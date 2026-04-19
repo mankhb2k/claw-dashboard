@@ -415,7 +415,149 @@ VPS_WORKER_SECRET=...            ← shared secret, không expose public
 
 ---
 
-## 12. Không làm cho MVP
+## 12. Health Check
+
+```typescript
+// app.controller.ts
+@Get('health')
+health() {
+  return { status: 'ok', timestamp: new Date().toISOString() };
+}
+
+@Get('health/ready')
+async ready() {
+  // Kiểm tra DB + Redis trước khi Railway route traffic vào
+  await this.dataSource.query('SELECT 1');
+  await this.redisClient.ping();
+  return { status: 'ready' };
+}
+```
+
+Railway config:
+```
+Health Check Path: /health
+Health Check Timeout: 10s
+```
+
+---
+
+## 13. CORS Configuration
+
+```typescript
+// main.ts
+await app.register(fastifyCors, {
+  origin: [
+    process.env.FRONTEND_URL,       // https://app.openclaw.ai
+    'http://localhost:3000',         // local dev
+  ],
+  credentials: true,                 // cần cho cookie-based session
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+});
+```
+
+> **Quan trọng:** `credentials: true` bắt buộc — Better-Auth dùng httpOnly cookie.  
+> Không dùng `origin: '*'` khi `credentials: true` (browser block).
+
+---
+
+## 14. TypeORM Migrations
+
+```bash
+# Tạo migration mới
+npx typeorm migration:generate src/database/migrations/InitSchema -d src/database/data-source.ts
+
+# Chạy migration
+npx typeorm migration:run -d src/database/data-source.ts
+
+# Rollback 1 bước
+npx typeorm migration:revert -d src/database/data-source.ts
+```
+
+```typescript
+// database/data-source.ts  (dùng riêng cho CLI, không import vào app)
+export const AppDataSource = new DataSource({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  entities: ['src/**/*.entity.ts'],
+  migrations: ['src/database/migrations/*.ts'],
+  migrationsRun: false,   // KHÔNG auto-run — chạy tường minh khi deploy
+});
+```
+
+Railway deploy script:
+```json
+// package.json
+"scripts": {
+  "build": "nest build",
+  "start:prod": "npx typeorm migration:run -d dist/database/data-source.js && node dist/main",
+}
+```
+
+---
+
+## 15. Cancel Heavy Job
+
+```
+POST   /api/heavy/cancel/:jobId     ← cancel job đang pending hoặc processing
+  ← { ok: true } | { ok: false, reason: 'already completed' }
+```
+
+```typescript
+@Post('cancel/:jobId')
+async cancelJob(@Param('jobId') jobId: string, @CurrentUser() user: User) {
+  const job = await this.heavyJobsRepo.findOne({
+    where: { id: jobId, userId: user.id },
+  });
+
+  if (!job) throw new NotFoundException();
+  if (['done', 'failed', 'cancelled'].includes(job.status)) {
+    return { ok: false, reason: 'already completed' };
+  }
+
+  // Xóa khỏi BullMQ nếu còn pending
+  const bullJob = await this.heavyQueue.getJob(jobId);
+  if (bullJob) await bullJob.remove();
+
+  await this.heavyJobsRepo.update(jobId, { status: 'cancelled' });
+  return { ok: true };
+}
+```
+
+> Nếu job đang `processing` trên VPS Heavy → VPS tự detect via heartbeat miss sau 30s.  
+> V2: gửi signal cancel qua Redis pub/sub.
+
+---
+
+## 16. SSE cho Heavy Job Status (V2)
+
+**MVP:** dùng polling `GET /api/heavy/status/:jobId` mỗi 5s — đơn giản, không cần infra thêm.
+
+**V2 — SSE:**
+
+```typescript
+// heavy/heavy.controller.ts
+@Sse('stream/:jobId')
+streamJobStatus(@Param('jobId') jobId: string): Observable<MessageEvent> {
+  return interval(3000).pipe(
+    switchMap(() => this.heavyJobsService.getStatus(jobId)),
+    map(job => ({ data: { status: job.status, progress: job.progress } })),
+    takeWhile(({ data }) => !['done', 'failed', 'cancelled'].includes(data.status), true),
+  );
+}
+```
+
+Frontend:
+```typescript
+const es = new EventSource(`/api/heavy/stream/${jobId}`, { withCredentials: true });
+es.onmessage = (e) => { /* update UI */ };
+es.onerror = () => es.close();
+```
+
+> Chỉ upgrade lên SSE khi polling thực sự gây UX lag — SSE giữ connection mở, tốn FD trên server.
+
+---
+
+## 17. Không làm cho MVP
 
 | Feature | Khi nào |
 |---|---|
@@ -424,3 +566,104 @@ VPS_WORKER_SECRET=...            ← shared secret, không expose public
 | Email notifications | Sprint 2 |
 | Admin dashboard | Khi cần support users |
 | API versioning | Khi có external API consumers |
+| SSE job streaming | Khi polling gây UX lag |
+
+---
+
+## 0. Bắt đầu từ đâu — Setup Guide
+
+### Thứ tự khởi động dự án (theo dependency)
+
+```
+Bước 1 → Database schema
+Bước 2 → Auth (Better-Auth)
+Bước 3 → Projects CRUD
+Bước 4 → BullMQ + Jobs Producer
+Bước 5 → Internal endpoints
+Bước 6 → Idle detection
+Bước 7 → Heavy tasks
+```
+
+---
+
+### Bước 1 — Khởi tạo project NestJS
+
+```bash
+npm i -g @nestjs/cli
+nest new backend --package-manager npm
+cd backend
+
+# Core deps
+npm install @nestjs/platform-fastify @fastify/cors
+npm install @nestjs/typeorm typeorm pg
+npm install @nestjs/bull bullmq
+npm install @nestjs/schedule
+npm install better-auth
+npm install nanoid
+
+# Dev deps
+npm install -D @types/pg
+```
+
+---
+
+### Bước 2 — Kết nối Railway
+
+1. Tạo project trên [railway.app](https://railway.app)
+2. Add service: **PostgreSQL** → copy `DATABASE_URL`
+3. Add service: **Redis** → copy `REDIS_URL`
+4. Add service: **Web** (deploy từ GitHub repo `backend/`)
+
+```env
+# .env (local dev)
+DATABASE_URL=postgresql://postgres:password@localhost:5432/openclaw
+REDIS_URL=redis://localhost:6379
+BETTER_AUTH_SECRET=<random 32 bytes: openssl rand -hex 32>
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+FRONTEND_URL=http://localhost:3000
+VPS_WORKER_SECRET=<random secret>
+```
+
+---
+
+### Bước 3 — Chạy migration lần đầu
+
+```bash
+# Start local PG + Redis
+docker compose up -d   # hoặc dùng Railway local tunnel
+
+# Generate migration từ entities
+npx typeorm migration:generate src/database/migrations/InitSchema -d src/database/data-source.ts
+
+# Apply
+npx typeorm migration:run -d src/database/data-source.ts
+
+# Seed plans
+psql $DATABASE_URL -c "INSERT INTO plans (name, max_projects, ram_mb, cpu_vcpu, storage_gb, heavy_jobs_per_day, idle_timeout_min)
+VALUES ('free', 1, 1024, 0.5, 4, 3, 10), ('pro', 5, 2048, 1.0, 20, 20, 30);"
+```
+
+---
+
+### Bước 4 — Kiểm tra lần lượt
+
+| Kiểm tra | Lệnh |
+|---|---|
+| Health check | `curl localhost:3001/health` |
+| Register user | `curl -X POST localhost:3001/api/auth/register -d '{...}'` |
+| Tạo project | `curl -X POST localhost:3001/api/projects -H 'Cookie: ...'` |
+| BullMQ dashboard | Cài `@bull-board/fastify` để xem queue local |
+
+---
+
+### Checklist trước khi deploy Railway
+
+- [ ] `DATABASE_URL` trỏ đúng Railway PostgreSQL
+- [ ] `REDIS_URL` trỏ đúng Railway Redis
+- [ ] `BETTER_AUTH_SECRET` đã set (không dùng default)
+- [ ] `VPS_WORKER_SECRET` đã set và khớp với VPS worker
+- [ ] `FRONTEND_URL` đúng domain production
+- [ ] Migration đã chạy (`start:prod` script tự chạy)
+- [ ] Health check path `/health` đã config trên Railway
+- [ ] CORS origin đúng domain frontend
