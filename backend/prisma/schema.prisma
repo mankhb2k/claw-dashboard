@@ -110,13 +110,47 @@ model Project {
   errorMessage   String?
   createdAt      DateTime      @default(now())
 
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan           Plan          @relation(fields: [planId], references: [id])
-  heavyJobs      HeavyJob[]
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               Plan               @relation(fields: [planId], references: [id])
+  heavyJobs          HeavyJob[]
+  containerInstances ContainerInstance[]
 
   @@index([userId])
   @@index([lastActiveAt], map: "idx_projects_idle")
   @@map("projects")
+}
+
+// ─── Container Instances ──────────────────────────────────────────────────────
+
+model ContainerInstance {
+  id           String                  @id @default(cuid())
+  projectId    String
+  containerId  String?                 // Docker container ID (64-char hex)
+  imageVersion String                  // vd: "openclaw:1.4.2"
+  cpuLimit     Decimal                 @db.Decimal(3, 1) // vCPU
+  ramLimit     Int                     // MB
+  status       ContainerInstanceStatus @default(STARTING)
+  nodeId       String                  @default("vps-1")
+  exitCode     Int?
+  errorMessage String?
+  startedAt    DateTime?
+  stoppedAt    DateTime?
+  createdAt    DateTime                @default(now())
+
+  project      Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([nodeId, status], map: "idx_instances_node_status")
+  @@map("container_instances")
+}
+
+enum ContainerInstanceStatus {
+  STARTING
+  RUNNING
+  STOPPING
+  STOPPED
+  ERROR
+  DESTROYED
 }
 
 enum ProjectStatus {

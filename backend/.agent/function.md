@@ -168,6 +168,57 @@ _(Không có function)_
 
 ---
 
+## `src/common/decorators/current-user.decorator.ts`
+
+**Nhiệm vụ:** NestJS param decorator — trích xuất `req.user` (đã được SessionGuard gắn) thành tham số controller, tránh lặp code `req.user` ở mọi handler.
+
+| Function | Mô tả |
+|---|---|
+| `CurrentUser` | Decorator factory — đọc `req.user` từ ExecutionContext, trả về `RequestUser` |
+
+---
+
+## `src/projects/projects.service.ts`
+
+**Nhiệm vụ:** Business logic toàn bộ Projects — tạo, quản lý vòng đời, kiểm tra plan limit, tương tác DB qua PrismaService.
+
+| Function | Mô tả |
+|---|---|
+| `findByUser(userId)` | Lấy tất cả projects của user, kèm plan info, sort mới nhất trước |
+| `create(userId)` | Kiểm tra plan limit → generate subdomain → tạo project với status CREATING |
+| `getHealth(projectId, userId)` | Trả status, subdomain, lastActiveAt, storageUsedMb của project |
+| `start(projectId, userId)` | Validate status → update STARTING → tạo ContainerInstance mới → (TODO: enqueue BullMQ wake) |
+| `stop(projectId, userId)` | Validate status → update STOPPED → update ContainerInstance active → (TODO: enqueue BullMQ stop) |
+| `remove(projectId, userId)` | Chặn xóa khi đang RUNNING → xóa project + cascade instances → (TODO: enqueue BullMQ destroy) |
+| `getInstances(projectId, userId)` | Lấy 20 ContainerInstance gần nhất của project, sort mới nhất trước |
+| `findOwned(projectId, userId)` _(private)_ | Tìm project theo id, throw 404 nếu không tồn tại, throw 403 nếu không phải owner |
+| `getFreePlan()` _(private)_ | Lấy plan `"free"` từ DB — throw nếu chưa seed |
+| `generateUniqueSubdomain()` _(private)_ | Tạo nanoid(8) lowercase, retry tối đa 5 lần nếu trùng |
+
+---
+
+## `src/projects/projects.controller.ts`
+
+**Nhiệm vụ:** HTTP handler cho Projects endpoints — tất cả routes đều qua `@UseGuards(SessionGuard)`.
+
+| Endpoint | Function | Mô tả |
+|---|---|---|
+| `GET /api/projects/mine` | `mine()` | Lấy danh sách projects của user đang login |
+| `POST /api/projects` | `create()` | Tạo project mới (free plan: tối đa 1) |
+| `POST /api/projects/:id/start` | `start()` | Wake container |
+| `POST /api/projects/:id/stop` | `stop()` | Stop container |
+| `GET /api/projects/:id/health` | `health()` | Lấy trạng thái + domain |
+| `GET /api/projects/:id/instances` | `instances()` | Lịch sử ContainerInstance |
+| `DELETE /api/projects/:id` | `remove()` | Xóa project (phải stop trước) |
+
+---
+
+## `src/projects/projects.module.ts`
+
+**Nhiệm vụ:** NestJS module kết nối ProjectsController + ProjectsService, import AuthModule để dùng SessionGuard.
+
+---
+
 ## Bảng tổng hợp theo chức năng
 
 | Chức năng             | Files liên quan                                                                                                               |
@@ -178,6 +229,9 @@ _(Không có function)_
 | Auth email/password   | `auth/auth.utils.ts`, `auth/auth.service.ts`, `auth/auth.controller.ts`                                                       |
 | Auth Google OAuth     | `auth/google.oauth.ts`, `auth/auth.service.ts`, `auth/auth.controller.ts`                                                     |
 | Session management    | `auth/auth.service.ts` (getSession, createSession, logout), `auth/guards/session.guard.ts`                                    |
+| Projects CRUD         | `projects/projects.service.ts`, `projects/projects.controller.ts`                                                             |
+| Container lifecycle   | `projects/projects.service.ts` (start, stop, remove, getInstances)                                                           |
+| Current user inject   | `common/decorators/current-user.decorator.ts`                                                                                 |
 | Database              | `prisma/prisma.service.ts`, `prisma/prisma.module.ts`                                                                         |
 | Tests (scaffold)      | `app.controller.spec.ts`                                                                                                      |
 

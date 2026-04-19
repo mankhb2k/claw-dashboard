@@ -7,6 +7,7 @@ import {
 } from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
@@ -31,12 +32,26 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('OpenClaw API')
+    .setDescription('Control Plane API — Auth · Projects · Heavy Tasks · Internal')
+    .setVersion('1.0')
+    .addCookieAuth('session_token')
+    .addApiKey({ type: 'apiKey', in: 'header', name: 'Authorization' }, 'worker-secret')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: { persistAuthorization: true },
+  });
+
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port, '0.0.0.0');
 
   try {
     const url = await app.getUrl();
     Logger.log(`Listening on ${url}`, 'Bootstrap');
+    Logger.log(`Swagger UI: ${url}/api/docs`, 'Bootstrap');
   } catch {
     Logger.log(`Listening on port ${port}`, 'Bootstrap');
   }
