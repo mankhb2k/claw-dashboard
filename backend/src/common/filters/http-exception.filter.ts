@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import { ApiResponse } from '../types/api-response.type.js';
+import { ApiResponse } from '../types/api-response.type';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

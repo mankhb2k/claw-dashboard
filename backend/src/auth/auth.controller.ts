@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -11,19 +10,10 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { fail, ok } from '../common/types/api-response.type.js';
-import { AuthService } from './auth.service.js';
-
-interface RegisterDto {
-  email: string;
-  password: string;
-  name: string;
-}
-
-interface LoginDto {
-  email: string;
-  password: string;
-}
+import { fail, ok } from '../common/types/api-response.type';
+import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('Auth')
 @Controller('api/auth')
@@ -37,10 +27,6 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Registered — session cookie set' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) reply: FastifyReply) {
-    if (!dto.email || !dto.password || !dto.name) {
-      throw new BadRequestException('email, password and name are required');
-    }
-
     const result = await this.authService.register(dto.email, dto.password, dto.name);
     this.setSessionCookie(reply, result.token, result.expiresAt);
     return ok({ user: this.sanitizeUser(result.user) });
@@ -54,10 +40,6 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged in — session cookie set' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) reply: FastifyReply) {
-    if (!dto.email || !dto.password) {
-      throw new BadRequestException('email and password are required');
-    }
-
     const result = await this.authService.login(dto.email, dto.password);
     this.setSessionCookie(reply, result.token, result.expiresAt);
     return ok({ user: this.sanitizeUser(result.user) });

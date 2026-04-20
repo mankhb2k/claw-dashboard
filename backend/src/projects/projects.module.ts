@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ProjectsController } from './projects.controller.js';
-import { ProjectsService } from './projects.service.js';
-import { AuthModule } from '../auth/auth.module.js';
+import { ProjectsController } from './projects.controller';
+import { ProjectsService } from './projects.service';
+import { AuthModule } from '../auth/auth.module';
+import { CommonModule } from '../common/common.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, CommonModule, QueueModule],
   controllers: [ProjectsController],
   providers: [ProjectsService],
   exports: [ProjectsService],

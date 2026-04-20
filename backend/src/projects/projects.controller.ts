@@ -6,12 +6,15 @@ import {
   Param,
   Post,
   UseGuards,
+  Body,
 } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser, RequestUser } from '../common/decorators/current-user.decorator.js';
-import { SessionGuard } from '../auth/guards/session.guard.js';
-import { ProjectsService } from './projects.service.js';
-import { ok } from '../common/types/api-response.type.js';
+import { CurrentUser, RequestUser } from '../common/decorators/current-user.decorator';
+import { SessionGuard } from '../auth/guards/session.guard';
+import { ProjectsService } from './projects.service';
+import { ok } from '../common/types/api-response.type';
+import { StartProjectDto } from './dto/start-project.dto';
+import { StopProjectDto } from './dto/stop-project.dto';
 
 @ApiTags('Projects')
 @ApiCookieAuth('session_token')
@@ -46,7 +49,7 @@ export class ProjectsController {
   @ApiParam({ name: 'id', description: 'Project ID' })
   @ApiResponse({ status: 200, description: 'Status set to STARTING, ContainerInstance created' })
   @ApiResponse({ status: 400, description: 'Project not in stoppable state' })
-  async start(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+  async start(@Param('id') id: string, @Body() _dto: StartProjectDto, @CurrentUser() user: RequestUser) {
     const result = await this.projectsService.start(id, user.id);
     return ok(result);
   }
@@ -57,7 +60,7 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Stop a running project container' })
   @ApiParam({ name: 'id', description: 'Project ID' })
   @ApiResponse({ status: 200, description: 'Status set to STOPPED' })
-  async stop(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+  async stop(@Param('id') id: string, @Body() _dto: StopProjectDto, @CurrentUser() user: RequestUser) {
     const result = await this.projectsService.stop(id, user.id);
     return ok(result);
   }

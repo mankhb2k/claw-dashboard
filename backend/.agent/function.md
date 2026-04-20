@@ -8,38 +8,36 @@
 
 **Nhiệm vụ:** Bootstrap NestJS app với Fastify adapter, đăng ký plugin và global middleware.
 
-| Function      | Mô tả                                                                                     |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| `bootstrap()` | Khởi tạo app, đăng ký CORS + cookie plugin, gắn global interceptor/filter, lắng nghe port |
+| Function | Mô tả |
+|---|---|
+| `bootstrap()` | Khởi tạo app, register CORS + cookie plugin, gắn global ValidationPipe / ResponseInterceptor / HttpExceptionFilter, setup Swagger, lắng nghe port |
 
 ---
 
 ## `src/app.module.ts`
 
-**Nhiệm vụ:** Root module — khai báo và kết nối tất cả các module con (PrismaModule, AuthModule). Không chứa logic, chỉ là điểm lắp ráp toàn bộ DI graph của app.
-
-_(Không có function)_
+**Nhiệm vụ:** Root module — import PrismaModule, QueueModule, AuthModule, ProjectsModule, InternalModule, SubscriptionsModule. Không chứa logic.
 
 ---
 
 ## `src/app.controller.ts`
 
-**Nhiệm vụ:** Controller gốc — cung cấp endpoint `GET /health` cho Railway health check và `GET /` placeholder. Không liên quan đến business logic.
+**Nhiệm vụ:** Endpoint health check cho Railway và placeholder root.
 
-| Endpoint      | Function     | Mô tả                                                                     |
-| ------------- | ------------ | ------------------------------------------------------------------------- |
-| `GET /`       | `getHello()` | Trả chuỗi "Hello World!" — placeholder, có thể xóa sau                    |
-| `GET /health` | `health()`   | Trả `{status:"ok", uptime}` — Railway dùng để kiểm tra app còn sống không |
+| Endpoint | Function | Mô tả |
+|---|---|---|
+| `GET /` | `getHello()` | Trả chuỗi "Hello World!" |
+| `GET /health` | `health()` | Trả `{status:"ok", uptime}` |
 
 ---
 
 ## `src/app.service.ts`
 
-**Nhiệm vụ:** Service gốc đi kèm AppController. Hiện chỉ có hàm placeholder, chưa có logic thật. Có thể dùng sau cho các tác vụ toàn cục (vd: thống kê hệ thống).
+**Nhiệm vụ:** Service đi kèm AppController.
 
-| Function     | Mô tả                                                                     |
-| ------------ | ------------------------------------------------------------------------- |
-| `getHello()` | Trả chuỗi "Hello World!" — placeholder từ NestJS scaffold, chưa dùng thật |
+| Function | Mô tả |
+|---|---|
+| `getHello()` | Trả chuỗi "Hello World!" |
 
 ---
 
@@ -47,164 +45,247 @@ _(Không có function)_
 
 **Nhiệm vụ:** Wrapper PrismaClient, inject vào NestJS DI, quản lý lifecycle kết nối DB.
 
-| Function         | Mô tả                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------ |
-| `constructor()`  | Khởi tạo `PrismaPg` adapter từ `DATABASE_URL`, truyền vào `super({adapter})` — Prisma v7 bắt buộc     |
-| `onModuleInit()` | Gọi `$connect()` khi NestJS khởi động — thiết lập kết nối PostgreSQL                                  |
+| Function | Mô tả |
+|---|---|
+| `constructor()` | Khởi tạo `PrismaPg` adapter từ `DATABASE_URL`, truyền vào `super({adapter})` |
+| `onModuleInit()` | Gọi `$connect()` khi NestJS khởi động |
 
 ---
 
 ## `src/prisma/prisma.module.ts`
 
-**Nhiệm vụ:** Global module export PrismaService — mọi module khác đều dùng được mà không cần import lại.
+**Nhiệm vụ:** Global module export PrismaService — mọi module khác dùng được mà không cần import lại.
 
 ---
 
 ## `src/common/types/api-response.type.ts`
 
-**Nhiệm vụ:** Định nghĩa kiểu dữ liệu response chuẩn dùng xuyên suốt toàn bộ API.
+**Nhiệm vụ:** Định nghĩa kiểu dữ liệu response chuẩn toàn bộ API.
 
-| Function              | Mô tả                                                                |
-| --------------------- | -------------------------------------------------------------------- |
-| `ok<T>(data)`         | Tạo response thành công `{success:true, data, error:null}`           |
+| Function | Mô tả |
+|---|---|
+| `ok<T>(data)` | Tạo response thành công `{success:true, data, error:null}` |
 | `fail(code, message)` | Tạo response lỗi `{success:false, data:null, error:{code, message}}` |
 
 ---
 
 ## `src/common/interceptors/response.interceptor.ts`
 
-**Nhiệm vụ:** NestJS global interceptor — tự động bọc mọi response của controller vào format `ApiResponse`.
+**Nhiệm vụ:** Global interceptor — tự động bọc response controller vào format `ApiResponse`.
 
-| Function               | Mô tả                                                                                   |
-| ---------------------- | --------------------------------------------------------------------------------------- |
-| `intercept(ctx, next)` | Pipe response qua `map()` — nếu chưa có format chuẩn thì bọc vào `{success:true, data}` |
+| Function | Mô tả |
+|---|---|
+| `intercept(ctx, next)` | Pipe qua `map()` — nếu chưa có format chuẩn thì bọc vào `{success:true, data}` |
 
 ---
 
 ## `src/common/filters/http-exception.filter.ts`
 
-**Nhiệm vụ:** NestJS global exception filter — bắt mọi exception và trả về format `ApiResponse` thay vì Fastify default error.
+**Nhiệm vụ:** Global exception filter — bắt HttpException + mọi exception, trả về format `ApiResponse`.
 
-| Function                 | Mô tả                                                                                           |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `catch(exception, host)` | Bắt exception, xác định status code và message, trả về `{success:false, error:{code, message}}` |
-| `statusToCode(status)`   | Map HTTP status number sang error code string (vd: 401 → `AUTH_UNAUTHENTICATED`)                |
-
----
-
-## `src/auth/auth.utils.ts`
-
-**Nhiệm vụ:** Các hàm tiện ích auth dùng Node.js built-in `crypto` — không phụ thuộc thư viện bên ngoài.
-
-| Function                        | Mô tả                                                                              |
-| ------------------------------- | ---------------------------------------------------------------------------------- |
-| `hashPassword(plain)`           | Hash password dùng `crypto.scrypt` + random salt 16 bytes, trả về `salt:hash`      |
-| `verifyPassword(plain, stored)` | So sánh password plain với hash đã lưu, dùng `timingSafeEqual` chống timing attack |
-| `generateSessionToken()`        | Tạo session token ngẫu nhiên 32 bytes hex (64 ký tự)                               |
-| `sessionExpiresAt(days)`        | Tính thời điểm hết hạn session, mặc định 30 ngày từ hiện tại                       |
-
----
-
-## `src/auth/google.oauth.ts`
-
-**Nhiệm vụ:** Thực hiện Google OAuth2 flow thủ công dùng `fetch` — không dùng passport hay thư viện OAuth.
-
-| Function                                   | Mô tả                                                                                     |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `buildGoogleAuthUrl(redirectUri, state)`   | Tạo URL redirect sang Google OAuth consent screen với đủ params (client_id, scope, state) |
-| `exchangeCodeForTokens(code, redirectUri)` | POST tới Google token endpoint để đổi `code` lấy `access_token` + `refresh_token`         |
-| `getGoogleUserInfo(accessToken)`           | GET Google userinfo endpoint để lấy thông tin user (email, name, picture, sub)            |
-
----
-
-## `src/auth/auth.service.ts`
-
-**Nhiệm vụ:** Business logic toàn bộ auth — register, login, session, Google OAuth. Tương tác trực tiếp với DB qua PrismaService.
-
-| Function                            | Mô tả                                                                                  |
-| ----------------------------------- | -------------------------------------------------------------------------------------- |
-| `register(email, password, name)`   | Kiểm tra email tồn tại, hash password, tạo User + Account(email) trong DB, tạo session |
-| `login(email, password)`            | Tìm user + account, verify password, tạo session mới                                   |
-| `logout(token)`                     | Xóa session khỏi DB theo token                                                         |
-| `getSession(token)`                 | Tìm session trong DB, kiểm tra chưa expired, trả về `{user, session}`                  |
-| `getGoogleRedirectUrl(state)`       | Gọi `buildGoogleAuthUrl` với redirectUri được build từ `API_URL` env                   |
-| `handleGoogleCallback(code)`        | Đổi code lấy token → lấy user info → tìm/tạo User + Account(google) → tạo session      |
-| `createSession(userId)` _(private)_ | Tạo session record trong DB với token ngẫu nhiên, trả về `{user, token, expiresAt}`    |
-| `googleRedirectUri()` _(private)_   | Build callback URL: `{API_URL}/api/auth/callback/google`                               |
-| `cookieName()` _(static)_           | Trả về tên cookie `"session_token"` — dùng chung giữa service và controller            |
-
----
-
-## `src/auth/auth.controller.ts`
-
-**Nhiệm vụ:** HTTP handler cho tất cả auth endpoints — nhận request, gọi AuthService, set/clear cookie, trả về ApiResponse.
-
-| Endpoint                        | Function             | Mô tả                                                                                   |
-| ------------------------------- | -------------------- | --------------------------------------------------------------------------------------- |
-| `POST /api/auth/register`       | `register()`         | Validate body, gọi service.register, set session cookie, trả user                       |
-| `POST /api/auth/login`          | `login()`            | Validate body, gọi service.login, set session cookie, trả user                          |
-| `POST /api/auth/logout`         | `logout()`           | Đọc cookie, gọi service.logout, clear cookie                                            |
-| `GET /api/auth/session`         | `session()`          | Đọc cookie, gọi service.getSession, trả user hoặc fail                                  |
-| `GET /api/auth/sign-in/google`  | `signInGoogle()`     | Redirect 302 sang Google OAuth URL                                                      |
-| `GET /api/auth/callback/google` | `googleCallback()`   | Nhận code từ Google, gọi service.handleGoogleCallback, set cookie, redirect về frontend |
-| _(private)_                     | `setSessionCookie()` | Set httpOnly cookie với token + expiresAt, secure=true khi production                   |
-| _(private)_                     | `sanitizeUser()`     | Lọc bỏ các field nhạy cảm, chỉ trả id/name/email/image/emailVerified/createdAt          |
-
----
-
-## `src/auth/guards/session.guard.ts`
-
-**Nhiệm vụ:** NestJS Guard — bảo vệ các route cần đăng nhập. Đọc cookie, verify session, gắn `req.user`.
-
-| Function           | Mô tả                                                                                                     |
-| ------------------ | --------------------------------------------------------------------------------------------------------- |
-| `canActivate(ctx)` | Đọc `session_token` cookie, gọi authService.getSession, nếu hợp lệ thì gắn user vào `req.user` và cho qua |
-
----
-
-## `src/auth/auth.module.ts`
-
-**Nhiệm vụ:** NestJS module khai báo và export AuthService + SessionGuard để các module khác (Projects, Heavy) dùng lại.
+| Function | Mô tả |
+|---|---|
+| `catch(exception, host)` | Xác định status code + message, trả về `{success:false, error:{code, message}}` với statusToCode mapping |
+| `statusToCode(status)` _(private)_ | Map HTTP status → error code: 400→BAD_REQUEST, 401→AUTH_UNAUTHENTICATED, 403→AUTH_FORBIDDEN, 404→NOT_FOUND, 409→CONFLICT, 500→INTERNAL_ERROR, etc. |
 
 ---
 
 ## `src/common/decorators/current-user.decorator.ts`
 
-**Nhiệm vụ:** NestJS param decorator — trích xuất `req.user` (đã được SessionGuard gắn) thành tham số controller, tránh lặp code `req.user` ở mọi handler.
+**Nhiệm vụ:** Param decorator — trích xuất `req.user` (do SessionGuard gắn) thành tham số controller.
+
+| Export | Mô tả |
+|---|---|
+| `CurrentUser` | Decorator factory — đọc `request.user` từ ExecutionContext |
+
+---
+
+## `src/common/validators/is-email-unique.validator.ts`
+
+**Nhiệm vụ:** Async validator — kiểm tra email chưa được đăng ký trong DB.
+
+| Method | Mô tả |
+|---|---|
+| `validate(email)` | Query DB, return `true` nếu email chưa tồn tại |
+| `defaultMessage()` | Trả `Email "{email}" is already registered` |
+
+---
+
+## `src/common/validators/is-valid-cuid.validator.ts`
+
+**Nhiệm vụ:** Sync validator — validate CUID format (lowercase alphanumeric).
+
+| Method | Mô tả |
+|---|---|
+| `validate(value)` | Check regex `/^[a-z0-9]+$/` |
+| `defaultMessage()` | Trả `Invalid ID format` |
+
+---
+
+## `src/common/validators/is-unique-subdomain.validator.ts`
+
+**Nhiệm vụ:** Async validator — kiểm tra subdomain chưa được dùng trong DB + validate format (lowercase + hyphen, 1-63 chars).
+
+| Method | Mô tả |
+|---|---|
+| `validate(subdomain)` | Check regex `/^[a-z0-9-]{1,63}$/` + query DB để tìm duplicate |
+| `defaultMessage()` | Trả `Subdomain must be unique and contain only lowercase letters, numbers, and hyphens` |
+
+---
+
+## `src/common/common.module.ts`
+
+**Nhiệm vụ:** Export tất cả custom validators (IsEmailUniqueValidator, IsValidCuidValidator, IsUniqueSubdomainValidator) để AuthModule, ProjectsModule dùng lại.
+
+---
+
+## `src/auth/auth.utils.ts`
+
+**Nhiệm vụ:** Các hàm tiện ích auth dùng Node.js built-in `crypto`.
 
 | Function | Mô tả |
 |---|---|
-| `CurrentUser` | Decorator factory — đọc `req.user` từ ExecutionContext, trả về `RequestUser` |
+| `hashPassword(plain)` | Hash password dùng `crypto.scrypt` + random salt 16 bytes, trả `salt:hash` |
+| `verifyPassword(plain, stored)` | So sánh với hash đã lưu, dùng `timingSafeEqual` chống timing attack |
+| `generateSessionToken()` | Tạo session token ngẫu nhiên 32 bytes hex (64 ký tự) |
+| `sessionExpiresAt(days?)` | Tính thời điểm hết hạn, mặc định 30 ngày từ hiện tại |
+
+---
+
+## `src/auth/google.oauth.ts`
+
+**Nhiệm vụ:** Thực hiện Google OAuth2 flow thủ công dùng `fetch`.
+
+| Function | Mô tả |
+|---|---|
+| `buildGoogleAuthUrl(redirectUri, state)` | Tạo URL redirect sang Google OAuth consent screen |
+| `exchangeCodeForTokens(code, redirectUri)` | POST tới Google token endpoint, đổi `code` lấy `access_token` + `id_token` |
+| `getGoogleUserInfo(accessToken)` | GET Google userinfo endpoint, lấy `{email, name, picture, sub}` |
+
+---
+
+## `src/auth/auth.service.ts`
+
+**Nhiệm vụ:** Business logic toàn bộ auth — register, login, logout, session, Google OAuth.
+
+| Function | Mô tả |
+|---|---|
+| `register(email, password, name)` | Kiểm tra email tồn tại → hash password → tạo User + Account(email) → tạo session |
+| `login(email, password)` | Tìm user + account → verify password → tạo session mới |
+| `logout(token)` | Xóa session khỏi DB theo token |
+| `getSession(token)` | Tìm session trong DB, kiểm tra chưa expired, trả `{user, session}` |
+| `getGoogleRedirectUrl(state)` | Gọi `buildGoogleAuthUrl` với redirectUri từ `API_URL` env |
+| `handleGoogleCallback(code)` | Đổi code → lấy user info → tìm/tạo User + Account(google) → tạo session |
+| `createSession(userId)` _(private)_ | Tạo Session record trong DB, trả `{user, token, expiresAt}` |
+| `googleRedirectUri()` _(private)_ | Build `{API_URL}/api/auth/callback/google` |
+| `cookieName()` _(static)_ | Trả `"session_token"` — dùng chung giữa service và controller |
+
+---
+
+## `src/auth/auth.controller.ts`
+
+**Nhiệm vụ:** HTTP handler cho tất cả auth endpoints.
+
+| Endpoint | Function | Mô tả |
+|---|---|---|
+| `POST /api/auth/register` | `register()` | Validate body → service.register → set cookie → trả user |
+| `POST /api/auth/login` | `login()` | Validate body → service.login → set cookie → trả user |
+| `POST /api/auth/logout` | `logout()` | Đọc cookie → service.logout → clear cookie |
+| `GET /api/auth/session` | `session()` | Đọc cookie → service.getSession → trả user |
+| `GET /api/auth/sign-in/google` | `signInGoogle()` | Redirect 302 sang Google OAuth URL |
+| `GET /api/auth/callback/google` | `googleCallback()` | Nhận code → service.handleGoogleCallback → set cookie → redirect frontend |
+| _(private)_ | `setSessionCookie()` | Set httpOnly cookie với token + expiresAt, secure=true khi production |
+| _(private)_ | `sanitizeUser()` | Trả chỉ id/name/email/image/emailVerified/createdAt, bỏ field nhạy cảm |
+
+---
+
+## `src/auth/guards/session.guard.ts`
+
+**Nhiệm vụ:** Guard — bảo vệ routes cần đăng nhập, gắn `req.user`.
+
+| Function | Mô tả |
+|---|---|
+| `canActivate(ctx)` | Đọc `session_token` cookie → authService.getSession → gắn user vào `req.user` |
+
+---
+
+## `src/auth/dto/register.dto.ts`
+
+**Nhiệm vụ:** Validate body cho `POST /api/auth/register`.
+
+| Property | Validator | Mô tả |
+|---|---|---|
+| `email` | `@IsEmail()`, `@Validate(IsEmailUniqueValidator)` | Email hợp lệ, chưa đăng ký |
+| `password` | `@MinLength(8)`, `@MaxLength(128)` | 8–128 ký tự |
+| `name` | `@MinLength(1)`, `@MaxLength(100)` | 1–100 ký tự |
+
+---
+
+## `src/auth/dto/login.dto.ts`
+
+**Nhiệm vụ:** Validate body cho `POST /api/auth/login`.
+
+| Property | Validator | Mô tả |
+|---|---|---|
+| `email` | `@IsEmail()` | Email hợp lệ |
+| `password` | `@MinLength(1)`, `@MaxLength(128)` | Không được trống |
+
+---
+
+## `src/auth/auth.module.ts`
+
+**Nhiệm vụ:** Export AuthService + SessionGuard để ProjectsModule, InternalModule dùng. Import CommonModule cho validators.
+
+---
+
+## `src/projects/dto/create-project.dto.ts`
+
+**Nhiệm vụ:** DTO cho `POST /api/projects`. Để trống — subdomain auto-generate.
+
+---
+
+## `src/projects/dto/start-project.dto.ts`
+
+**Nhiệm vụ:** DTO cho `POST /api/projects/:id/start`. Để trống — request body validation.
+
+---
+
+## `src/projects/dto/stop-project.dto.ts`
+
+**Nhiệm vụ:** DTO cho `POST /api/projects/:id/stop`. Để trống — request body validation.
 
 ---
 
 ## `src/projects/projects.service.ts`
 
-**Nhiệm vụ:** Business logic toàn bộ Projects — tạo, quản lý vòng đời, kiểm tra plan limit, tương tác DB qua PrismaService.
+**Nhiệm vụ:** Business logic toàn bộ Projects — CRUD, vòng đời container, plan limit, internal callbacks.
 
 | Function | Mô tả |
 |---|---|
 | `findByUser(userId)` | Lấy tất cả projects của user, kèm plan info, sort mới nhất trước |
-| `create(userId)` | Kiểm tra plan limit → generate subdomain → tạo project với status CREATING |
-| `getHealth(projectId, userId)` | Trả status, subdomain, lastActiveAt, storageUsedMb của project |
-| `start(projectId, userId)` | Validate status → update STARTING → tạo ContainerInstance mới → (TODO: enqueue BullMQ wake) |
-| `stop(projectId, userId)` | Validate status → update STOPPED → update ContainerInstance active → (TODO: enqueue BullMQ stop) |
-| `remove(projectId, userId)` | Chặn xóa khi đang RUNNING → xóa project + cascade instances → (TODO: enqueue BullMQ destroy) |
-| `getInstances(projectId, userId)` | Lấy 20 ContainerInstance gần nhất của project, sort mới nhất trước |
-| `findOwned(projectId, userId)` _(private)_ | Tìm project theo id, throw 404 nếu không tồn tại, throw 403 nếu không phải owner |
-| `getFreePlan()` _(private)_ | Lấy plan `"free"` từ DB — throw nếu chưa seed |
-| `generateUniqueSubdomain()` _(private)_ | Tạo nanoid(8) lowercase, retry tối đa 5 lần nếu trùng |
+| `create(userId)` | Lấy plan từ user subscription (hoặc free plan default) → check maxProjects limit → generate subdomain → tạo Project (CREATING) + ContainerInstance → enqueue spawn |
+| `getHealth(projectId, userId)` | Trả `{status, subdomain, lastActiveAt, storageUsedMb}` |
+| `start(projectId, userId)` | Validate status → update STARTING → tạo ContainerInstance mới → enqueue wake |
+| `stop(projectId, userId)` | Validate status → update STOPPED → update ContainerInstance active → enqueue stop |
+| `remove(projectId, userId)` | Chặn xóa khi RUNNING → xóa Project (cascade ContainerInstance) → enqueue destroy |
+| `getInstances(projectId, userId)` | Lấy 20 ContainerInstance gần nhất, sort mới nhất trước |
+| `updateProjectStatus(projectId, status, containerId?)` | Update project status; nếu có containerId thì update ContainerInstance luôn. Dùng bởi InternalController |
+| `updateLastActiveAt(projectId, lastActiveAt)` | Update lastActiveAt timestamp. Dùng bởi InternalController heartbeat |
+| `findOwned(projectId, userId)` _(private)_ | Tìm project, throw 404 nếu không tồn tại, throw 403 nếu không phải owner |
+| `getPlanForUser(userId)` _(private)_ | Tìm subscription của user, nếu có thì dùng plan đó; không có thì fallback getFreePlan |
+| `getFreePlan()` _(private)_ | Lấy plan `"free"` từ DB, throw nếu chưa seed |
+| `generateUniqueSubdomain()` _(private)_ | `nanoid(8).toLowerCase()`, retry tối đa 5 lần nếu trùng |
 
 ---
 
 ## `src/projects/projects.controller.ts`
 
-**Nhiệm vụ:** HTTP handler cho Projects endpoints — tất cả routes đều qua `@UseGuards(SessionGuard)`.
+**Nhiệm vụ:** HTTP handler cho Projects endpoints. Tất cả routes qua `@UseGuards(SessionGuard)`.
 
 | Endpoint | Function | Mô tả |
 |---|---|---|
 | `GET /api/projects/mine` | `mine()` | Lấy danh sách projects của user đang login |
-| `POST /api/projects` | `create()` | Tạo project mới (free plan: tối đa 1) |
+| `POST /api/projects` | `create()` | Tạo project mới |
 | `POST /api/projects/:id/start` | `start()` | Wake container |
 | `POST /api/projects/:id/stop` | `stop()` | Stop container |
 | `GET /api/projects/:id/health` | `health()` | Lấy trạng thái + domain |
@@ -215,36 +296,182 @@ _(Không có function)_
 
 ## `src/projects/projects.module.ts`
 
-**Nhiệm vụ:** NestJS module kết nối ProjectsController + ProjectsService, import AuthModule để dùng SessionGuard.
+**Nhiệm vụ:** Import AuthModule (SessionGuard), CommonModule (validators), QueueModule (QueueService). Export ProjectsService cho InternalModule dùng.
+
+---
+
+## `src/queue/queue.module.ts`
+
+**Nhiệm vụ:** Configure BullMQ với Redis, register 2 queues. Parse `REDIS_URL` tự động, fallback sang REDIS_HOST/PORT/PASSWORD.
+
+| Queue | Jobs |
+|---|---|
+| `container-ops` | spawn, wake, stop, destroy |
+| `heavy-tasks` | ffmpeg, playwright, tts, stt |
+
+---
+
+## `src/queue/queue.service.ts`
+
+**Nhiệm vụ:** Enqueue jobs vào BullMQ. 2 queues: container-ops và heavy-tasks.
+
+**Container Operations:**
+
+| Function | Job | Priority | Attempts | Timeout |
+|---|---|---|---|---|
+| `enqueueSpawn(projectId, userId, subdomain, imageVersion, cpuLimit, ramLimit)` | spawn | 5 | 3 | 2m |
+| `enqueueWake(projectId, userId)` | wake | 1 (cao nhất) | 2 | 30s |
+| `enqueueStop(projectId, userId)` | stop | 10 (thấp nhất) | 1 | 1m |
+| `enqueueDestroy(projectId, userId)` | destroy | 5 | 0 (no retry) | 2m |
+
+**Heavy Tasks:**
+
+| Function | Job | Return | Timeout |
+|---|---|---|---|
+| `enqueueFFmpeg(userId, projectId, params)` | ffmpeg | jobId | 5m |
+| `enqueuePlaywright(userId, projectId, params)` | playwright | jobId | 2m |
+| `enqueueTTS(userId, projectId, params)` | tts | jobId | 2m |
+| `enqueueSTT(userId, projectId, params)` | stt | jobId | 5m |
+
+**Queue Stats:**
+
+| Function | Mô tả |
+|---|---|
+| `getContainerOpsQueueStats()` | Trả `{total, delayed, active, failed}` cho container-ops |
+| `getHeavyTasksQueueStats()` | Trả `{total, delayed, active, failed}` cho heavy-tasks |
+
+---
+
+## `src/queue/queue-consumer.service.ts`
+
+**Nhiệm vụ:** Mock VPS worker — subscribe to BullMQ `container-ops` queue, simulate job processing, gọi Internal API để update project status. Chỉ chạy khi `NODE_ENV !== 'production'`.
+
+| Function | Mô tả |
+|---|---|
+| `onModuleInit()` | Lifecycle hook — init mock worker nếu không phải production |
+| `initializeMockWorker()` _(private)_ | Register `queue.process()` handler + listen global:completed/failed events |
+| `handleQueueJob(job)` _(private)_ | Dispatch theo job.name → gọi simulate tương ứng |
+| `simulateSpawn(projectId, userId, data)` _(private)_ | Delay 1s → generate mock containerId → call updateProjectStatus(RUNNING) |
+| `simulateWake(projectId, userId)` _(private)_ | Delay 1s → call updateProjectStatus(RUNNING) |
+| `simulateStop(projectId, userId)` _(private)_ | Delay 1s → call updateProjectStatus(STOPPED) |
+| `simulateDestroy(projectId, userId)` _(private)_ | Delay 1s → call updateProjectStatus(DESTROYING) |
+| `updateProjectStatus(projectId, status, containerId?)` _(private)_ | POST `http://localhost:{PORT}/api/internal/status` với header `Authorization: Bearer {VPS_WORKER_SECRET}` |
+| `delay(ms)` _(private)_ | `new Promise(resolve => setTimeout(resolve, ms))` |
+
+---
+
+## `src/internal/guards/worker-secret.guard.ts`
+
+**Nhiệm vụ:** Guard — bảo vệ Internal API, verify `Authorization: Bearer {VPS_WORKER_SECRET}`.
+
+| Function | Mô tả |
+|---|---|
+| `canActivate(ctx)` | Parse header `Bearer {secret}` → so sánh với `VPS_WORKER_SECRET` env → throw 401/403 nếu sai |
+
+**Exceptions:** `UnauthorizedException` (401) nếu header missing/sai format — `ForbiddenException` (403) nếu secret sai.
+
+---
+
+## `src/internal/dtos/update-status.dto.ts`
+
+**Nhiệm vụ:** Validate body cho `POST /api/internal/status`. Export `ProjectStatus` enum.
+
+| Property | Validator | Mô tả |
+|---|---|---|
+| `projectId` | `@IsString()` | Project ID |
+| `status` | `@IsEnum(ProjectStatus)` | CREATING / RUNNING / STARTING / STOPPED / STOPPING / ERROR / DESTROYING |
+| `containerId?` | `@IsOptional()`, `@IsString()` | Container ID từ mock worker |
+
+---
+
+## `src/internal/dtos/update-heartbeat.dto.ts`
+
+**Nhiệm vụ:** Validate body cho `POST /api/internal/heartbeat`.
+
+| Property | Validator | Mô tả |
+|---|---|---|
+| `projectId` | `@IsString()` | Project ID |
+| `lastActiveAt` | `@IsISO8601()` | Timestamp ISO8601 |
+
+---
+
+## `src/internal/internal.controller.ts`
+
+**Nhiệm vụ:** HTTP handler cho Internal API. Tất cả routes qua `@UseGuards(WorkerSecretGuard)`.
+
+| Endpoint | Function | Mô tả |
+|---|---|---|
+| `POST /api/internal/status` | `updateStatus(dto)` | Gọi `projectsService.updateProjectStatus()`, trả `{projectId, status}` |
+| `POST /api/internal/heartbeat` | `updateHeartbeat(dto)` | Gọi `projectsService.updateLastActiveAt()`, trả `{projectId, lastActiveAt}` |
+
+---
+
+## `src/internal/internal.module.ts`
+
+**Nhiệm vụ:** Import ProjectsModule để dùng ProjectsService trong InternalController.
+
+---
+
+## `src/subscriptions/subscriptions.service.ts`
+
+**Nhiệm vụ:** Quản lý subscription plan của user — get/upsert.
+
+| Function | Mô tả |
+|---|---|
+| `getSubscription(userId)` | Tìm subscription của user, kèm plan info. Trả null nếu không tồn tại |
+| `upsertSubscription(userId, planId)` | Tạo hoặc update subscription: nếu chưa có thì create, có rồi thì update planId. Throw NotFoundException nếu planId không tồn tại |
+
+---
+
+## `src/subscriptions/subscriptions.module.ts`
+
+**Nhiệm vụ:** Export SubscriptionsService để ProjectsModule dùng.
+
+---
+
+## E2E Test Scenarios (Day 10)
+
+| Scenario | Location | Test Cases |
+|---|---|---|
+| Scenario 1: Register → Create → Check → Delete | `test/projects.e2e.spec.ts` | User flow: create project, check health, delete |
+| Scenario 2: Create 2 Projects → List → Start/Stop | `test/projects.e2e.spec.ts` | Create 1st (201), create 2nd (409), stop, start |
+| Scenario 3: Free Plan Limit (max 1) | `test/projects.e2e.spec.ts` | 1st project succeeds (201), 2nd fails (409 CONFLICT) |
+| Scenario 4: Cross-User Access (403 Forbidden) | `test/projects.e2e.spec.ts` | User2 cannot access User1's project (403 AUTH_FORBIDDEN) |
+| Scenario 5: Mock Worker Auto-Update | `test/projects.e2e.spec.ts` | In dev: job → 2s delay → status updated. In test: disabled. |
 
 ---
 
 ## Bảng tổng hợp theo chức năng
 
-| Chức năng             | Files liên quan                                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Bootstrap & wiring    | `main.ts`, `app.module.ts`                                                                                                    |
-| Health check          | `app.controller.ts`, `app.service.ts`                                                                                         |
-| Response format chuẩn | `common/types/api-response.type.ts`, `common/interceptors/response.interceptor.ts`, `common/filters/http-exception.filter.ts` |
-| Auth email/password   | `auth/auth.utils.ts`, `auth/auth.service.ts`, `auth/auth.controller.ts`                                                       |
-| Auth Google OAuth     | `auth/google.oauth.ts`, `auth/auth.service.ts`, `auth/auth.controller.ts`                                                     |
-| Session management    | `auth/auth.service.ts` (getSession, createSession, logout), `auth/guards/session.guard.ts`                                    |
-| Projects CRUD         | `projects/projects.service.ts`, `projects/projects.controller.ts`                                                             |
-| Container lifecycle   | `projects/projects.service.ts` (start, stop, remove, getInstances)                                                           |
-| Current user inject   | `common/decorators/current-user.decorator.ts`                                                                                 |
-| Database              | `prisma/prisma.service.ts`, `prisma/prisma.module.ts`                                                                         |
-| Tests (scaffold)      | `app.controller.spec.ts`                                                                                                      |
+| Chức năng | Files |
+|---|---|
+| Bootstrap | `main.ts`, `app.module.ts` |
+| Health check | `app.controller.ts`, `app.service.ts` |
+| Response format | `common/types/api-response.type.ts`, `common/interceptors/response.interceptor.ts`, `common/filters/http-exception.filter.ts` |
+| Auth | `auth/auth.utils.ts`, `auth/auth.service.ts`, `auth/auth.controller.ts` |
+| Auth DTOs | `auth/dto/register.dto.ts`, `auth/dto/login.dto.ts` |
+| Google OAuth | `auth/google.oauth.ts` |
+| Session guard | `auth/guards/session.guard.ts` |
+| Custom validators | `common/validators/is-email-unique.validator.ts`, `common/validators/is-valid-cuid.validator.ts` |
+| Current user decorator | `common/decorators/current-user.decorator.ts` |
+| Projects CRUD | `projects/projects.service.ts`, `projects/projects.controller.ts`, `projects/dto/*.ts` |
+| Subscriptions | `subscriptions/subscriptions.service.ts`, `subscriptions/subscriptions.module.ts` |
+| Validators | `common/validators/is-*.validator.ts` |
+| Queue jobs | `queue/queue.service.ts` |
+| Mock VPS worker | `queue/queue-consumer.service.ts` |
+| Internal API | `internal/internal.controller.ts`, `internal/guards/worker-secret.guard.ts` |
+| Integration Tests | `test/projects.e2e.spec.ts` (5 Day 10 scenarios) |
+| DB | `prisma/prisma.service.ts`, `prisma/prisma.module.ts` |
 
 ---
 
-## Error codes chuẩn
+## Error codes
 
-| Code                       | HTTP Status | Khi nào                               |
-| -------------------------- | ----------- | ------------------------------------- |
-| `AUTH_UNAUTHENTICATED`     | 401         | Không có session hoặc session hết hạn |
-| `AUTH_FORBIDDEN`           | 403         | Có session nhưng không đủ quyền       |
-| `AUTH_INVALID_CREDENTIALS` | 401         | Sai email hoặc password               |
-| `AUTH_EMAIL_EXISTS`        | 409         | Email đã đăng ký                      |
-| `BAD_REQUEST`              | 400         | Thiếu hoặc sai format input           |
-| `NOT_FOUND`                | 404         | Resource không tồn tại                |
-| `INTERNAL_ERROR`           | 500         | Lỗi server không xác định             |
+| Code | HTTP | Khi nào |
+|---|---|---|
+| `AUTH_UNAUTHENTICATED` | 401 | Không có session / session hết hạn |
+| `AUTH_FORBIDDEN` | 403 | Có session nhưng không đủ quyền |
+| `BAD_REQUEST` | 400 | Validation fail / input sai |
+| `NOT_FOUND` | 404 | Resource không tồn tại |
+| `CONFLICT` | 409 | Duplicate (email, subdomain, v.v.) |
+| `INTERNAL_ERROR` | 500 | Lỗi server không xác định |

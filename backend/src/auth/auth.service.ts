@@ -3,18 +3,18 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   generateSessionToken,
   hashPassword,
   sessionExpiresAt,
   verifyPassword,
-} from './auth.utils.js';
+} from './auth.utils';
 import {
   buildGoogleAuthUrl,
   exchangeCodeForTokens,
   getGoogleUserInfo,
-} from './google.oauth.js';
+} from './google.oauth';
 
 const SESSION_COOKIE = 'session_token';
 
