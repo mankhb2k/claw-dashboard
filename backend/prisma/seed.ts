@@ -19,7 +19,7 @@ async function main() {
       ramMb: 1024,
       cpuVcpu: 0.5,
       storageGb: 4,
-      heavyJobsPerDay: 3,
+      heavyJobsPerDay: 0, // Heavy jobs Pro-only
       idleTimeoutMin: 10,
       priceMonthly: 0,
     },
