@@ -178,4 +178,19 @@ export class QueueService {
       failed,
     };
   }
+
+  async enqueueHeavyJob(
+    tool: string,
+    data: Record<string, any>,
+  ): Promise<string> {
+    const job = await this.heavyTasksQueue.add(
+      tool.toLowerCase(),
+      data,
+      {
+        attempts: 1,
+        timeout: data.timeout || 300000, // Default 5 minutes
+      },
+    );
+    return job.id.toString();
+  }
 }

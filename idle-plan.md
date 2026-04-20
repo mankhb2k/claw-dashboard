@@ -117,6 +117,7 @@ Việc có thực sự 24/7 hay không là implementation detail.
 - 1 Telegram bot ở webhook mode
 - 1 cron job/ngày
 - Thử các integration
+- ❌ Heavy jobs (FFmpeg, Playwright, TTS/STT) - Pro only
 
 **Workload KHÔNG phù hợp:**
 - WhatsApp (persistent connection)
@@ -124,6 +125,7 @@ Việc có thực sự 24/7 hay không là implementation detail.
 - Signal, Matrix, IRC
 - Cron chạy mỗi vài phút
 - Heartbeat liên tục
+- Heavy jobs (FFmpeg, Playwright, TTS/STT)
 
 **Thông điệp rõ ràng cho user Free:**
 > *"Free tier dùng chế độ 'khi cần mới chạy'. Bot Telegram webhook và cron chạy bình thường (có độ trễ 3-5s lúc wake). Nếu bạn cần WhatsApp, Discord 24/7, Signal hay cron mỗi 5 phút — nâng lên Pro."*
@@ -132,7 +134,13 @@ Việc có thực sự 24/7 hay không là implementation detail.
 
 **Thông số:** 2 GB RAM, 1.0 vCPU, 10 GB storage, idle timeout 60 phút (đề xuất).
 
-**Value prop:** *"Trợ lý AI của bạn luôn sẵn sàng, không miss channel, cron chính xác."*
+**Value prop:** *"Trợ lý AI của bạn luôn sẵn sàng, không miss channel, cron chính xác. + Heavy jobs (FFmpeg, Playwright, TTS/STT)."*
+
+**Gồm:**
+- Idle timeout 60 phút (thay vì 10 phút)
+- 100 heavy jobs/ngày (FFmpeg, Playwright, TTS/STT)
+- Wake-on-demand cho mọi trigger
+- Optional keep-alive cho persistent channels
 
 **Câu hỏi then chốt:** Always-on hay idle thông minh?
 
@@ -433,6 +441,8 @@ User đang có:
 | Cron jobs | 1 | 20 | 20 |
 | Tier A channels (webhook) | 1 | Unlimited | Unlimited |
 | Tier B channels (persistent) | ❌ | ❌ | ✅ max 2 |
+| **Heavy jobs/day** | ❌ **0** | **100** | **100** |
+| **Heavy tools** | ❌ None | ✅ FFmpeg, Playwright, TTS/STT | ✅ FFmpeg, Playwright, TTS/STT |
 | Cold start (webhook) | 3-8s | 3-8s | 0s |
 | Cold start (user UI) | 3-5s | 3-5s | 0s |
 | Cron miss rate | ~0% (CP-owned) | ~0% (CP-owned) | ~0% |

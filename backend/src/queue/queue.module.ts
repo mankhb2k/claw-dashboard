@@ -39,6 +39,6 @@ const getRedisConfig = () => {
     ),
   ],
   providers: [QueueService, QueueConsumerService],
-  exports: [QueueService],
+  exports: [QueueService, BullModule],
 })
 export class QueueModule {}

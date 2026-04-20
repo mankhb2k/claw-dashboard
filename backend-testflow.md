@@ -557,26 +557,28 @@ GET /api/projects/abc123/instances
 
 ## 🔨 What to Code
 
-### Day 15: Heavy Jobs Service
+### Day 15: Heavy Jobs Service (Pro Plan Only)
 
 **Task 15.1: Implement HeavyJobsService**
 - Location: `src/heavy-jobs/heavy-jobs.service.ts`
+- **Pro plan only** - reject free users with 403 Forbidden
 - Methods:
-  - `submitJob(userId, projectId, tool, params)` → create HeavyJob + enqueue
+  - `submitJob(userId, projectId, tool, params)` → verify Pro plan → create HeavyJob + enqueue
   - `getJobStatus(jobId, userId)` → check status
   - `cancelJob(jobId, userId)` → set status=CANCELLED
   - `getJobResult(jobId, userId)` → get resultPath
   - `listJobs(userId, projectId)` → query jobs
 
 **Task 15.2: Implement HeavyJobsController**
-- POST `/api/heavy/submit` → {tool, params}
+- POST `/api/heavy/submit` → {tool, params} (Pro only)
 - GET `/api/heavy/status/:jobId`
 - POST `/api/heavy/cancel/:jobId`
 - GET `/api/heavy/results/:jobId`
 - GET `/api/heavy/history`
 
 **Task 15.3: Implement quota checking**
-- Check user plan: `heavyJobsPerDay` limit
+- **Check plan: Free → 403 Forbidden "Pro plan only"**
+- Check user plan: `heavyJobsPerDay` limit (Pro: 100/day)
 - Query HeavyJob WHERE userId AND status=PROCESSING AND DATE=today
 - Reject if >= limit
 

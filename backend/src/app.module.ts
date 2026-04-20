@@ -7,9 +7,11 @@ import { ProjectsModule } from './projects/projects.module';
 import { QueueModule } from './queue/queue.module';
 import { InternalModule } from './internal/internal.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
+import { HeavyJobsModule } from './heavy-jobs/heavy-jobs.module';
 
 @Module({
-  imports: [PrismaModule, QueueModule, AuthModule, ProjectsModule, InternalModule, SubscriptionsModule],
+  imports: [PrismaModule, QueueModule, AuthModule, ProjectsModule, InternalModule, SubscriptionsModule, SchedulerModule, HeavyJobsModule],
   controllers: [AppController],
   providers: [AppService],
 })

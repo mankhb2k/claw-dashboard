@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
 import { ProjectsService } from '../projects/projects.service';
+import { IdleDetectionService } from '../scheduler/idle-detection.service';
 import { WorkerSecretGuard } from './guards/worker-secret.guard';
 import { UpdateStatusDto } from './dtos/update-status.dto';
 import { UpdateHeartbeatDto } from './dtos/update-heartbeat.dto';
@@ -7,7 +8,10 @@ import { UpdateHeartbeatDto } from './dtos/update-heartbeat.dto';
 @Controller('api/internal')
 @UseGuards(WorkerSecretGuard)
 export class InternalController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly idleDetectionService: IdleDetectionService,
+  ) {}
 
   @Post('status')
   @HttpCode(200)
@@ -34,5 +38,12 @@ export class InternalController {
       projectId: project.id,
       lastActiveAt: project.lastActiveAt,
     };
+  }
+
+  @Post('trigger-idle-detection')
+  @HttpCode(200)
+  async triggerIdleDetection() {
+    await this.idleDetectionService.triggerManual();
+    return { success: true, message: 'Idle detection triggered' };
   }
 }

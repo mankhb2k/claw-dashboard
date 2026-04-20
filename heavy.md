@@ -1,9 +1,10 @@
 # OpenClaw SaaS — VPS Heavy (Compute Plane)
 
-**Purpose:** Dedicated VPS for async heavy task processing  
+**Purpose:** Dedicated VPS for async heavy task processing (Pro plan only)  
 **Tools:** FFmpeg, Playwright, TTS/STT, media processing  
 **Spec:** Contabo 12 vCPU / 48GB RAM / 100GB SSD (CPU-only, no GPU)  
-**Cost:** ~$50/mo
+**Cost:** ~$50/mo  
+**Plan Access:** Pro only (Free plan: no heavy jobs)
 
 ---
 

@@ -397,12 +397,13 @@
 
 ## `src/internal/internal.controller.ts`
 
-**Nhiệm vụ:** HTTP handler cho Internal API. Tất cả routes qua `@UseGuards(WorkerSecretGuard)`.
+**Nhiệm vụ:** HTTP handler cho Internal API. Tất cả routes qua `@UseGuards(WorkerSecretGuard)`. Phase 3: thêm endpoint test trigger-idle-detection.
 
 | Endpoint | Function | Mô tả |
 |---|---|---|
 | `POST /api/internal/status` | `updateStatus(dto)` | Gọi `projectsService.updateProjectStatus()`, trả `{projectId, status}` |
 | `POST /api/internal/heartbeat` | `updateHeartbeat(dto)` | Gọi `projectsService.updateLastActiveAt()`, trả `{projectId, lastActiveAt}` |
+| `POST /api/internal/trigger-idle-detection` | `triggerIdleDetection()` | (Dev/Test only) Gọi IdleDetectionService.triggerManual(), trả `{success: true}` |
 
 ---
 
@@ -429,7 +430,118 @@
 
 ---
 
-## E2E Test Scenarios (Day 10)
+## `src/scheduler/idle-detection.service.ts` (Phase 3 — Day 11)
+
+**Nhiệm vụ:** Cron scheduler — chạy mỗi 1 phút để scan projects idle và auto-stop. Integratedbây giờ với idle timeout từ plan.
+
+| Function | Mô tả |
+|---|---|
+| `@Cron('*/1 * * * *')` `detectAndStopIdleProjects()` | Chạy mỗi 1 phút: query projects RUNNING, so sánh lastActiveAt < now - idleTimeoutMin, update status → STOPPING, enqueue stop job (priority=10) |
+| `triggerManual()` | Gọi detectAndStopIdleProjects() từ endpoint test `/api/internal/trigger-idle-detection` |
+
+---
+
+## `src/scheduler/scheduler.module.ts` (Phase 3)
+
+**Nhiệm vụ:** Register ScheduleModule (NestJS @nestjs/schedule), provide IdleDetectionService, export cho InternalModule dùng.
+
+---
+
+## `src/app.module.ts` (Updated Phase 3)
+
+**Nhiệm vụ:** Root module — import thêm SchedulerModule (ngoài PrismaModule, QueueModule, AuthModule, ProjectsModule, InternalModule, SubscriptionsModule).
+
+---
+
+## `src/heavy-jobs/heavy-jobs.service.ts` (Phase 4 — Day 15)
+
+**Nhiệm vụ:** Business logic toàn bộ heavy jobs — submit, status, cancel, result, list. Quản lý quota hàng ngày theo plan.
+
+| Function | Mô tả |
+|---|---|
+| `submitJob(userId, projectId, tool, params)` | Verify project ownership → check dailyquota → create HeavyJob (PENDING) → enqueue to BullMQ heavy-tasks |
+| `getJobStatus(jobId, userId)` | Lấy status của job, verify ownership, trả {status, submittedAt, completedAt, resultPath, error} |
+| `cancelJob(jobId, userId)` | Verify ownership, check status (PENDING/PROCESSING) → update to CANCELLED |
+| `listJobs(userId, projectId?)` | Lấy danh sách jobs của user, kèm optional projectId filter, max 50, sort mới nhất trước |
+| `getJobResult(jobId, userId)` | Verify ownership, check status = DONE → trả {resultPath, resultSizeMb, completedAt} |
+| `updateJobResult(jobId, status, resultPath, sizeMb, error)` | Internal: update job result sau khi heavy worker xử lý xong |
+| `getToolTimeout(tool)` _(private)_ | Return timeout: FFMPEG=5m, PLAYWRIGHT=2m, TTS=2m, STT=5m |
+| `getEstimatedWait(tool)` _(private)_ | Return estimated wait time: FFMPEG="2-5min", PLAYWRIGHT="30-60s", etc |
+
+---
+
+## `src/heavy-jobs/heavy-jobs.controller.ts` (Phase 4 — Day 16)
+
+**Nhiệm vụ:** HTTP handler cho Heavy Jobs endpoints. Tất cả routes qua `@UseGuards(SessionGuard)`.
+
+| Endpoint | Function | Mô tả |
+|---|---|---|
+| `POST /api/heavy/submit` | `submit()` | Submit heavy job: {projectId, tool, params} → service.submitJob → trả {jobId, status, estimatedWait} |
+| `GET /api/heavy/status/:jobId` | `getStatus()` | Lấy status của job |
+| `GET /api/heavy/results/:jobId` | `getResult()` | Lấy kết quả (chỉ khi DONE) |
+| `POST /api/heavy/cancel/:jobId` | `cancel()` | Hủy job (PENDING/PROCESSING) |
+| `GET /api/heavy/history` | `listJobs()` | Lịch sử jobs, optional filter by projectId |
+
+---
+
+## `src/heavy-jobs/mock-heavy-worker.service.ts` (Phase 4 — Day 16)
+
+**Nhiệm vụ:** Mock VPS Heavy worker — subscribe to BullMQ `heavy-tasks` queue, simulate job processing, update job result trong DB. Chỉ chạy khi `NODE_ENV !== 'production'`.
+
+| Function | Mô tả |
+|---|---|
+| `initializeMockWorker()` | Lifecycle: register handlers cho ffmpeg, playwright, tts, stt jobs. Listen on completed/failed events |
+| `processHeavyJob(job, tool, delayMs)` _(private)_ | Simulate processing: delay Xms → generate mock result → call heavyJobsService.updateJobResult(DONE) |
+
+---
+
+## `src/heavy-jobs/dto/submit-heavy-job.dto.ts` (Phase 4)
+
+**Nhiệm vụ:** Validate body cho `POST /api/heavy/submit`.
+
+| Property | Validator | Mô tả |
+|---|---|---|
+| `projectId` | `@IsString()`, `@IsNotEmpty()` | Project ID |
+| `tool` | `@IsEnum()` | FFMPEG / PLAYWRIGHT / TTS / STT |
+| `params` | `@IsObject()`, `@IsNotEmpty()` | Tool-specific parameters |
+
+---
+
+## Phase 4 Architecture (Days 15-17)
+
+**Heavy Jobs Quota (from Plan):**
+- Free: 3 heavy jobs/day
+- Pro: 100 heavy jobs/day
+
+**Heavy Tools & Timeouts:**
+- FFmpeg: 5 min timeout, 100-500MB output
+- Playwright: 2 min timeout, 2-50MB output
+- TTS: 2 min timeout, 1-10MB output
+- STT: 5 min timeout, <1MB output
+
+**Job Lifecycle:**
+1. User submits job via POST /api/heavy/submit
+2. Service verifies quota → creates HeavyJob (PENDING) → enqueues to BullMQ
+3. Mock heavy worker simulates processing
+4. Updates job result in DB (DONE/FAILED)
+5. User retrieves result via GET /api/heavy/results/:jobId
+
+---
+
+## E2E Test Scenarios (Phase 3 — Days 11-14)
+
+| Scenario | Location | Test Cases |
+|---|---|---|
+| Scenario 1: Idle Detection Auto-Stop (Free 10m) | `test/idle-detection.e2e.spec.ts` | Create project → set lastActiveAt = 11m ago → POST trigger-idle-detection → status = STOPPED |
+| Scenario 2: Idle Detection Preserves Pro (60m) | `test/idle-detection.e2e.spec.ts` | Create pro project → set lastActiveAt = 50m ago → trigger → status stays RUNNING |
+| Scenario 3: Heartbeat Prevents Idle | `test/heartbeat.e2e.spec.ts` | Create → set lastActiveAt = 10m ago → POST heartbeat → lastActiveAt updates → trigger idle → still RUNNING |
+| Scenario 4: Concurrent Start Idempotency | `test/concurrent.e2e.spec.ts` | Click start 2x fast → should only enqueue 1 wake job → status = STARTING then RUNNING |
+| Scenario 5: Error State Recovery | `test/error-handling.e2e.spec.ts` | Project ERROR → user clicks start → enqueue wake → status = STARTING then RUNNING |
+| Scenario 6: Instance History Audit Trail | `test/instance-history.e2e.spec.ts` | Create → start → stop → GET instances → see all ContainerInstance records with timestamps |
+
+---
+
+## Phase 2 E2E Test Scenarios (Day 10)
 
 | Scenario | Location | Test Cases |
 |---|---|---|
