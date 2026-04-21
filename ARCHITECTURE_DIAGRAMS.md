@@ -1,535 +1,684 @@
-# OpenClaw SaaS — Architecture Diagrams (Mermaid)
+# OpenClaw SaaS — Architecture Diagrams (Updated)
+
+Updated: April 21, 2026 | Based on actual implementation
 
 ---
 
-## 1. System Architecture Overview (MVP)
+## 1. System Architecture (Current Implementation)
 
 ```mermaid
 graph TB
-    User["👤 User<br/>(Web/App)"]
+    User["👤 User<br/>(Telegram/Web)"]
     CDN["🌐 Cloudflare<br/>DNS + CDN + DDoS"]
     
-    subgraph Railway["Railway (Control Plane)"]
-        API["🔵 NestJS API<br/>Fastify + TypeORM"]
-        DB["🗄️ PostgreSQL<br/>Projects, Users, Jobs"]
-        Redis["📦 Redis Managed<br/>BullMQ Queue"]
+    subgraph Railway["Railway (Control Plane) :3001"]
+        API["🔵 NestJS API<br/>Port 3001<br/>Projects | Users | Jobs"]
+        DB["🗄️ PostgreSQL<br/>projects | users | heavy_jobs"]
+        Redis["📦 Redis Managed<br/>container-ops queue<br/>heavy-tasks queue"]
     end
     
-    subgraph "VPS Worker (Management)"
-        Worker["🟢 openclaw-worker<br/>Job dispatcher"]
-        Traefik["🔄 Traefik v3<br/>SSL + Routing"]
-        Docker["🐳 Docker Engine<br/>Container spawner"]
+    subgraph Worker["VPS Worker (Contabo Ubuntu 22.04)"]
+        VPSWorker["🟢 vps-worker :3002<br/>BullMQ Consumer<br/>container-ops"]
+        DockerEngine["🐳 Docker Engine<br/>spawn/wake/stop/destroy"]
+        Traefik["🔄 Traefik v3 :80/:443<br/>SSL + Routing<br/>*.openclaw.ai"]
+        Storage1["💾 /data/users<br/>250GB NVMe<br/>~40-50 containers"]
         
-        subgraph "User Containers"
-            Container1["📱 openclaw-usr_abc<br/>1GB/0.5vCPU/4GB"]
-            Container2["📱 openclaw-usr_def<br/>1GB/0.5vCPU/4GB"]
-            ContainerN["📱 ... (40-50 total)"]
+        subgraph Containers["User Containers (isolated)"]
+            C1["📱 openclaw-user1<br/>Image: openclaw-gateway<br/>1GB / 0.5vCPU / 4GB"]
+            C2["📱 openclaw-user2<br/>..."]
         end
-        
-        Storage["💾 /data/users<br/>250GB NVMe<br/>Volumes + SQLite"]
     end
     
-    subgraph "VPS Heavy (Compute)"
-        Heavy["🔴 openclaw-heavy<br/>Job processor"]
-        FFmpeg["🎬 FFmpeg<br/>Video encoding"]
-        Playwright["🌐 Playwright<br/>Screenshot/PDF"]
-        Tools["🔧 TTS/STT<br/>Media tools"]
-        JobStorage["💾 /data/jobs<br/>Temp + results"]
+    subgraph Heavy["VPS Heavy (Separate)"]
+        VPSHeavy["🔴 vps-heavy :3003<br/>BullMQ Consumer<br/>heavy-tasks"]
+        FFmpeg["🎬 FFmpeg<br/>video/audio encode"]
+        Playwright["🌐 Playwright<br/>screenshot/PDF"]
+        Tools["🔧 TTS/STT<br/>media synthesis"]
+        Storage2["💾 /data/users<br/>heavy-tasks/<br/>job results"]
     end
     
     User -->|HTTPS| CDN
     CDN -->|api.openclaw.ai| API
-    CDN -->|*.openclaw.ai| Traefik
+    CDN -->|user1.openclaw.ai| Traefik
     
     API -->|Read/Write| DB
-    API -->|Enqueue job| Redis
-    Worker -->|Pull job| Redis
+    API -->|Enqueue| Redis
     
-    Worker -->|Control| Docker
-    Docker -->|Spawn/Stop| Container1
-    Docker -->|Spawn/Stop| Container2
-    Docker -->|Spawn/Stop| ContainerN
+    VPSWorker -->|Pull| Redis
+    VPSWorker -->|Docker SDK| DockerEngine
+    DockerEngine -->|spawn/stop| Containers
+    Containers -->|:3000/health| Traefik
+    Traefik -->|route| Containers
+    Containers -->|store state| Storage1
     
-    Container1 -->|Chat/API| Traefik
-    Container2 -->|Chat/API| Traefik
-    ContainerN -->|Chat/API| Traefik
+    VPSHeavy -->|Pull| Redis
+    VPSHeavy -->|execute| FFmpeg
+    VPSHeavy -->|execute| Playwright
+    VPSHeavy -->|execute| Tools
+    FFmpeg -->|save| Storage2
+    Playwright -->|save| Storage2
+    Tools -->|save| Storage2
     
-    Traefik -->|HTTP :3000| Container1
-    Container1 -->|Store| Storage
+    VPSWorker -->|PUT /api/internal/status| API
+    VPSHeavy -->|PUT /api/internal/job/:id/result| API
     
-    Worker -->|Push heavy job| Redis
-    Heavy -->|Pull job| Redis
-    
-    Heavy -->|Execute| FFmpeg
-    Heavy -->|Execute| Playwright
-    Heavy -->|Execute| Tools
-    FFmpeg -->|Save| JobStorage
-    Playwright -->|Save| JobStorage
-    
-    Heavy -->|Callback| Worker
-    JobStorage -->|Upload| Storage
-    
-    Container1 -->|GET result| Storage
-    
-    style Railway fill:#e1f5ff
-    style VPS_Worker fill:#f3e5f5
-    style VPS_Heavy fill:#fff3e0
-    style User fill:#c8e6c9
-    style CDN fill:#ffe0b2
+    style Railway fill:#e3f2fd
+    style Worker fill:#f3e5f5
+    style Heavy fill:#fff3e0
+    style Containers fill:#f1f8e9
 ```
 
 ---
 
-## 2. User Container Lifecycle
+## 2. Monorepo Directory Structure
+
+```mermaid
+graph TD
+    Root["openclaw-saas/"]
+    
+    Root --> Backend["backend/ <br/>(Railway Control Plane)"]
+    Root --> Frontend["frontend/ <br/>(Cloudflare Pages)"]
+    Root --> Worker["worker/ <br/>(OpenClaw Gateway)"]
+    Root --> VPSWorker["vps-worker/ <br/>(Container Orchestrator)"]
+    Root --> VPSHeavy["vps-heavy/ <br/>(Media Processor)"]
+    
+    Backend --> BEFiles["src/<br/>├─ projects/<br/>├─ heavy/<br/>├─ queue/<br/>└─ internal/"]
+    
+    Frontend --> FEFiles["src/<br/>├─ pages/<br/>├─ components/<br/>└─ api/"]
+    
+    Worker --> WFiles["src/ (upstream)<br/>├─ gateway/<br/>├─ channels/<br/>└─ agents/<br/><br/>control-ui/ (pure frontend)<br/>├─ src/<br/>└─ vite.config.ts<br/><br/>vendor/control-ui/<br/>(build output)"]
+    
+    VPSWorker --> VWFiles["src/<br/>├─ processors/container.ts<br/>├─ docker/docker.service.ts<br/>├─ control-plane/callback.ts<br/>└─ health/health.ts<br/><br/>docker-compose.yml<br/>.env.example"]
+    
+    VPSHeavy --> VHFiles["src/<br/>├─ processors/heavy.ts<br/>├─ tools/<br/>│  ├─ ffmpeg.tool.ts<br/>│  ├─ playwright.tool.ts<br/>│  ├─ tts.tool.ts<br/>│  └─ stt.tool.ts<br/>├─ storage/storage.service.ts<br/>└─ control-plane/callback.ts<br/><br/>docker-compose.yml<br/>.env.example"]
+    
+    style Root fill:#fafafa
+    style Backend fill:#e3f2fd
+    style Frontend fill:#f3e5f5
+    style Worker fill:#fff9c4
+    style VPSWorker fill:#e8f5e9
+    style VPSHeavy fill:#fff3e0
+```
+
+---
+
+## 3. Queue & Job Flow
 
 ```mermaid
 sequenceDiagram
-    actor User as 👤 User
-    participant API as 🔵 Railway API
-    participant Queue as 📦 Redis Queue
-    participant Worker as 🟢 Worker VPS
+    participant User as 👤 User<br/>(Telegram)
+    participant API as 🔵 Backend<br/>:3001
+    participant Redis as 📦 Redis<br/>Queues
+    participant Worker as 🟢 VPS Worker<br/>:3002
     participant Docker as 🐳 Docker
-    participant Container as 📱 Container
+    participant Container as 📱 User<br/>Container
+    participant Heavy as 🔴 VPS Heavy<br/>:3003
     participant Storage as 💾 Storage
+
+    Note over API,Heavy: === CONTAINER LIFECYCLE ===
     
     User->>API: POST /api/projects (create)
-    API->>API: Check quota (free: 1 project)
-    API->>Queue: Enqueue 'spawn' job
+    API->>Redis: Enqueue {type: 'spawn', userId, plan}
     API-->>User: {projectId, domain}
     
-    Worker->>Queue: Pull 'spawn' job
-    Worker->>Docker: docker create openclaw-gateway:latest
+    Worker->>Redis: Pull container-ops job
+    Worker->>Docker: docker.createContainer(openclaw-gateway)
     Docker->>Storage: mkdir /data/users/{userId}
     Docker->>Container: docker start
-    Container->>Container: Health check :3000/health
+    Container->>Container: Health check :3000
     
-    Worker->>API: PUT /api/internal/status (running)
-    API->>API: Update project.status = 'running'
+    Worker->>API: PUT /api/internal/status {status: running}
+    API->>API: project.status = 'running'
     
-    User->>Container: Send message via Telegram
-    Container->>Container: Process via OpenClaw
-    Container->>Storage: Save state to SQLite
+    Note over User,API: === HEAVY JOB SUBMISSION ===
     
-    Note over Container: Idle for 10 min
+    Container->>API: POST /api/heavy/submit {tool: ffmpeg}
+    API->>API: Check quota (3/day free)
+    API->>Redis: Enqueue {type: 'ffmpeg', jobId, params}
+    API-->>Container: {jobId, estimatedTime}
     
-    API->>API: Idle scheduler detects (last_active > 10min)
-    API->>Queue: Enqueue 'stop' job
-    Worker->>Docker: docker stop (graceful)
-    Worker->>API: PUT /api/internal/status (stopped)
+    Note over Heavy,Storage: === HEAVY PROCESSING ===
     
-    User->>API: GET /api/projects/{id}/health
-    API-->>User: {status: 'stopped', lastActive}
-    User->>API: POST /api/projects/{id}/start
-    API->>Queue: Enqueue 'wake' job
-    Worker->>Docker: docker start
-    Worker->>API: PUT /api/internal/status (running)
+    Heavy->>Redis: Pull heavy-tasks job
+    Heavy->>Heavy: Download input (if URL)
+    Heavy->>Heavy: Process (FFmpeg/Playwright/TTS/STT)
+    Heavy->>Storage: Save result /data/users/{userId}/heavy-tasks/
+    Heavy->>API: PUT /api/internal/job/{jobId}/result {resultPath}
     
-    User->>Container: Send message
-    Container->>User: Response instant
+    API->>API: heavy_jobs.status = 'done'
+    Container->>API: GET /api/heavy/status/{jobId}
+    API-->>Container: {status: done, resultPath}
+    Container->>Storage: Download result
 ```
 
 ---
 
-## 3. Heavy Task Processing Flow
+## 4. Container Spawn Detailed Flow
 
 ```mermaid
-sequenceDiagram
-    participant Container as 📱 User Container
-    participant API as 🔵 Railway API
-    participant Queue as 📦 Redis Queue
-    participant Heavy as 🔴 Heavy VPS
-    participant FFmpeg as 🎬 FFmpeg
-    participant Storage as 💾 Storage
+flowchart TD
+    A["Backend API<br/>POST /api/projects"] --> B["Check quota<br/>Free: 1 project"]
+    B --> C["Enqueue spawn job<br/>container-ops queue"]
+    C --> D["Return projectId<br/>+ domain"]
     
-    Container->>API: POST /api/heavy/submit<br/>{tool: 'ffmpeg', params...}
-    API->>API: Check quota (free: 3/day)
-    API->>API: Check daily usage
-    alt Quota OK
-        API->>Queue: Enqueue heavy-tasks job
-        API-->>Container: {jobId, estimatedTime: '2-5min'}
-    else Quota Exceeded
-        API-->>Container: Error 429
-    end
+    E["VPS Worker<br/>BullMQ processor"] --> F["Pull spawn job<br/>from Redis"]
+    F --> G["Parse: userId, plan,<br/>projectId"]
     
-    Heavy->>Queue: Pull job from heavy-tasks
-    Heavy->>Heavy: Validate params
-    Heavy->>Heavy: Download input file (if URL)
+    G --> H["Check quota:<br/>Free=1GB<br/>Pro=2GB"]
     
-    par Processing
-        Heavy->>FFmpeg: ffmpeg -i input.mp4 -c:v libx264 ...
-        FFmpeg->>FFmpeg: Encode (CPU intensive)
-        FFmpeg-->>Heavy: output.mp4 (200MB)
-    end
+    H --> I["docker.createContainer<br/>openclaw-gateway:2026.4.5"]
     
-    Heavy->>Storage: Upload /data/users/{userId}/heavy-tasks/
-    Heavy->>API: PUT /api/internal/job/{jobId}/result<br/>{status: 'done', resultPath}
-    API->>API: Update heavy_jobs table (status=done)
+    I --> J["Set resource limits<br/>memory, cpu quota"]
     
-    Container->>API: GET /api/heavy/status/{jobId} (polling)
-    API-->>Container: {status: 'done', resultPath}
+    J --> K["Set Traefik labels<br/>for routing<br/>openclaw-{userId}..."]
     
-    Container->>Storage: GET /storage/heavy-tasks/output.mp4
-    Storage-->>Container: File stream (download)
+    K --> L["mkdir /data/users/{userId}"]
     
-    alt After 30 days
-        API->>Storage: Auto-delete expired results
-        Storage->>Storage: rm /heavy-tasks/old_*
-    end
+    L --> M["docker start"]
+    
+    M --> N["Wait container healthy<br/>GET :3000/health<br/>timeout 30s"]
+    
+    N --> O{Healthy?}
+    
+    O -->|Yes| P["PUT /api/internal/status<br/>{status: running,<br/>containerName}"]
+    
+    O -->|No| Q["PUT /api/internal/status<br/>{status: error,<br/>reason: timeout}"]
+    
+    P --> R["Update project<br/>status=running"]
+    Q --> S["Update project<br/>status=error"]
+    
+    R --> T["User can access<br/>user1.openclaw.ai"]
+    
+    style A fill:#e3f2fd
+    style E fill:#e8f5e9
+    style P fill:#c8e6c9
+    style Q fill:#ffcdd2
 ```
 
 ---
 
-## 4. Version Management & Update Workflow
+## 5. Heavy Job Processing Detailed Flow
+
+```mermaid
+flowchart TD
+    A["Container<br/>POST /api/heavy/submit<br/>{tool: ffmpeg, params}"] --> B["Backend checks:<br/>Quota OK?<br/>Storage OK?"]
+    
+    B --> C{Both OK?}
+    C -->|No| D["❌ Error 429/507"]
+    C -->|Yes| E["✅ Enqueue heavy-tasks"]
+    
+    E --> F["Return jobId<br/>estimatedTime"]
+    
+    G["VPS Heavy<br/>BullMQ processor"] --> H["Pull heavy-tasks job"]
+    H --> I["Validate tool type<br/>& params"]
+    
+    I --> J{Tool?}
+    
+    J -->|ffmpeg| K["ffmpeg.tool.process<br/>convert format/encode"]
+    J -->|playwright| L["playwright.tool.capture<br/>screenshot or PDF"]
+    J -->|tts| M["tts.tool.synthesize<br/>Google/ElevenLabs API"]
+    J -->|stt| N["stt.tool.transcribe<br/>OpenAI/Deepgram API"]
+    
+    K --> O["Save output<br/>/data/users/{userId}<br/>/heavy-tasks/"]
+    L --> O
+    M --> O
+    N --> O
+    
+    O --> P["Calculate SHA256<br/>checksum"]
+    
+    P --> Q["Check quota:<br/>4GB per user<br/>30-day TTL"]
+    
+    Q --> R{Quota OK?}
+    
+    R -->|Yes| S["PUT /api/internal/job/{jobId}/result<br/>{status: done,<br/>resultPath, size,<br/>checksum}"]
+    
+    R -->|No| T["Clean old files<br/>Try again"]
+    
+    S --> U["Update heavy_jobs<br/>status=done<br/>result_path set"]
+    
+    U --> V["Container polls<br/>GET /api/heavy/status/{jobId}"]
+    V --> W["Returns done +<br/>resultPath"]
+    
+    W --> X["Download result<br/>GET /storage/..."]
+    
+    style A fill:#fff9c4
+    style G fill:#fff3e0
+    style S fill:#c8e6c9
+    style T fill:#ffcdd2
+```
+
+---
+
+## 6. vps-worker Docker Compose Stack
+
+```mermaid
+graph TB
+    subgraph "vps-worker/docker-compose.yml"
+        Redis["📦 Redis:7-alpine<br/>:6379 (internal)<br/>maxmemory: 512mb<br/>requirepass: REDIS_PASSWORD"]
+        
+        Traefik["🔄 Traefik v3<br/>:80, :443 (user containers)<br/>:8080 (dashboard)<br/>volumes:<br/>docker.sock<br/>acme.json"]
+        
+        Worker["🟢 vps-worker service<br/>port :3002 (health check)<br/>volumes:<br/>docker.sock → Docker SDK<br/>/data/users → NVMe storage<br/>depends_on: [redis]"]
+        
+        Docker["🐳 Docker Socket<br/>/var/run/docker.sock<br/>(host Docker daemon)"]
+    end
+    
+    subgraph "Host System"
+        Store["💾 Host Storage<br/>/data/users/<br/>(250GB NVMe)"]
+        Host["Ubuntu 22.04 Host<br/>Contabo VPS<br/>12vCPU / 48GB RAM"]
+    end
+    
+    Redis -->|network| Worker
+    Traefik -->|network| Worker
+    Worker -->|unix socket| Docker
+    Docker -->|bind mount| Store
+    Traefik -->|bind mount| Store
+    
+    Host -.->|Runs| Redis
+    Host -.->|Runs| Traefik
+    Host -.->|Runs| Worker
+    
+    style Redis fill:#ffe082
+    style Traefik fill:#90caf9
+    style Worker fill:#a5d6a7
+    style Docker fill:#ffab91
+```
+
+---
+
+## 7. vps-heavy Docker Compose Stack
+
+```mermaid
+graph TB
+    subgraph "vps-heavy/docker-compose.yml"
+        Redis2["📦 Redis:7-alpine<br/>:6379 (internal)<br/>maxmemory: 512mb"]
+        
+        Heavy["🔴 vps-heavy service<br/>port :3003 (health check)<br/>CONCURRENT_JOBS: 3<br/>FFMPEG_TIMEOUT: 300s<br/>PLAYWRIGHT_TIMEOUT: 120s<br/>volumes:<br/>/data/users → results<br/>depends_on: [redis]"]
+        
+        Tools["🎬 Installed tools<br/>ffmpeg (video/audio)<br/>playwright (chromium)<br/>python3 (TTS/STT)<br/>libvips (image ops)"]
+    end
+    
+    subgraph "Host System"
+        Store2["💾 Host Storage<br/>/data/users/...<br/>/heavy-tasks/<br/>(shared NFS or local)"]
+        Host2["Ubuntu 22.04 Host<br/>Contabo VPS<br/>12vCPU / 48GB RAM"]
+    end
+    
+    Redis2 -->|network| Heavy
+    Heavy -->|execute| Tools
+    Tools -->|write| Store2
+    Heavy -->|write| Store2
+    
+    Host2 -.->|Runs| Redis2
+    Host2 -.->|Runs| Heavy
+    
+    style Redis2 fill:#ffe082
+    style Heavy fill:#ffcc80
+    style Tools fill:#ffab91
+```
+
+---
+
+## 8. API Endpoints Reference
 
 ```mermaid
 graph LR
+    subgraph "Backend API :3001"
+        A["🔵 Control Plane<br/>(Railway)"]
+    end
+    
+    subgraph "Public Endpoints"
+        P1["POST /api/projects<br/>→ Queue spawn job"]
+        P2["GET /api/projects/:id<br/>→ Get project status"]
+        P3["POST /api/heavy/submit<br/>→ Queue heavy job"]
+        P4["GET /api/heavy/status/:jobId<br/>→ Check job status"]
+        P5["GET /storage/heavy-tasks/:path<br/>→ Download result"]
+    end
+    
+    subgraph "Internal Webhook Endpoints"
+        I1["PUT /api/internal/status<br/>← VPS Worker callback<br/>payload: {status, containerName}"]
+        I2["PUT /api/internal/job/:jobId/result<br/>← VPS Heavy callback<br/>payload: {status, resultPath, size}"]
+    end
+    
+    A --> P1
+    A --> P2
+    A --> P3
+    A --> P4
+    A --> P5
+    
+    A --> I1
+    A --> I2
+    
+    Worker["🟢 VPS Worker"] -.->|Auth: Bearer| I1
+    Heavy["🔴 VPS Heavy"] -.->|Auth: Bearer| I2
+    
+    style A fill:#e3f2fd
+    style P1 fill:#c8e6c9
+    style P2 fill:#c8e6c9
+    style P3 fill:#c8e6c9
+    style P4 fill:#c8e6c9
+    style P5 fill:#c8e6c9
+    style I1 fill:#bbdefb
+    style I2 fill:#bbdefb
+```
+
+---
+
+## 9. Job Payload Schemas
+
+```mermaid
+graph TD
+    subgraph "container-ops Queue"
+        S1["spawn:<br/>{<br/>  userId: string<br/>  projectId: string<br/>  plan: free|pro<br/>  imageTag: 2026.4.5<br/>}"]
+        
+        S2["wake:<br/>{<br/>  userId: string<br/>  projectId: string<br/>}"]
+        
+        S3["stop:<br/>{<br/>  userId: string<br/>  projectId: string<br/>}"]
+        
+        S4["destroy:<br/>{<br/>  userId: string<br/>  projectId: string<br/>}"]
+    end
+    
+    subgraph "heavy-tasks Queue"
+        H1["ffmpeg:<br/>{<br/>  jobId: string<br/>  userId: string<br/>  tool: ffmpeg<br/>  params: {<br/>    inputUrl?: string<br/>    format: mp4|webm|avi<br/>    quality: low|med|high<br/>    codec?: h264|vp9<br/>  }<br/>}"]
+        
+        H2["playwright:<br/>{<br/>  jobId: string<br/>  userId: string<br/>  tool: playwright<br/>  params: {<br/>    url?: string<br/>    html?: string<br/>    format: png|pdf<br/>    viewport: {w, h}<br/>  }<br/>}"]
+        
+        H3["tts:<br/>{<br/>  jobId: string<br/>  userId: string<br/>  tool: tts<br/>  params: {<br/>    text: string<br/>    voice: en|vi<br/>    provider: google|elevenlabs<br/>  }<br/>}"]
+        
+        H4["stt:<br/>{<br/>  jobId: string<br/>  userId: string<br/>  tool: stt<br/>  params: {<br/>    inputUrl: string<br/>    language: en|vi<br/>    provider: openai|deepgram<br/>  }<br/>}"]
+    end
+    
+    style S1 fill:#c8e6c9
+    style S2 fill:#c8e6c9
+    style S3 fill:#c8e6c9
+    style S4 fill:#c8e6c9
+    
+    style H1 fill:#fff9c4
+    style H2 fill:#fff9c4
+    style H3 fill:#fff9c4
+    style H4 fill:#fff9c4
+```
+
+---
+
+## 10. Storage Architecture
+
+```mermaid
+graph TB
+    subgraph "VPS Worker"
+        Root1["/data/users/"]
+        User1["user1/"]
+        User2["user2/"]
+        
+        U1State["sqlite/<br/>messages, sessions<br/>~100MB"]
+        U1Config["config/<br/>bot tokens, keys<br/>~5MB"]
+        U1Heavy["heavy-tasks/<br/>video/image results<br/>~3GB (4GB quota)"]
+    end
+    
+    subgraph "VPS Heavy"
+        Root2["/data/users/"]
+        UserH1["user1/"]
+        UserH2["user2/"]
+        
+        UH1Jobs["heavy-tasks/<br/>job_xyz_2026-04-21.mp4<br/>job_abc_2026-04-21.png<br/>job_def_2026-04-21.txt"]
+    end
+    
+    Root1 --> User1
+    Root1 --> User2
+    
+    User1 --> U1State
+    User1 --> U1Config
+    User1 --> U1Heavy
+    
+    Root2 --> UserH1
+    Root2 --> UserH2
+    
+    UserH1 --> UH1Jobs
+    
+    Note["⏱️ Results auto-expire<br/>30 days (configurable)<br/>Quota: 4GB per user<br/>On quota exceed:<br/>- Auto-delete oldest<br/>- Or error 507"]
+    
+    style Root1 fill:#f1f8e9
+    style Root2 fill:#fff3e0
+    style U1Heavy fill:#c8e6c9
+    style UH1Jobs fill:#ffcc80
+```
+
+---
+
+## 11. Deployment Timeline
+
+```mermaid
+timeline
+    title MVP → Production Pipeline
+    
+    section Phase 1: Dev
+    Local Test : vps-worker dev mode :3002
+           : vps-heavy dev mode :3003
+           : Manual job queueing via Redis CLI
+           : All on localhost
+    
+    section Phase 2: Docker Build
+    Build Worker : docker build vps-worker/
+                 : tag: openclaw-worker:2026.4.5
+    Build Heavy  : docker build vps-heavy/
+                 : tag: openclaw-heavy:2026.4.5
+    Build Gateway: docker build worker/
+                 : tag: openclaw-gateway:2026.4.5
+    
+    section Phase 3: Staging
+    Deploy Worker : docker-compose up (staging)
+    Deploy Heavy  : docker-compose up (staging)
+    Deploy API    : Railway push (staging)
+    Test Full Flow: POST /api/projects → container spawn
+                  : POST /api/heavy/submit → ffmpeg
+    
+    section Phase 4: Production
+    Prod Worker   : Deploy to Contabo VPS Worker
+    Prod Heavy    : Deploy to Contabo VPS Heavy
+    Prod API      : Railway production
+    Monitor       : Health checks every 30s
+                  : Log aggregation (ELK or Grafana)
+                  : On-call alerts (pagerduty)
+```
+
+---
+
+## 12. Container Resource Limits
+
+```mermaid
+graph TB
+    subgraph "Free Plan"
+        F["1 project<br/>1GB RAM<br/>0.5 vCPU<br/>4GB storage<br/>3 heavy/day"]
+    end
+    
+    subgraph "Pro Plan"
+        P["3 projects<br/>2GB RAM<br/>1.0 vCPU<br/>8GB storage<br/>10 heavy/day"]
+    end
+    
+    subgraph "Business Plan"
+        B["Unlimited<br/>4GB RAM<br/>2.0 vCPU<br/>20GB storage<br/>50 heavy/day"]
+    end
+    
+    subgraph "Implementation"
+        Impl["vps-worker/docker/docker.service.ts<br/>createContainer({<br/>  MemoryLimit: 1GB|2GB|4GB<br/>  CpuQuota: 50000|100000|200000<br/>  HostConfig.Binds: volumes<br/>})"]
+    end
+    
+    F --> Impl
+    P --> Impl
+    B --> Impl
+    
+    style F fill:#c8e6c9
+    style P fill:#bbdefb
+    style B fill:#fff9c4
+```
+
+---
+
+## Quick Reference Table
+
+| Component | Port | Host | Timeout | Status |
+|-----------|------|------|---------|--------|
+| Backend API | 3001 | Railway | - | ✅ Done |
+| VPS Worker | 3002 | Contabo | - | ✅ Impl |
+| VPS Heavy | 3003 | Contabo | - | ✅ Impl |
+| Traefik (user containers) | 80/443 | VPS Worker | - | ✅ Impl |
+| Redis (worker) | 6379 | Localhost | - | ✅ Setup |
+| Redis (heavy) | 6379 | Localhost | - | ✅ Setup |
+| FFmpeg timeout | - | VPS Heavy | 300s | ✅ Config |
+| Playwright timeout | - | VPS Heavy | 120s | ✅ Config |
+| Container health check | 3000 | User Container | 30s | ✅ Impl |
+
+---
+
+## Status: ARCHITECTURE_DIAGRAMS.md
+
+✅ **Diagrams are mostly accurate** for:
+- System architecture (components, connections)
+- Queue structure (container-ops, heavy-tasks)
+- API endpoints
+
+⚠️ **Need updates for:**
+- [x] Actual port numbers (3001, 3002, 3003)
+- [x] Queue names (container-ops, heavy-tasks)
+- [x] Storage paths (/data/users, /data/users/.../heavy-tasks/)
+- [x] Docker-compose stacks details
+- [x] Timeout values (FFmpeg 300s, Playwright 120s)
+- [x] Job payload schemas
+- [x] Monorepo structure diagram
+
+**This file has been updated ✅ on April 21, 2026**
+
+---
+
+## 13. Upstream Version Update Workflow
+
+```mermaid
+graph TB
     subgraph "Month 1"
-        Check["📅 Week 1<br/>Monitor upstream<br/>git log origin/main"]
-        Review["📋 Week 2<br/>Review changes<br/>git diff"]
-        Build["🔨 Week 3<br/>Build images<br/>./build.sh 2026.5.0"]
-        Test["✅ Week 3<br/>Test locally<br/>docker run"]
-        Deploy["🚀 Week 4<br/>Deploy to prod<br/>./deploy.sh"]
+        Check["📅 Week 1<br/>Monitor upstream<br/>git log openclaw/main"]
+        Review["📋 Week 2<br/>Review changes<br/>git diff v2026.4.5..v2026.5.0"]
+        Build["🔨 Week 3<br/>Build new image<br/>docker build worker/<br/>→ openclaw-gateway:2026.5.0"]
+    end
+    
+    subgraph "Month 2"
+        Test["✅ Week 3<br/>Test locally<br/>docker run + curl :3000"]
+        Staging["🚀 Week 4<br/>Deploy to staging<br/>vps-worker-staging"]
+        Monitor["📊 Week 4<br/>Monitor 24h<br/>Check logs + metrics"]
+    end
+    
+    subgraph "Month 3"
+        Update["🔄 Update env<br/>OPENCLAW_IMAGE:<br/>2026.4.5 → 2026.5.0"]
+        Deploy["🟢 Deploy production<br/>New containers use v2026.5.0"]
+        RollingWait["⏱️ Wait 48h<br/>Keep old containers running<br/>New spawns = v2026.5.0"]
     end
     
     Check -->|Found v2026.5.0| Review
     Review -->|Approved| Build
     Build -->|Success| Test
-    Test -->|Pass| Deploy
+    Test -->|Pass| Staging
+    Staging -->|OK| Monitor
+    Monitor -->|No issues| Update
     
-    subgraph "Images"
-        WorkerImg["🟢 openclaw-worker<br/>v2026.5.0<br/>~400MB"]
-        HeavyImg["🔴 openclaw-heavy<br/>v2026.5.0<br/>~800MB"]
-    end
+    Update --> Deploy
+    Deploy --> RollingWait
     
-    Build -->|Create| WorkerImg
-    Build -->|Create| HeavyImg
-    
-    subgraph "Deployment"
-        PushReg["📤 Push to registry"]
-        DeployWorker["🟢 Deploy Worker VPS"]
-        DeployHeavy["🔴 Deploy Heavy VPS"]
-        Monitor["📊 Monitor 24h"]
-        Done["✨ Complete"]
-    end
-    
-    Deploy -->|Push| PushReg
-    PushReg -->|docker pull| DeployWorker
-    DeployWorker -->|docker pull| DeployHeavy
-    DeployHeavy -->|Health check| Monitor
-    Monitor -->|No issues| Done
-    
-    subgraph "Rollback"
-        Issue["⚠️ Issue found"]
-        Rollback["🔄 Rollback 2026.4.5"]
-        Alert["🚨 Post-mortem"]
+    subgraph "Rollback (if issue)"
+        Issue["⚠️ Issue detected<br/>in v2026.5.0"]
+        RollbackEnv["🔄 Revert env<br/>2026.5.0 → 2026.4.5"]
+        RollbackContainers["🟢 Restart affected<br/>containers with old image"]
+        PostMortem["📝 Post-mortem<br/>Fix issue in upstream"]
     end
     
     Monitor -->|Failure| Issue
-    Issue -->|./rollback.sh| Rollback
-    Rollback -->|Fix + retest| Alert
+    Issue --> RollbackEnv
+    RollbackEnv --> RollbackContainers
+    RollbackContainers --> PostMortem
     
-    style WorkerImg fill:#c3e9ff
-    style HeavyImg fill:#ffe0b2
-    style Done fill:#c8e6c9
+    style Check fill:#fff9c4
+    style Review fill:#fff9c4
+    style Build fill:#ffcc80
+    style Test fill:#ffab91
+    style Staging fill:#ef9a9a
+    style Monitor fill:#f48fb1
+    style Update fill:#ce93d8
+    style Deploy fill:#c8e6c9
+    style RollingWait fill:#a5d6a7
     style Issue fill:#ffcdd2
+    style RollbackEnv fill:#ffcdd2
+    style RollbackContainers fill:#ef9a9a
+    style PostMortem fill:#bbdefb
+```
+
+### Version Update Checklist:
+
+```
+Pre-Update:
+☐ Review upstream CHANGELOG
+☐ Test locally (docker run)
+☐ Check for breaking changes
+☐ Update dependencies if needed
+
+During Update:
+☐ Build new Docker image
+☐ Tag: openclaw-gateway:YYYY.MM.DD
+☐ Push to registry
+☐ Update docker-compose.yml / env var
+☐ Document changes in DEPLOY_LOG.md
+
+Post-Update (First 48h):
+☐ Monitor application logs
+☐ Check container health metrics
+☐ Monitor user reports (Slack/email)
+☐ Verify no data loss
+☐ CPU/Memory usage normal?
+
+If Issue Found:
+☐ Revert OPENCLAW_IMAGE env var
+☐ Restart containers (they pull old image)
+☐ Verify users can access
+☐ Post-mortem: what went wrong?
+☐ Coordinate with upstream for fix
 ```
 
 ---
 
-## 5. Storage & Quota Management
+## 14. Image Versioning Strategy
 
 ```mermaid
-graph TB
-    User["👤 User<br/>Free tier"]
-    
-    subgraph "Container Storage (4GB)"
-        SQLite["📊 SQLite<br/>Messages<br/>Sessions<br/>~50MB"]
-        Config["⚙️ Config<br/>Bot tokens<br/>API keys<br/>~5MB"]
-        HeavyResults["🎬 Heavy Results<br/>Videos<br/>Screenshots<br/>~3GB"]
+graph TD
+    subgraph "Versioning Scheme"
+        Upstream["openclaw (upstream)<br/>v2026.5.0<br/>v2026.6.0<br/>v2026.7.0"]
+        
+        Gateway["openclaw-gateway<br/>(Docker image)<br/>2026.5.0<br/>2026.6.0<br/>2026.7.0"]
+        
+        Note1["Matches upstream version<br/>Easy tracking<br/>One-to-one mapping"]
     end
     
-    subgraph "Quota Tracking"
-        QuotaUI["📊 UI: 3.2GB / 4GB used"]
-        DeleteBtn["🗑️ Delete old files"]
-        Storage["⏱️ Auto-expire<br/>30 days"]
+    subgraph "Current & Previous"
+        Current["CURRENT (prod)<br/>openclaw-gateway:2026.5.0<br/>OPENCLAW_IMAGE=2026.5.0"]
+        
+        Previous["PREVIOUS (fallback)<br/>openclaw-gateway:2026.4.5<br/>Kept in registry<br/>30 days retention"]
+        
+        Old["OLD (cleanup)<br/>openclaw-gateway:2026.3.0<br/>Deleted after<br/>30 days"]
     end
     
-    subgraph "Timeline"
-        Week1["Week 1<br/>~400MB used<br/>10% quota"]
-        Week2["Week 2<br/>~800MB used<br/>20% quota"]
-        Week3["Week 3<br/>~1.2GB used<br/>30% quota"]
-        Week4["Week 4<br/>~1.6GB used<br/>40% quota"]
-        Week6["Week 6<br/>~2.4GB used<br/>60% quota"]
-        Week8["Week 8<br/>~3.2GB used<br/>80% quota"]
+    subgraph "Docker Compose Config"
+        Env["vps-worker/docker-compose.yml<br/>environment:<br/>  OPENCLAW_IMAGE=2026.5.0<br/>  # Change this to deploy new version"]
     end
     
-    User -->|3 calls/day<br/>3 months later| Week8
+    Upstream --> Gateway
+    Gateway --> Note1
+    Current --> Env
+    Previous --> Current
+    Old -.->|deleted| Previous
     
-    Week1 -->|+1 video<br/>+screenshot| Week2
-    Week2 -->|+1 video| Week3
-    Week3 -->|+2 videos| Week4
-    Week4 -->|Moderate<br/>use| Week6
-    Week6 -->|Casual<br/>use| Week8
-    
-    Week8 -->|User action| QuotaUI
-    QuotaUI -->|Manual or<br/>Auto-expire| DeleteBtn
-    DeleteBtn -->|Delete old<br/>files| Storage
-    Storage -->|Frees space<br/>for more| Week1
-    
-    SQLite -->|Persistent| User
-    Config -->|Persistent| User
-    HeavyResults -->|Temporary<br/>30-day TTL| Storage
-    
-    style User fill:#c8e6c9
-    style HeavyResults fill:#fff3e0
-    style QuotaUI fill:#bbdefb
-    style Week8 fill:#ffccbc
+    style Upstream fill:#fff9c4
+    style Gateway fill:#ffcc80
+    style Current fill:#c8e6c9
+    style Previous fill:#bbdefb
+    style Old fill:#ccc
+    style Env fill:#e8f5e9
 ```
 
 ---
 
-## 6. Scaling: MVP → Multi-VPS
-
-```mermaid
-graph TB
-    subgraph "Phase 1: MVP (50-150 users)"
-        Phase1["Single VPS Worker<br/>+ Single VPS Heavy<br/>Cost: ~$80/mo"]
-    end
-    
-    subgraph "Phase 2: Growth (150-500 users)"
-        Phase2["2-3 VPS Worker<br/>+ 1-2 VPS Heavy<br/>Load balanced<br/>Cost: ~$200/mo"]
-    end
-    
-    subgraph "Phase 3: Scale (500-5000 users)"
-        Phase3["4-6 VPS Worker<br/>+ 2-4 VPS Heavy<br/>Dedicated Redis VPS<br/>Cost: ~$500/mo"]
-    end
-    
-    subgraph "Phase 4: Enterprise (5000+ users)"
-        Phase4["8-12 VPS Worker<br/>+ 4-8 VPS Heavy<br/>Redis Sentinel<br/>Kubernetes (optional)<br/>Cost: $1000+/mo"]
-    end
-    
-    Phase1 -->|More signups| Phase2
-    Phase2 -->|CPU/Storage<br/>saturated| Phase3
-    Phase3 -->|Reliability<br/>needed| Phase4
-    
-    subgraph "Node Selector"
-        Algo["Algorithm:<br/>Choose VPS with<br/>lowest load<br/>(containers/<br/>max_capacity)"]
-    end
-    
-    Phase2 -->|Need| Algo
-    Algo -->|Used by| Phase3
-    
-    subgraph "Database Migration"
-        DB1["SQLite<br/>(single node)"]
-        DB2["PostgreSQL<br/>(Railway)"]
-    end
-    
-    Phase1 -->|State| DB1
-    Phase2 -->|Upgrade| DB2
-    
-    style Phase1 fill:#c8e6c9
-    style Phase2 fill:#bbdefb
-    style Phase3 fill:#ffe0b2
-    style Phase4 fill:#f8bbd0
-```
-
----
-
-## 7. Database Schema Relationships
-
-```mermaid
-erDiagram
-    USERS ||--o{ PROJECTS : owns
-    USERS ||--o{ HEAVY_JOBS : submits
-    PROJECTS ||--o{ HEAVY_JOBS : references
-    PLANS ||--o{ PROJECTS : defines
-    
-    USERS {
-        uuid id PK
-        string email UK
-        string name
-        timestamp created_at
-    }
-    
-    PLANS {
-        uuid id PK
-        string name UK "free|pro|business"
-        int max_projects
-        int ram_mb
-        decimal cpu_vcpu
-        int storage_gb
-        int heavy_jobs_per_day
-    }
-    
-    PROJECTS {
-        uuid id PK
-        uuid user_id FK
-        uuid plan_id FK
-        string subdomain UK
-        string status "creating|running|stopped|error"
-        string container_name
-        int storage_used_mb
-        int heavy_quota_used "today"
-        timestamp last_active_at
-        timestamp created_at
-    }
-    
-    HEAVY_JOBS {
-        string id PK "job_xyz"
-        uuid user_id FK
-        uuid project_id FK
-        string tool "ffmpeg|playwright|tts|stt"
-        jsonb params
-        string status "pending|processing|done|failed"
-        string result_path
-        int result_size_mb
-        text error_message
-        timestamp submitted_at
-        timestamp completed_at
-        timestamp expires_at "30-day TTL"
-    }
-```
-
----
-
-## 8. Request Flow: Submit Heavy Job
-
-```mermaid
-flowchart TD
-    Start["User submit<br/>heavy job"]
-    
-    Start -->|POST /api/heavy/submit| Check1{"Quota<br/>OK?"}
-    
-    Check1 -->|No| Error1["❌ 429<br/>Daily limit exceeded"]
-    Check1 -->|Yes| Check2{"Storage<br/>4GB<br/>enough?"}
-    
-    Check2 -->|No| Error2["❌ 507<br/>Storage full"]
-    Check2 -->|Yes| Enqueue["✅ Enqueue job<br/>to Redis"]
-    
-    Enqueue -->|Return| Response["jobId<br/>estimatedTime"]
-    Response -->|User polls| Poll["GET /api/heavy/status/{jobId}"]
-    
-    Poll -->|Meanwhile| PullJob["🔴 Heavy VPS<br/>pulls job"]
-    PullJob -->|Validate| Validate{"Input<br/>OK?"}
-    
-    Validate -->|No| FailJob["❌ Job FAILED<br/>error_message"]
-    Validate -->|Yes| Process["⏱️ Process<br/>timeout check"]
-    
-    Process -->|Timeout| Timeout["❌ Job TIMEOUT"]
-    Process -->|Success| Upload["✅ Upload result<br/>to /data/users/"]
-    
-    Upload -->|Callback| Callback["PUT /api/internal/job/{jobId}/result"]
-    Callback -->|Update DB| Done["✅ heavy_jobs.status='done'"]
-    
-    Done -->|User next poll| Result["GET /api/heavy/status/{jobId}<br/>returns: done + resultPath"]
-    Result -->|Download| Download["GET /storage/heavy-tasks/output.mp4"]
-    
-    FailJob -->|Notify| PollFail["GET returns error"]
-    Timeout -->|Notify| PollTimeout["GET returns timeout"]
-    
-    PollFail -->|User can retry| Retry["POST /api/heavy/submit again"]
-    Retry -->|If quota| Requeue["Enqueue 2nd attempt"]
-    
-    style Start fill:#e3f2fd
-    style Response fill:#c8e6c9
-    style Done fill:#c8e6c9
-    style Error1 fill:#ffcdd2
-    style Error2 fill:#ffcdd2
-    style FailJob fill:#ffcdd2
-```
-
----
-
-## 9. Idle Detection & Auto-Wake
-
-```mermaid
-timeline
-    title Container Lifecycle with Idle Detection
-    
-    section Day 1
-    00:00 : Container created : Status: running
-    08:00 : User chat : last_active_at updated
-    12:00 : User idle (4h) : Still running
-    
-    section Day 2
-    06:00 : Idle check (last_active > 10min) : Scheduler runs
-    06:05 : Auto-stop triggered : docker stop (graceful)
-          : Status changed to: stopped
-    
-    section Day 3
-    10:00 : User returns : GET /health
-          : Status: stopped
-    10:01 : User action : POST /projects/{id}/start
-          : docker start (10s)
-    10:02 : Container healthy : Status: running
-    10:03 : User instant response : Chat works
-    
-    section Day 4
-    (repeat idle → stop → wake cycle)
-```
-
----
-
-## 10. Cost Breakdown (MVP Phase)
-
-```mermaid
-pie title "Monthly Cost - 100 Free Users"
-    "VPS Worker (12 vCPU)" : 40
-    "VPS Heavy (12 vCPU)" : 50
-    "Storage (400GB)" : 5
-    "Railway API" : 10
-    "Cloudflare" : 0
-    "Ops/Monitoring" : 5
-    
-pie title "Cost Per User (Monthly)"
-    "Infrastructure" : 1.1
-    "Margin" : 3.9
-    "Target (Free)" : 0
-```
-
----
-
-## 11. Error Handling & Retry Logic
-
-```mermaid
-stateDiagram-v2
-    [*] --> Submitted: POST /submit
-    
-    Submitted --> Queued: Enqueued to Redis
-    Queued --> Processing: Worker pulls job
-    
-    Processing --> Success: Job completes
-    Processing --> Timeout: >5min (FFmpeg)
-    Processing --> Failed: Error (codec, OOM, etc)
-    
-    Success --> Done: Result uploaded
-    Timeout --> Failed: Retry? (user decision)
-    Failed --> Retryable: User retries<br/>(counts quota)
-    
-    Retryable --> Queued: Resubmit job
-    
-    Done --> [*]: Download result
-    
-    Failed --> [*]: Show error
-    
-    note right of Timeout
-        User sees:
-        "Job timeout after 5min"
-        Can retry now or later
-    end
-    
-    note right of Failed
-        User sees:
-        Error details from Heavy VPS
-        Example: "Unsupported codec H.265"
-    end
-```
-
----
-
-Generated: April 18, 2026  
-All diagrams are Mermaid-compatible  
-Copy-paste directly into:
-- GitHub README
-- Mermaid Live Editor (mermaid.live)
-- Notion, Confluence, etc
+Generated by: claude-code | Last updated: April 21, 2026
