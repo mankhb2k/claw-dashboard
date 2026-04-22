@@ -8,6 +8,8 @@
     "ui:dev": "npm --prefix control-ui run dev",
     "ui:build": "npm --prefix control-ui run build",
     "control-ui:build": "npm run ui:build",
+    "gateway:onboard": "openclaw onboard --mode local",
+    "onboard": "node onboard-server.js",
     "gateway:run": "openclaw gateway run --bind loopback --port 18789",
     "gateway:run:lan": "openclaw gateway run --bind lan --port 18789",
     "dev": "npm run gateway:run",
