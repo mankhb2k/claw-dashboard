@@ -21,20 +21,20 @@ export class MockHeavyWorkerService {
     try {
       this.logger.log('Starting mock heavy worker');
 
-      // Process all heavy job types
-      await this.heavyTasksQueue.process('ffmpeg', async (job) => {
+      // Process all heavy job types (do NOT await — process() registers handlers, never resolves)
+      this.heavyTasksQueue.process('ffmpeg', async (job) => {
         return this.processHeavyJob(job, 'ffmpeg', 3000);
       });
 
-      await this.heavyTasksQueue.process('playwright', async (job) => {
+      this.heavyTasksQueue.process('playwright', async (job) => {
         return this.processHeavyJob(job, 'playwright', 1500);
       });
 
-      await this.heavyTasksQueue.process('tts', async (job) => {
+      this.heavyTasksQueue.process('tts', async (job) => {
         return this.processHeavyJob(job, 'tts', 1000);
       });
 
-      await this.heavyTasksQueue.process('stt', async (job) => {
+      this.heavyTasksQueue.process('stt', async (job) => {
         return this.processHeavyJob(job, 'stt', 2000);
       });
 
