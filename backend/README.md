@@ -273,6 +273,78 @@ LRANGE openclaw:heavy:queue 0 -1
 
 ---
 
+## Docker & Deploy
+
+### Build và push lên Docker Hub
+
+Dùng script `deploy.ps1` (Windows PowerShell):
+
+```powershell
+# Lần đầu — unlock script nếu bị báo lỗi
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# Build + push version mới
+.\deploy.ps1 1.0.0
+```
+
+Script tự động:
+1. Build image `mankhb2k/clawsaas-be:1.0.0`
+2. Push tag version lên Docker Hub
+3. Tag thêm `latest` và push
+
+### Deploy lên Railway
+
+**Kiến trúc:**
+```
+Railway
+├── Backend (Docker image từ Hub)   ← deploy ở đây
+└── Redis (Railway plugin)          ← add service 1-click
+
+Neon (cloud riêng)
+└── PostgreSQL                      ← kết nối qua DATABASE_URL
+```
+
+**Các bước:**
+1. Tạo project trên [railway.app](https://railway.app)
+2. **Add Service → Redis** (Railway plugin)
+3. **Add Service → Docker Image** → nhập `mankhb2k/clawsaas-be:latest`
+4. Vào tab **Variables**, thêm:
+
+```
+DATABASE_URL       = (Neon connection string)
+REDIS_URL          = (copy từ Redis service vừa tạo)
+BETTER_AUTH_SECRET = (random 32 chars)
+FRONTEND_URL       = https://your-frontend.vercel.app
+VPS_WORKER_SECRET  = (random secret)
+API_URL            = https://your-backend.railway.app
+NODE_ENV           = production
+```
+
+5. Railway tự pull image → chạy `prisma migrate deploy` → start server
+6. Vào **Settings → Networking → Generate Domain** để lấy URL
+
+### Update phiên bản mới
+
+```powershell
+# Sửa code → build → push version mới
+.\deploy.ps1 1.0.1
+```
+
+Sau đó vào Railway → service → **Deploy** để pull `latest` về chạy.
+
+### Test image locally trước khi deploy
+
+```powershell
+docker run -p 3001:3001 `
+  -e DATABASE_URL="your_neon_url" `
+  -e REDIS_URL="redis://host.docker.internal:6379" `
+  -e BETTER_AUTH_SECRET="abc123..." `
+  -e NODE_ENV=production `
+  mankhb2k/clawsaas-be:latest
+```
+
+---
+
 ## Production Checklist
 
 - [ ] Database backups configured
