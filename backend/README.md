@@ -7,7 +7,7 @@
 
 ## Features
 
-- ✅ Authentication (email/password, Google OAuth)
+- ✅ Authentication (Better Auth: email/password, Google OAuth)
 - ✅ Project management with container lifecycle
 - ✅ Auto-idle detection with configurable timeouts (Free: 10min, Pro: 60min)
 - ✅ Heavy job processing (FFmpeg, Playwright, TTS, STT) — Pro only
@@ -137,15 +137,16 @@ Use Swagger UI at `/api/docs` to test endpoints with authentication.
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/register` — Create account
-- `POST /api/auth/login` — Login (returns session cookie)
-- `POST /api/auth/logout` — Logout
-- `GET /api/auth/session` — Check current session
-- `GET /api/auth/sign-in/google` — Google OAuth
-- `GET /api/auth/callback/google` — OAuth callback
+### Authentication (Better Auth)
+
+- `POST /api/auth/sign-up/email` — Create account
+- `POST /api/auth/sign-in/email` — Login (returns Better Auth session cookie)
+- `POST /api/auth/sign-out` — Logout
+- `GET /api/auth/get-session` — Check current session
+- `GET /api/auth/sign-in/social?provider=google` — Google OAuth
 
 ### Projects
+
 - `GET /api/projects/mine` — List my projects
 - `POST /api/projects` — Create project
 - `POST /api/projects/:id/start` — Start container
@@ -155,6 +156,7 @@ Use Swagger UI at `/api/docs` to test endpoints with authentication.
 - `DELETE /api/projects/:id` — Delete project
 
 ### Heavy Jobs (Pro only)
+
 - `POST /api/heavy/submit` — Submit FFmpeg/Playwright/TTS/STT job
 - `GET /api/heavy/status/:jobId` — Get job status
 - `GET /api/heavy/results/:jobId` — Download result
@@ -162,6 +164,7 @@ Use Swagger UI at `/api/docs` to test endpoints with authentication.
 - `GET /api/heavy/history` — Job history
 
 ### Internal
+
 - `POST /api/internal/heartbeat` — Keep container awake
 - `POST /api/internal/status` — Update container status
 - `POST /api/internal/trigger-idle-detection` — Manual idle check
@@ -223,6 +226,7 @@ The API returns structured error responses:
 ### Database Unavailability
 
 If PostgreSQL is down:
+
 - Health check middleware detects it every 5 seconds
 - Subsequent requests return `503 Service Unavailable`
 - Automatic recovery when database comes back online
@@ -230,6 +234,7 @@ If PostgreSQL is down:
 ### Queue Unavailability
 
 If Redis is down:
+
 - Heavy job submission returns `503 Service Unavailable`
 - Other endpoints continue working
 - Jobs are queued when Redis recovers
@@ -283,11 +288,12 @@ Dùng script `deploy.ps1` (Windows PowerShell):
 # Lần đầu — unlock script nếu bị báo lỗi
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
-# Build + push version mới
+# Build + push version mới lên DọckerHub
 .\deploy.ps1 1.0.0
 ```
 
 Script tự động:
+
 1. Build image `mankhb2k/clawsaas-be:1.0.0`
 2. Push tag version lên Docker Hub
 3. Tag thêm `latest` và push
@@ -295,6 +301,7 @@ Script tự động:
 ### Deploy lên Railway
 
 **Kiến trúc:**
+
 ```
 Railway
 ├── Backend (Docker image từ Hub)   ← deploy ở đây
@@ -305,14 +312,15 @@ Neon (cloud riêng)
 ```
 
 **Các bước:**
+
 1. Tạo project trên [railway.app](https://railway.app)
 2. **Add Service → Redis** (Railway plugin)
 3. **Add Service → Docker Image** → nhập `mankhb2k/clawsaas-be:latest`
 4. Vào tab **Variables**, thêm:
 
 ```
-DATABASE_URL       = (Neon connection string)
-REDIS_URL          = (copy từ Redis service vừa tạo)
+DATABASE_URL              = (Neon connection string)
+REDIS_URL                 = (copy từ Redis service vừa tạo)
 BETTER_AUTH_SECRET = (random 32 chars)
 FRONTEND_URL       = https://your-frontend.vercel.app
 VPS_WORKER_SECRET  = (random secret)
@@ -363,6 +371,7 @@ docker run -p 3001:3001 `
 ## Support
 
 For issues and questions, check:
+
 - [NestJS Docs](https://docs.nestjs.com)
 - [Prisma Docs](https://www.prisma.io/docs)
 - [BullMQ Docs](https://docs.bullmq.io)

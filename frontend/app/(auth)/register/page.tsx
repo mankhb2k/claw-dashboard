@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { registerSchema, type RegisterInput } from '@/schemas/auth.schema'
 import { useAuthStore } from '@/stores/auth.store'
+import { authApi } from '@/lib/api/auth'
 import { Input } from '@/components/ui/Input/Input'
 import { Button } from '@/components/ui/Button/Button'
+import { SocialLoginButton } from '@/components/ui/SocialLoginButton/SocialLoginButton'
 import styles from './register.module.css'
 
 export default function RegisterPage() {
@@ -79,6 +81,14 @@ export default function RegisterPage() {
           Tạo tài khoản
         </Button>
       </form>
+
+      <div className={styles.divider}>
+        <span>hoặc</span>
+      </div>
+
+      <div className={styles.socialLogin}>
+        <SocialLoginButton provider="google" onClick={() => authApi.signInGoogle()} />
+      </div>
 
       <p className={styles.footer}>
         Đã có tài khoản?{' '}

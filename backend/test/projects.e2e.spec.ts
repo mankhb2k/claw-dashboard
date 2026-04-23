@@ -5,9 +5,9 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { PrismaService } from '../src/core/database/prisma.service';
+import { ResponseInterceptor } from '../src/core/common/interceptors/response.interceptor';
+import { HttpExceptionFilter } from '../src/core/common/filters/http-exception.filter';
 
 describe('Projects API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -58,7 +58,7 @@ describe('Projects API (e2e)', () => {
 
     // Create user
     const registerResponse = await request(app.getHttpServer())
-      .post('/api/auth/register')
+      .post('/api/auth/sign-up/email')
       .send({
         email: testEmail,
         password: testPassword,
@@ -66,7 +66,7 @@ describe('Projects API (e2e)', () => {
       });
 
     sessionCookie = registerResponse.headers['set-cookie'][0];
-    userId = registerResponse.body.data.user.id;
+    userId = registerResponse.body.user.id;
   });
 
   afterAll(async () => {
@@ -166,7 +166,7 @@ describe('Projects API (e2e)', () => {
       // Create another user
       const otherEmail = `other-${Date.now()}@example.com`;
       const registerResponse = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: otherEmail,
           password: testPassword,
@@ -300,7 +300,7 @@ describe('Projects API (e2e)', () => {
       // User 1: Register and create project
       const user1Email = `user1-${Date.now()}@example.com`;
       const registerResponse1 = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: user1Email,
           password: testPassword,
@@ -320,7 +320,7 @@ describe('Projects API (e2e)', () => {
       // User 2: Register for testing cross-user access
       const user2Email = `user2-${Date.now()}@example.com`;
       const registerResponse2 = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: user2Email,
           password: testPassword,
@@ -352,7 +352,7 @@ describe('Projects API (e2e)', () => {
     it('Scenario 2: Create 2 projects → List them → Start/Stop', async () => {
       const user3Email = `user3-${Date.now()}@example.com`;
       const registerResponse = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: user3Email,
           password: testPassword,
@@ -409,7 +409,7 @@ describe('Projects API (e2e)', () => {
     it('Scenario 3: Free user plan limit (max 1 project)', async () => {
       const userEmail = `user4-${Date.now()}@example.com`;
       const registerResponse = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: userEmail,
           password: testPassword,
@@ -466,7 +466,7 @@ describe('Projects API (e2e)', () => {
       if (process.env.NODE_ENV === 'development') {
         const userEmail = `user5-${Date.now()}@example.com`;
         const registerResponse = await request(app.getHttpServer())
-          .post('/api/auth/register')
+          .post('/api/auth/sign-up/email')
           .send({
             email: userEmail,
             password: testPassword,

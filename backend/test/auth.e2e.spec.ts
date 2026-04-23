@@ -5,9 +5,9 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
-import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { PrismaService } from '../src/core/database/prisma.service';
+import { ResponseInterceptor } from '../src/core/common/interceptors/response.interceptor';
+import { HttpExceptionFilter } from '../src/core/common/filters/http-exception.filter';
 
 describe('Auth API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -58,18 +58,18 @@ describe('Auth API (e2e)', () => {
     await app.close();
   });
 
-  describe('POST /api/auth/register', () => {
+  describe('POST /api/auth/sign-up/email', () => {
     it('should register a new user with valid credentials', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: testEmail,
           password: testPassword,
           name: testName,
         });
 
-      expect(response.status).toBe(201);
-      expect(response.body.data.user).toEqual({
+      expect(response.status).toBe(200);
+      expect(response.body.user).toEqual({
         id: expect.any(String),
         email: testEmail,
         name: testName,
@@ -82,7 +82,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject invalid email', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: 'not-an-email',
           password: testPassword,
@@ -95,7 +95,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject short password (< 8 chars)', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: `short-${Date.now()}@example.com`,
           password: 'short',
@@ -108,7 +108,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject duplicate email', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: testEmail,
           password: testPassword,
@@ -121,7 +121,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject missing fields', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: testEmail,
           // missing password and name
@@ -132,7 +132,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject empty name', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: `empty-name-${Date.now()}@example.com`,
           password: testPassword,
@@ -145,7 +145,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject name > 100 chars', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: `long-name-${Date.now()}@example.com`,
           password: testPassword,
@@ -158,7 +158,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject extra fields (whitelist)', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post('/api/auth/sign-up/email')
         .send({
           email: `whitelist-${Date.now()}@example.com`,
           password: testPassword,
@@ -171,23 +171,23 @@ describe('Auth API (e2e)', () => {
     });
   });
 
-  describe('POST /api/auth/login', () => {
+  describe('POST /api/auth/sign-in/email', () => {
     it('should login with correct credentials', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: testEmail,
           password: testPassword,
         });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.user.email).toBe(testEmail);
+      expect(response.body.user.email).toBe(testEmail);
       expect(response.headers['set-cookie']).toBeDefined();
     });
 
     it('should reject invalid email format', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: 'invalid-email',
           password: testPassword,
@@ -199,7 +199,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject wrong password', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: testEmail,
           password: 'WrongPassword123!',
@@ -210,7 +210,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject non-existent user', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: 'nonexistent@example.com',
           password: testPassword,
@@ -221,7 +221,7 @@ describe('Auth API (e2e)', () => {
 
     it('should reject empty password', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: testEmail,
           password: '',
@@ -231,12 +231,12 @@ describe('Auth API (e2e)', () => {
     });
   });
 
-  describe('GET /api/auth/session', () => {
+  describe('GET /api/auth/get-session', () => {
     let sessionCookie: string;
 
     beforeAll(async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: testEmail,
           password: testPassword,
@@ -247,11 +247,11 @@ describe('Auth API (e2e)', () => {
 
     it('should return current user with valid session', async () => {
       const response = await request(app.getHttpServer())
-        .get('/api/auth/session')
+        .get('/api/auth/get-session')
         .set('Cookie', sessionCookie);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.user).toEqual({
+      expect(response.body.user).toEqual({
         id: expect.any(String),
         email: testEmail,
         name: testName,
@@ -262,26 +262,26 @@ describe('Auth API (e2e)', () => {
     });
 
     it('should reject request without session', async () => {
-      const response = await request(app.getHttpServer()).get('/api/auth/session');
+      const response = await request(app.getHttpServer()).get('/api/auth/get-session');
 
       expect(response.status).toBe(401);
     });
 
     it('should reject invalid session token', async () => {
       const response = await request(app.getHttpServer())
-        .get('/api/auth/session')
-        .set('Cookie', 'sessionToken=invalid-token-12345');
+        .get('/api/auth/get-session')
+        .set('Cookie', 'better-auth.session_token=invalid-token-12345');
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('POST /api/auth/logout', () => {
+  describe('POST /api/auth/sign-out', () => {
     let sessionCookie: string;
 
     beforeAll(async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
+        .post('/api/auth/sign-in/email')
         .send({
           email: testEmail,
           password: testPassword,
@@ -293,21 +293,21 @@ describe('Auth API (e2e)', () => {
     it('should logout and invalidate session', async () => {
       // First logout
       const logoutResponse = await request(app.getHttpServer())
-        .post('/api/auth/logout')
+        .post('/api/auth/sign-out')
         .set('Cookie', sessionCookie);
 
       expect(logoutResponse.status).toBe(200);
 
       // Then try to use same session
       const sessionResponse = await request(app.getHttpServer())
-        .get('/api/auth/session')
+        .get('/api/auth/get-session')
         .set('Cookie', sessionCookie);
 
       expect(sessionResponse.status).toBe(401);
     });
 
     it('should allow logout without session', async () => {
-      const response = await request(app.getHttpServer()).post('/api/auth/logout');
+      const response = await request(app.getHttpServer()).post('/api/auth/sign-out');
 
       expect(response.status).toBe(200);
     });

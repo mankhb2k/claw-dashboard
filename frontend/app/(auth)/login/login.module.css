@@ -32,6 +32,31 @@
   padding: var(--space-3) var(--space-4);
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.socialLogin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .footer {
   margin-top: var(--space-6);
   font-size: var(--font-size-sm);

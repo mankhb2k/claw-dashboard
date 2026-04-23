@@ -37,6 +37,9 @@ model Account {
   accessToken  String?
   refreshToken String?
   idToken      String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope        String?
   expiresAt    DateTime?
   password     String?
   createdAt    DateTime  @default(now())
@@ -44,6 +47,7 @@ model Account {
 
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -59,6 +63,7 @@ model Session {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("sessions")
 }
 
@@ -70,6 +75,7 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@index([identifier])
   @@map("verifications")
 }
 

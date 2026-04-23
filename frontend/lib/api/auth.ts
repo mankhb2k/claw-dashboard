@@ -3,23 +3,35 @@ import { userSchema, type LoginInput, type RegisterInput, type User } from '@/sc
 
 export const authApi = {
   login: async (input: LoginInput): Promise<User> => {
-    const res = await api.post('/api/auth/login', input)
-    // Backend: { success, data: { user: {...} } } → unwrapped → { user: {...} }
-    return userSchema.parse(res.data.user)
+    await api.post('/api/auth/sign-in/email', input)
+    return authApi.me()
   },
 
   register: async (input: Omit<RegisterInput, 'confirmPassword'>): Promise<User> => {
-    const res = await api.post('/api/auth/register', input)
-    return userSchema.parse(res.data.user)
+    await api.post('/api/auth/sign-up/email', {
+      email: input.email,
+      password: input.password,
+      name: input.email.split('@')[0],
+    })
+    return authApi.me()
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/api/auth/logout')
+    await api.post('/api/auth/sign-out')
   },
 
-  // Backend endpoint is GET /api/auth/session (not /me)
   me: async (): Promise<User> => {
-    const res = await api.get('/api/auth/session')
-    return userSchema.parse(res.data.user)
+    const res = await api.get('/api/auth/get-session')
+    return userSchema.parse(res.data?.user)
+  },
+
+  signInGoogle: (): void => {
+    const baseURL = api.defaults.baseURL ?? 'http://localhost:3001'
+    window.location.href = `${baseURL}/api/auth/sign-in/google`
+  },
+
+  signInGitHub: (): void => {
+    const baseURL = api.defaults.baseURL ?? 'http://localhost:3001'
+    window.location.href = `${baseURL}/api/auth/sign-in/github`
   },
 }

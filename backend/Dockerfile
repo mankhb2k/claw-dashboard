@@ -21,11 +21,12 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 ENV NODE_ENV=production
 ENV PORT=3001
 
 EXPOSE 3001
 
-# Run migrations then start
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+# Generate Prisma client and run migrations then start
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && node dist/src/main"]

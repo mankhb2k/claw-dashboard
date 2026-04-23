@@ -9,8 +9,8 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ResponseInterceptor } from './core/common/interceptors/response.interceptor';
+import { HttpExceptionFilter } from './core/common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -46,7 +46,7 @@ async function bootstrap() {
     .setTitle('OpenClaw API')
     .setDescription('Control Plane API — Auth · Projects · Heavy Tasks · Internal')
     .setVersion('1.0')
-    .addCookieAuth('session_token')
+    .addCookieAuth('better-auth.session_token')
     .addApiKey({ type: 'apiKey', in: 'header', name: 'Authorization' }, 'worker-secret')
     .build();
 

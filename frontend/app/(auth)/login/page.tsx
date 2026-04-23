@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { loginSchema, type LoginInput } from '@/schemas/auth.schema'
 import { useAuthStore } from '@/stores/auth.store'
+import { authApi } from '@/lib/api/auth'
 import { Input } from '@/components/ui/Input/Input'
 import { Button } from '@/components/ui/Button/Button'
+import { SocialLoginButton } from '@/components/ui/SocialLoginButton/SocialLoginButton'
 import styles from './login.module.css'
 
 export default function LoginPage() {
@@ -69,6 +71,14 @@ export default function LoginPage() {
           Đăng nhập
         </Button>
       </form>
+
+      <div className={styles.divider}>
+        <span>hoặc</span>
+      </div>
+
+      <div className={styles.socialLogin}>
+        <SocialLoginButton provider="google" onClick={() => authApi.signInGoogle()} />
+      </div>
 
       <p className={styles.footer}>
         Chưa có tài khoản?{' '}
