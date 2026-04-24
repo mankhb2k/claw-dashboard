@@ -3,12 +3,12 @@ import { userSchema, type LoginInput, type RegisterInput, type User } from '@/sc
 
 export const authApi = {
   login: async (input: LoginInput): Promise<User> => {
-    await api.post('/api/auth/signin/email', input)
+    await api.post('/api/auth/sign-in/email', input)
     return authApi.me()
   },
 
   register: async (input: Omit<RegisterInput, 'confirmPassword'>): Promise<User> => {
-    await api.post('/api/auth/signup/email', {
+    await api.post('/api/auth/sign-up/email', {
       email: input.email,
       password: input.password,
       name: input.email.split('@')[0],
@@ -17,21 +17,39 @@ export const authApi = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/api/auth/signout')
+    await api.post('/api/auth/sign-out')
   },
 
   me: async (): Promise<User> => {
-    const res = await api.get('/api/auth/sessions')
+    const res = await api.get('/api/auth/get-session')
     return userSchema.parse(res.data?.user)
   },
 
-  signInGoogle: (): void => {
-    const baseURL = api.defaults.baseURL ?? 'http://localhost:3001'
-    window.location.href = `${baseURL}/api/auth/signin/google`
+  signInGoogle: async (): Promise<void> => {
+    const res = await api.post<{
+      url?: string
+      redirect?: boolean
+    }>('/api/auth/sign-in/social', {
+      provider: 'google',
+      callbackURL: typeof window !== 'undefined' ? window.location.origin + '/' : undefined,
+    })
+    const url = res.data?.url
+    if (url) {
+      window.location.href = url
+    }
   },
 
-  signInGitHub: (): void => {
-    const baseURL = api.defaults.baseURL ?? 'http://localhost:3001'
-    window.location.href = `${baseURL}/api/auth/signin/github`
+  signInGitHub: async (): Promise<void> => {
+    const res = await api.post<{
+      url?: string
+      redirect?: boolean
+    }>('/api/auth/sign-in/social', {
+      provider: 'github',
+      callbackURL: typeof window !== 'undefined' ? window.location.origin + '/' : undefined,
+    })
+    const url = res.data?.url
+    if (url) {
+      window.location.href = url
+    }
   },
 }
