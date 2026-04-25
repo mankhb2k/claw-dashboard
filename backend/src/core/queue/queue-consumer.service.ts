@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import axios from 'axios';
-import { ProjectStatus } from '../../features/worker-callbacks/dtos/update-status.dto';
+import { ProjectStatus } from '../../plugins/worker-callbacks/dtos/update-status.dto';
 
 const CONTAINER_OPS_QUEUE = 'container-ops';
 const MOCK_WORKER_DELAY_MS = 1000;
@@ -83,8 +83,14 @@ export class QueueConsumerService implements OnModuleInit {
     const containerId = `mock-${projectId.substring(0, 8)}-${Date.now()}`;
 
     // Call internal API to update status
-    await this.updateProjectStatus(projectId, ProjectStatus.RUNNING, containerId);
-    this.logger.log(`[Mock] Project ${projectId} is now RUNNING with container ${containerId}`);
+    await this.updateProjectStatus(
+      projectId,
+      ProjectStatus.RUNNING,
+      containerId,
+    );
+    this.logger.log(
+      `[Mock] Project ${projectId} is now RUNNING with container ${containerId}`,
+    );
   }
 
   private async simulateWake(projectId: string, userId: string) {
@@ -123,14 +129,17 @@ export class QueueConsumerService implements OnModuleInit {
         },
         {
           headers: {
-            'Authorization': `Bearer ${workerSecret}`,
+            Authorization: `Bearer ${workerSecret}`,
             'Content-Type': 'application/json',
           },
           timeout: 5000,
         },
       );
 
-      this.logger.debug(`Status update response for ${projectId}:`, response.status);
+      this.logger.debug(
+        `Status update response for ${projectId}:`,
+        response.status,
+      );
       return response.data;
     } catch (error) {
       this.logger.error(
