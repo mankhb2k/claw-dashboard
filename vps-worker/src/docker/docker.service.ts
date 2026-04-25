@@ -1,6 +1,6 @@
 import Docker from 'dockerode';
 import * as fs from 'fs/promises';
-import { Logger } from '../logger.ts';
+import { Logger } from '../logger';
 
 const logger = new Logger('DockerService');
 

@@ -8,7 +8,7 @@ import { AuthModule } from './core/auth/auth.module';
 import { QueueModule } from './core/queue/queue.module';
 import { BillingModule } from './core/billing/billing.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
-// Features
+// Plugins
 import { ProjectsModule } from './plugins/projects/projects.module';
 import { HeavyJobsModule } from './plugins/heavy-jobs/heavy-jobs.module';
 import { SchedulerModule } from './plugins/scheduler/scheduler.module';
