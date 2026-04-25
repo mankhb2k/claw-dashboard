@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import axios from 'axios';
-import { ProjectStatus } from '../../features/worker-callbacks/dtos/update-status.dto';
+import { ProjectStatus } from '../../plugins/worker-callbacks/dtos/update-status.dto';
 
 const CONTAINER_OPS_QUEUE = 'container-ops';
 const MOCK_WORKER_DELAY_MS = 1000;

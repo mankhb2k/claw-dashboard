@@ -1,7 +1,7 @@
-import { Queue, Job, Worker } from 'bull';
-import { DockerService } from '../docker/docker.service.ts';
-import { CallbackService } from '../control-plane/callback.service.ts';
-import { Logger } from '../logger.ts';
+import { Queue, Job } from 'bull';
+import { DockerService } from '../docker/docker.service';
+import { CallbackService } from '../control-plane/callback.service';
+import { Logger } from '../logger';
 
 const logger = new Logger('ContainerProcessor');
 
@@ -33,30 +33,29 @@ interface DestroyJobData {
 export class ContainerProcessor {
   private docker = new DockerService();
   private callback = new CallbackService();
-  private worker: Worker<any> | null = null;
+  private started = false;
 
   constructor(private queue: Queue) {}
 
   async start(): Promise<void> {
-    this.worker = new Worker<any>('container-ops', this.processJob.bind(this), {
-      concurrency: 5,
-      connection: this.queue.client.options as any,
-    });
+    await this.queue.process(5, async (job: Job<any>) => this.processJob(job));
 
-    this.worker.on('completed', (job) => {
+    this.queue.on('completed', (job: Job<any>) => {
       logger.log(`Job completed: ${job.name} - ${job.data.projectId}`);
     });
 
-    this.worker.on('failed', (job, err) => {
+    this.queue.on('failed', (job: Job<any>, err: Error) => {
       logger.error(`Job failed: ${job?.name} - ${job?.data.projectId}: ${err.message}`);
     });
 
+    this.started = true;
     logger.log('Container processor started');
   }
 
   async stop(): Promise<void> {
-    if (this.worker) {
-      await this.worker.close();
+    if (this.started) {
+      // Queue lifecycle is managed by index.ts, so only flip state here.
+      this.started = false;
       logger.log('Container processor stopped');
     }
   }
@@ -112,7 +111,7 @@ export class ContainerProcessor {
 
     // Wait for health check
     const containerName = `openclaw-${userId}`;
-    await this.docker.waitHealthy(containerName, { timeoutMs: 30_000 });
+    await this.docker.waitHealthy(containerName, { timeoutMs: 30_000, checkInterval: 2_000 });
 
     // Notify control plane
     await this.callback.updateProjectStatus({
@@ -148,7 +147,7 @@ export class ContainerProcessor {
 
     // Wait for health check
     const containerName = `openclaw-${userId}`;
-    await this.docker.waitHealthy(containerName, { timeoutMs: 20_000 });
+    await this.docker.waitHealthy(containerName, { timeoutMs: 20_000, checkInterval: 2_000 });
 
     // Notify control plane
     await this.callback.updateProjectStatus({

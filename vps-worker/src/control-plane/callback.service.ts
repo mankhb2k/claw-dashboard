@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Logger } from '../logger.ts';
+import { Logger } from '../logger';
 
 export type ProjectStatus = 'CREATING' | 'RUNNING' | 'STARTING' | 'STOPPING' | 'STOPPED' | 'ERROR' | 'DESTROYING';
 

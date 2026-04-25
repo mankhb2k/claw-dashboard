@@ -8,11 +8,11 @@ import { AuthModule } from './core/auth/auth.module';
 import { QueueModule } from './core/queue/queue.module';
 import { BillingModule } from './core/billing/billing.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
-// Features
-import { ProjectsModule } from './features/projects/projects.module';
-import { HeavyJobsModule } from './features/heavy-jobs/heavy-jobs.module';
-import { SchedulerModule } from './features/scheduler/scheduler.module';
-import { WorkerCallbacksModule } from './features/worker-callbacks/worker-callbacks.module';
+// Plugins
+import { ProjectsModule } from './plugins/projects/projects.module';
+import { HeavyJobsModule } from './plugins/heavy-jobs/heavy-jobs.module';
+import { SchedulerModule } from './plugins/scheduler/scheduler.module';
+import { WorkerCallbacksModule } from './plugins/worker-callbacks/worker-callbacks.module';
 
 @Module({
   imports: [

@@ -1,7 +1,6 @@
 import Queue from 'bull';
-import { ContainerProcessor } from './processors/container.processor.ts';
-import { DockerService } from './docker/docker.service.ts';
-import { Logger } from './logger.ts';
+import { ContainerProcessor } from './processors/container.processor';
+import { Logger } from './logger';
 import * as http from 'http';
 
 const logger = new Logger('VPSWorker');
@@ -56,7 +55,7 @@ async function startHealthCheckServer(): Promise<http.Server> {
   });
 }
 
-async function syncDockerStateOnStartup(processor: ContainerProcessor): Promise<void> {
+async function syncDockerStateOnStartup(_processor: ContainerProcessor): Promise<void> {
   logger.log('Syncing Docker state on startup...');
 
   try {
