@@ -1,8 +1,8 @@
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
@@ -15,8 +15,12 @@ export class PlanGateService {
       where: { userId },
       include: { plan: true },
     });
-    if (subscription?.plan) return subscription.plan;
-    return this.getFreePlan();
+    if (!subscription?.plan) {
+      throw new InternalServerErrorException(
+        'No active subscription for user. Run Prisma migration backfill (backfill_free_subscriptions) or contact support.',
+      );
+    }
+    return subscription.plan;
   }
 
   // Throws ConflictException if user is at max projects for their plan.
@@ -60,12 +64,6 @@ export class PlanGateService {
       );
     }
 
-    return plan;
-  }
-
-  private async getFreePlan() {
-    const plan = await this.prisma.plan.findUnique({ where: { name: 'free' } });
-    if (!plan) throw new BadRequestException('Free plan not configured. Run db seed first.');
     return plan;
   }
 }

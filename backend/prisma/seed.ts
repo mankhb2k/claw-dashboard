@@ -7,6 +7,8 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Default plans are also created by migration `20260426140000_baseline_plans` (for migrate deploy
+  // without a separate seed step). This script upserts the same rows for local convenience.
   console.log('Seeding database...');
 
   // Upsert Free Plan

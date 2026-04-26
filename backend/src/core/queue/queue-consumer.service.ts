@@ -115,6 +115,7 @@ export class QueueConsumerService implements OnModuleInit {
     projectId: string,
     status: ProjectStatus,
     containerId?: string,
+    errorMessage?: string,
   ) {
     const internalApiUrl = `http://localhost:${process.env.PORT ?? 3001}/api/internal/status`;
     const workerSecret = process.env.VPS_WORKER_SECRET || 'mock-secret';
@@ -126,6 +127,7 @@ export class QueueConsumerService implements OnModuleInit {
           projectId,
           status,
           containerId,
+          ...(errorMessage ? { errorMessage } : {}),
         },
         {
           headers: {

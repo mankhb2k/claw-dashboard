@@ -1,7 +1,7 @@
 import { Queue, Job } from 'bull';
-import { DockerService } from '../docker/docker.service';
-import { CallbackService } from '../control-plane/callback.service';
-import { Logger } from '../logger';
+import { DockerService } from '../docker/docker.service.js';
+import { CallbackService } from '../control-plane/callback.service.js';
+import { Logger } from '../logger.js';
 
 const logger = new Logger('ContainerProcessor');
 
@@ -18,17 +18,28 @@ interface SpawnJobData {
 interface WakeJobData {
   projectId: string;
   userId: string;
+  subdomain: string;
 }
 
 interface StopJobData {
   projectId: string;
   userId: string;
+  subdomain: string;
 }
 
 interface DestroyJobData {
   projectId: string;
   userId: string;
+  subdomain: string;
 }
+
+function containerNameForSubdomain(subdomain: string): string {
+  return `openclaw-${subdomain}`;
+}
+
+/** Gateway cold-start có thể vài phút; wake cùng image nên cùng ngân sách với spawn. */
+const GATEWAY_HEALTH_TIMEOUT_MS = 300_000;
+const GATEWAY_HEALTH_INTERVAL_MS = 3_000;
 
 export class ContainerProcessor {
   private docker = new DockerService();
@@ -38,7 +49,13 @@ export class ContainerProcessor {
   constructor(private queue: Queue) {}
 
   async start(): Promise<void> {
-    await this.queue.process(5, async (job: Job<any>) => this.processJob(job));
+    // Register a named handler for each job type so Bull can match them correctly.
+    // queue.process(concurrency, handler) registers an *unnamed* handler which never
+    // matches named jobs like 'spawn', 'wake', 'stop', 'destroy'.
+    const concurrency = 5;
+    for (const jobName of ['spawn', 'wake', 'stop', 'destroy'] as const) {
+      this.queue.process(jobName, concurrency, async (job: Job<any>) => this.processJob(job));
+    }
 
     this.queue.on('completed', (job: Job<any>) => {
       logger.log(`Job completed: ${job.name} - ${job.data.projectId}`);
@@ -54,7 +71,6 @@ export class ContainerProcessor {
 
   async stop(): Promise<void> {
     if (this.started) {
-      // Queue lifecycle is managed by index.ts, so only flip state here.
       this.started = false;
       logger.log('Container processor stopped');
     }
@@ -83,37 +99,51 @@ export class ContainerProcessor {
       }
     } catch (err) {
       logger.error(`Error processing ${name} for project ${data.projectId}:`, err);
-      await this.callback.updateProjectStatus({
-        projectId: data.projectId,
-        status: 'ERROR',
-        errorMessage: err instanceof Error ? err.message : 'Unknown error',
-      });
+      if (name !== 'destroy') {
+        await this.callback.updateProjectStatus({
+          projectId: data.projectId,
+          status: 'ERROR',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error',
+        });
+      }
       throw err;
     }
   }
 
   private async handleSpawn(data: SpawnJobData): Promise<void> {
-    const { projectId, userId, subdomain, plan, imageVersion } = data;
+    const { projectId, userId, subdomain, plan, imageVersion, cpuLimit, ramLimit } = data;
 
     logger.log(`[Spawn] Creating container for project ${projectId}`);
 
-    // Create container
+    // Remove any pre-existing container with the same name to prevent 409 Conflict on retries
+    const existing = await this.docker.getContainerInfoBySubdomain(subdomain);
+    if (existing) {
+      logger.log(`[Spawn] Removing pre-existing container for ${subdomain} before re-creating`);
+      try {
+        await this.docker.removeContainer(existing.Id);
+      } catch (removeErr) {
+        logger.warn(`[Spawn] Could not remove existing container, proceeding anyway:`, removeErr);
+      }
+    }
+
     const containerId = await this.docker.createContainer({
       userId,
       projectId,
       subdomain,
       plan,
       imageVersion,
+      cpuLimit,
+      ramLimit,
     });
 
-    // Start container
     await this.docker.startContainer(containerId);
 
-    // Wait for health check
-    const containerName = `openclaw-${userId}`;
-    await this.docker.waitHealthy(containerName, { timeoutMs: 30_000, checkInterval: 2_000 });
+    const containerName = containerNameForSubdomain(subdomain);
+    await this.docker.waitHealthy(containerName, {
+      timeoutMs: GATEWAY_HEALTH_TIMEOUT_MS,
+      checkInterval: GATEWAY_HEALTH_INTERVAL_MS,
+    });
 
-    // Notify control plane
     await this.callback.updateProjectStatus({
       projectId,
       status: 'RUNNING',
@@ -124,13 +154,12 @@ export class ContainerProcessor {
   }
 
   private async handleWake(data: WakeJobData): Promise<void> {
-    const { projectId, userId } = data;
+    const { projectId, subdomain } = data;
 
     logger.log(`[Wake] Starting container for project ${projectId}`);
 
-    const containerInfo = await this.docker.getContainerInfo(userId);
+    const containerInfo = await this.docker.getContainerInfoBySubdomain(subdomain);
     if (!containerInfo) {
-      // Container doesn't exist, re-spawn
       logger.warn(`[Wake] Container not found, will be re-spawned by control plane: ${projectId}`);
       await this.callback.updateProjectStatus({
         projectId,
@@ -142,14 +171,14 @@ export class ContainerProcessor {
 
     const containerId = containerInfo.Id;
 
-    // Start container
     await this.docker.startContainer(containerId);
 
-    // Wait for health check
-    const containerName = `openclaw-${userId}`;
-    await this.docker.waitHealthy(containerName, { timeoutMs: 20_000, checkInterval: 2_000 });
+    const containerName = containerNameForSubdomain(subdomain);
+    await this.docker.waitHealthy(containerName, {
+      timeoutMs: GATEWAY_HEALTH_TIMEOUT_MS,
+      checkInterval: GATEWAY_HEALTH_INTERVAL_MS,
+    });
 
-    // Notify control plane
     await this.callback.updateProjectStatus({
       projectId,
       status: 'RUNNING',
@@ -159,20 +188,18 @@ export class ContainerProcessor {
   }
 
   private async handleStop(data: StopJobData): Promise<void> {
-    const { projectId, userId } = data;
+    const { projectId, subdomain } = data;
 
     logger.log(`[Stop] Stopping container for project ${projectId}`);
 
-    const containerInfo = await this.docker.getContainerInfo(userId);
+    const containerInfo = await this.docker.getContainerInfoBySubdomain(subdomain);
     if (!containerInfo) {
       logger.warn(`[Stop] Container not found: ${projectId}`);
       return;
     }
 
-    // Stop with graceful timeout: SIGTERM → 10s → SIGKILL
     await this.docker.stopContainer(containerInfo.Id, 10);
 
-    // Notify control plane
     await this.callback.updateProjectStatus({
       projectId,
       status: 'STOPPED',
@@ -182,33 +209,24 @@ export class ContainerProcessor {
   }
 
   private async handleDestroy(data: DestroyJobData): Promise<void> {
-    const { projectId, userId } = data;
+    const { projectId, userId, subdomain } = data;
 
     logger.log(`[Destroy] Destroying project ${projectId}`);
 
-    const containerInfo = await this.docker.getContainerInfo(userId);
+    const containerInfo = await this.docker.getContainerInfoBySubdomain(subdomain);
 
     if (containerInfo) {
-      // Stop container first (force, don't wait)
       try {
         await this.docker.stopContainer(containerInfo.Id, 5);
       } catch (err) {
         logger.warn(`[Destroy] Failed to stop container during destroy: ${projectId}`, err);
       }
 
-      // Remove container
       await this.docker.removeContainer(containerInfo.Id);
     }
 
-    // Cleanup user data
-    await this.docker.cleanupUserData(userId);
+    await this.docker.cleanupProjectData(userId, projectId);
 
-    // Notify control plane
-    await this.callback.updateProjectStatus({
-      projectId,
-      status: 'STOPPED', // Mark as stopped, not destroyed (control plane owns the destroy state)
-    });
-
-    logger.log(`[Destroy] ✓ Project destroyed successfully: ${projectId}`);
+    logger.log(`[Destroy] ✓ Project destroyed (local cleanup done): ${projectId}`);
   }
 }

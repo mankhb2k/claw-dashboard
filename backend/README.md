@@ -37,11 +37,11 @@ npm install
 cp .env.example .env
 # Edit .env with your database URL and secrets
 
-# Run migrations
+# Run migrations (includes baseline Free/Pro `plans` rows; no `db seed` required for prod-like)
 npx prisma migrate dev
 
-# Seed plans (Free & Pro)
-npx prisma db seed
+# Optional: re-upsert plans if you change values manually
+# npx prisma db seed
 ```
 
 ### Running the Server
@@ -60,6 +60,22 @@ npm run start:debug
 
 **Server runs on:** `http://localhost:3001`  
 **Swagger UI:** `http://localhost:3001/api/docs`
+
+### Docker (API + Postgres + Redis + vps-worker)
+
+```bash
+cd backend
+# Build: backend + vps-worker; ensure .env.docker exists (secrets / VPS_WORKER_SECRET, auth, …)
+docker compose build
+# If host port 3002 is already used (e.g. another worker), map another port:
+#   set VPS_WORKER_PORT=3003   # Windows PowerShell: $env:VPS_WORKER_PORT="3003"
+#   export VPS_WORKER_PORT=3003  # Linux/macOS
+docker compose up -d
+curl -s http://localhost:3001/health
+curl -s http://localhost:${VPS_WORKER_PORT:-3002}/health   # vps-worker
+```
+
+`docker-compose.yml` pins local `DATABASE_URL` / `REDIS_URL` to the compose Postgres and Redis, sets `APP_DOMAIN` and `OPENCLAW_IMAGE`, and runs `vps-worker` on network `openclaw-net` for spawned containers.
 
 ---
 
@@ -85,7 +101,21 @@ NODE_ENV="development"
 
 # VPS Worker (internal use)
 VPS_WORKER_SECRET=<random secret for webhook auth>
+
+# Projects & public URLs
+# Public hostname suffix for each project: https://<slug>.<APP_DOMAIN> (no https://, no path)
+APP_DOMAIN=clawsandbox.cloud
+# Image used when spawning user containers; change this to roll out a new build
+OPENCLAW_IMAGE=ghcr.io/yourorg/openclaw:latest
 ```
+
+**DNS (production):** point a wildcard `*.clawsandbox.cloud` (or your `APP_DOMAIN`) to the IP where Traefik + the vps-worker host run, so `https://<slug>.<APP_DOMAIN>` resolves. For quick checks without public DNS, use e.g. `curl --resolve myslug.clawsandbox.cloud:443:<vps-ip> https://myslug.clawsandbox.cloud/health`.
+
+#### Local multi-project test
+
+- Run Postgres, Redis, backend, and vps-worker against the same Bull queue and Docker socket.
+- Create two projects with `POST /api/projects` and distinct `displayName` values. Confirm the worker created two containers named `openclaw-<slug>`.
+- `PATCH /api/projects/:id` with `{ "displayName": "new label" }` should not change the slug, container name, or Traefik host; `GET /api/projects/mine` should still show the same `subdomain` and `publicUrl` host.
 
 ---
 
@@ -98,12 +128,15 @@ VPS_WORKER_SECRET=<random secret for webhook auth>
 npx prisma migrate dev --name init
 ```
 
-### Seed Data
+### Seed Data (optional)
+
+By default, Free/Pro `plans` are inserted by migration `20260426140000_baseline_plans` when you run `migrate dev` / `migrate deploy`. Use this only to **re-upsert** plan rows (same logic as the migration):
 
 ```bash
-# Seed Free & Pro plans
 npx prisma db seed
 ```
+
+**Subscriptions:** On sign-up, Better Auth runs a hook that creates an `ACTIVE` `subscriptions` row for the `free` plan. Existing users without a row are fixed by migration `20260426160000_backfill_free_subscriptions`. `PlanGateService` always resolves the current plan from that subscription (no implicit free fallback).
 
 ### Reset (local development only)
 
@@ -148,7 +181,8 @@ Use Swagger UI at `/api/docs` to test endpoints with authentication.
 ### Projects
 
 - `GET /api/projects/mine` — List my projects
-- `POST /api/projects` — Create project
+- `POST /api/projects` — Create project (body: `displayName`; server generates unique slug and `publicUrl`)
+- `PATCH /api/projects/:id` — Update `displayName` only
 - `POST /api/projects/:id/start` — Start container
 - `POST /api/projects/:id/stop` — Stop container
 - `GET /api/projects/:id/health` — Get status
@@ -279,6 +313,103 @@ LRANGE openclaw:heavy:queue 0 -1
 ---
 
 ## Docker & Deploy
+
+### Test backend bằng Docker (local)
+
+Muc tieu: chay full stack backend local bang Docker gom `backend + postgres + redis`.
+
+#### 1) Chuan bi
+
+- Dang dung file `docker-compose.yml` trong thu muc `backend/`
+- Service app dung image da build tay: `clawsaas-be:dev`
+- Da co `.env.docker` (chua secret cho auth/oauth)
+
+#### 2) Build tay image backend
+
+```bash
+cd backend
+docker build -t clawsaas-be:dev .
+```
+
+#### 3) Dung compose
+
+```bash
+docker compose up -d
+```
+
+Compose se tao:
+
+- Container: `clawsaas-api`, `clawsaas-postgres`, `clawsaas-redis`
+- Volumes: `clawsaas-postgres-data`, `clawsaas-redis-data`
+
+#### 4) Kiem tra trang thai
+
+```bash
+docker compose ps
+docker compose logs -f backend
+```
+
+Backend san sang khi thay log:
+
+- `Nest application successfully started`
+- `Listening on http://127.0.0.1:3001`
+
+Truy cap:
+
+- API: `http://localhost:3001`
+- Swagger: `http://localhost:3001/api/docs`
+
+> Luu y: `localhost:5432` va `localhost:6379` la cong DB/Redis protocol, khong phai web URL nen khong mo bang browser.
+
+#### 5) Mo Prisma Studio dung DB Docker
+
+`prisma.config.ts` doc `DATABASE_URL` tu environment hien tai, vi vay phai set URL local truoc khi chay.
+
+**Windows CMD:**
+
+```cmd
+set DATABASE_URL=postgresql://postgres:password@localhost:5432/openclaw
+npx prisma studio --port 5555
+```
+
+**PowerShell:**
+
+```powershell
+$env:DATABASE_URL="postgresql://postgres:password@localhost:5432/openclaw"
+npx prisma studio --port 5555
+```
+
+Mo: `http://localhost:5555`
+
+#### 6) Khi sua code backend
+
+Vi compose dang dung image build tay, can build lai moi khi code thay doi:
+
+```bash
+docker build -t clawsaas-be:dev .
+docker compose up -d --force-recreate backend
+```
+
+#### 7) Dung, xoa, va reset du lieu
+
+```bash
+# Dung stack (giu data)
+docker compose down
+
+# Dung stack va xoa ca volumes (mat data)
+docker compose down -v
+
+# Xem volumes
+docker volume ls
+docker volume inspect clawsaas-postgres-data
+docker volume inspect clawsaas-redis-data
+```
+
+#### 8) Loi thuong gap
+
+- `failed to read dockerfile`: ban dang chay lenh o root repo. Hay `cd backend` truoc khi build/compose.
+- Khong thay bang trong Prisma Studio: dang tro sai `DATABASE_URL` (thuong dang tro cloud DB).
+- Khong vao duoc `http://localhost:5432`: day khong phai HTTP endpoint.
 
 ### Build và push lên Docker Hub
 

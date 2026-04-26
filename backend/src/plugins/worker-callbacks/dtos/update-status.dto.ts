@@ -20,4 +20,8 @@ export class UpdateStatusDto {
   @IsOptional()
   @IsString()
   containerId?: string;
+
+  @IsOptional()
+  @IsString()
+  errorMessage?: string;
 }

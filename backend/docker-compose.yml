@@ -1,23 +1,54 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  backend:
+    build: .
+    image: clawsaas-be:dev
     container_name: clawsaas-api
     env_file:
       - .env.docker
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/openclaw
       REDIS_URL: redis://redis:6379
-      NODE_ENV: development
+      REDIS_PUBLIC_URL: redis://redis:6379
+      NODE_ENV: production
       PORT: 3001
+      APP_DOMAIN: ${APP_DOMAIN:-clawsandbox.cloud}
+      OPENCLAW_IMAGE: ${OPENCLAW_IMAGE:-mankhb2k/clawsaas-worker:1.0.0}
     ports:
-      - "3001:3001"
+      - '3001:3001'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
+    restart: unless-stopped
+
+  vps-worker:
+    build: ../vps-worker
+    image: clawsaas-vps-worker:dev
+    container_name: openclaw-vps-worker
+    env_file:
+      - .env.docker
+    environment:
+      REDIS_URL: redis://redis:6379
+      CONTROL_PLANE_URL: http://backend:3001
+      VPS_NODE_ID: vps-1
+      APP_DOMAIN: ${APP_DOMAIN:-clawsandbox.cloud}
+      OPENCLAW_IMAGE: ${OPENCLAW_IMAGE:-mankhb2k/clawsaas-worker:1.0.0}
+      DATA_DIR: /data/users
+      PORT: '3002'
+      NODE_ENV: production
+      DEBUG: 'false'
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - default
+      - openclaw-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vps_user_data:/data/users
+    ports:
+      - '${VPS_WORKER_PORT:-3002}:3002'
     restart: unless-stopped
 
   postgres:
@@ -28,11 +59,11 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: openclaw
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d openclaw"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d openclaw']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -43,7 +74,7 @@ services:
     container_name: clawsaas-redis
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -53,3 +84,10 @@ volumes:
     name: clawsaas-postgres-data
   redis_data:
     name: clawsaas-redis-data
+  vps_user_data:
+    name: clawsaas-vps-user-data
+
+networks:
+  openclaw-net:
+    name: openclaw-net
+    driver: bridge

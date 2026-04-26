@@ -81,13 +81,21 @@ export const projectHandlers = {
       throw new Error('Not authenticated')
     }
 
-    const { name } = req.data as CreateProjectInput
-    const subdomain = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')
+    const { displayName } = req.data as CreateProjectInput
+    const slugBase = displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'project'
+    const subdomain = `${slugBase}-m${Math.random().toString(36).slice(2, 6)}`
+    const publicUrl = `https://${subdomain}.clawsandbox.cloud`
 
     const project: Project = {
       id: Math.random().toString(36).slice(2, 9),
-      name,
+      displayName,
+      name: displayName,
       subdomain,
+      publicUrl,
       status: 'creating',
       containerName: null,
       lastActiveAt: null,
@@ -151,7 +159,10 @@ export const projectHandlers = {
 
     return {
       status: project.status,
-      url: project.status === 'running' ? `${project.subdomain}.openclaw.ai` : null,
+      displayName: project.displayName,
+      publicUrl:
+        project.status === 'running' ? (project.publicUrl ?? `https://${project.subdomain}.clawsandbox.cloud`) : undefined,
+      subdomain: project.subdomain,
     }
   },
 

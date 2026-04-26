@@ -1,6 +1,6 @@
 import Queue from 'bull';
-import { ContainerProcessor } from './processors/container.processor';
-import { Logger } from './logger';
+import { ContainerProcessor } from './processors/container.processor.js';
+import { Logger } from './logger.js';
 import * as http from 'http';
 
 const logger = new Logger('VPSWorker');

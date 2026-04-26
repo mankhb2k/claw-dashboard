@@ -39,8 +39,19 @@ export class IdleDetectionService {
             data: { status: 'STOPPED' },
           });
 
+          const activeInstance = await this.prisma.containerInstance.findFirst({
+            where: { projectId: project.id, status: { in: ['RUNNING', 'STARTING'] } },
+            orderBy: { createdAt: 'desc' },
+          });
+          if (activeInstance) {
+            await this.prisma.containerInstance.update({
+              where: { id: activeInstance.id },
+              data: { status: 'STOPPED', stoppedAt: new Date() },
+            });
+          }
+
           // Enqueue stop job with lowest priority
-          await this.queue.enqueueStop(project.id, project.userId);
+          await this.queue.enqueueStop(project.id, project.userId, project.subdomain);
         }
       }
     } catch (error) {

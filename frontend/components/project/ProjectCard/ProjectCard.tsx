@@ -30,7 +30,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       await startProject(project.id)
       const stopPolling = pollHealth(project.id, (url) => {
         stopPolling()
-        if (url) window.open(`https://${project.subdomain}.openclaw.ai`, '_blank')
+        if (url) window.open(url, '_blank')
       })
     } finally {
       setIsActing(false)
@@ -48,14 +48,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   const isRunning = project.status === 'running'
   const isBusy = project.status === 'starting' || project.status === 'creating'
-  const url = `https://${project.subdomain}.openclaw.ai`
+  const publicDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'
+  const url = project.publicUrl ?? `https://${project.subdomain}.${publicDomain}`
 
   return (
     <div className={styles.card}>
       <div className={styles.top}>
         <div>
-          <h3 className={styles.name}>{project.name}</h3>
-          <p className={styles.subdomain}>{project.subdomain}.openclaw.ai</p>
+          <h3 className={styles.name}>{project.displayName || project.name}</h3>
+          <p className={styles.subdomain}>
+            {new URL(url).host}
+          </p>
         </div>
         <span className={[styles.badge, styles[`badge--${project.status}`]].join(' ')}>
           {isBusy && <span className={styles.badgeSpinner} />}

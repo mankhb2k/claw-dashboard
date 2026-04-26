@@ -1,4 +1,5 @@
 import { PrismaService } from '../database/prisma.service';
+import { ensureDefaultFreeSubscription } from '../billing/ensure-free-subscription';
 
 function getBaseUrl(): string {
   return process.env.API_URL ?? 'http://localhost:3001';
@@ -34,5 +35,14 @@ export async function createBetterAuth(prisma: PrismaService) {
             },
           }
         : {},
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            await ensureDefaultFreeSubscription(prisma, user.id);
+          },
+        },
+      },
+    },
   });
 }

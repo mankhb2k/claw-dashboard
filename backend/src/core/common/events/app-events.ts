@@ -17,6 +17,7 @@ export interface ProjectCreatedEvent {
   projectId: string;
   userId: string;
   subdomain: string;
+  displayName: string;
   planName: string;
 }
 

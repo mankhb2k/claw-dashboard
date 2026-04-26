@@ -20,6 +20,7 @@ export class WorkerCallbacksController {
       dto.projectId,
       dto.status,
       dto.containerId,
+      dto.errorMessage,
     );
     return {
       projectId: project.id,

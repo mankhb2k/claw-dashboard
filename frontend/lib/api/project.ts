@@ -12,10 +12,15 @@ export const projectApi = {
   // Backend: GET /api/projects/mine
   list: async (): Promise<Project[]> => {
     const res = await api.get('/api/projects/mine')
-    return z.array(projectSchema).parse(res.data)
+    const parsed = z.array(projectSchema).safeParse(res.data)
+    if (!parsed.success) {
+      console.error('[projectApi.list] Zod parse failed', parsed.error, res.data)
+      throw new Error('Dữ liệu project từ server không hợp lệ. Xem console.')
+    }
+    return parsed.data
   },
 
-  // Backend: POST /api/projects (name sent in body)
+  // Backend: POST /api/projects (displayName in body; slug/subdomain is server-generated)
   create: async (input: CreateProjectInput): Promise<Project> => {
     const res = await api.post('/api/projects', input)
     return projectSchema.parse(res.data)

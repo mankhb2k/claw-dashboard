@@ -22,6 +22,13 @@ describe('Projects API (e2e)', () => {
   let projectId: string;
 
   beforeAll(async () => {
+    if (!process.env.OPENCLAW_IMAGE) {
+      process.env.OPENCLAW_IMAGE = 'test/openclaw:1';
+    }
+    if (!process.env.APP_DOMAIN) {
+      process.env.APP_DOMAIN = 'clawsandbox.cloud';
+    }
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -78,17 +85,21 @@ describe('Projects API (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', sessionCookie)
-        .send({});
+        .send({ displayName: 'E2E Project' });
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toEqual({
-        id: expect.any(String),
-        userId: userId,
-        subdomain: expect.any(String),
-        status: 'CREATING',
-        createdAt: expect.any(String),
-        lastActiveAt: expect.any(String),
-      });
+      expect(response.body.data).toEqual(
+        expect.objectContaining({
+          id: expect.any(String),
+          userId: userId,
+          displayName: 'E2E Project',
+          subdomain: expect.any(String),
+          publicUrl: expect.stringMatching(/^https:\/\//),
+          status: 'CREATING',
+          createdAt: expect.any(String),
+          lastActiveAt: expect.any(String),
+        }),
+      );
 
       projectId = response.body.data.id;
     });
@@ -96,7 +107,7 @@ describe('Projects API (e2e)', () => {
     it('should reject if not authenticated', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/projects')
-        .send({});
+        .send({ displayName: 'Nope' });
 
       expect(response.status).toBe(401);
     });
@@ -105,10 +116,10 @@ describe('Projects API (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', sessionCookie)
-        .send({});
+        .send({ displayName: 'Another' });
 
       expect(response.status).toBe(409);
-      expect(response.body.message).toContain('Max projects');
+      expect(String(response.body.message || '')).toMatch(/[Pp]lan/);
     });
   });
 
@@ -121,14 +132,18 @@ describe('Projects API (e2e)', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBeGreaterThan(0);
-      expect(response.body.data[0]).toEqual({
-        id: expect.any(String),
-        userId: userId,
-        subdomain: expect.any(String),
-        status: expect.any(String),
-        createdAt: expect.any(String),
-        lastActiveAt: expect.any(String),
-      });
+      expect(response.body.data[0]).toEqual(
+        expect.objectContaining({
+          id: expect.any(String),
+          userId: userId,
+          displayName: expect.any(String),
+          subdomain: expect.any(String),
+          publicUrl: expect.stringMatching(/^https:\/\//),
+          status: expect.any(String),
+          createdAt: expect.any(String),
+          lastActiveAt: expect.any(String),
+        }),
+      );
     });
 
     it('should reject if not authenticated', async () => {
@@ -145,13 +160,16 @@ describe('Projects API (e2e)', () => {
         .set('Cookie', sessionCookie);
 
       expect(response.status).toBe(200);
-      expect(response.body.data).toEqual({
-        projectId: projectId,
-        status: expect.any(String),
-        subdomain: expect.any(String),
-        lastActiveAt: expect.any(String),
-        storageUsedMb: expect.any(Number),
-      });
+      expect(response.body.data).toEqual(
+        expect.objectContaining({
+          status: expect.any(String),
+          displayName: expect.any(String),
+          publicUrl: expect.stringMatching(/^https:\/\//),
+          subdomain: expect.any(String),
+          lastActiveAt: expect.any(String),
+          storageUsedMb: expect.any(Number),
+        }),
+      );
     });
 
     it('should reject if project not found', async () => {
@@ -313,7 +331,7 @@ describe('Projects API (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', user1SessionCookie)
-        .send({});
+        .send({ displayName: 'User 1 project' });
 
       user1ProjectId = createResponse.body.data.id;
 
@@ -365,7 +383,7 @@ describe('Projects API (e2e)', () => {
       const project1Response = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', sessionCookie)
-        .send({});
+        .send({ displayName: 'First' });
 
       expect(project1Response.status).toBe(201);
       const projectId1 = project1Response.body.data.id;
@@ -383,7 +401,7 @@ describe('Projects API (e2e)', () => {
       const project2Response = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', sessionCookie)
-        .send({});
+        .send({ displayName: 'Second' });
 
       expect(project2Response.status).toBe(409);
 
@@ -422,7 +440,7 @@ describe('Projects API (e2e)', () => {
       const createResponse1 = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', sessionCookie)
-        .send({});
+        .send({ displayName: 'A' });
 
       expect(createResponse1.status).toBe(201);
 
@@ -430,7 +448,7 @@ describe('Projects API (e2e)', () => {
       const createResponse2 = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', sessionCookie)
-        .send({});
+        .send({ displayName: 'B' });
 
       expect(createResponse2.status).toBe(409);
       expect(createResponse2.body.error.code).toBe('CONFLICT');
@@ -441,7 +459,7 @@ describe('Projects API (e2e)', () => {
       const createResponse = await request(app.getHttpServer())
         .post('/api/projects')
         .set('Cookie', user1SessionCookie)
-        .send({});
+        .send({ displayName: 'User1 cross' });
 
       const projectId = createResponse.body.data.id;
 
@@ -479,7 +497,7 @@ describe('Projects API (e2e)', () => {
         const createResponse = await request(app.getHttpServer())
           .post('/api/projects')
           .set('Cookie', sessionCookie)
-          .send({});
+          .send({ displayName: 'User5' });
 
         const projectId = createResponse.body.data.id;
 

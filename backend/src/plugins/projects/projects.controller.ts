@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   UseGuards,
   Body,
@@ -15,6 +16,8 @@ import { ProjectsService } from './projects.service';
 import { ok } from '../../core/common/types/api-response.type';
 import { StartProjectDto } from './dto/start-project.dto';
 import { StopProjectDto } from './dto/stop-project.dto';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @ApiTags('Projects')
 @ApiCookieAuth('better-auth.session_token')
@@ -37,8 +40,23 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Create a new project (free plan: max 1)' })
   @ApiResponse({ status: 201, description: 'Project created with status CREATING' })
   @ApiResponse({ status: 403, description: 'Plan limit reached' })
-  async create(@CurrentUser() user: RequestUser) {
-    const project = await this.projectsService.create(user.id);
+  async create(@CurrentUser() user: RequestUser, @Body() dto: CreateProjectDto) {
+    const project = await this.projectsService.create(user.id, dto.displayName);
+    return ok(project);
+  }
+
+  // PATCH /api/projects/:id
+  @Patch(':id')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Update project displayName (subdomain is immutable)' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  @ApiResponse({ status: 200, description: 'Project updated' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProjectDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const project = await this.projectsService.updateDisplayName(id, user.id, dto.displayName);
     return ok(project);
   }
 

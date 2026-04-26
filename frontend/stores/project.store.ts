@@ -6,7 +6,7 @@ interface ProjectState {
   projects: Project[]
   isLoading: boolean
   error: string | null
-  fetchProjects: () => Promise<void>
+  fetchProjects: (opts?: { silent?: boolean }) => Promise<void>
   createProject: (input: CreateProjectInput) => Promise<Project>
   startProject: (id: string) => Promise<void>
   stopProject: (id: string) => Promise<void>
@@ -19,15 +19,20 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchProjects: async () => {
-    set({ isLoading: true, error: null })
+  fetchProjects: async (opts) => {
+    const silent = opts?.silent === true
+    if (!silent) {
+      set({ isLoading: true, error: null })
+    }
     try {
       const projects = await projectApi.list()
-      set({ projects })
+      set({ projects, error: null })
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Không tải được danh sách project' })
     } finally {
-      set({ isLoading: false })
+      if (!silent) {
+        set({ isLoading: false })
+      }
     }
   },
 
@@ -67,7 +72,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
               p.id === id ? { ...p, status: 'running' } : p
             ),
           }))
-          onDone(health.subdomain ? `https://${health.subdomain}.openclaw.ai` : null)
+          onDone(
+            health.publicUrl
+              ? health.publicUrl
+              : health.subdomain
+                ? `https://${health.subdomain}.${process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'}`
+                : null,
+          )
         } else if (health.status === 'error') {
           clearInterval(interval)
           set((s) => ({

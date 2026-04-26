@@ -24,8 +24,8 @@ export default function NewProjectPage() {
     resolver: zodResolver(createProjectSchema),
   })
 
-  const nameValue = watch('name') ?? ''
-  const previewSubdomain = nameValue.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')
+  const displayNameValue = watch('displayName') ?? ''
+  const publicDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'
 
   const onSubmit = async (data: CreateProjectInput) => {
     try {
@@ -51,19 +51,18 @@ export default function NewProjectPage() {
 
           <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
             <Input
-              id="name"
+              id="displayName"
               label="Tên project"
-              placeholder="my-bot"
-              error={errors.name?.message}
-              {...register('name')}
+              placeholder="Ví dụ: My Claw"
+              error={errors.displayName?.message}
+              {...register('displayName')}
             />
 
-            {previewSubdomain && (
+            {displayNameValue.trim() && (
               <div className={styles.preview}>
-                <span className={styles.previewLabel}>Subdomain preview</span>
-                <code className={styles.previewUrl}>
-                  {previewSubdomain}.openclaw.ai
-                </code>
+                <span className={styles.previewLabel}>
+                  URL công khai: https://&lt;slug&gt;.{publicDomain} (slug do server tạo từ tên này)
+                </span>
               </div>
             )}
 

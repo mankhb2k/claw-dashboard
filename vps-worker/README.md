@@ -15,9 +15,8 @@ VPS Worker (This Service)
   ├─ Docker SDK
   ├─ Traefik (routing)
   └─ User Containers
-       ├─ openclaw-usr_abc
-       ├─ openclaw-usr_def
-       └─ ... (up to 40-50 concurrent)
+       ├─ openclaw-<project-slug>   (one per project, slug from DB)
+       └─ ... (concurrency bound by your VPS)
 ```
 
 ## Quick Start (Development)
@@ -64,8 +63,9 @@ docker-compose down
 | `REDIS_URL` | ✅ | Redis connection: `redis://default:password@host:6379` |
 | `CONTROL_PLANE_URL` | ✅ | Backend API: `https://api.openclaw.ai` |
 | `VPS_WORKER_SECRET` | ✅ | Shared secret for webhook authentication |
-| `OPENCLAW_IMAGE` | ⬜ | Docker image to spawn: `openclaw-gateway:2026.4.5` |
-| `DATA_DIR` | ⬜ | User data mount point: `/data/users` |
+| `OPENCLAW_IMAGE` | ⬜ | Fallback image if a job has no `imageVersion` (prefer setting `OPENCLAW_IMAGE` in the control plane) |
+| `APP_DOMAIN` | ⬜ | Public domain for Traefik `Host()`: e.g. `clawsandbox.cloud` → `Host(\`slug.clawsandbox.cloud\`)` |
+| `DATA_DIR` | ⬜ | Base path; per-project data is at `<DATA_DIR>/<userId>/<projectId>` |
 | `PORT` | ⬜ | Health check port: `3002` |
 | `DEBUG` | ⬜ | Enable debug logging: `true/false` |
 
@@ -94,7 +94,7 @@ GET /health
 
 3. **Traefik routes traffic:**
    - Automatically detects containers with labels
-   - Routes `{subdomain}.openclaw.ai` → container:3000
+   - Routes `https://{subdomain}.{APP_DOMAIN}` (default `clawsandbox.cloud`) → container:3000
 
 4. **Project lifecycle:**
    ```

@@ -20,6 +20,7 @@ export class QueueService {
     imageVersion: string,
     cpuLimit: number,
     ramLimit: number,
+    plan: 'free' | 'pro',
   ): Promise<void> {
     await this.containerOpsQueue.add(
       'spawn',
@@ -30,6 +31,7 @@ export class QueueService {
         imageVersion,
         cpuLimit,
         ramLimit,
+        plan,
       },
       {
         priority: 5,
@@ -43,10 +45,14 @@ export class QueueService {
     );
   }
 
-  async enqueueWake(projectId: string, userId: string): Promise<void> {
+  async enqueueWake(
+    projectId: string,
+    userId: string,
+    subdomain: string,
+  ): Promise<void> {
     await this.containerOpsQueue.add(
       'wake',
-      { projectId, userId },
+      { projectId, userId, subdomain },
       {
         priority: 1, // Highest priority
         attempts: 2,
@@ -54,15 +60,20 @@ export class QueueService {
           type: 'exponential',
           delay: 1000,
         },
-        timeout: 30000, // 30 seconds
+        // Phải >= thời gian waitHealthy ở vps-worker (gateway cold-start có thể vài phút)
+        timeout: 360_000, // 6 minutes
       },
     );
   }
 
-  async enqueueStop(projectId: string, userId: string): Promise<void> {
+  async enqueueStop(
+    projectId: string,
+    userId: string,
+    subdomain: string,
+  ): Promise<void> {
     await this.containerOpsQueue.add(
       'stop',
-      { projectId, userId },
+      { projectId, userId, subdomain },
       {
         priority: 10, // Lowest priority
         attempts: 1,
@@ -71,10 +82,14 @@ export class QueueService {
     );
   }
 
-  async enqueueDestroy(projectId: string, userId: string): Promise<void> {
+  async enqueueDestroy(
+    projectId: string,
+    userId: string,
+    subdomain: string,
+  ): Promise<void> {
     await this.containerOpsQueue.add(
       'destroy',
-      { projectId, userId },
+      { projectId, userId, subdomain },
       {
         priority: 5,
         attempts: 0, // No retries (prevent accidental double-delete)

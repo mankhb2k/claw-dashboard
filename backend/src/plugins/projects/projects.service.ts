@@ -2,10 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { nanoid } from 'nanoid';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QueueService } from '../../core/queue/queue.service';
 import { PlanGateService } from '../../core/billing/plan-gate.service';
@@ -17,6 +18,9 @@ import {
   ProjectStartedEvent,
   ProjectStoppedEvent,
 } from '../../core/common/events/app-events';
+import { SlugService } from '../../core/slug/slug.service';
+
+type ProjectWithPlan = Prisma.ProjectGetPayload<{ include: { plan: true } }>;
 
 @Injectable()
 export class ProjectsService {
@@ -25,29 +29,34 @@ export class ProjectsService {
     private readonly queue: QueueService,
     private readonly planGate: PlanGateService,
     private readonly events: EventEmitter2,
+    private readonly slug: SlugService,
   ) {}
 
   // ── List ─────────────────────────────────────────────────────────────────
 
   async findByUser(userId: string) {
-    return this.prisma.project.findMany({
+    const list = await this.prisma.project.findMany({
       where: { userId },
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
+    return list.map((p) => this.withPublicUrl(p));
   }
 
   // ── Create ────────────────────────────────────────────────────────────────
 
-  async create(userId: string) {
+  async create(userId: string, displayName: string) {
     const plan = await this.planGate.assertProjectLimit(userId);
-    const subdomain = await this.generateUniqueSubdomain();
+    const slug = await this.slug.ensureUniqueSubdomainFromDisplayName(displayName);
+    const image = this.getOpenClawImage();
+    const planName = plan.name === 'pro' ? 'pro' : 'free';
 
     const project = await this.prisma.project.create({
       data: {
         userId,
         planId: plan.id,
-        subdomain,
+        displayName,
+        subdomain: slug,
         status: 'CREATING',
       },
       include: { plan: true },
@@ -56,16 +65,17 @@ export class ProjectsService {
     await this.queue.enqueueSpawn(
       project.id,
       userId,
-      subdomain,
-      'openclaw:latest',
+      slug,
+      image,
       Number(plan.cpuVcpu),
       plan.ramMb,
+      planName,
     );
 
     await this.prisma.containerInstance.create({
       data: {
         projectId: project.id,
-        imageVersion: 'openclaw:latest',
+        imageVersion: image,
         cpuLimit: plan.cpuVcpu,
         ramLimit: plan.ramMb,
         status: 'STARTING',
@@ -76,20 +86,35 @@ export class ProjectsService {
     this.events.emit(AppEvents.PROJECT_CREATED, {
       projectId: project.id,
       userId,
-      subdomain,
+      subdomain: slug,
+      displayName,
       planName: plan.name,
     } satisfies ProjectCreatedEvent);
 
-    return project;
+    return this.withPublicUrl(project);
   }
 
-  // ── Health ────────────────────────────────────────────────────────────────
+  // ── Update (displayName only) ─────────────────────────────────────────────
+
+  async updateDisplayName(projectId: string, userId: string, displayName: string) {
+    const project = await this.findOwned(projectId, userId);
+    const updated = await this.prisma.project.update({
+      where: { id: projectId },
+      data: { displayName },
+      include: { plan: true },
+    });
+    return this.withPublicUrl(updated);
+  }
+
+  // ── Health ─────────────────────────────────────────────────────────────
 
   async getHealth(projectId: string, userId: string) {
     const project = await this.findOwned(projectId, userId);
     return {
       status: project.status,
+      displayName: project.displayName,
       subdomain: project.subdomain,
+      publicUrl: this.buildPublicUrl(project.subdomain),
       lastActiveAt: project.lastActiveAt,
       storageUsedMb: project.storageUsedMb,
     };
@@ -117,10 +142,12 @@ export class ProjectsService {
       data: { status: 'STARTING' },
     });
 
+    const image = this.getOpenClawImage();
+
     await this.prisma.containerInstance.create({
       data: {
         projectId,
-        imageVersion: 'openclaw:latest',
+        imageVersion: image,
         cpuLimit: project.plan.cpuVcpu,
         ramLimit: project.plan.ramMb,
         status: 'STARTING',
@@ -128,7 +155,7 @@ export class ProjectsService {
       },
     });
 
-    await this.queue.enqueueWake(projectId, userId);
+    await this.queue.enqueueWake(projectId, userId, project.subdomain);
 
     this.events.emit(AppEvents.PROJECT_STARTED, {
       projectId,
@@ -168,7 +195,7 @@ export class ProjectsService {
       });
     }
 
-    await this.queue.enqueueStop(projectId, userId);
+    await this.queue.enqueueStop(projectId, userId, project.subdomain);
 
     this.events.emit(AppEvents.PROJECT_STOPPED, {
       projectId,
@@ -183,12 +210,14 @@ export class ProjectsService {
   async remove(projectId: string, userId: string) {
     const project = await this.findOwned(projectId, userId);
 
-    if (project.status === 'RUNNING') {
+    if (project.status === 'RUNNING' || project.status === 'STARTING') {
       throw new BadRequestException('Stop the project before deleting');
     }
 
+    const { subdomain } = project;
+
+    await this.queue.enqueueDestroy(projectId, userId, subdomain);
     await this.prisma.project.delete({ where: { id: projectId } });
-    await this.queue.enqueueDestroy(projectId, userId);
 
     this.events.emit(AppEvents.PROJECT_DELETED, {
       projectId,
@@ -212,24 +241,72 @@ export class ProjectsService {
 
   // ── Internal API ─────────────────────────────────────────────────────────
 
-  async updateProjectStatus(projectId: string, status: ProjectStatus, containerId?: string) {
+  async updateProjectStatus(
+    projectId: string,
+    status: ProjectStatus,
+    containerId?: string,
+    errorMessage?: string,
+  ) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
 
-    const updated = await this.prisma.project.update({
-      where: { id: projectId },
-      data: { status: status as any },
-      include: { plan: true },
-    });
+    const prismaStatus = this.toPrismaProjectStatus(status);
 
-    if (containerId) {
-      await this.prisma.containerInstance.update({
-        where: { id: containerId },
-        data: { status: status as any },
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.project.update({
+        where: { id: projectId },
+        data: {
+          status: prismaStatus,
+          errorMessage: status === 'ERROR' ? (errorMessage ?? 'Unknown error') : null,
+          ...(status === 'RUNNING' && containerId
+            ? { containerName: `openclaw-${project.subdomain}` }
+            : {}),
+        },
+        include: { plan: true },
       });
-    }
 
-    return updated;
+      const instance = await tx.containerInstance.findFirst({
+        where: {
+          projectId,
+          status: { in: ['STARTING', 'RUNNING', 'STOPPING'] },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (instance) {
+        if (status === 'RUNNING') {
+          await tx.containerInstance.update({
+            where: { id: instance.id },
+            data: {
+              status: 'RUNNING',
+              ...(containerId
+                ? { containerId, startedAt: instance.startedAt ?? new Date() }
+                : {}),
+            },
+          });
+        } else if (status === 'STOPPED' || status === 'STOPPING') {
+          await tx.containerInstance.update({
+            where: { id: instance.id },
+            data: { status: 'STOPPED', stoppedAt: new Date() },
+          });
+        } else if (status === 'ERROR') {
+          await tx.containerInstance.update({
+            where: { id: instance.id },
+            data: {
+              status: 'ERROR',
+              ...(errorMessage ? { errorMessage } : {}),
+            },
+          });
+        } else if (status === 'STARTING' || status === 'CREATING') {
+          await tx.containerInstance.update({
+            where: { id: instance.id },
+            data: { status: 'STARTING' },
+          });
+        }
+      }
+
+      return updated;
+    });
   }
 
   async updateLastActiveAt(projectId: string, lastActiveAt: Date) {
@@ -245,6 +322,45 @@ export class ProjectsService {
 
   // ── Private ───────────────────────────────────────────────────────────────
 
+  private toPrismaProjectStatus(
+    s: ProjectStatus,
+  ): 'CREATING' | 'RUNNING' | 'STOPPED' | 'STARTING' | 'ERROR' {
+    if (s === 'DESTROYING' || s === 'STOPPING') {
+      return 'STOPPED';
+    }
+    return s;
+  }
+
+  private getAppDomainLabel(): string {
+    const raw = process.env.APP_DOMAIN || 'clawsandbox.cloud';
+    return raw
+      .replace(/^https?:\/\//i, '')
+      .split('/')[0]
+      .replace(/:\d+$/, '')
+      .trim() || 'clawsandbox.cloud';
+  }
+
+  private buildPublicUrl(subdomain: string): string {
+    return `https://${subdomain}.${this.getAppDomainLabel()}`;
+  }
+
+  private withPublicUrl<T extends ProjectWithPlan | (ProjectWithPlan & { publicUrl?: string })>(
+    project: T,
+  ): T & { publicUrl: string } {
+    if ('publicUrl' in project && project.publicUrl) {
+      return project as T & { publicUrl: string };
+    }
+    return { ...project, publicUrl: this.buildPublicUrl(project.subdomain) };
+  }
+
+  private getOpenClawImage(): string {
+    const v = process.env.OPENCLAW_IMAGE?.trim();
+    if (!v) {
+      throw new InternalServerErrorException('OPENCLAW_IMAGE is not configured');
+    }
+    return v;
+  }
+
   private async findOwned(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -255,17 +371,5 @@ export class ProjectsService {
     if (project.userId !== userId) throw new ForbiddenException('Not your project');
 
     return project;
-  }
-
-  private async generateUniqueSubdomain(): Promise<string> {
-    const maxRetries = 5;
-
-    for (let i = 0; i < maxRetries; i++) {
-      const subdomain = nanoid(8).toLowerCase();
-      const exists = await this.prisma.project.findUnique({ where: { subdomain } });
-      if (!exists) return subdomain;
-    }
-
-    throw new BadRequestException('Failed to generate unique subdomain after retries. Try again.');
   }
 }

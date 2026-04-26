@@ -106,6 +106,8 @@ model Project {
   id             String        @id @default(cuid())
   userId         String
   planId         String
+  /// Human-readable name (editable). Immutable slug is in `subdomain`.
+  displayName    String        @default("")
   subdomain      String        @unique
   containerName  String?
   status         ProjectStatus @default(CREATING)
