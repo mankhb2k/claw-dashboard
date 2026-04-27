@@ -205,32 +205,32 @@
 
 ---
 
-## `src/features/projects/dto/create-project.dto.ts`
+## `src/plugins/projects/dto/create-project.dto.ts`
 
 **Nhiệm vụ:** DTO cho `POST /api/projects`. Để trống — subdomain auto-generate.
 
 ---
 
-## `src/features/projects/dto/start-project.dto.ts`
+## `src/plugins/projects/dto/start-project.dto.ts`
 
 **Nhiệm vụ:** DTO cho `POST /api/projects/:id/start`. Để trống.
 
 ---
 
-## `src/features/projects/dto/stop-project.dto.ts`
+## `src/plugins/projects/dto/stop-project.dto.ts`
 
 **Nhiệm vụ:** DTO cho `POST /api/projects/:id/stop`. Để trống.
 
 ---
 
-## `src/features/projects/projects.service.ts`
+## `src/plugins/projects/projects.service.ts`
 
 **Nhiệm vụ:** Business logic Projects — CRUD, vòng đời container, plan limit checks.
 
 | Function | Mô tả |
 |---|---|
 | `findByUser(userId)` | Lấy tất cả projects của user, sort mới nhất trước |
-| `create(userId)` | Check plan limit → generate subdomain → create Project (CREATING) → enqueue spawn |
+| `create(userId, displayName)` | Check `maxProjects` + `maxConcurrentRunning` → generate subdomain → create Project (CREATING) → enqueue spawn |
 | `getHealth(projectId, userId)` | Trả `{status, subdomain, lastActiveAt, storageUsedMb}` |
 | `start(projectId, userId)` | Validate status STOPPED → update STARTING → enqueue wake |
 | `stop(projectId, userId)` | Validate status RUNNING → update STOPPED → enqueue stop |
@@ -243,7 +243,7 @@
 
 ---
 
-## `src/features/projects/projects.controller.ts`
+## `src/plugins/projects/projects.controller.ts`
 
 **Nhiệm vụ:** HTTP handler Projects endpoints. Tất cả routes qua `@UseGuards(SessionGuard)`.
 
@@ -259,7 +259,7 @@
 
 ---
 
-## `src/features/projects/projects.module.ts`
+## `src/plugins/projects/projects.module.ts`
 
 **Nhiệm vụ:** Import AuthModule, CommonModule, QueueModule. Export ProjectsService.
 
@@ -320,8 +320,8 @@
 
 | Function | Mô tả |
 |---|---|
-| `getFreePlan()` | Lấy plan `"free"` từ DB |
 | `getSubscription(userId)` | Tìm subscription của user, kèm plan info |
+| `upsertSubscription(userId, planId)` | Upsert subscription sang plan tương ứng |
 
 ---
 
@@ -331,32 +331,49 @@
 
 | Function | Mô tả |
 |---|---|
-| `verifyProjectCreation(userId)` | Check maxProjects limit, throw CONFLICT nếu exceed |
+| `getPlanForUser(userId)` | Resolve plan từ `subscription.plan`, throw nếu thiếu subscription |
+| `assertProjectLimit(userId)` | Check `maxProjects`, throw CONFLICT nếu vượt |
+| `assertConcurrentRunningLimit(userId)` | Check `maxConcurrentRunning`, throw CONFLICT nếu vượt |
 
 ---
 
 ## `src/core/billing/billing.module.ts`
 
-**Nhiệm vụ:** Export billing services.
+**Nhiệm vụ:** Export billing services (`BillingService`, `PlanGateService`, `CreditService`).
 
 ---
 
-## `src/features/heavy-jobs/heavy-jobs.service.ts`
+## `src/core/billing/credit.service.ts`
 
-**Nhiệm vụ:** Submit, track, cancel heavy jobs. Daily quota management.
+**Nhiệm vụ:** Quản lý credit wallet (monthly/purchased), deduct/refund/grant và transaction log.
 
 | Function | Mô tả |
 |---|---|
-| `submitJob(userId, projectId, tool, params)` | Check quota → create HeavyJob (PENDING) → enqueue |
-| `getJobStatus(jobId, userId)` | Get job status + metadata |
-| `cancelJob(jobId, userId)` | Cancel PENDING/PROCESSING jobs |
-| `listJobs(userId, projectId?)` | List jobs với optional filter |
-| `getJobResult(jobId, userId)` | Get result (chỉ khi DONE) |
-| `updateJobResult(jobId, status, resultPath, sizeMb, error)` | Internal: update job result |
+| `getCost(tool)` | Trả credit cost theo tool |
+| `getWallet(userId)` | Lấy hoặc khởi tạo wallet user |
+| `listTransactions(userId, take)` | Lấy lịch sử credit transaction |
+| `consumeForHeavyJob(userId, tool, heavyJobId, description)` | Trừ credit atomically, ghi `USAGE` transaction |
+| `refundForHeavyJob(userId, heavyJobId, amount, description)` | Hoàn credit, ghi `REFUND` transaction |
+| `grantMonthly(userId, credits, resetAt)` | Cấp monthly credits, ghi `MONTHLY_GRANT` transaction |
 
 ---
 
-## `src/features/heavy-jobs/heavy-jobs.controller.ts`
+## `src/plugins/heavy-jobs/heavy-jobs.service.ts`
+
+**Nhiệm vụ:** Submit, track, cancel heavy jobs. Credit wallet management (deduct/refund).
+
+| Function | Mô tả |
+|---|---|
+| `submitJob(userId, projectId, tool, params)` | Resolve tool cost → create HeavyJob(PENDING, creditCost) → deduct credits atomically → enqueue |
+| `getJobStatus(jobId, userId)` | Get job status + metadata |
+| `cancelJob(jobId, userId)` | Cancel PENDING/PROCESSING jobs + refund credit |
+| `listJobs(userId, projectId?)` | List jobs với optional filter |
+| `getJobResult(jobId, userId)` | Get result (chỉ khi DONE) |
+| `updateJobResult(jobId, status, resultPath, sizeMb, error)` | Internal: update job result; refund credit nếu FAILED |
+
+---
+
+## `src/plugins/heavy-jobs/heavy-jobs.controller.ts`
 
 **Nhiệm vụ:** HTTP handler heavy jobs. Qua `@UseGuards(SessionGuard)`.
 
@@ -370,7 +387,7 @@
 
 ---
 
-## `src/features/heavy-jobs/mock-heavy-worker.service.ts`
+## `src/plugins/heavy-jobs/mock-heavy-worker.service.ts`
 
 **Nhiệm vụ:** Mock heavy job processor — simulate ffmpeg, playwright, tts, stt. Dev-only.
 
@@ -381,13 +398,31 @@
 
 ---
 
-## `src/features/heavy-jobs/tool-registry.ts`
+## `src/plugins/heavy-jobs/tool-registry.ts`
 
 **Nhiệm vụ:** Tool metadata — timeouts, quotas, descriptions.
 
 | Export | Mô tả |
 |---|---|
 | `TOOL_REGISTRY` | Map of tools with timeout, quota, description |
+
+---
+
+## `src/plugins/credits/credits.controller.ts`
+
+**Nhiệm vụ:** HTTP handler cho credit APIs. Qua `@UseGuards(SessionGuard)`.
+
+| Endpoint | Function | Mô tả |
+|---|---|---|
+| `GET /api/credits/wallet` | `wallet()` | Lấy wallet hiện tại |
+| `GET /api/credits/history` | `history()` | Lấy lịch sử credit transactions |
+| `GET /api/credits/cost/:tool` | `cost()` | Xem cost theo tool |
+
+---
+
+## `src/plugins/credits/credits.module.ts`
+
+**Nhiệm vụ:** Wire controller credits, dùng `BillingModule` + `AuthModule`.
 
 ---
 
@@ -403,13 +438,13 @@
 
 ---
 
-## `src/scheduler/idle-detection.service.ts`
+## `src/plugins/scheduler/idle-detection.service.ts`
 
 **Nhiệm vụ:** Cron scheduler — auto-stop idle projects mỗi 1 phút. Plan-aware timeout.
 
 | Function | Mô tả |
 |---|---|
-| `detectAndStopIdleProjects()` @Cron | Scan RUNNING projects, check lastActiveAt vs idle timeout, update to STOPPING, enqueue stop |
+| `detectAndStopIdleProjects()` @Cron | Scan RUNNING projects, check lastActiveAt vs idle timeout (plan từ subscription), update STOPPED, enqueue stop |
 | `triggerManual()` | Manual trigger từ `/api/internal/trigger-idle-detection` (dev/test) |
 
 ---

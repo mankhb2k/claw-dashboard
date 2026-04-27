@@ -1,7 +1,8 @@
 import { IsString, IsEnum, IsObject, IsNotEmpty } from 'class-validator';
 
 enum HeavyToolEnum {
-  FFMPEG = 'FFMPEG',
+  FFMPEG_SHORT = 'FFMPEG_SHORT',
+  FFMPEG_LONG = 'FFMPEG_LONG',
   PLAYWRIGHT = 'PLAYWRIGHT',
   TTS = 'TTS',
   STT = 'STT',
@@ -14,7 +15,7 @@ export class SubmitHeavyJobDto {
 
   @IsEnum(HeavyToolEnum)
   @IsNotEmpty()
-  tool!: 'FFMPEG' | 'PLAYWRIGHT' | 'TTS' | 'STT';
+  tool!: 'FFMPEG_SHORT' | 'FFMPEG_LONG' | 'PLAYWRIGHT' | 'TTS' | 'STT';
 
   @IsObject()
   @IsNotEmpty()

@@ -58,14 +58,10 @@ export class DockerService {
       name,
       Image: image,
       Hostname: name,
-      // Override cmd to inject controlUi config before gateway run so it can bind to non-loopback
+      // Keep command lean to avoid cold-start overhead from repeated config writes.
       Cmd: [
         'sh', '-lc',
-        [
-          'node_modules/openclaw/openclaw.mjs config set gateway.controlUi.root /app/vendor/control-ui',
-          'node_modules/openclaw/openclaw.mjs config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true',
-          'node_modules/openclaw/openclaw.mjs gateway run --allow-unconfigured --bind lan --port 18789 --auth token --token "${OPENCLAW_GATEWAY_TOKEN:-dev-openclaw-token-18789}"',
-        ].join(' && '),
+        'node_modules/openclaw/openclaw.mjs gateway run --allow-unconfigured --bind lan --port 18789 --auth token --token "${OPENCLAW_GATEWAY_TOKEN:-dev-openclaw-token-18789}"',
       ],
       HostConfig: {
         Memory: memory,
@@ -79,7 +75,9 @@ export class DockerService {
         `OPENCLAW_PLAN=${plan}`,
         `OPENCLAW_USER_ID=${userId}`,
         `OPENCLAW_PROJECT_ID=${projectId}`,
-        // Required: gateway needs this to start with non-loopback bind (--bind lan)
+        // Use env-driven config to avoid expensive "openclaw config set" calls on every boot.
+        `OPENCLAW_GATEWAY_CONTROL_UI_ROOT=/app/vendor/control-ui`,
+        // Required: gateway needs this when running with --bind lan
         `OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUS_HOST_FALLBACK=true`,
         `APP_DOMAIN=${APP_DOMAIN}`,
       ],
@@ -112,7 +110,11 @@ export class DockerService {
       const container = this.docker.getContainer(containerId);
       await container.start();
       logger.log(`Container started: ${containerId.substring(0, 12)}`);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.statusCode === 304) {
+        logger.warn(`Container already started or in starting state: ${containerId}`);
+        return;
+      }
       logger.error(`Failed to start container ${containerId}:`, err);
       throw err;
     }

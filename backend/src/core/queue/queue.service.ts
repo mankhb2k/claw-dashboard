@@ -20,7 +20,7 @@ export class QueueService {
     imageVersion: string,
     cpuLimit: number,
     ramLimit: number,
-    plan: 'free' | 'pro',
+    idleTimeoutMin: number,
   ): Promise<void> {
     await this.containerOpsQueue.add(
       'spawn',
@@ -31,7 +31,7 @@ export class QueueService {
         imageVersion,
         cpuLimit,
         ramLimit,
-        plan,
+        idleTimeoutMin,
       },
       {
         priority: 5,
@@ -40,7 +40,8 @@ export class QueueService {
           type: 'exponential',
           delay: 2000,
         },
-        timeout: 120000, // 2 minutes
+        // Must cover gateway cold-start budget in vps-worker waitHealthy().
+        timeout: 360_000, // 6 minutes
       },
     );
   }

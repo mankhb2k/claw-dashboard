@@ -1,7 +1,15 @@
 # OpenClaw SaaS — Roadmap & MVP Plan
 
-> Updated: 2026-04-23
+> Updated: 2026-04-27
 > Status: Phase 1 (MVP) — Railway backend deployed, VPS setup in progress
+> Related docs: Architecture flow in `workflow.md`; billing and quota source of truth in `billing-plan.md`
+
+## Document Role
+
+- **Purpose:** Checklist và timeline triển khai.
+- **Owns:** phase/sprint tasks, migration sequence, rollout order.
+- **Does not own:** kiến trúc chi tiết (`workflow.md`) và billing policy (`billing-plan.md`).
+- **Terminology note:** Dùng `project` làm đơn vị sản phẩm; runtime hiện tại map 1:1, tức **1 project = 1 container worker**.
 
 ---
 
@@ -37,9 +45,9 @@
 - [ ] `GET /api/projects/:id/health` → health check polling
 - [ ] `POST /api/projects/:id/start` → manual wake
 - [ ] `PUT /api/internal/status` → VPS Worker callback
-- [ ] Idle detection cron (scan every 1 min, stop after 10 min)
+- [ ] Idle detection cron (scan every 1 min, dùng `plan.idleTimeoutMin`: Free 10m, Pro 60m)
 - [ ] `vps_nodes` table seeded (vps-1 entry)
-- [ ] `projects` table with `subdomain`, `vps_id`, `container_id`, `status`
+- [ ] `projects` table with `subdomain`, `vps_id`, `container_name`, `status`
 
 ### 📋 VPS Worker (Container Orchestrator)
 - [ ] BullMQ consumer: spawn / wake / stop / destroy
@@ -190,35 +198,85 @@ Cloudflare geo-routing: user → nearest VPS region
 
 ---
 
+## Billing & Resource Model
+
+Để tránh trùng lặp tài liệu, phần này được tách riêng:
+
+- Xem policy đầy đủ tại `billing-plan.md`
+- Workflow kỹ thuật liên quan xem `workflow.md`
+
+Roadmap này chỉ giữ checklist triển khai theo sprint/phase.
+
+---
+
 ## Feature Roadmap
+
+> Scope note:
+> - **MVP Core:** Sprint 1
+> - **Post-MVP / mở rộng:** Sprint 2+
 
 ### Sprint 1 — MVP Core (Now)
 - Auth: email/password + Google OAuth
-- Project create → spawn container
+- Project create → spawn container (validate maxProjects + maxConcurrentRunning từ user plan)
 - Project start/stop (manual)
-- Idle shutdown (10 min free)
+- Idle shutdown (10 min free, 60 min pro — từ plan.idleTimeoutMin)
 - Dashboard: status, start button, domain link
 
-### Sprint 2 — Idle Smart
-- Wake-proxy service (Traefik fallback for stopped containers)
-- Telegram webhook wake-on-message
-- CP-owned cron scheduler (via `/hooks/agent`)
-- Pro plan: 60 min idle timeout
+### Sprint 2 — Plan Model & Idle Smart
 
-### Sprint 3 — Channels & Keep-alive
+**Schema migration:**
+- [ ] Bỏ `project.planId` — resolve plan qua `user → subscription → plan`
+- [ ] Bỏ `project.heavyQuotaUsed`
+- [ ] Thêm `project.keepAlive: Boolean`
+- [ ] Thêm `plans.maxConcurrentRunning`, `plans.maxKeepAliveProjects`
+- [ ] (Nếu còn schema cũ) migrate `plans.heavyJobsPerDay` → `plans.monthlyCredits`
+- [ ] Seed data cập nhật cho Free và Pro
+
+**Logic:**
+- [ ] Wake-proxy service (Traefik fallback cho stopped containers)
+- [ ] Telegram webhook wake-on-message
+- [ ] CP-owned cron scheduler (via `/hooks/agent`)
+
+### Sprint 3 — Credit System & Billing
+
+**Schema:**
+- [ ] Bảng `user_credits` (monthlyBalance, purchasedBalance, monthlyResetAt)
+- [ ] Bảng `credit_transactions` (audit trail)
+- [ ] Bảng `credit_packs` (seed: starter/standard/pro_pack)
+- [ ] Thêm `heavy_jobs.creditCost` (snapshot tại lúc submit)
+
+**Backend:**
+- [ ] `CreditService.checkAndDeduct(userId, tool)` — atomic transaction
+- [ ] `CreditService.refund(userId, heavyJobId)` — hoàn credit khi server error
+- [ ] `CreditService.grantMonthly(userId, credits)` — gọi khi Stripe subscription renew
+- [ ] `POST /api/credits/purchase` → Stripe Payment Intent
+- [ ] `POST /api/credits/webhook` ← Stripe payment_intent.succeeded
+- [ ] `GET /api/credits/wallet` → balance + resetAt
+- [ ] `GET /api/credits/history` → transactions paged
+- [ ] Monthly reset cron: scan subscriptions có `currentPeriodEnd <= NOW()`, grant + reset
+
+**Frontend:**
+- [ ] Credit wallet widget trong dashboard (balance + reset countdown)
+- [ ] Credit packs page — chọn pack → Stripe checkout
+- [ ] Heavy job submission hiển thị cost trước khi confirm
+- [ ] Transaction history page
+
+### Sprint 4 — Channels & Keep-alive
 - Channel config UI (Telegram, Slack tokens)
-- Auto keep-alive for tier-B channels (Discord, WhatsApp)
-- Channel status in project card
+- Auto set `project.keepAlive=true` khi bật tier-B channel (Discord, WhatsApp)
+- Validate `maxKeepAliveProjects` per user trước khi cho phép bật tier-B
+- Idle scheduler skip projects với `keepAlive=true`
+- Channel status trong project card
 
-### Sprint 4 — Multi-VPS
+### Sprint 5 — Multi-VPS
 - Per-project DNS via Cloudflare API
 - VPS load balancer (least active)
 - VPS health monitoring
 
-### Sprint 5 — Scale
+### Sprint 6 — Scale
 - Cloudflare Workers routing
 - Redis Sentinel
-- Usage analytics dashboard
+- Usage analytics dashboard (credit spend, heavy job stats)
 
 ---
 
@@ -233,4 +291,4 @@ Cloudflare geo-routing: user → nearest VPS region
 
 ---
 
-*Last updated: 2026-04-23*
+*Last updated: 2026-04-27*

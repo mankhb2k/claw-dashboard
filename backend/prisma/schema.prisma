@@ -25,6 +25,8 @@ model User {
   heavyJobs        HeavyJob[]
   subscription     Subscription?
   invoices         Invoice[]
+  credits          UserCredits?
+  creditTransactions CreditTransaction[]
 
   @@map("users")
 }
@@ -88,13 +90,14 @@ model Plan {
   ramMb            Int       @default(1024)
   cpuVcpu          Decimal   @default(0.5) @db.Decimal(3, 1)
   storageGb        Int       @default(4)
-  heavyJobsPerDay  Int       @default(3)
+  maxConcurrentRunning Int   @default(1)
+  maxKeepAliveProjects Int   @default(0)
+  monthlyCredits   Int       @default(0)
   idleTimeoutMin   Int       @default(10)
   priceMonthly     Int       @default(0)  // USD cents, 0 = free
   stripeProductId  String?   @unique
   stripePriceId    String?   @unique      // monthly price ID
 
-  projects         Project[]
   subscriptions    Subscription[]
 
   @@map("plans")
@@ -105,7 +108,6 @@ model Plan {
 model Project {
   id             String        @id @default(cuid())
   userId         String
-  planId         String
   /// Human-readable name (editable). Immutable slug is in `subdomain`.
   displayName    String        @default("")
   subdomain      String        @unique
@@ -113,13 +115,12 @@ model Project {
   status         ProjectStatus @default(CREATING)
   lastActiveAt   DateTime      @default(now())
   vpsId          String        @default("vps-1")
+  keepAlive      Boolean       @default(false)
   storageUsedMb  Int           @default(0)
-  heavyQuotaUsed Int           @default(0)
   errorMessage   String?
   createdAt      DateTime      @default(now())
 
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan               Plan               @relation(fields: [planId], references: [id])
   heavyJobs          HeavyJob[]
   containerInstances ContainerInstance[]
 
@@ -235,6 +236,7 @@ model HeavyJob {
   userId       String
   projectId    String
   tool         HeavyTool
+  creditCost   Int
   params       Json
   status       HeavyJobStatus @default(PENDING)
   resultPath   String?
@@ -246,16 +248,79 @@ model HeavyJob {
 
   user         User           @relation(fields: [userId], references: [id])
   project      Project        @relation(fields: [projectId], references: [id])
+  creditTransactions CreditTransaction[]
 
   @@index([userId, status], map: "idx_heavy_jobs_active")
   @@map("heavy_jobs")
 }
 
 enum HeavyTool {
-  FFMPEG
+  FFMPEG_SHORT
+  FFMPEG_LONG
   PLAYWRIGHT
   TTS
   STT
+}
+
+model UserCredits {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  monthlyBalance   Int      @default(0)
+  purchasedBalance Int      @default(0)
+  monthlyResetAt   DateTime?
+  totalGranted     Int      @default(0)
+  totalUsed        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_credits")
+}
+
+enum CreditTransactionType {
+  MONTHLY_GRANT
+  PURCHASE
+  USAGE
+  REFUND
+  EXPIRY
+}
+
+model CreditPack {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  credits          Int
+  priceUsd         Int
+  stripeProductId  String?  @unique
+  stripePriceId    String?  @unique
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  creditTransactions CreditTransaction[]
+
+  @@map("credit_packs")
+}
+
+model CreditTransaction {
+  id                    String                @id @default(cuid())
+  userId                String
+  type                  CreditTransactionType
+  amount                Int
+  balanceAfter          Int
+  description           String
+  heavyJobId            String?
+  creditPackId          String?
+  stripePaymentIntentId String?
+  createdAt             DateTime              @default(now())
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  heavyJob    HeavyJob?  @relation(fields: [heavyJobId], references: [id], onDelete: SetNull)
+  creditPack  CreditPack? @relation(fields: [creditPackId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([heavyJobId])
+  @@map("credit_transactions")
 }
 
 enum HeavyJobStatus {

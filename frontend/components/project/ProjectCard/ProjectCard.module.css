@@ -20,6 +20,17 @@
   gap: var(--space-3);
 }
 
+.nameLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.nameLink:hover .name,
+.nameLink:focus-visible .name {
+  color: var(--color-primary);
+}
+
 .name {
   font-size: var(--font-size-base);
   font-weight: 600;
@@ -56,7 +67,8 @@
 }
 
 .badge--starting,
-.badge--creating {
+.badge--creating,
+.badge--stopping {
   background: var(--color-primary-dim);
   color: var(--color-primary);
 }

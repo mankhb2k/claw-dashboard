@@ -13,6 +13,7 @@ import { ProjectsModule } from './plugins/projects/projects.module';
 import { HeavyJobsModule } from './plugins/heavy-jobs/heavy-jobs.module';
 import { SchedulerModule } from './plugins/scheduler/scheduler.module';
 import { WorkerCallbacksModule } from './plugins/worker-callbacks/worker-callbacks.module';
+import { CreditsModule } from './plugins/credits/credits.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { WorkerCallbacksModule } from './plugins/worker-callbacks/worker-callbac
     // plugins — business logic
     ProjectsModule,
     HeavyJobsModule,
+    CreditsModule,
     SchedulerModule,
     WorkerCallbacksModule,
   ],

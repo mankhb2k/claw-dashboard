@@ -22,12 +22,16 @@ export class MockHeavyWorkerService {
     try {
       this.logger.log('Starting mock heavy worker');
 
-      // Register a handler per tool dynamically — adding a new tool to TOOL_REGISTRY
-      // automatically gets a mock handler here, no code changes needed.
-      for (const [tool, config] of Object.entries(TOOL_REGISTRY)) {
-        const jobName = tool.toLowerCase();
+      const registered = new Set<string>();
+      // Register one handler per queue job name. FFMPEG variants share `ffmpeg` queue name.
+      for (const tool of Object.keys(TOOL_REGISTRY)) {
+        const jobName = tool.startsWith('FFMPEG') ? 'ffmpeg' : tool.toLowerCase();
+        if (registered.has(jobName)) continue;
+        registered.add(jobName);
         this.heavyTasksQueue.process(jobName, async (job) => {
-          return this.processHeavyJob(job, tool, config.mockDelayMs);
+          const runtimeTool = String(job.data.tool ?? tool).toUpperCase();
+          const runtimeCfg = TOOL_REGISTRY[runtimeTool] ?? TOOL_REGISTRY[tool];
+          return this.processHeavyJob(job, runtimeTool, runtimeCfg.mockDelayMs);
         });
       }
 

@@ -17,9 +17,10 @@ export function ProjectStatusPoller() {
 
   const shouldPoll = useMemo(
     () =>
-      projects.some(
-        (p) => p.status === 'creating' || p.status === 'starting',
-      ),
+      projects.some((p) => {
+        const s = p.status?.toUpperCase()
+        return s === 'CREATING' || s === 'STARTING' || s === 'STOPPING'
+      }),
     [projects],
   )
 

@@ -1,6 +1,7 @@
-import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, Put, Param } from '@nestjs/common';
 import { ProjectsService } from '../projects/projects.service';
 import { IdleDetectionService } from '../scheduler/idle-detection.service';
+import { HeavyJobsService } from '../heavy-jobs/heavy-jobs.service';
 import { WorkerSecretGuard } from './guards/worker-secret.guard';
 import { UpdateStatusDto } from './dtos/update-status.dto';
 import { UpdateHeartbeatDto } from './dtos/update-heartbeat.dto';
@@ -11,6 +12,7 @@ export class WorkerCallbacksController {
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly idleDetectionService: IdleDetectionService,
+    private readonly heavyJobsService: HeavyJobsService,
   ) {}
 
   @Post('status')
@@ -46,5 +48,26 @@ export class WorkerCallbacksController {
   async triggerIdleDetection() {
     await this.idleDetectionService.triggerManual();
     return { success: true, message: 'Idle detection triggered' };
+  }
+
+  @Put('job/:jobId/result')
+  @HttpCode(200)
+  async updateHeavyJobResult(
+    @Param('jobId') jobId: string,
+    @Body() body: {
+      status: 'DONE' | 'FAILED';
+      resultPath?: string;
+      resultSizeMb?: number;
+      errorMessage?: string;
+    },
+  ) {
+    await this.heavyJobsService.updateJobResult(
+      jobId,
+      body.status,
+      body.resultPath,
+      body.resultSizeMb,
+      body.errorMessage,
+    );
+    return { ok: true, jobId, status: body.status };
   }
 }

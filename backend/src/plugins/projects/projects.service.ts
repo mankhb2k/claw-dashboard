@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QueueService } from '../../core/queue/queue.service';
 import { PlanGateService } from '../../core/billing/plan-gate.service';
@@ -19,8 +18,6 @@ import {
   ProjectStoppedEvent,
 } from '../../core/common/events/app-events';
 import { SlugService } from '../../core/slug/slug.service';
-
-type ProjectWithPlan = Prisma.ProjectGetPayload<{ include: { plan: true } }>;
 
 @Injectable()
 export class ProjectsService {
@@ -37,7 +34,6 @@ export class ProjectsService {
   async findByUser(userId: string) {
     const list = await this.prisma.project.findMany({
       where: { userId },
-      include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
     return list.map((p) => this.withPublicUrl(p));
@@ -47,19 +43,17 @@ export class ProjectsService {
 
   async create(userId: string, displayName: string) {
     const plan = await this.planGate.assertProjectLimit(userId);
+    await this.planGate.assertConcurrentRunningLimit(userId);
     const slug = await this.slug.ensureUniqueSubdomainFromDisplayName(displayName);
     const image = this.getOpenClawImage();
-    const planName = plan.name === 'pro' ? 'pro' : 'free';
 
     const project = await this.prisma.project.create({
       data: {
         userId,
-        planId: plan.id,
         displayName,
         subdomain: slug,
         status: 'CREATING',
       },
-      include: { plan: true },
     });
 
     await this.queue.enqueueSpawn(
@@ -69,7 +63,7 @@ export class ProjectsService {
       image,
       Number(plan.cpuVcpu),
       plan.ramMb,
-      planName,
+      plan.idleTimeoutMin,
     );
 
     await this.prisma.containerInstance.create({
@@ -101,7 +95,6 @@ export class ProjectsService {
     const updated = await this.prisma.project.update({
       where: { id: projectId },
       data: { displayName },
-      include: { plan: true },
     });
     return this.withPublicUrl(updated);
   }
@@ -124,6 +117,7 @@ export class ProjectsService {
 
   async start(projectId: string, userId: string) {
     const project = await this.findOwned(projectId, userId);
+    const plan = await this.planGate.assertConcurrentRunningLimit(userId);
 
     if (project.status === 'RUNNING') {
       return { status: 'RUNNING', message: 'Already running' };
@@ -148,8 +142,8 @@ export class ProjectsService {
       data: {
         projectId,
         imageVersion: image,
-        cpuLimit: project.plan.cpuVcpu,
-        ramLimit: project.plan.ramMb,
+        cpuLimit: plan.cpuVcpu,
+        ramLimit: plan.ramMb,
         status: 'STARTING',
         nodeId: project.vpsId,
       },
@@ -162,7 +156,7 @@ export class ProjectsService {
       userId,
     } satisfies ProjectStartedEvent);
 
-    return { status: 'STARTING', message: 'Container is starting', estimatedWait: '3-5s' };
+    return { status: 'STARTING', message: 'Container is starting', estimatedWait: '30-120s' };
   }
 
   // ── Stop ──────────────────────────────────────────────────────────────────
@@ -262,7 +256,6 @@ export class ProjectsService {
             ? { containerName: `openclaw-${project.subdomain}` }
             : {}),
         },
-        include: { plan: true },
       });
 
       const instance = await tx.containerInstance.findFirst({
@@ -316,7 +309,6 @@ export class ProjectsService {
     return this.prisma.project.update({
       where: { id: projectId },
       data: { lastActiveAt },
-      include: { plan: true },
     });
   }
 
@@ -344,7 +336,7 @@ export class ProjectsService {
     return `https://${subdomain}.${this.getAppDomainLabel()}`;
   }
 
-  private withPublicUrl<T extends ProjectWithPlan | (ProjectWithPlan & { publicUrl?: string })>(
+  private withPublicUrl<T extends { subdomain: string; publicUrl?: string }>(
     project: T,
   ): T & { publicUrl: string } {
     if ('publicUrl' in project && project.publicUrl) {
@@ -364,7 +356,6 @@ export class ProjectsService {
   private async findOwned(projectId: string, userId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      include: { plan: true },
     });
 
     if (!project) throw new NotFoundException('Project not found');

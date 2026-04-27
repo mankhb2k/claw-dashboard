@@ -18,10 +18,12 @@ async function main() {
     create: {
       name: 'free',
       maxProjects: 1,
+      maxConcurrentRunning: 1,
+      maxKeepAliveProjects: 0,
       ramMb: 1024,
       cpuVcpu: 0.5,
       storageGb: 4,
-      heavyJobsPerDay: 0, // Heavy jobs Pro-only
+      monthlyCredits: 0,
       idleTimeoutMin: 10,
       priceMonthly: 0,
     },
@@ -33,15 +35,30 @@ async function main() {
     update: {},
     create: {
       name: 'pro',
-      maxProjects: 10,
+      maxProjects: 3,
+      maxConcurrentRunning: 3,
+      maxKeepAliveProjects: 1,
       ramMb: 2048,
       cpuVcpu: 1.0,
-      storageGb: 100,
-      heavyJobsPerDay: 100,
+      storageGb: 10,
+      monthlyCredits: 200,
       idleTimeoutMin: 60,
-      priceMonthly: 2999,
+      priceMonthly: 2000,
     },
   });
+
+  const packs = [
+    { name: 'starter', credits: 120, priceUsd: 1000 },
+    { name: 'standard', credits: 320, priceUsd: 2500 },
+    { name: 'pro_pack', credits: 700, priceUsd: 5000 },
+  ];
+  for (const pack of packs) {
+    await prisma.creditPack.upsert({
+      where: { name: pack.name },
+      update: { credits: pack.credits, priceUsd: pack.priceUsd, active: true },
+      create: pack,
+    });
+  }
 
   console.log('✓ Free plan seeded:', freePlan);
   console.log('✓ Pro plan seeded:', proPlan);

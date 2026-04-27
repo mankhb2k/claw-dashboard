@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -36,34 +35,20 @@ export class PlanGateService {
     return plan;
   }
 
-  // Throws ForbiddenException if not Pro, ConflictException if daily quota exhausted.
-  // Returns the plan so callers can access heavyJobsPerDay etc.
-  async assertHeavyJobQuota(userId: string) {
+  // Throws ConflictException if running projects exceed concurrent limit.
+  async assertConcurrentRunningLimit(userId: string) {
     const plan = await this.getPlanForUser(userId);
-
-    if (plan.name !== 'pro') {
-      throw new ForbiddenException(
-        'Heavy jobs only available on Pro plan. Upgrade to access FFmpeg, Playwright, TTS/STT.',
-      );
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const jobsToday = await this.prisma.heavyJob.count({
+    const runningCount = await this.prisma.project.count({
       where: {
         userId,
-        status: { in: ['PROCESSING', 'DONE'] },
-        submittedAt: { gte: today },
+        status: { in: ['RUNNING', 'STARTING'] },
       },
     });
-
-    if (jobsToday >= plan.heavyJobsPerDay) {
+    if (runningCount >= plan.maxConcurrentRunning) {
       throw new ConflictException(
-        `Daily heavy job limit (${plan.heavyJobsPerDay}) reached.`,
+        `Plan allows ${plan.maxConcurrentRunning} running project(s) at the same time.`,
       );
     }
-
     return plan;
   }
 }

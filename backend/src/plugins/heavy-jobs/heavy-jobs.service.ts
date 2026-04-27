@@ -6,9 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { HeavyTool } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QueueService } from '../../core/queue/queue.service';
-import { PlanGateService } from '../../core/billing/plan-gate.service';
+import { CreditService } from '../../core/billing/credit.service';
 import {
   AppEvents,
   HeavyJobCancelledEvent,
@@ -16,14 +17,12 @@ import {
 } from '../../core/common/events/app-events';
 import { getToolConfig } from './tool-registry';
 
-type HeavyTool = 'FFMPEG' | 'PLAYWRIGHT' | 'TTS' | 'STT';
-
 @Injectable()
 export class HeavyJobsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly queue: QueueService,
-    private readonly planGate: PlanGateService,
+    private readonly creditService: CreditService,
     private readonly events: EventEmitter2,
   ) {}
 
@@ -37,25 +36,34 @@ export class HeavyJobsService {
     if (!project) throw new NotFoundException('Project not found');
     if (project.userId !== userId) throw new ForbiddenException('Not your project');
 
-    await this.planGate.assertHeavyJobQuota(userId);
-
-    const toolConfig = getToolConfig(tool);
+    const normalizedTool = tool.toUpperCase() as HeavyTool;
+    const toolConfig = getToolConfig(normalizedTool);
+    const queueTool = normalizedTool.startsWith('FFMPEG') ? 'ffmpeg' : normalizedTool.toLowerCase();
 
     const job = await this.prisma.heavyJob.create({
       data: {
         userId,
         projectId,
-        tool: tool as any,
+        tool: normalizedTool,
+        creditCost: toolConfig.creditCost,
         params,
         status: 'PENDING',
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       },
     });
 
-    await this.queue.enqueueHeavyJob(tool, {
+    await this.creditService.consumeForHeavyJob(
+      userId,
+      normalizedTool,
+      job.id,
+      `${normalizedTool} job`,
+    );
+
+    await this.queue.enqueueHeavyJob(queueTool, {
       jobId: job.id,
       userId,
       projectId,
+      tool: normalizedTool,
       params,
       timeout: toolConfig.timeout,
     });
@@ -64,12 +72,13 @@ export class HeavyJobsService {
       jobId: job.id,
       userId,
       projectId,
-      tool,
+      tool: normalizedTool,
     } satisfies HeavyJobSubmittedEvent);
 
     return {
       jobId: job.id,
       status: job.status,
+      creditCost: job.creditCost,
       submittedAt: job.submittedAt,
       estimatedWait: toolConfig.estimatedWait,
     };
@@ -85,6 +94,7 @@ export class HeavyJobsService {
       completedAt: job.completedAt,
       resultPath: job.resultPath,
       resultSizeMb: job.resultSizeMb,
+      creditCost: job.creditCost,
       errorMessage: job.errorMessage,
     };
   }
@@ -100,6 +110,12 @@ export class HeavyJobsService {
       where: { id: jobId },
       data: { status: 'CANCELLED' },
     });
+    await this.creditService.refundForHeavyJob(
+      userId,
+      jobId,
+      job.creditCost,
+      'Cancelled heavy job',
+    );
 
     this.events.emit(AppEvents.HEAVY_JOB_CANCELLED, {
       jobId,
@@ -122,6 +138,7 @@ export class HeavyJobsService {
     return jobs.map((job) => ({
       jobId: job.id,
       tool: job.tool,
+      creditCost: job.creditCost,
       status: job.status,
       submittedAt: job.submittedAt,
       completedAt: job.completedAt,
@@ -165,6 +182,14 @@ export class HeavyJobsService {
         completedAt: new Date(),
       },
     });
+    if (status === 'FAILED') {
+      await this.creditService.refundForHeavyJob(
+        job.userId,
+        job.id,
+        job.creditCost,
+        'Heavy job failed (server-side refund)',
+      );
+    }
   }
 
   // ── Private ───────────────────────────────────────────────────────────────

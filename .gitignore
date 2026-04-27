@@ -5,7 +5,8 @@
 **/.env.*.local
 **/dist/
 **/.next/
+**/vendor/
+**/*.tsbuildinfo
 *.log
 .DS_Store
 .tmp-openclaw-upstream
-.vendor

@@ -1,17 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useProjectStore } from '@/stores/project.store'
 import { Button } from '@/components/ui/Button/Button'
 import type { Project } from '@/schemas/project.schema'
 import styles from './ProjectCard.module.css'
 
 const STATUS_LABEL: Record<string, string> = {
-  running: 'Đang chạy',
-  stopped: 'Đã dừng',
-  starting: 'Đang khởi động...',
-  creating: 'Đang tạo...',
-  error: 'Lỗi',
+  RUNNING: 'Đang chạy',
+  STOPPED: 'Đã dừng',
+  STARTING: 'Đang khởi động...',
+  STOPPING: 'Đang dừng...',
+  CREATING: 'Đang tạo...',
+  ERROR: 'Lỗi',
 }
 
 interface ProjectCardProps {
@@ -46,8 +48,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
     }
   }
 
-  const isRunning = project.status === 'running'
-  const isBusy = project.status === 'starting' || project.status === 'creating'
+  const status = project.status?.toUpperCase() || ''
+  const isRunning = status === 'RUNNING'
+  const isBusy = status === 'STARTING' || status === 'CREATING' || status === 'STOPPING'
   const publicDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'
   const url = project.publicUrl ?? `https://${project.subdomain}.${publicDomain}`
 
@@ -55,14 +58,16 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <div className={styles.card}>
       <div className={styles.top}>
         <div>
-          <h3 className={styles.name}>{project.displayName || project.name}</h3>
+          <Link className={styles.nameLink} href={`/projects/${project.id}`}>
+            <h3 className={styles.name}>{project.displayName || project.name}</h3>
+          </Link>
           <p className={styles.subdomain}>
             {new URL(url).host}
           </p>
         </div>
-        <span className={[styles.badge, styles[`badge--${project.status}`]].join(' ')}>
+        <span className={[styles.badge, styles[`badge--${status.toLowerCase()}`]].join(' ')}>
           {isBusy && <span className={styles.badgeSpinner} />}
-          {STATUS_LABEL[project.status] ?? project.status}
+          {STATUS_LABEL[status] ?? project.status}
         </span>
       </div>
 

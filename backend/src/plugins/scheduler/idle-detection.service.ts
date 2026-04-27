@@ -20,12 +20,20 @@ export class IdleDetectionService {
           status: 'RUNNING',
         },
         include: {
-          plan: true,
+          user: {
+            include: {
+              subscription: {
+                include: { plan: true },
+              },
+            },
+          },
         },
       });
 
       for (const project of projects) {
-        const idleTimeoutMin = project.plan.idleTimeoutMin;
+        const idleTimeoutMin =
+          project.user.subscription?.plan?.idleTimeoutMin ??
+          10;
         const idleThreshold = new Date(Date.now() - idleTimeoutMin * 60 * 1000);
 
         if (project.lastActiveAt < idleThreshold) {

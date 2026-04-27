@@ -161,7 +161,7 @@ export const projectHandlers = {
       status: project.status,
       displayName: project.displayName,
       publicUrl:
-        project.status === 'running' ? (project.publicUrl ?? `https://${project.subdomain}.clawsandbox.cloud`) : undefined,
+        project.status === 'RUNNING' ? (project.publicUrl ?? `https://${project.subdomain}.clawsandbox.cloud`) : undefined,
       subdomain: project.subdomain,
     }
   },

@@ -21,19 +21,27 @@ export function Sidebar() {
       </div>
 
       <nav className={styles.nav}>
-        {NAV.map((item) => (
+        {NAV.map((item) => {
+          const isActive =
+            item.href === '/projects'
+              ? pathname === item.href || pathname.startsWith('/projects/')
+              : item.href === '/settings'
+                ? pathname.startsWith('/settings')
+                : pathname === item.href
+          return (
           <Link
             key={item.href}
             href={item.href}
             className={[
               styles.navItem,
-              pathname === item.href ? styles.navItemActive : '',
+              isActive ? styles.navItemActive : '',
             ].join(' ')}
           >
             <span className={styles.navIcon}>{item.icon}</span>
             {item.label}
           </Link>
-        ))}
+          )
+        })}
       </nav>
     </aside>
   )

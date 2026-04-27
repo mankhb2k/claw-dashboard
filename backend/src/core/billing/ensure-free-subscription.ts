@@ -25,4 +25,14 @@ export async function ensureDefaultFreeSubscription(
     },
     update: {},
   });
+
+  await prisma.userCredits.upsert({
+    where: { userId },
+    create: {
+      userId,
+      monthlyBalance: 0,
+      purchasedBalance: 0,
+    },
+    update: {},
+  });
 }
