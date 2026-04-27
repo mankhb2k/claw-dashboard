@@ -22,6 +22,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "openclaw": "2026.4.5"
+    "openclaw": "2026.4.24"
   }
 }
