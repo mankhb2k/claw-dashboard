@@ -1,3 +1,0 @@
-[submodule ".tmp-openclaw-upstream"]
-	path = .tmp-openclaw-upstream
-	url = https://github.com/openclaw/openclaw.git

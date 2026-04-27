@@ -8,7 +8,6 @@
 **/vendor/
 **/*.tsbuildinfo
 *.log
-worker/
+/worker/
 .DS_Store
 .tmp-openclaw-upstream
-

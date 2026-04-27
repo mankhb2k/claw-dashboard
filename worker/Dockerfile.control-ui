@@ -1,9 +1,0 @@
-FROM openclaw:2026.4.5
-
-WORKDIR /app
-
-# Inject the locally built Control-UI artifacts.
-COPY vendor/control-ui /app/vendor/control-ui
-
-# Configure gateway to serve Control-UI and run on LAN bind for Docker port publish.
-CMD ["sh", "-lc", "openclaw config set gateway.controlUi.root /app/vendor/control-ui && openclaw gateway run --allow-unconfigured --bind lan --port 18789 --auth token --token \"${OPENCLAW_GATEWAY_TOKEN:-dev-openclaw-token-18789}\""]
