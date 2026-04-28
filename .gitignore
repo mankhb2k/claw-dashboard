@@ -9,5 +9,5 @@
 **/*.tsbuildinfo
 *.log
 /worker/
+/openclaw-worker/
 .DS_Store
-.tmp-openclaw-upstream
