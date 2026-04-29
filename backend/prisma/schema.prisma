@@ -121,10 +121,12 @@ model Project {
   createdAt      DateTime      @default(now())
 
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vpsNode            VpsNode            @relation(fields: [vpsId], references: [id])
   heavyJobs          HeavyJob[]
   containerInstances ContainerInstance[]
 
   @@index([userId])
+  @@index([vpsId])
   @@index([lastActiveAt], map: "idx_projects_idle")
   @@map("projects")
 }
@@ -147,6 +149,7 @@ model ContainerInstance {
   createdAt    DateTime                @default(now())
 
   project      Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  vpsNode      VpsNode                 @relation(fields: [nodeId], references: [id])
 
   @@index([projectId])
   @@index([nodeId, status], map: "idx_instances_node_status")
@@ -329,4 +332,29 @@ enum HeavyJobStatus {
   DONE
   FAILED
   CANCELLED
+}
+
+// ─── Infrastructure ───────────────────────────────────────────────────────────
+
+model VpsNode {
+  id                 String              @id // ví dụ: "vps-1"
+  name               String
+  ipAddress          String              // IP Public để kết nối và setup DNS
+  totalRamMb         Int
+  totalCpu           Decimal             @db.Decimal(5, 1)
+  status             VpsStatus           @default(ACTIVE)
+  isAccepting        Boolean             @default(true) // Cho phép nhận project mới
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  projects           Project[]
+  containerInstances ContainerInstance[]
+
+  @@map("vps_nodes")
+}
+
+enum VpsStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
 }
