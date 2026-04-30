@@ -18,6 +18,7 @@ import { StartProjectDto } from './dto/start-project.dto';
 import { StopProjectDto } from './dto/stop-project.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { UpsertProjectEnvDto } from './dto/upsert-project-env.dto';
 
 @ApiTags('Projects')
 @ApiCookieAuth('better-auth.session_token')
@@ -90,6 +91,27 @@ export class ProjectsController {
   @ApiResponse({ status: 200, description: 'status, subdomain, lastActiveAt, storageUsedMb' })
   async health(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     const result = await this.projectsService.getHealth(id, user.id);
+    return ok(result);
+  }
+
+  // GET /api/projects/:id/env
+  @Get(':id/env')
+  @ApiOperation({ summary: 'List project env keys (masked)' })
+  async listEnv(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    const result = await this.projectsService.listEnvMetadata(id, user.id);
+    return ok(result);
+  }
+
+  // PUT /api/projects/:id/env
+  @Put(':id/env')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Upsert encrypted project env variables' })
+  async upsertEnv(
+    @Param('id') id: string,
+    @Body() dto: UpsertProjectEnvDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const result = await this.projectsService.upsertEnv(id, user.id, dto.env);
     return ok(result);
   }
 

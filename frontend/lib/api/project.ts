@@ -2,9 +2,11 @@ import { api } from '@/lib/axios'
 import {
   projectSchema,
   projectHealthSchema,
+  upsertProjectEnvSchema,
   type Project,
   type CreateProjectInput,
   type ProjectHealth,
+  type UpsertProjectEnvInput,
 } from '@/schemas/project.schema'
 import { z } from 'zod'
 
@@ -41,5 +43,10 @@ export const projectApi = {
 
   destroy: async (id: string): Promise<void> => {
     await api.delete(`/api/projects/${id}`)
+  },
+
+  upsertEnv: async (id: string, input: UpsertProjectEnvInput): Promise<void> => {
+    const parsed = upsertProjectEnvSchema.parse(input)
+    await api.put(`/api/projects/${id}/env`, parsed)
   },
 }

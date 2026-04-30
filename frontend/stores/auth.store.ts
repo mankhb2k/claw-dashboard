@@ -6,6 +6,7 @@ interface AuthState {
   user: User | null
   isLoading: boolean
   isInitialized: boolean
+  setUser: (user: User | null) => void
   login: (input: LoginInput) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   logout: () => Promise<void>
@@ -16,6 +17,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: false,
   isInitialized: false,
+  setUser: (user) => set({ user, isInitialized: true }),
 
   fetchMe: async () => {
     try {

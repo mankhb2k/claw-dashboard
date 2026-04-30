@@ -43,9 +43,7 @@
   letter-spacing: 0.05em;
 }
 
-.divider::before,
-.divider::after {
-  content: '';
+.dividerLine {
   flex: 1;
   height: 1px;
   background: var(--color-border);

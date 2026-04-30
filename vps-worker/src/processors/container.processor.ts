@@ -126,6 +126,8 @@ export class ContainerProcessor {
       }
     }
 
+    const runtimeEnv = await this.callback.getProjectRuntimeEnv(projectId);
+
     const containerId = await this.docker.createContainer({
       userId,
       projectId,
@@ -134,6 +136,7 @@ export class ContainerProcessor {
       imageVersion,
       cpuLimit,
       ramLimit,
+      envVars: runtimeEnv,
     });
 
     await this.docker.startContainer(containerId);

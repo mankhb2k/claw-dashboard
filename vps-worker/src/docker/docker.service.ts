@@ -31,13 +31,14 @@ export interface ContainerConfig {
   ramLimit: number;
   /** vCPU (e.g. 0.5, 1) */
   cpuLimit: number;
+  envVars?: Record<string, string>;
 }
 
 export class DockerService {
   private docker = new Docker();
 
   async createContainer(config: ContainerConfig): Promise<string> {
-    const { userId, projectId, subdomain, plan, imageVersion, ramLimit, cpuLimit } = config;
+    const { userId, projectId, subdomain, plan, imageVersion, ramLimit, cpuLimit, envVars } = config;
     const name = containerNameForSubdomain(subdomain);
     const key = traefikKey(projectId);
     const image = (imageVersion || DEFAULT_IMAGE).trim() || DEFAULT_IMAGE;
@@ -53,6 +54,13 @@ export class DockerService {
     }
 
     const hostRule = `Host(\`${subdomain}.${APP_DOMAIN}\`)`;
+
+    const extraEnv =
+      envVars
+        ? Object.entries(envVars)
+            .filter(([key, value]) => Boolean(key) && typeof value === 'string' && value.length > 0)
+            .map(([key, value]) => `${key}=${value}`)
+        : [];
 
     const containerConfig = {
       name,
@@ -80,6 +88,7 @@ export class DockerService {
         // Required: gateway needs this when running with --bind lan
         `OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUS_HOST_FALLBACK=true`,
         `APP_DOMAIN=${APP_DOMAIN}`,
+        ...extraEnv,
       ],
       Labels: {
         'traefik.enable': 'true',

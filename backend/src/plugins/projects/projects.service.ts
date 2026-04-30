@@ -18,6 +18,8 @@ import {
   ProjectStoppedEvent,
 } from '../../core/common/events/app-events';
 import { SlugService } from '../../core/slug/slug.service';
+import { ProjectEnvCryptoService } from './project-env-crypto.service';
+import { ALLOWED_PROJECT_ENV_KEYS } from './project-env.constants';
 
 @Injectable()
 export class ProjectsService {
@@ -27,6 +29,7 @@ export class ProjectsService {
     private readonly planGate: PlanGateService,
     private readonly events: EventEmitter2,
     private readonly slug: SlugService,
+    private readonly projectEnvCrypto: ProjectEnvCryptoService,
   ) {}
 
   // ── List ─────────────────────────────────────────────────────────────────
@@ -221,6 +224,103 @@ export class ProjectsService {
     return { deleted: true, projectId };
   }
 
+  // ── Project Env (encrypted) ────────────────────────────────────────────────
+
+  async upsertEnv(
+    projectId: string,
+    userId: string,
+    env: Array<{ key: string; value: string }>,
+  ) {
+    if (!Array.isArray(env) || env.length === 0) {
+      throw new BadRequestException('env is required');
+    }
+
+    const project = await this.findOwned(projectId, userId);
+
+    const normalized = env.map((entry) => ({
+      key: entry.key.trim().toUpperCase(),
+      value: entry.value,
+    }));
+
+    const keys = new Set<string>();
+    for (const entry of normalized) {
+      if (!ALLOWED_PROJECT_ENV_KEYS.has(entry.key)) {
+        throw new BadRequestException(`Env key is not allowed: ${entry.key}`);
+      }
+      if (keys.has(entry.key)) {
+        throw new BadRequestException(`Duplicate env key: ${entry.key}`);
+      }
+      keys.add(entry.key);
+    }
+
+    await this.prisma.$transaction(
+      normalized.map((entry) => {
+        const aad = this.envAad(project.id, userId, entry.key);
+        const encrypted = this.projectEnvCrypto.encrypt(entry.value, aad);
+        return this.prisma.projectEnvSecret.upsert({
+          where: { projectId_key: { projectId: project.id, key: entry.key } },
+          create: {
+            projectId: project.id,
+            key: entry.key,
+            ciphertext: encrypted.ciphertext,
+            iv: encrypted.iv,
+            authTag: encrypted.authTag,
+            algo: encrypted.algo,
+            keyVersion: encrypted.keyVersion,
+          },
+          update: {
+            ciphertext: encrypted.ciphertext,
+            iv: encrypted.iv,
+            authTag: encrypted.authTag,
+            algo: encrypted.algo,
+            keyVersion: encrypted.keyVersion,
+          },
+        });
+      }),
+    );
+
+    return this.listEnvMetadata(projectId, userId);
+  }
+
+  async listEnvMetadata(projectId: string, userId: string) {
+    await this.findOwned(projectId, userId);
+    const rows = await this.prisma.projectEnvSecret.findMany({
+      where: { projectId },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        key: true,
+        updatedAt: true,
+      },
+    });
+    return rows.map((r) => ({
+      key: r.key,
+      updatedAt: r.updatedAt,
+      masked: '********',
+    }));
+  }
+
+  async getRuntimeEnv(projectId: string) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const rows = await this.prisma.projectEnvSecret.findMany({ where: { projectId } });
+    const env: Record<string, string> = {};
+    for (const row of rows) {
+      const aad = this.envAad(project.id, project.userId, row.key);
+      env[row.key] = this.projectEnvCrypto.decrypt(
+        {
+          ciphertext: row.ciphertext,
+          iv: row.iv,
+          authTag: row.authTag,
+        },
+        aad,
+      );
+    }
+    return env;
+  }
+
   // ── Container Instance History ────────────────────────────────────────────
 
   async getInstances(projectId: string, userId: string) {
@@ -362,5 +462,9 @@ export class ProjectsService {
     if (project.userId !== userId) throw new ForbiddenException('Not your project');
 
     return project;
+  }
+
+  private envAad(projectId: string, userId: string, key: string): string {
+    return `${projectId}:${userId}:${key}`;
   }
 }

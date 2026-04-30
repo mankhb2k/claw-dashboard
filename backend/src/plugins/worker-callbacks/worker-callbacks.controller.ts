@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, HttpCode, Put, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, Put, Param, Get } from '@nestjs/common';
 import { ProjectsService } from '../projects/projects.service';
 import { IdleDetectionService } from '../scheduler/idle-detection.service';
 import { HeavyJobsService } from '../heavy-jobs/heavy-jobs.service';
@@ -69,5 +69,12 @@ export class WorkerCallbacksController {
       body.errorMessage,
     );
     return { ok: true, jobId, status: body.status };
+  }
+
+  @Get('projects/:projectId/runtime-env')
+  @HttpCode(200)
+  async getProjectRuntimeEnv(@Param('projectId') projectId: string) {
+    const env = await this.projectsService.getRuntimeEnv(projectId);
+    return { projectId, env };
   }
 }

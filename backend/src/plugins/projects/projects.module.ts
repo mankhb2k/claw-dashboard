@@ -6,11 +6,12 @@ import { CommonModule } from '../../core/common/common.module';
 import { QueueModule } from '../../core/queue/queue.module';
 import { BillingModule } from '../../core/billing/billing.module';
 import { SlugService } from '../../core/slug/slug.service';
+import { ProjectEnvCryptoService } from './project-env-crypto.service';
 
 @Module({
   imports: [AuthModule, CommonModule, QueueModule, BillingModule],
   controllers: [ProjectsController],
-  providers: [ProjectsService, SlugService],
+  providers: [ProjectsService, SlugService, ProjectEnvCryptoService],
   exports: [ProjectsService],
 })
 export class ProjectsModule {}

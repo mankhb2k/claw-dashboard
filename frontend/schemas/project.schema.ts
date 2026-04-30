@@ -26,6 +26,15 @@ export const createProjectSchema = z.object({
     .max(200, 'Tên tối đa 200 ký tự'),
 })
 
+export const projectEnvEntrySchema = z.object({
+  key: z.string().min(2).max(100),
+  value: z.string().min(1).max(5000),
+})
+
+export const upsertProjectEnvSchema = z.object({
+  env: z.array(projectEnvEntrySchema).min(1).max(100),
+})
+
 export const projectHealthSchema = z.object({
   status: projectStatusSchema,
   displayName: z.string().optional(),
@@ -39,3 +48,5 @@ export type Project = z.infer<typeof projectSchema>
 export type ProjectStatus = z.infer<typeof projectStatusSchema>
 export type CreateProjectInput = z.infer<typeof createProjectSchema>
 export type ProjectHealth = z.infer<typeof projectHealthSchema>
+export type ProjectEnvEntryInput = z.infer<typeof projectEnvEntrySchema>
+export type UpsertProjectEnvInput = z.infer<typeof upsertProjectEnvSchema>

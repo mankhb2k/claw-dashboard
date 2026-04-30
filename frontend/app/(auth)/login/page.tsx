@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import * as Separator from '@radix-ui/react-separator'
 import { loginSchema, type LoginInput } from '@/schemas/auth.schema'
 import { useAuthStore } from '@/stores/auth.store'
 import { authApi } from '@/lib/api/auth'
@@ -15,6 +16,7 @@ import styles from './login.module.css'
 export default function LoginPage() {
   const router = useRouter()
   const login = useAuthStore((s) => s.login)
+  const setUser = useAuthStore((s) => s.setUser)
   const isLoading = useAuthStore((s) => s.isLoading)
 
   const {
@@ -35,6 +37,18 @@ export default function LoginPage() {
         message: err instanceof Error ? err.message : 'Đăng nhập thất bại',
       })
     }
+  }
+
+  const skipLoginForDesign = () => {
+    document.cookie = 'oc_preview_auth=1; path=/; max-age=86400'
+    setUser({
+      id: 'preview-user',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      createdAt: new Date().toISOString(),
+      image: null,
+    })
+    router.push('/dashboard')
   }
 
   return (
@@ -73,12 +87,18 @@ export default function LoginPage() {
       </form>
 
       <div className={styles.divider}>
+        <Separator.Root className={styles.dividerLine} decorative orientation="horizontal" />
         <span>hoặc</span>
+        <Separator.Root className={styles.dividerLine} decorative orientation="horizontal" />
       </div>
 
       <div className={styles.socialLogin}>
         <SocialLoginButton provider="google" onClick={() => authApi.signInGoogle()} />
       </div>
+
+      <Button type="button" variant="ghost" style={{ width: '100%' }} onClick={skipLoginForDesign}>
+        Bỏ qua đăng nhập (Design mode)
+      </Button>
 
       <p className={styles.footer}>
         Chưa có tài khoản?{' '}

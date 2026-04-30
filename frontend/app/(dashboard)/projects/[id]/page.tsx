@@ -172,9 +172,9 @@ export default function ProjectDetailPage() {
           </Link>
           <p>Không tìm thấy project hoặc bạn không có quyền truy cập.</p>
           <div style={{ marginTop: 16 }}>
-            <Link href="/projects">
-              <Button>Quay lại Projects</Button>
-            </Link>
+            <Button asChild>
+              <Link href="/projects">Quay lại Projects</Link>
+            </Button>
           </div>
         </div>
       </>
@@ -194,35 +194,59 @@ export default function ProjectDetailPage() {
           ← Tất cả project
         </Link>
 
-        <div className={styles.head}>
-          <div className={styles.titleBlock}>
-            <h1 className={styles.title}>{displayName}</h1>
-            <div>
-              <span
-                className={[
-                  styles.badge,
-                  styles[
-                    `badge--${(statusRaw || 'STOPPED').toLowerCase()}` as keyof typeof styles
-                  ],
-                ].join(' ')}
-              >
-                {isBusy && <span className={styles.badgeSpinner} />}
-                {STATUS_LABEL[statusRaw] ?? p.status}
-              </span>
-            </div>
-            <div className={styles.urlRow}>
-              {publicUrl ? (
-                <a className={styles.url} href={isRunning ? publicUrl : undefined} rel="noreferrer" target={isRunning ? '_blank' : undefined}>
-                  {publicUrl}
-                </a>
-              ) : (
-                <span className={styles.urlMuted}>Chưa có URL công khai (khởi động project để cấp)</span>
-              )}
+        <section id="overview" className={styles.overviewCard}>
+          <div className={styles.head}>
+            <div className={styles.titleBlock}>
+              <h1 className={styles.title}>{displayName}</h1>
+              <div>
+                <span
+                  className={[
+                    styles.badge,
+                    styles[
+                      `badge--${(statusRaw || 'STOPPED').toLowerCase()}` as keyof typeof styles
+                    ],
+                  ].join(' ')}
+                >
+                  {isBusy && <span className={styles.badgeSpinner} />}
+                  {STATUS_LABEL[statusRaw] ?? p.status}
+                </span>
+              </div>
+              <div className={styles.urlRow}>
+                {publicUrl ? (
+                  <a
+                    className={styles.url}
+                    href={isRunning ? publicUrl : undefined}
+                    rel="noreferrer"
+                    target={isRunning ? '_blank' : undefined}
+                  >
+                    {publicUrl}
+                  </a>
+                ) : (
+                  <span className={styles.urlMuted}>
+                    Chưa có URL công khai (khởi động project để cấp)
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={styles.panel}>
+          <div className={styles.quickInfo}>
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>Subdomain</span>
+              <span className={styles.quickValue}>{p.subdomain}</span>
+            </div>
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>Hoạt động gần nhất</span>
+              <span className={styles.quickValue}>{formatWhen(health?.lastActiveAt ?? p.lastActiveAt)}</span>
+            </div>
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>Tạo lúc</span>
+              <span className={styles.quickValue}>{formatWhen(p.createdAt)}</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="info" className={styles.panel}>
           <h2 className={styles.panelTitle}>Thông tin</h2>
           <div className={styles.dl}>
             <div className={styles.row}>
@@ -235,9 +259,7 @@ export default function ProjectDetailPage() {
             </div>
             <div className={styles.row}>
               <span className={styles.dt}>Hoạt động gần nhất</span>
-              <span className={styles.dd}>
-                {formatWhen(health?.lastActiveAt ?? p.lastActiveAt)}
-              </span>
+              <span className={styles.dd}>{formatWhen(health?.lastActiveAt ?? p.lastActiveAt)}</span>
             </div>
             {typeof health?.storageUsedMb === 'number' && (
               <div className={styles.row}>
@@ -253,24 +275,24 @@ export default function ProjectDetailPage() {
             )}
           </div>
           {healthError && <p className={styles.error}>{healthError}</p>}
-          <div style={{ marginTop: 'var(--space-3)' }}>
+          <div className={styles.refreshWrap}>
             <Button type="button" size="sm" variant="ghost" onClick={() => void loadHealth()}>
               Cập nhật thông tin
             </Button>
           </div>
-        </div>
+        </section>
 
-        <div className={styles.panel}>
+        <section id="controls" className={styles.panel}>
           <h2 className={styles.panelTitle}>Điều khiển</h2>
           <div className={styles.actions}>
             {isRunning ? (
               <>
                 {publicUrl && (
-                  <a href={publicUrl} rel="noopener noreferrer" target="_blank">
-                    <Button size="sm" variant="ghost">
+                  <Button asChild size="sm" variant="ghost">
+                    <a href={publicUrl} rel="noopener noreferrer" target="_blank">
                       Mở dashboard
-                    </Button>
-                  </a>
+                    </a>
+                  </Button>
                 )}
                 <Button
                   type="button"
@@ -294,13 +316,13 @@ export default function ProjectDetailPage() {
               </Button>
             )}
           </div>
-        </div>
+        </section>
 
-        <div className={`${styles.panel} ${styles.danger}`}>
+        <section id="danger" className={`${styles.panel} ${styles.danger}`}>
           <h2 className={styles.panelTitle}>Khu vực nguy hiểm</h2>
           <p className={styles.dangerNote}>
-            Xoá project chỉ thực hiện được khi container đang dừng. Mọi dữ liệu trong project sẽ
-            bị gỡ.
+            Xoá project chỉ thực hiện được khi container đang dừng. Mọi dữ liệu trong project sẽ bị
+            gỡ.
           </p>
           <Button
             type="button"
@@ -312,7 +334,7 @@ export default function ProjectDetailPage() {
           >
             Xóa project
           </Button>
-        </div>
+        </section>
       </div>
     </>
   )

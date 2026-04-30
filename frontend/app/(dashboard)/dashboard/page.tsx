@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import Link from 'next/link'
 import { useProjectStore } from '@/stores/project.store'
+import { useCreateProjectModalStore } from '@/stores/create-project-modal.store'
 import { Header } from '@/components/layout/Header/Header'
 import { Button } from '@/components/ui/Button/Button'
 import { ProjectCard } from '@/components/project/ProjectCard/ProjectCard'
@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const isLoading = useProjectStore((s) => s.isLoading)
   const error = useProjectStore((s) => s.error)
   const fetchProjects = useProjectStore((s) => s.fetchProjects)
+  const openCreateModal = useCreateProjectModalStore((s) => s.open)
 
   useEffect(() => {
     fetchProjects()
@@ -28,9 +29,9 @@ export default function DashboardPage() {
             <h2 className={styles.heading}>Projects của bạn</h2>
             <p className={styles.sub}>Mỗi project chạy trên 1 container riêng biệt</p>
           </div>
-          <Link href="/projects/new">
-            <Button>+ Tạo project</Button>
-          </Link>
+          <Button type="button" onClick={() => openCreateModal('dashboard')}>
+            + Tạo project
+          </Button>
         </div>
 
         {error && <p className={styles.error}>{error}</p>}
@@ -44,9 +45,9 @@ export default function DashboardPage() {
           <div className={styles.empty}>
             <p className={styles.emptyIcon}>◈</p>
             <p className={styles.emptyText}>Chưa có project nào</p>
-            <Link href="/projects/new">
-              <Button>Tạo project đầu tiên</Button>
-            </Link>
+            <Button type="button" onClick={() => openCreateModal('dashboard')}>
+              Tạo project đầu tiên
+            </Button>
           </div>
         ) : (
           <div className={styles.grid}>
@@ -56,6 +57,7 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
     </>
   )
 }

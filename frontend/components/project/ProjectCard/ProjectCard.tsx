@@ -74,9 +74,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <div className={styles.actions}>
         {isRunning ? (
           <>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="ghost">Mở dashboard</Button>
-            </a>
+            <Button asChild size="sm" variant="ghost">
+              <a href={url} target="_blank" rel="noopener noreferrer">Mở dashboard</a>
+            </Button>
             <Button size="sm" variant="danger" loading={isActing} onClick={handleStop}>
               Dừng
             </Button>

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import * as Separator from '@radix-ui/react-separator'
 import { registerSchema, type RegisterInput } from '@/schemas/auth.schema'
 import { useAuthStore } from '@/stores/auth.store'
 import { authApi } from '@/lib/api/auth'
@@ -83,7 +84,9 @@ export default function RegisterPage() {
       </form>
 
       <div className={styles.divider}>
+        <Separator.Root className={styles.dividerLine} decorative orientation="horizontal" />
         <span>hoặc</span>
+        <Separator.Root className={styles.dividerLine} decorative orientation="horizontal" />
       </div>
 
       <div className={styles.socialLogin}>

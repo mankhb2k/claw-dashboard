@@ -124,11 +124,31 @@ model Project {
   vpsNode            VpsNode            @relation(fields: [vpsId], references: [id])
   heavyJobs          HeavyJob[]
   containerInstances ContainerInstance[]
+  envSecrets         ProjectEnvSecret[]
 
   @@index([userId])
   @@index([vpsId])
   @@index([lastActiveAt], map: "idx_projects_idle")
   @@map("projects")
+}
+
+model ProjectEnvSecret {
+  id         String   @id @default(cuid())
+  projectId  String
+  key        String
+  ciphertext String
+  iv         String
+  authTag    String
+  algo       String   @default("aes-256-gcm")
+  keyVersion Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, key], map: "uq_project_env_key")
+  @@index([projectId], map: "idx_project_env_project")
+  @@map("project_env_secrets")
 }
 
 // ─── Container Instances ──────────────────────────────────────────────────────
