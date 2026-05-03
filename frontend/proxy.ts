@@ -55,6 +55,11 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
 const PUBLIC_STATIC_EXT = /\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$/i
 
 export async function proxy(request: NextRequest) {
+  const previewMode = request.cookies.get(PREVIEW_COOKIE)?.value === '1'
+  if (MOCK_AUTH_BYPASS || previewMode) {
+    return NextResponse.next()
+  }
+
   const { pathname } = request.nextUrl
   /* next/image tải /man.png không gửi session; bỏ qua auth để không trả redirect HTML. */
   if (PUBLIC_STATIC_EXT.test(pathname)) {

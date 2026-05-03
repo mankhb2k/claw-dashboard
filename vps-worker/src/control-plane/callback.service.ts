@@ -58,4 +58,23 @@ export class CallbackService {
       logger.warn(`Failed to send heartbeat for ${projectId}:`, err);
     }
   }
+
+  async getProjectRuntimeEnv(projectId: string): Promise<Record<string, string>> {
+    const url = `${this.controlPlaneUrl}/api/internal/projects/${projectId}/runtime-env`;
+
+    try {
+      const response = await axios.get<{ projectId: string; env: Record<string, string> }>(url, {
+        headers: {
+          'Authorization': `Bearer ${this.workerSecret}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 5000,
+      });
+
+      return response.data?.env ?? {};
+    } catch (err) {
+      logger.error(`Failed to fetch runtime env for project ${projectId}:`, err);
+      throw err;
+    }
+  }
 }
