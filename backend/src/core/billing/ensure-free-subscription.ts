@@ -1,4 +1,4 @@
-import { APIError } from 'better-auth/api';
+import { InternalServerErrorException } from '@nestjs/common';
 import type { PrismaService } from '../database/prisma.service';
 
 /**
@@ -11,9 +11,9 @@ export async function ensureDefaultFreeSubscription(
 ): Promise<void> {
   const free = await prisma.plan.findUnique({ where: { name: 'free' } });
   if (!free) {
-    throw new APIError('INTERNAL_SERVER_ERROR', {
-      message: 'Free plan not configured. Apply Prisma migrations (baseline plans).',
-    });
+    throw new InternalServerErrorException(
+      'Free plan not configured. Apply Prisma migrations (baseline plans).',
+    );
   }
 
   await prisma.subscription.upsert({

@@ -1,10 +1,13 @@
+/* =============================================================================
+   1. NÚT — nền tả chung & focus
+   ============================================================================= */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   font-weight: 500;
   transition:
     background var(--transition-fast) ease,
@@ -24,7 +27,9 @@
   cursor: not-allowed;
 }
 
-/* Sizes */
+/* =============================================================================
+   2. KÍCH THƯỚC
+   ============================================================================= */
 .md {
   height: 38px;
   padding: 0 var(--space-4);
@@ -37,7 +42,9 @@
   font-size: var(--font-size-xs);
 }
 
-/* Variants */
+/* =============================================================================
+   3. BIẾN THỂ MÀU (variant)
+   ============================================================================= */
 .primary {
   background: var(--color-primary);
   color: #fff;
@@ -71,7 +78,9 @@
   background: var(--color-danger-dim);
 }
 
-/* Spinner */
+/* =============================================================================
+   4. SPINNER (loading inline)
+   ============================================================================= */
 .spinner {
   width: 14px;
   height: 14px;
@@ -82,6 +91,11 @@
   flex-shrink: 0;
 }
 
+/* =============================================================================
+   5. Animation
+   ============================================================================= */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

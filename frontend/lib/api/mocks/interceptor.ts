@@ -1,7 +1,19 @@
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { authHandlers, projectHandlers } from './handlers'
 
-const MOCK_ENABLED = process.env.NEXT_PUBLIC_MOCK_API === 'true'
+const MOCK_ENABLED = true
+
+function normalizePath(inputUrl: string): string {
+  const raw = inputUrl.trim()
+  if (!raw) return ''
+  try {
+    // Handle absolute URLs like http://localhost:3001/api/...
+    return new URL(raw).pathname
+  } catch {
+    // Handle relative URLs like /api/...
+    return raw.split('?')[0]
+  }
+}
 
 function isMockRoute(url: string, method: string): boolean {
   const mockRoutes: Array<
@@ -9,70 +21,61 @@ function isMockRoute(url: string, method: string): boolean {
     | { url: string; methods: string[] }
     | { pattern: RegExp; methods: string[] }
   > = [
-    { url: '/api/auth/login', method: 'post' },
-    { url: '/api/auth/register', method: 'post' },
-    { url: '/api/auth/logout', method: 'post' },
-    { url: '/api/auth/me', method: 'get' },
+    { url: '/api/auth/sign-in/email', method: 'post' },
+    { url: '/api/auth/sign-up/email', method: 'post' },
+    { url: '/api/auth/sign-out', method: 'post' },
+    { url: '/api/auth/get-session', method: 'get' },
     { url: '/api/projects', methods: ['get', 'post'] },
-    { pattern: /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|$)/, methods: ['get', 'post', 'delete'] },
+    { url: '/api/projects/mine', methods: ['get'] },
+    {
+      pattern: /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/env|$)/,
+      methods: ['get', 'post', 'put', 'delete'],
+    },
   ]
 
-  const baseUrl = url.split('?')[0]
-  const method_ = method.toLowerCase()
+  const baseUrl = normalizePath(url)
+  const methodName = method.toLowerCase()
 
   return mockRoutes.some((route) => {
     let urlMatches = false
     if ('url' in route) {
       urlMatches = baseUrl === route.url
-    } else if ('pattern' in route) {
+    } else {
       urlMatches = route.pattern.test(baseUrl)
     }
 
-    const methods =
-      'methods' in route ? route.methods : 'method' in route ? [route.method] : []
-    const methodMatches = methods.includes(method_)
-
-    return urlMatches && methodMatches
+    const methods = 'methods' in route ? route.methods : [route.method]
+    return urlMatches && methods.includes(methodName)
   })
 }
 
 export function setupMockInterceptor(api: AxiosInstance) {
   if (!MOCK_ENABLED) return
 
-  // Intercept requests at request level
   api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    // Mark mock requests so we can handle them
     if (isMockRoute(config.url ?? '', config.method ?? '')) {
-      ;(config as any)._isMocked = true
+      ;(config as { _isMocked?: boolean })._isMocked = true
     }
     return config
   })
 
-  // Handle mock responses
   api.interceptors.response.use(
-    (res: AxiosResponse) => {
-      // If this was a mocked request, just return the response as-is
-      if ((res.config as any)._isMocked) {
-        return res
-      }
-      return res
-    },
+    (res: AxiosResponse) => res,
     async (err) => {
-      const config = err.config as any
+      const config = err.config as InternalAxiosRequestConfig & { data?: unknown }
       if (!config || !isMockRoute(config.url ?? '', config.method ?? '')) {
         return Promise.reject(err)
       }
 
       try {
-        let responseData: any = {}
+        let responseData: unknown = {}
         const method = config.method?.toLowerCase() ?? 'get'
-        const url = config.url ?? ''
+        const rawUrl = config.url ?? ''
+        const url = normalizePath(rawUrl)
+        const reqData = typeof config.data === 'string' ? JSON.parse(config.data) : config.data
 
-        console.log(`[Mock API] ${method.toUpperCase()} ${url}`)
-
-        // Auth routes
-        if (url === '/api/auth/login' && method === 'post') {
-          responseData = authHandlers.login({ config, data: config.data })
+        if (url === '/api/auth/sign-in/email' && method === 'post') {
+          responseData = authHandlers.login({ config, data: reqData })
           return Promise.resolve({
             data: responseData,
             status: 200,
@@ -82,8 +85,8 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        if (url === '/api/auth/register' && method === 'post') {
-          responseData = authHandlers.register({ config, data: config.data })
+        if (url === '/api/auth/sign-up/email' && method === 'post') {
+          responseData = authHandlers.register({ config, data: reqData })
           return Promise.resolve({
             data: responseData,
             status: 200,
@@ -93,7 +96,7 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        if (url === '/api/auth/logout' && method === 'post') {
+        if (url === '/api/auth/sign-out' && method === 'post') {
           authHandlers.logout()
           return Promise.resolve({
             data: {},
@@ -104,7 +107,7 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        if (url === '/api/auth/me' && method === 'get') {
+        if (url === '/api/auth/get-session' && method === 'get') {
           responseData = authHandlers.me()
           return Promise.resolve({
             data: responseData,
@@ -115,8 +118,7 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        // Project routes
-        if (url === '/api/projects' && method === 'get') {
+        if ((url === '/api/projects' || url === '/api/projects/mine') && method === 'get') {
           responseData = projectHandlers.list()
           return Promise.resolve({
             data: responseData,
@@ -128,7 +130,7 @@ export function setupMockInterceptor(api: AxiosInstance) {
         }
 
         if (url === '/api/projects' && method === 'post') {
-          responseData = projectHandlers.create({ config, data: config.data })
+          responseData = projectHandlers.create({ config, data: reqData })
           return Promise.resolve({
             data: responseData,
             status: 201,
@@ -138,15 +140,24 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        // Project actions
+        const gatewayTokenMatch = url.match(/^\/api\/projects\/([\w-]+)\/gateway-token$/)
+        if (gatewayTokenMatch && method === 'get') {
+          const [, pid] = gatewayTokenMatch
+          responseData = projectHandlers.gatewayToken(pid)
+          return Promise.resolve({
+            data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
         const projectMatch = url.match(/^\/api\/projects\/([\w-]+)\/(start|stop|health)$/)
         if (projectMatch && method === 'post') {
           const [, id, action] = projectMatch
-          if (action === 'start') {
-            projectHandlers.start(id)
-          } else if (action === 'stop') {
-            projectHandlers.stop(id)
-          }
+          if (action === 'start') projectHandlers.start(id)
+          if (action === 'stop') projectHandlers.stop(id)
           return Promise.resolve({
             data: {},
             status: 200,
@@ -168,7 +179,6 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        // Delete project
         const deleteMatch = url.match(/^\/api\/projects\/([\w-]+)$/)
         if (deleteMatch && method === 'delete') {
           const [, id] = deleteMatch
@@ -182,13 +192,56 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        console.warn(`[Mock API] No handler for ${method.toUpperCase()} ${url}`)
+        const envMatch = url.match(/^\/api\/projects\/([\w-]+)\/env$/)
+        if (envMatch && method === 'put') {
+          const [, id] = envMatch
+          projectHandlers.upsertEnv(id, { config, data: reqData })
+          return Promise.resolve({
+            data: {},
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        if (envMatch && method === 'delete') {
+          const [, id] = envMatch
+          const keyName =
+            reqData &&
+            typeof reqData === 'object' &&
+            'key' in reqData &&
+            typeof (reqData as { key?: unknown }).key === 'string'
+              ? (reqData as { key: string }).key
+              : ''
+          projectHandlers.deleteEnvKey(id, keyName)
+          return Promise.resolve({
+            data: {},
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        if (envMatch && method === 'get') {
+          const [, id] = envMatch
+          responseData = projectHandlers.getEnv(id)
+          return Promise.resolve({
+            data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
         return Promise.reject(new Error(`Mock endpoint not found: ${method.toUpperCase()} ${url}`))
       } catch (mockErr) {
         const message = mockErr instanceof Error ? mockErr.message : 'Mock API error'
-        console.error(`[Mock API Error]`, message)
         return Promise.reject(new Error(message))
       }
     }
   )
 }
+

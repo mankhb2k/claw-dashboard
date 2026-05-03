@@ -10,6 +10,7 @@ import { HeavyTool } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QueueService } from '../../core/queue/queue.service';
 import { CreditService } from '../../core/billing/credit.service';
+import { PlanGateService } from '../../core/billing/plan-gate.service';
 import {
   AppEvents,
   HeavyJobCancelledEvent,
@@ -23,6 +24,7 @@ export class HeavyJobsService {
     private readonly prisma: PrismaService,
     private readonly queue: QueueService,
     private readonly creditService: CreditService,
+    private readonly planGate: PlanGateService,
     private readonly events: EventEmitter2,
   ) {}
 
@@ -39,6 +41,11 @@ export class HeavyJobsService {
     const normalizedTool = tool.toUpperCase() as HeavyTool;
     const toolConfig = getToolConfig(normalizedTool);
     const queueTool = normalizedTool.startsWith('FFMPEG') ? 'ffmpeg' : normalizedTool.toLowerCase();
+
+    const plan = await this.planGate.getPlanForUser(userId);
+    if (plan.name !== 'pro') {
+      throw new ForbiddenException('Heavy jobs require Pro plan.');
+    }
 
     const job = await this.prisma.heavyJob.create({
       data: {

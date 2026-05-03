@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/project/:projectSlug/info',
+        destination: '/project/:projectSlug/setting',
+        permanent: false,
+      },
+    ]
+  },
+
   async rewrites() {
     return {
       beforeFiles: [

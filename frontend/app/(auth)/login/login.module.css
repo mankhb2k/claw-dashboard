@@ -1,9 +1,15 @@
+/* =============================================================================
+   1. KHUNG TRANG — cột chứa tiêu đề & form
+   ============================================================================= */
 .wrapper {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
+/* =============================================================================
+   2. TIÊU ĐỀ
+   ============================================================================= */
 .title {
   font-size: var(--font-size-xl);
   font-weight: 700;
@@ -17,6 +23,9 @@
   margin-bottom: var(--space-4);
 }
 
+/* =============================================================================
+   3. FORM
+   ============================================================================= */
 .form {
   display: flex;
   flex-direction: column;
@@ -28,10 +37,13 @@
   color: var(--color-danger);
   background: var(--color-danger-dim);
   border: 1px solid var(--color-danger);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);
 }
 
+/* =============================================================================
+   4. PHÂN CÁCH & ĐĂNG NHẬP MXH
+   ============================================================================= */
 .divider {
   display: flex;
   align-items: center;
@@ -43,9 +55,7 @@
   letter-spacing: 0.05em;
 }
 
-.divider::before,
-.divider::after {
-  content: '';
+.dividerLine {
   flex: 1;
   height: 1px;
   background: var(--color-border);
@@ -57,6 +67,9 @@
   gap: var(--space-3);
 }
 
+/* =============================================================================
+   5. CHÂN TRANG — link chuyển trang
+   ============================================================================= */
 .footer {
   margin-top: var(--space-6);
   font-size: var(--font-size-sm);

@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { QueueService } from './queue.service';
 import { QueueConsumerService } from './queue-consumer.service';
+import { ProjectsModule } from '../../plugins/projects/projects.module';
 
 const getRedisConfig = () => {
   const redisUrl = process.env.REDIS_PUBLIC_URL;
@@ -40,6 +41,7 @@ const getRedisConfig = () => {
       { name: 'container-ops' },
       { name: 'heavy-tasks' },
     ),
+    forwardRef(() => ProjectsModule),
   ],
   providers: [QueueService, QueueConsumerService],
   exports: [QueueService, BullModule],

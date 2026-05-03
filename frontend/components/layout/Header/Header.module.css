@@ -1,5 +1,12 @@
+/* =============================================================================
+   1. THANH HEADER — chiều cao cố định, nền surface
+   ============================================================================= */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   height: var(--header-height);
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -14,21 +21,47 @@
   color: var(--color-text);
 }
 
+/* =============================================================================
+   2. VÙNG PHẢI — hành động người dùng
+   ============================================================================= */
 .right {
   display: flex;
   align-items: center;
   gap: var(--space-4);
 }
 
-.userMenu {
-  position: relative;
-  padding-bottom: var(--space-2);
+.themeToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  transition:
+    background var(--transition-fast) var(--ease-out),
+    border-color var(--transition-fast) var(--ease-out),
+    color var(--transition-fast) var(--ease-out);
 }
 
-.userMenu:hover .dropdown {
-  opacity: 1;
-  pointer-events: all;
-  transform: translateY(0);
+.themeToggle:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.themeToggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.avatarButton {
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .avatar {
@@ -46,20 +79,22 @@
   cursor: pointer;
 }
 
+.avatarButton:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-radius: 9999px;
+}
+
+/* =============================================================================
+   3. DROPDOWN MENU (Radix Content)
+   ============================================================================= */
 .dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: var(--space-2);
   min-width: 180px;
   box-shadow: var(--shadow-md);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-4px);
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  animation: dropdown-in var(--transition-fast) var(--ease-out);
 }
 
 .dropdownEmail {
@@ -73,8 +108,16 @@
   text-overflow: ellipsis;
 }
 
+.dropdownSeparator {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 var(--space-2) var(--space-2);
+}
+
 .dropdownItem {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   width: 100%;
   text-align: left;
   background: none;
@@ -86,6 +129,25 @@
   transition: background var(--transition-fast);
 }
 
-.dropdownItem:hover {
+.dropdownItem:hover:not(:disabled) {
   background: var(--color-danger-dim);
+}
+
+.dropdownItem:focus-visible {
+  outline: none;
+  background: var(--color-danger-dim);
+}
+
+/* =============================================================================
+   4. Animation
+   ============================================================================= */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -13,6 +13,8 @@ interface SpawnJobData {
   cpuLimit: number;
   ramLimit: number;
   plan: 'free' | 'pro';
+  idleTimeoutMin?: number;
+  dockerEnv?: Record<string, string>;
 }
 
 interface WakeJobData {
@@ -111,7 +113,8 @@ export class ContainerProcessor {
   }
 
   private async handleSpawn(data: SpawnJobData): Promise<void> {
-    const { projectId, userId, subdomain, plan, imageVersion, cpuLimit, ramLimit } = data;
+    const { projectId, userId, subdomain, imageVersion, cpuLimit, ramLimit } = data;
+    const plan: SpawnJobData['plan'] = data.plan === 'pro' ? 'pro' : 'free';
 
     logger.log(`[Spawn] Creating container for project ${projectId}`);
 
@@ -134,6 +137,7 @@ export class ContainerProcessor {
       imageVersion,
       cpuLimit,
       ramLimit,
+      dockerEnv: data.dockerEnv,
     });
 
     await this.docker.startContainer(containerId);

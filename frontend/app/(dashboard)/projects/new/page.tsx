@@ -1,42 +1,12 @@
-'use client'
+"use client";
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
-import { createProjectSchema, type CreateProjectInput } from '@/schemas/project.schema'
-import { useProjectStore } from '@/stores/project.store'
-import { Header } from '@/components/layout/Header/Header'
-import { Input } from '@/components/ui/Input/Input'
-import { Button } from '@/components/ui/Button/Button'
-import styles from './new-project.module.css'
+import { useRouter } from "next/navigation";
+import { Header } from "@/components/layout/Header/Header";
+import { CreateProjectFormCard } from "@/components/project/CreateProjectFormCard/CreateProjectFormCard";
+import styles from "./new-project.module.css";
 
 export default function NewProjectPage() {
-  const router = useRouter()
-  const createProject = useProjectStore((s) => s.createProject)
-
-  const {
-    register,
-    handleSubmit,
-    setError,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateProjectInput>({
-    resolver: zodResolver(createProjectSchema),
-  })
-
-  const displayNameValue = watch('displayName') ?? ''
-  const publicDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'
-
-  const onSubmit = async (data: CreateProjectInput) => {
-    try {
-      await createProject(data)
-      router.push('/dashboard')
-    } catch (err) {
-      setError('root', {
-        message: err instanceof Error ? err.message : 'Tạo project thất bại',
-      })
-    }
-  }
+  const router = useRouter();
 
   return (
     <>
@@ -44,45 +14,11 @@ export default function NewProjectPage() {
 
       <div className={styles.page}>
         <div className={styles.card}>
-          <h2 className={styles.title}>Cấu hình project</h2>
-          <p className={styles.description}>
-            Project sẽ chạy trên 1 container Docker riêng. Subdomain được gán tự động.
-          </p>
-
-          <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Input
-              id="displayName"
-              label="Tên project"
-              placeholder="Ví dụ: My Claw"
-              error={errors.displayName?.message}
-              {...register('displayName')}
-            />
-
-            {displayNameValue.trim() && (
-              <div className={styles.preview}>
-                <span className={styles.previewLabel}>
-                  URL công khai: https://&lt;slug&gt;.{publicDomain} (slug do server tạo từ tên này)
-                </span>
-              </div>
-            )}
-
-            {errors.root && (
-              <p className={styles.rootError}>{errors.root.message}</p>
-            )}
-
-            <div className={styles.formActions}>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => router.back()}
-              >
-                Huỷ
-              </Button>
-              <Button type="submit" loading={isSubmitting}>
-                Tạo project
-              </Button>
-            </div>
-          </form>
+          <CreateProjectFormCard
+            title="Cấu hình project"
+            onSuccess={() => router.push("/dashboard")}
+            onCancel={() => router.back()}
+          />
         </div>
 
         <div className={styles.info}>
@@ -96,5 +32,5 @@ export default function NewProjectPage() {
         </div>
       </div>
     </>
-  )
+  );
 }

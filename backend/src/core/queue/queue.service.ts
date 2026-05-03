@@ -21,6 +21,8 @@ export class QueueService {
     cpuLimit: number,
     ramLimit: number,
     idleTimeoutMin: number,
+    plan: 'free' | 'pro',
+    dockerEnv: Record<string, string>,
   ): Promise<void> {
     await this.containerOpsQueue.add(
       'spawn',
@@ -32,6 +34,8 @@ export class QueueService {
         cpuLimit,
         ramLimit,
         idleTimeoutMin,
+        plan,
+        dockerEnv,
       },
       {
         priority: 5,

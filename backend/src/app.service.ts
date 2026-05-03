@@ -3,6 +3,13 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class AppService {
   getHello(): string {
-    return 'Hello World!';
+    return 'OpenClaw SaaS API';
+  }
+
+  getHealth() {
+    return {
+      status: 'healthy',
+      time: new Date().toISOString(),
+    }
   }
 }

@@ -1,71 +1,81 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useProjectStore } from '@/stores/project.store'
-import { Button } from '@/components/ui/Button/Button'
-import type { Project } from '@/schemas/project.schema'
-import styles from './ProjectCard.module.css'
+import { useState } from "react";
+import Link from "next/link";
+import { useProjectStore } from "@/stores/project.store";
+import { Button } from "@/components/ui/Button/Button";
+import type { Project } from "@/schemas/project.schema";
+import { getProjectOverviewPath } from "@/lib/project-route";
+import styles from "./ProjectCard.module.css";
 
 const STATUS_LABEL: Record<string, string> = {
-  RUNNING: 'Đang chạy',
-  STOPPED: 'Đã dừng',
-  STARTING: 'Đang khởi động...',
-  STOPPING: 'Đang dừng...',
-  CREATING: 'Đang tạo...',
-  ERROR: 'Lỗi',
-}
+  RUNNING: "Đang chạy",
+  STOPPED: "Đã dừng",
+  STARTING: "Đang khởi động...",
+  STOPPING: "Đang dừng...",
+  CREATING: "Đang tạo...",
+  ERROR: "Lỗi",
+};
 
 interface ProjectCardProps {
-  project: Project
+  project: Project;
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const startProject = useProjectStore((s) => s.startProject)
-  const stopProject = useProjectStore((s) => s.stopProject)
-  const pollHealth = useProjectStore((s) => s.pollHealth)
-  const [isActing, setIsActing] = useState(false)
+  const startProject = useProjectStore((s) => s.startProject);
+  const stopProject = useProjectStore((s) => s.stopProject);
+  const pollHealth = useProjectStore((s) => s.pollHealth);
+  const [isActing, setIsActing] = useState(false);
 
   const handleStart = async () => {
-    setIsActing(true)
+    setIsActing(true);
     try {
-      await startProject(project.id)
+      await startProject(project.id);
       const stopPolling = pollHealth(project.id, (url) => {
-        stopPolling()
-        if (url) window.open(url, '_blank')
-      })
+        stopPolling();
+        if (url) window.open(url, "_blank");
+      });
     } finally {
-      setIsActing(false)
+      setIsActing(false);
     }
-  }
+  };
 
   const handleStop = async () => {
-    setIsActing(true)
+    setIsActing(true);
     try {
-      await stopProject(project.id)
+      await stopProject(project.id);
     } finally {
-      setIsActing(false)
+      setIsActing(false);
     }
-  }
+  };
 
-  const status = project.status?.toUpperCase() || ''
-  const isRunning = status === 'RUNNING'
-  const isBusy = status === 'STARTING' || status === 'CREATING' || status === 'STOPPING'
-  const publicDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'
-  const url = project.publicUrl ?? `https://${project.subdomain}.${publicDomain}`
+  const status = project.status?.toUpperCase() || "";
+  const isRunning = status === "RUNNING";
+  const isBusy =
+    status === "STARTING" || status === "CREATING" || status === "STOPPING";
+  const publicDomain =
+    process.env.NEXT_PUBLIC_APP_DOMAIN ?? "clawsandbox.cloud";
+  const url =
+    project.publicUrl ?? `https://${project.subdomain}.${publicDomain}`;
+  const detailPath = getProjectOverviewPath(project);
 
   return (
     <div className={styles.card}>
       <div className={styles.top}>
         <div>
-          <Link className={styles.nameLink} href={`/projects/${project.id}`}>
-            <h3 className={styles.name}>{project.displayName || project.name}</h3>
+          <Link className={styles.nameLink} href={detailPath}>
+            <h3 className={styles.name}>
+              {project.displayName || project.name}
+            </h3>
           </Link>
-          <p className={styles.subdomain}>
-            {new URL(url).host}
-          </p>
+          <p className={styles.subdomain}>{new URL(url).host}</p>
         </div>
-        <span className={[styles.badge, styles[`badge--${status.toLowerCase()}`]].join(' ')}>
+        <span
+          className={[
+            styles.badge,
+            styles[`badge--${status.toLowerCase()}`],
+          ].join(" ")}
+        >
           {isBusy && <span className={styles.badgeSpinner} />}
           {STATUS_LABEL[status] ?? project.status}
         </span>
@@ -74,10 +84,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <div className={styles.actions}>
         {isRunning ? (
           <>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="ghost">Mở dashboard</Button>
-            </a>
-            <Button size="sm" variant="danger" loading={isActing} onClick={handleStop}>
+            <Button asChild size="sm" variant="ghost">
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                Mở dashboard
+              </a>
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              loading={isActing}
+              onClick={handleStop}
+            >
               Dừng
             </Button>
           </>
@@ -93,5 +110,5 @@ export function ProjectCard({ project }: ProjectCardProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

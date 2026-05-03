@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   UseGuards,
   Body,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { StartProjectDto } from './dto/start-project.dto';
 import { StopProjectDto } from './dto/stop-project.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { DeleteProjectEnvDto, UpsertProjectEnvDto } from './dto/project-env.dto';
 
 @ApiTags('Projects')
 @ApiCookieAuth('better-auth.session_token')
@@ -58,6 +60,53 @@ export class ProjectsController {
   ) {
     const project = await this.projectsService.updateDisplayName(id, user.id, dto.displayName);
     return ok(project);
+  }
+
+  // GET /api/projects/:id/gateway-token
+  @Get(':id/gateway-token')
+  @ApiOperation({ summary: 'Reveal OpenClaw gateway token (owner only)' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  @ApiResponse({ status: 200, description: '{ token }' })
+  async gatewayToken(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    const data = await this.projectsService.getGatewayToken(id, user.id);
+    return ok(data);
+  }
+
+  // GET /api/projects/:id/env — model/provider keys only (masked)
+  @Get(':id/env')
+  @ApiOperation({ summary: 'List stored model/provider env keys (masked values)' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  async listEnv(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    const rows = await this.projectsService.listProjectEnv(id, user.id);
+    return ok(rows);
+  }
+
+  // PUT /api/projects/:id/env
+  @Put(':id/env')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Upsert encrypted model/provider API keys (applies on next container recreate)' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  async upsertEnv(
+    @Param('id') id: string,
+    @Body() dto: UpsertProjectEnvDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    await this.projectsService.upsertProjectEnv(id, user.id, dto.env);
+    return ok({ saved: true });
+  }
+
+  // DELETE /api/projects/:id/env
+  @Delete(':id/env')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Remove one model/provider secret key' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  async deleteEnvKey(
+    @Param('id') id: string,
+    @Body() dto: DeleteProjectEnvDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    await this.projectsService.deleteProjectEnv(id, user.id, dto.key);
+    return ok({ deleted: true });
   }
 
   // POST /api/projects/:id/start

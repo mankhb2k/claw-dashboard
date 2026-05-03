@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PUBLIC_ROUTES = ['/login', '/register']
 const AUTH_COOKIE = 'better-auth.session_token'
+const PREVIEW_COOKIE = 'oc_preview_auth'
+const MOCK_AUTH_BYPASS = process.env.NEXT_PUBLIC_MOCK_API === 'true'
 
 /** API base (same as axios). Proxy runs on the server/edge; must reach the control-plane API. */
 function getApiBaseUrl(): string {
@@ -50,8 +52,20 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
   }
 }
 
+const PUBLIC_STATIC_EXT = /\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$/i
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  /* next/image tải /man.png không gửi session; bỏ qua auth để không trả redirect HTML. */
+  if (PUBLIC_STATIC_EXT.test(pathname)) {
+    return NextResponse.next()
+  }
+
+  const previewMode = request.cookies.get(PREVIEW_COOKIE)?.value === '1'
+  if (MOCK_AUTH_BYPASS || previewMode) {
+    return NextResponse.next()
+  }
+
   const isPublic = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))
   const validSession = await hasValidSession(request)
 

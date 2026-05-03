@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenClaw — Frontend
 
-## Getting Started
+SPA dashboard (Next.js App Router): auth, danh sách project, chi tiết project và cấu hình agent.
 
-First, run the development server:
+## Yêu cầu
+
+- Node 20+
+- Backend API (Nest + Better Auth) hoặc **Mock API** khi dev UI
+
+## Cài đặt & chạy
 
 ```bash
+cd frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mặc định: [http://localhost:3000](http://localhost:3000) → **`/`** redirect **`/dashboard`**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Biến môi trường
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Tạo `frontend/.env.local`:
 
-## Learn More
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3001
+# Dev UI không cần backend thật:
+# NEXT_PUBLIC_MOCK_API=true
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Luồng routing (flow hiện tại)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| URL | Ý nghĩa |
+|-----|---------|
+| `/` | Redirect → `/dashboard` |
+| `/login`, `/register` | Auth (public) |
+| `/dashboard` | Trang chủ dash: danh sách project (cards + modal tạo) |
+| `/projects` | Danh sách project (layout riêng) |
+| `/projects/new` | Form tạo project |
+| `/project/{slug}-{id}` | Chi tiết project (tổng quan) — `slug` từ tên hiển thị + `id` là id backend |
+| `/project/{slug}-{id}/info` | Chi tiết — phần thông tin |
+| `/project/{slug}-{id}/agent` | Chi tiết — API keys / agent |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Lưu ý:** không còn URL dạng `/{username}/{project}`. Hàm dựng đường dẫn: `lib/project-route.ts` (`getProjectOverviewPath`, …).
 
-## Deploy on Vercel
+### Bảo vệ route & static
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`proxy.ts` (middleware/route guard trong setup hiện tại): session hợp lệ qua cookie + gọi `get-session`; user chưa đăng nhập → `/login`. File tĩnh (`.png`, …) được bỏ qua để `next/image` không bị redirect HTML.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+npm run dev      # dev server (Turbopack)
+npm run build    # production build
+npm run start    # chạy bản production
+npm run lint     # ESLint
+```
+
+## Tài liệu trong repo
+
+- **Quy trình & checklist:** [.agent/workflow.md](.agent/workflow.md)
+- **Quy tắc code:** [.agent/rule.md](.agent/rule.md)
+
+## Stack ngắn gọn
+
+Next.js 16, React 19, TypeScript, Zustand, Zod, react-hook-form, Axios, Radix UI.

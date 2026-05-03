@@ -4,7 +4,7 @@ import { z } from 'zod'
 export const projectStatusSchema = z
   .string()
   .transform((v) => v.toLowerCase())
-  .pipe(z.enum(['creating', 'running', 'starting', 'stopped', 'error']))
+  .pipe(z.enum(['creating', 'running', 'starting', 'stopping', 'stopped', 'error']))
 
 export const projectSchema = z
   .object({
@@ -26,6 +26,15 @@ export const createProjectSchema = z.object({
     .max(200, 'Tên tối đa 200 ký tự'),
 })
 
+export const projectEnvEntrySchema = z.object({
+  key: z.string().min(2).max(100),
+  value: z.string().min(1).max(5000),
+})
+
+export const upsertProjectEnvSchema = z.object({
+  env: z.array(projectEnvEntrySchema).min(1).max(100),
+})
+
 export const projectHealthSchema = z.object({
   status: projectStatusSchema,
   displayName: z.string().optional(),
@@ -39,3 +48,40 @@ export type Project = z.infer<typeof projectSchema>
 export type ProjectStatus = z.infer<typeof projectStatusSchema>
 export type CreateProjectInput = z.infer<typeof createProjectSchema>
 export type ProjectHealth = z.infer<typeof projectHealthSchema>
+export type ProjectEnvEntryInput = z.infer<typeof projectEnvEntrySchema>
+export type UpsertProjectEnvInput = z.infer<typeof upsertProjectEnvSchema>
+
+export const PROJECT_AGENT_ENV_KEYS = [
+  'OPENAI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'GEMINI_API_KEY',
+  'OPENROUTER_API_KEY',
+  'GOOGLE_API_KEY',
+] as const
+
+export type ProjectAgentEnvKey = (typeof PROJECT_AGENT_ENV_KEYS)[number]
+
+/** GET /api/projects/:id/gateway-token */
+export const gatewayTokenResponseSchema = z.object({
+  token: z.string().min(1),
+})
+
+export type GatewayTokenResponse = z.infer<typeof gatewayTokenResponseSchema>
+
+/** GET /api/projects/:id/env — masked rows */
+export const projectEnvMaskedRowSchema = z.object({
+  key: z.string(),
+  updatedAt: z.coerce.string(),
+  masked: z.string(),
+})
+
+/** Form draft: empty string means "do not send / leave unchanged in mock until user types" */
+export const agentProviderKeysFormSchema = z.object({
+  OPENAI_API_KEY: z.string().max(5000),
+  ANTHROPIC_API_KEY: z.string().max(5000),
+  GEMINI_API_KEY: z.string().max(5000),
+  OPENROUTER_API_KEY: z.string().max(5000),
+  GOOGLE_API_KEY: z.string().max(5000),
+})
+
+export type AgentProviderKeysFormInput = z.infer<typeof agentProviderKeysFormSchema>

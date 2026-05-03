@@ -1,0 +1,37 @@
+# Infra chỉ Postgres + Redis — dùng khi dev/test backend không cần vps-worker / openclaw-worker.
+# Chạy: docker compose -f docker-compose.deps.yml up -d
+# Chuỗi kết nối mặc định trùng với docker-compose.yml gốc.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: clawsaas-postgres-deps
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: openclaw
+    ports:
+      - '5432:5432'
+    volumes:
+      - clawsaas_postgres_deps:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d openclaw']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: clawsaas-redis-deps
+    command: redis-server --appendonly yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - clawsaas_redis_deps:/data
+    restart: unless-stopped
+
+volumes:
+  clawsaas_postgres_deps:
+    name: clawsaas-postgres-data-deps
+  clawsaas_redis_deps:
+    name: clawsaas-redis-data-deps

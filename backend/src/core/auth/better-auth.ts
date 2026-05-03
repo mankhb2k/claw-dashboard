@@ -23,6 +23,9 @@ export async function createBetterAuth(prisma: PrismaService) {
     database: prismaAdapter(prisma, {
       provider: 'postgresql',
     }),
+    session: {
+      cookieCache: { enabled: false },
+    },
     emailAndPassword: {
       enabled: true,
     },

@@ -1,8 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import axios from 'axios';
 import { ProjectStatus } from '../../plugins/worker-callbacks/dtos/update-status.dto';
+import { ProjectsService } from '../../plugins/projects/projects.service';
 
 const CONTAINER_OPS_QUEUE = 'container-ops';
 const MOCK_WORKER_DELAY_MS = 1000;
@@ -13,6 +14,7 @@ export class QueueConsumerService implements OnModuleInit {
   private mockWorkerEnabled = process.env.NODE_ENV !== 'production';
 
   constructor(
+    private readonly moduleRef: ModuleRef,
     @InjectQueue(CONTAINER_OPS_QUEUE)
     private readonly containerOpsQueue: Queue,
   ) {}
@@ -37,11 +39,16 @@ export class QueueConsumerService implements OnModuleInit {
       this.logger.warn(`Job failed: ${jobId}`, err.message);
     });
 
-    // Listen for new jobs and process them
-    this.containerOpsQueue.process(async (job) => {
+    // Named jobs (`spawn`, `wake`, …): single-arg process() only binds `__default__`.
+    // Wildcard `*` matches every job name (see bull Queue.prototype.processJob).
+    this.containerOpsQueue.process('*', 1, async (job) => {
       await this.handleQueueJob(job);
       return {};
     });
+  }
+
+  private projects(): ProjectsService {
+    return this.moduleRef.get(ProjectsService, { strict: false });
   }
 
   private async handleQueueJob(job: any) {
@@ -71,7 +78,8 @@ export class QueueConsumerService implements OnModuleInit {
           this.logger.warn(`Unknown job type: ${name}`);
       }
     } catch (error) {
-      this.logger.error(`Error processing job ${name}:`, error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Error processing job ${name}: ${err.message}`, err.stack);
       throw error;
     }
   }
@@ -79,11 +87,9 @@ export class QueueConsumerService implements OnModuleInit {
   private async simulateSpawn(projectId: string, userId: string, data: any) {
     this.logger.log(`[Mock] Spawning container for project ${projectId}`);
 
-    // Simulate container creation
     const containerId = `mock-${projectId.substring(0, 8)}-${Date.now()}`;
 
-    // Call internal API to update status
-    await this.updateProjectStatus(
+    await this.projects().updateProjectStatus(
       projectId,
       ProjectStatus.RUNNING,
       containerId,
@@ -95,61 +101,29 @@ export class QueueConsumerService implements OnModuleInit {
 
   private async simulateWake(projectId: string, userId: string) {
     this.logger.log(`[Mock] Waking up project ${projectId}`);
-    await this.updateProjectStatus(projectId, ProjectStatus.RUNNING);
+    await this.projects().updateProjectStatus(
+      projectId,
+      ProjectStatus.RUNNING,
+    );
     this.logger.log(`[Mock] Project ${projectId} is now RUNNING`);
   }
 
   private async simulateStop(projectId: string, userId: string) {
     this.logger.log(`[Mock] Stopping project ${projectId}`);
-    await this.updateProjectStatus(projectId, ProjectStatus.STOPPED);
+    await this.projects().updateProjectStatus(
+      projectId,
+      ProjectStatus.STOPPED,
+    );
     this.logger.log(`[Mock] Project ${projectId} is now STOPPED`);
   }
 
   private async simulateDestroy(projectId: string, userId: string) {
     this.logger.log(`[Mock] Destroying project ${projectId}`);
-    await this.updateProjectStatus(projectId, ProjectStatus.DESTROYING);
+    await this.projects().updateProjectStatus(
+      projectId,
+      ProjectStatus.DESTROYING,
+    );
     this.logger.log(`[Mock] Project ${projectId} marked as DESTROYING`);
-  }
-
-  private async updateProjectStatus(
-    projectId: string,
-    status: ProjectStatus,
-    containerId?: string,
-    errorMessage?: string,
-  ) {
-    const internalApiUrl = `http://localhost:${process.env.PORT ?? 3001}/api/internal/status`;
-    const workerSecret = process.env.VPS_WORKER_SECRET || 'mock-secret';
-
-    try {
-      const response = await axios.post(
-        internalApiUrl,
-        {
-          projectId,
-          status,
-          containerId,
-          ...(errorMessage ? { errorMessage } : {}),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${workerSecret}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 5000,
-        },
-      );
-
-      this.logger.debug(
-        `Status update response for ${projectId}:`,
-        response.status,
-      );
-      return response.data;
-    } catch (error) {
-      this.logger.error(
-        `Failed to update project status for ${projectId}`,
-        error instanceof Error ? error.message : String(error),
-      );
-      throw error;
-    }
   }
 
   private delay(ms: number): Promise<void> {

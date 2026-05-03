@@ -1,3 +1,6 @@
+/* =============================================================================
+   1. FIELD — label + ô nhập chồng dọc
+   ============================================================================= */
 .field {
   display: flex;
   flex-direction: column;
@@ -16,7 +19,7 @@
   padding: 8px 12px;
   background: var(--bg-elevated);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   color: var(--color-text);
   font-size: 13px;
   outline: none;
@@ -32,27 +35,28 @@
   opacity: 0.6;
 }
 
-.input:hover:not(:focus) {
+.input:hover:not(:focus-visible) {
   border-color: var(--color-border-strong);
 }
 
-.input:focus {
+.input:focus-visible {
   border-color: var(--color-primary);
-  box-shadow: var(--focus-ring);
   background: var(--bg-hover);
 }
 
+/* =============================================================================
+   2. TRẠNG THÁI LỖI VALIDATION
+   ============================================================================= */
 .inputError {
   border-color: var(--color-danger);
 }
 
-.inputError:hover:not(:focus) {
+.inputError:hover:not(:focus-visible) {
   border-color: var(--color-danger);
 }
 
-.inputError:focus {
+.inputError:focus-visible {
   border-color: var(--color-danger);
-  box-shadow: var(--focus-ring);
   background: var(--bg-hover);
 }
 

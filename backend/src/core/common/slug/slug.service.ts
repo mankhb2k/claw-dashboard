@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../../database/prisma.service';
 
 const RESERVED = new Set([
   'api',

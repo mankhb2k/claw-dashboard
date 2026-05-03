@@ -1,4 +1,5 @@
 import { Globe, GitBranch, MessageCircle } from 'lucide-react'
+import { Button } from '@/components/ui/Button/Button'
 import styles from './SocialLoginButton.module.css'
 
 interface SocialLoginButtonProps {
@@ -31,15 +32,16 @@ export function SocialLoginButton({
   const Icon = config.icon
 
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
-      disabled={loading}
+      loading={loading}
+      variant="ghost"
       className={styles.btn}
       aria-label={`Sign in with ${config.label}`}
     >
       {Icon && <Icon size={18} className={styles.icon} />}
       <span className={styles.label}>Tiếp tục với {config.label}</span>
-    </button>
+    </Button>
   )
 }

@@ -17,7 +17,8 @@ import {
   ProjectStartedEvent,
   ProjectStoppedEvent,
 } from '../../core/common/events/app-events';
-import { SlugService } from '../../core/slug/slug.service';
+import { SlugService } from '../../core/common/slug/slug.service';
+import { ProjectSecretsService } from './project-secrets.service';
 
 @Injectable()
 export class ProjectsService {
@@ -27,6 +28,7 @@ export class ProjectsService {
     private readonly planGate: PlanGateService,
     private readonly events: EventEmitter2,
     private readonly slug: SlugService,
+    private readonly projectSecrets: ProjectSecretsService,
   ) {}
 
   // ── List ─────────────────────────────────────────────────────────────────
@@ -46,46 +48,54 @@ export class ProjectsService {
     await this.planGate.assertConcurrentRunningLimit(userId);
     const slug = await this.slug.ensureUniqueSubdomainFromDisplayName(displayName);
     const image = this.getOpenClawImage();
+    const workerPlan = this.planNameToWorker(plan.name);
 
-    const project = await this.prisma.project.create({
-      data: {
-        userId,
-        displayName,
-        subdomain: slug,
-        status: 'CREATING',
-      },
+    const { project: created, dockerEnv } = await this.prisma.$transaction(async (tx) => {
+      const p = await tx.project.create({
+        data: {
+          userId,
+          displayName,
+          subdomain: slug,
+          status: 'CREATING',
+        },
+      });
+      await this.projectSecrets.ensureGatewayToken(tx, p.id);
+      const envForDocker = await this.projectSecrets.buildDockerEnvMap(tx, p.id);
+      return { project: p, dockerEnv: envForDocker };
     });
 
     await this.queue.enqueueSpawn(
-      project.id,
+      created.id,
       userId,
       slug,
       image,
       Number(plan.cpuVcpu),
       plan.ramMb,
       plan.idleTimeoutMin,
+      workerPlan,
+      dockerEnv,
     );
 
     await this.prisma.containerInstance.create({
       data: {
-        projectId: project.id,
+        projectId: created.id,
         imageVersion: image,
         cpuLimit: plan.cpuVcpu,
         ramLimit: plan.ramMb,
         status: 'STARTING',
-        nodeId: project.vpsId,
+        nodeId: created.vpsId,
       },
     });
 
     this.events.emit(AppEvents.PROJECT_CREATED, {
-      projectId: project.id,
+      projectId: created.id,
       userId,
       subdomain: slug,
       displayName,
       planName: plan.name,
     } satisfies ProjectCreatedEvent);
 
-    return this.withPublicUrl(project);
+    return this.withPublicUrl(created);
   }
 
   // ── Update (displayName only) ─────────────────────────────────────────────
@@ -210,6 +220,8 @@ export class ProjectsService {
 
     const { subdomain } = project;
 
+    await this.prisma.heavyJob.deleteMany({ where: { projectId } });
+
     await this.queue.enqueueDestroy(projectId, userId, subdomain);
     await this.prisma.project.delete({ where: { id: projectId } });
 
@@ -231,6 +243,36 @@ export class ProjectsService {
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
+  }
+
+  async getGatewayToken(projectId: string, userId: string) {
+    await this.findOwned(projectId, userId);
+    const token = await this.projectSecrets.getGatewayTokenPlain(projectId);
+    return { token };
+  }
+
+  async listProjectEnv(projectId: string, userId: string) {
+    await this.findOwned(projectId, userId);
+    const rows = await this.projectSecrets.listEnvRowsForApi(projectId);
+    return rows.map((r) => ({
+      key: r.key,
+      updatedAt: r.updatedAt.toISOString(),
+      masked: r.masked,
+    }));
+  }
+
+  async upsertProjectEnv(
+    projectId: string,
+    userId: string,
+    env: Array<{ key: string; value: string }>,
+  ): Promise<void> {
+    await this.findOwned(projectId, userId);
+    await this.projectSecrets.upsertEnvEntries(projectId, env);
+  }
+
+  async deleteProjectEnv(projectId: string, userId: string, key: string): Promise<void> {
+    await this.findOwned(projectId, userId);
+    await this.projectSecrets.deleteEnvKey(projectId, key);
   }
 
   // ── Internal API ─────────────────────────────────────────────────────────
@@ -351,6 +393,10 @@ export class ProjectsService {
       throw new InternalServerErrorException('OPENCLAW_IMAGE is not configured');
     }
     return v;
+  }
+
+  private planNameToWorker(planName: string): 'free' | 'pro' {
+    return planName.toLowerCase() === 'pro' ? 'pro' : 'free';
   }
 
   private async findOwned(projectId: string, userId: string) {

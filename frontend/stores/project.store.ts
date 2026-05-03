@@ -44,7 +44,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   startProject: async (id) => {
     set((s) => ({
-      projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'STARTING' } : p)),
+      projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'starting' } : p)),
     }))
     await projectApi.start(id)
     // Add silent poll so the UI can auto-refresh when start actually completes
@@ -53,7 +53,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   stopProject: async (id) => {
     set((s) => ({
-      projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'STOPPING' } : p)),
+      projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'stopping' } : p)),
     }))
     await projectApi.stop(id)
     // Do not optimistically set STOPPED, because the worker takes up to 10s to stop.
@@ -70,12 +70,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const interval = setInterval(async () => {
       try {
         const health = await projectApi.health(id)
-        const healthStatus = health.status?.toUpperCase()
-        if (healthStatus === 'RUNNING') {
+        const healthStatus = health.status
+        if (healthStatus === 'running') {
           clearInterval(interval)
           set((s) => ({
             projects: s.projects.map((p) =>
-              p.id === id ? { ...p, status: 'RUNNING' } : p
+              p.id === id ? { ...p, status: 'running' } : p
             ),
           }))
           onDone(
@@ -85,16 +85,16 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
                 ? `https://${health.subdomain}.${process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'clawsandbox.cloud'}`
                 : null,
           )
-        } else if (healthStatus === 'ERROR') {
+        } else if (healthStatus === 'error') {
           clearInterval(interval)
           set((s) => ({
-            projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'ERROR' } : p)),
+            projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'error' } : p)),
           }))
           onDone(null)
-        } else if (healthStatus === 'STOPPED') {
+        } else if (healthStatus === 'stopped') {
           clearInterval(interval)
           set((s) => ({
-            projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'STOPPED' } : p)),
+            projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'stopped' } : p)),
           }))
           onDone(null)
         }

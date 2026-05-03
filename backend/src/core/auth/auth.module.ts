@@ -14,7 +14,7 @@ import { BETTER_AUTH } from './auth.constants';
     {
       provide: BETTER_AUTH,
       inject: [PrismaService],
-      useFactory: (prisma: PrismaService) => createBetterAuth(prisma),
+      useFactory: async (prisma: PrismaService) => createBetterAuth(prisma),
     },
   ],
   exports: [BETTER_AUTH, SessionGuard],

@@ -2,9 +2,14 @@ import { api } from '@/lib/axios'
 import {
   projectSchema,
   projectHealthSchema,
+  upsertProjectEnvSchema,
+  projectEnvMaskedRowSchema,
+  gatewayTokenResponseSchema,
   type Project,
   type CreateProjectInput,
   type ProjectHealth,
+  type UpsertProjectEnvInput,
+  type GatewayTokenResponse,
 } from '@/schemas/project.schema'
 import { z } from 'zod'
 
@@ -39,7 +44,28 @@ export const projectApi = {
     return projectHealthSchema.parse(res.data)
   },
 
+  gatewayToken: async (id: string): Promise<GatewayTokenResponse> => {
+    const res = await api.get(`/api/projects/${id}/gateway-token`)
+    return gatewayTokenResponseSchema.parse(res.data)
+  },
+
   destroy: async (id: string): Promise<void> => {
     await api.delete(`/api/projects/${id}`)
+  },
+
+  upsertEnv: async (id: string, input: UpsertProjectEnvInput): Promise<void> => {
+    const parsed = upsertProjectEnvSchema.parse(input)
+    await api.put(`/api/projects/${id}/env`, parsed)
+  },
+
+  listEnv: async (
+    id: string,
+  ): Promise<Array<{ key: string; updatedAt: string; masked: string }>> => {
+    const res = await api.get(`/api/projects/${id}/env`)
+    return z.array(projectEnvMaskedRowSchema).parse(res.data)
+  },
+
+  deleteEnvKey: async (id: string, key: string): Promise<void> => {
+    await api.delete(`/api/projects/${id}/env`, { data: { key } })
   },
 }

@@ -3,7 +3,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 // Core
+import { LoggingModule } from './core/logging/logging.module';
 import { PrismaModule } from './core/database/prisma.module';
+import { SecretCryptoModule } from './core/crypto/secret-crypto.module';
 import { AuthModule } from './core/auth/auth.module';
 import { QueueModule } from './core/queue/queue.module';
 import { BillingModule } from './core/billing/billing.module';
@@ -18,8 +20,10 @@ import { CreditsModule } from './plugins/credits/credits.module';
 @Module({
   imports: [
     // Core — infrastructure, always loaded
+    LoggingModule,
     EventEmitterModule.forRoot(),
     PrismaModule,
+    SecretCryptoModule,
     QueueModule,
     AuthModule,
     BillingModule,

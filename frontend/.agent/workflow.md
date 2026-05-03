@@ -1,6 +1,6 @@
 # Frontend Workflow — OpenClaw SaaS
 
-> Status: MVP Complete · 2026-04-22  
+> Status: MVP Complete · routing cập nhật 2026-05  
 > Framework: Next.js 16.2.4 + React 19.2.4 + TypeScript 5  
 > State: Zustand · Validation: Zod · Forms: react-hook-form
 
@@ -13,14 +13,22 @@
 #### Auth Pages
 - **Login** (`/login`): email + password form with Zod validation
 - **Register** (`/register`): email + password + confirm with validation
-- **Middleware**: Protect routes, redirect unauthenticated users to `/login`
+- **Route guard** (`proxy.ts`): Bảo vệ route, gọi API `get-session`; chưa đăng nhập → `/login` (preview cookie / mock bypass khi dev)
 - **Auth Store**: Zustand store with `login()`, `register()`, `logout()`, `fetchMe()`
 
-#### Dashboard
-- **Layout**: Sidebar + Header with logo, nav, user dropdown
-- **Dashboard Home** (`/dashboard`): Project list with cards + "Create" button
-- **Create Project Form** (`/projects/new`): Name input with live subdomain preview
-- **Project Card**: Status badge, Start/Stop buttons, Open link, polling on start
+#### Dashboard / Projects
+- **Layout** (`(dashboard)/layout.tsx`): Sidebar + main; theme qua Providers
+- **Home** (`/dashboard`): Redirect từ `/`; danh sách project + modal tạo
+- **Projects** (`/projects`): Danh sách (layout riêng)
+- **Tạo project** (`/projects/new`): Form + subdomain preview
+- **Chi tiết project** (**không** còn `/{username}/{project}`):  
+  - `/project/{slug}-{id}` — tổng quan (`ProjectDetailContent`)  
+  - `/project/.../info` — panel thông tin  
+  - `/project/.../agent` — API keys agent  
+  Đường dẫn helper: `lib/project-route.ts` (`getProjectOverviewPath`, …)
+- **Sidebar**: Trên trang project đổi nav sang Tổng quan / Thông tin / Agent; avatar footer luôn hiển thị
+- **ProjectCard**: Link vào `/project/...`; Start/Stop + polling như trước
+- **Legacy** `/projects/[id]` (nếu còn): có thể dùng id thô — ưu tiên flow `/project/{segment}`
 
 #### API Integration
 - **Axios Instance**: Single `api` client with `withCredentials: true`
@@ -46,17 +54,27 @@
 ```
 frontend/
 ├── app/
-│   ├── layout.tsx                    # Root layout
-│   ├── page.tsx                      # → /dashboard redirect
-│   ├── globals.css                   # CSS variables, reset
+│   ├── layout.tsx                    # Root layout + theme bootstrap script
+│   ├── page.tsx                      # → redirect /dashboard
+│   ├── globals.css
+│   ├── providers.tsx
 │   ├── (auth)/
-│   │   ├── layout.tsx                # Centered card layout
-│   │   ├── login/page.tsx            # Login form + link to register
-│   │   └── register/page.tsx         # Register form + link to login
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
 │   └── (dashboard)/
-│       ├── layout.tsx                # Sidebar + main area
-│       ├── dashboard/page.tsx        # Project list home
-│       └── projects/new/page.tsx     # Create project form
+│       ├── layout.tsx                # Shell: Sidebar + children
+│       ├── dashboard/page.tsx        # Home: grid project cards
+│       ├── settings/page.tsx         # Placeholder settings
+│       ├── projects/
+│       │   ├── page.tsx              # List
+│       │   ├── new/page.tsx          # Create
+│       │   └── [id]/page.tsx         # Legacy/by-id (nếu dùng)
+│       └── project/[projectSlug]/
+│           ├── page.tsx              # Detail overview
+│           ├── info/page.tsx
+│           └── agent/page.tsx + agent.module.css
+│       └── _components/
+│           └── ProjectDetailContent.tsx
 ├── components/
 │   ├── ui/
 │   │   ├── Button/Button.tsx         # Reusable button (primary/ghost/danger)
@@ -65,9 +83,11 @@ frontend/
 │   │   ├── Sidebar/Sidebar.tsx       # Nav sidebar
 │   │   └── Header/Header.tsx         # Top header with user menu
 │   └── project/
-│       └── ProjectCard/ProjectCard.tsx  # Project display + actions
+│       ├── ProjectCard/ProjectCard.tsx
+│       └── … (CreateProject modal, …)
 ├── lib/
-│   ├── axios.ts                      # Axios config + interceptors
+│   ├── project-route.ts              # getProjectSegment, getProjectOverviewPath → /project/…
+│   ├── axios.ts
 │   ├── api/
 │   │   ├── auth.ts                   # login, register, logout, me
 │   │   ├── project.ts                # list, create, start, stop, health, destroy
@@ -82,7 +102,7 @@ frontend/
 ├── stores/
 │   ├── auth.store.ts                 # Zustand: user + auth actions
 │   └── project.store.ts              # Zustand: projects + CRUD + polling
-├── middleware.ts                     # Route protection (check session cookie)
+├── proxy.ts                          # Route guard: session qua backend get-session + static bypass
 ├── .env.local                        # API_URL, MOCK_API flag
 ├── .agent/
 │   ├── README.md                     # Docs index
@@ -102,11 +122,12 @@ frontend/
 {
   "next": "16.2.4",
   "react": "19.2.4",
-  "zod": "^3.x",
+  "react-dom": "19.2.4",
+  "zod": "^4.x",
   "react-hook-form": "^7.x",
-  "@hookform/resolvers": "^3.x",
+  "@hookform/resolvers": "^5.x",
   "axios": "^1.x",
-  "zustand": "^4.x"
+  "zustand": "^5.x"
 }
 ```
 
@@ -230,24 +251,22 @@ curl -X POST http://localhost:3001/api/auth/login \
 ## Known Limitations & TODO
 
 ### Current Limitations
-- **No OAuth yet**: Better-Auth configured on backend, frontend ready to use
-- **No settings page**: Placeholder in sidebar, not implemented
-- **No project details page**: Can only view list + create
-- **No real health check retry**: Polling stops if error (should retry)
-- **Middleware cookie detection**: Hardcoded cookie name, match backend actual name
-- **No error toast/notification**: Uses inline errors only
-- **No loading skeleton**: Uses spinner, no skeleton UI
-- **Mobile nav**: No hamburger menu, sidebar always visible
+- **No OAuth wired end-to-end**: Nút Google gọi API; luồng callback tùy backend
+- **Settings**: `/settings` mới là placeholder (“Đang làm…”)
+- **Health polling**: Có retry giới hạn; có thể cần backoff rõ ràng hơn
+- **Cookie / session**: Tên cookie session phải khớp backend (`better-auth.session_token` trong `proxy.ts`)
+- **Không có toast**: Lỗi chủ yếu inline / alert
+- **Mobile**: Sidebar cố định, chưa menu hamburger
+- **`extractProjectIdFromSegment`**: Lấy id sau **dấu `-` cuối** trong segment URL — không phù hợp mọi dạng `id`; flow chính dùng `/project/{nameSlug}-{uuid}` một khối
 
 ### Backlog
-- [ ] Settings page (`/settings`)
-- [ ] Project details page (`/projects/:id`)
+- [ ] Settings thật (`/settings`: form profile, đổi mật khẩu, …)
 - [ ] Settings form (email, password change)
 - [ ] Notifications/toast system
 - [ ] Real OAuth (Google sign-in button)
 - [ ] Project logs viewer
 - [ ] Container resource usage display
-- [ ] Dark mode toggle (CSS ready, no UI)
+- [ ] OAuth Google hoàn chỉnh (callback, error UX)
 - [ ] Mobile responsive nav menu
 - [ ] Keyboard shortcuts (e.g. Cmd+K search)
 
@@ -261,8 +280,8 @@ curl -X POST http://localhost:3001/api/auth/login \
 - [ ] Login: email/password validation
 - [ ] Login failure: show error message
 - [ ] Logout: redirect to login + clear state
-- [ ] Middleware: unauthenticated → redirect /login
-- [ ] Middleware: authenticated → can access /dashboard
+- [ ] `proxy`/guard: chưa session → `/login`
+- [ ] Đã session → vào được `/dashboard` và `/project/...`
 
 ### Dashboard Flow
 - [ ] Load project list (should show 2 mock projects if mock API)
@@ -272,7 +291,8 @@ curl -X POST http://localhost:3001/api/auth/login \
 - [ ] Project status: "creating" → "running" (2s in mock)
 - [ ] Start project: status "starting" → "running" (3s in mock)
 - [ ] Stop project: status → "stopped"
-- [ ] Open dashboard link: href = `https://subdomain.openclaw.ai`
+- [ ] Mở public URL container: subdomain + `NEXT_PUBLIC_APP_DOMAIN`
+- [ ] Click card → URL `/project/{slug}-{id}` (khớp `getProjectOverviewPath`)
 - [ ] Health polling: every 2s when starting
 
 ### UI/UX
@@ -301,7 +321,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 | **Zustand state empty** | Might need `await fetchMe()` in RootLayout or initial effect |
 | **CSS not updating** | Restart dev server if CSS vars changed, check `.module.css` file |
 | **TypeScript errors** | Run `npx tsc --noEmit`, `npm run build`, or check IDE settings |
-| **Middleware redirects to /login** | Check cookie name in `middleware.ts`, match backend session cookie name |
+| **Luôn bị đẩy về /login** | Cookie session + `proxy.ts`: `better-auth.session_token`; backend `/api/auth/get-session` OK? |
 
 ---
 
@@ -313,7 +333,7 @@ When backend is ready:
 - [ ] Test auth: login → response includes `id, email, name, createdAt`
 - [ ] Test session: login → response `Set-Cookie`, next request sends cookie
 - [ ] Test CORS: `credentials: true`, origin = frontend URL
-- [ ] Update middleware: correct session cookie name (replace `better-auth.session_token`)
+- [ ] Cookie session: chỉnh `AUTH_COOKIE` trong `proxy.ts` nếu backend đổi tên cookie
 - [ ] Disable mock API: `NEXT_PUBLIC_MOCK_API=false`
 - [ ] Set `NEXT_PUBLIC_API_URL` to backend URL
 - [ ] Run full test: register → login → create → start → health check
@@ -348,7 +368,8 @@ NEXT_PUBLIC_API_URL=https://api.openclaw.ai  # Real backend
 | File | Purpose | Edit When |
 |---|---|---|
 | `app/globals.css` | CSS variables, reset | Change colors, spacing, fonts |
-| `middleware.ts` | Route protection | Change auth cookie name |
+| `proxy.ts` | Route protection + bypass static (*.png…) | Cookie name, public routes |
+| `lib/project-route.ts` | Segment & URL `/project/…` | Đổi quy ước slug/id |
 | `stores/*.ts` | Global state logic | Change state shape, add actions |
 | `lib/api/*.ts` | API client functions | Add endpoints, change response parsing |
 | `schemas/*.ts` | Validation schemas | Change form/API contract |
@@ -367,5 +388,5 @@ NEXT_PUBLIC_API_URL=https://api.openclaw.ai  # Real backend
 
 ---
 
-**Last Updated:** 2026-04-22  
-**Next Review:** When backend MVP is deployed
+**Last Updated:** 2026-05-02  
+**Next Review:** Khi chỉnh auth cookie hoặc thêm subdomain routing

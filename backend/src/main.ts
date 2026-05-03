@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger as NestLogger, ValidationPipe } from '@nestjs/common';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -8,6 +8,7 @@ import {
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { Logger as PinoNestLogger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './core/common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './core/common/filters/http-exception.filter';
@@ -16,7 +17,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
+    { bufferLogs: true },
   );
+  app.useLogger(app.get(PinoNestLogger));
 
   await app.register(fastifyCors, {
     origin: [
@@ -60,10 +63,10 @@ async function bootstrap() {
 
   try {
     const url = await app.getUrl();
-    Logger.log(`Listening on ${url}`, 'Bootstrap');
-    Logger.log(`Swagger UI: ${url}/api/docs`, 'Bootstrap');
+    NestLogger.log(`Listening on ${url}`, 'Bootstrap');
+    NestLogger.log(`Swagger UI: ${url}/api/docs`, 'Bootstrap');
   } catch {
-    Logger.log(`Listening on port ${port}`, 'Bootstrap');
+    NestLogger.log(`Listening on port ${port}`, 'Bootstrap');
   }
 }
 bootstrap();
