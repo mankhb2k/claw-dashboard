@@ -132,6 +132,11 @@ API_URL=http://localhost:3001
 
 ## NestJS Backend Structure Rules
 
+### Controllers & Error Handling
+- **Use Base Exception Filters**: All errors MUST be thrown via standard NestJS exception classes (e.g., `NotFoundException`, `BadRequestException`, `InternalServerErrorException`) to ensure unified error formatting for the client.
+- **Always write Validation DTOs**: Create DTOs using `class-validator` for every module's incoming requests (Body, Query) to guarantee type safety and automatic validation.
+- Do not throw raw `Error` objects in controllers or services unless caught and transformed into proper HttpExceptions.
+
 ### Auth Module
 - Use `auth.service.ts` for login/register logic
 - Use `auth.controller.ts` for HTTP endpoints

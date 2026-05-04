@@ -354,6 +354,10 @@ export class ProjectsService {
     });
   }
 
+  async getRuntimeEnv(projectId: string) {
+    return this.projectSecrets.buildDockerEnvMap(this.prisma, projectId);
+  }
+
   // ── Private ───────────────────────────────────────────────────────────────
 
   private toPrismaProjectStatus(

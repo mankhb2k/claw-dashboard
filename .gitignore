@@ -12,5 +12,4 @@
 /frontend/
 .DS_Store
 .tmp-openclaw-upstream
-
 /generated/prisma

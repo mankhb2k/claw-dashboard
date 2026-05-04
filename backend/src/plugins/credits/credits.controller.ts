@@ -2,6 +2,7 @@ import { Controller, Get, HttpCode, Param, Query, UseGuards } from '@nestjs/comm
 import { SessionGuard } from '../../core/auth/guards/session.guard';
 import { CurrentUser } from '../../core/common/decorators/current-user.decorator';
 import { CreditService } from '../../core/billing/credit.service';
+import { HistoryQueryDto } from './dto/history-query.dto';
 
 @Controller('api/credits')
 @UseGuards(SessionGuard)
@@ -18,11 +19,10 @@ export class CreditsController {
   @HttpCode(200)
   async history(
     @CurrentUser() user: any,
-    @Query('take') take?: string,
+    @Query() query: HistoryQueryDto,
   ) {
-    const n = Number(take ?? '50');
-    const safeTake = Number.isFinite(n) ? Math.max(1, Math.min(200, n)) : 50;
-    return this.credits.listTransactions(user.id, safeTake);
+    const take = query.take ?? 50;
+    return this.credits.listTransactions(user.id, take);
   }
 
   @Get('cost/:tool')

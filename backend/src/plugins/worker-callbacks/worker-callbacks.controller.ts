@@ -5,6 +5,7 @@ import { HeavyJobsService } from '../heavy-jobs/heavy-jobs.service';
 import { WorkerSecretGuard } from './guards/worker-secret.guard';
 import { UpdateStatusDto } from './dtos/update-status.dto';
 import { UpdateHeartbeatDto } from './dtos/update-heartbeat.dto';
+import { UpdateJobResultDto } from './dtos/update-job-result.dto';
 
 @Controller('api/internal')
 @UseGuards(WorkerSecretGuard)
@@ -54,12 +55,7 @@ export class WorkerCallbacksController {
   @HttpCode(200)
   async updateHeavyJobResult(
     @Param('jobId') jobId: string,
-    @Body() body: {
-      status: 'DONE' | 'FAILED';
-      resultPath?: string;
-      resultSizeMb?: number;
-      errorMessage?: string;
-    },
+    @Body() body: UpdateJobResultDto,
   ) {
     await this.heavyJobsService.updateJobResult(
       jobId,
