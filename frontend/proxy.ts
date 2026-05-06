@@ -66,11 +66,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const previewMode = request.cookies.get(PREVIEW_COOKIE)?.value === '1'
-  if (MOCK_AUTH_BYPASS || previewMode) {
-    return NextResponse.next()
-  }
-
   const isPublic = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))
   const validSession = await hasValidSession(request)
 

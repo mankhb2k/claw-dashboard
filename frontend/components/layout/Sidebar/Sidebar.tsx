@@ -14,6 +14,7 @@ import {
   MessageSquareCodeIcon,
   Settings as SettingsIcon,
   Sparkles,
+  Cable,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 
@@ -33,7 +34,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const projectPathMatch = pathname.match(
-    /^\/project\/([^/]+)(?:\/(setting|model|channel|skill))?$/,
+    /^\/project\/([^/]+)(?:\/(setting|model|channel|skill|connect)(?:\/[^/]+)*)?$/,
   );
   const isProjectDetail = Boolean(projectPathMatch);
   const [activeProjectHash, setActiveProjectHash] = useState("overview");
@@ -69,6 +70,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       hash: "skill",
       label: "Skill",
       icon: Sparkles,
+    },
+    {
+      href: `${baseProjectPath}/connect`,
+      hash: "connect",
+      label: "Kết nối",
+      icon: Cable,
     },
     {
       href: `${baseProjectPath}/setting`,
@@ -121,14 +128,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   item.hash === "overview"
                     ? pathname === baseProjectPath
                     : item.hash === "setting"
-                      ? pathname === `${baseProjectPath}/setting`
+                      ? pathname.startsWith(`${baseProjectPath}/setting`)
                       : item.hash === "model"
-                        ? pathname === `${baseProjectPath}/model`
+                        ? pathname.startsWith(`${baseProjectPath}/model`)
                         : item.hash === "channel"
-                          ? pathname === `${baseProjectPath}/channel`
+                          ? pathname.startsWith(`${baseProjectPath}/channel`)
                           : item.hash === "skill"
-                            ? pathname === `${baseProjectPath}/skill`
-                            : activeProjectHash === item.hash;
+                            ? pathname.startsWith(`${baseProjectPath}/skill`)
+                            : item.hash === "connect"
+                              ? pathname.startsWith(`${baseProjectPath}/connect`)
+                              : activeProjectHash === item.hash;
                 return (
                   <Link
                     key={item.hash}

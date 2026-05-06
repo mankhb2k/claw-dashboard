@@ -121,6 +121,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
@@ -130,9 +131,13 @@
     color var(--transition-fast);
 }
 
-.navItem:hover {
-  background: var(--color-surface-2);
-  color: var(--color-text);
+.navItem:hover:not(.navItemActive) {
+  background: var(--color-backgroud-hover);
+  color: var(--color-primary);
+}
+
+.navItem:hover .navIcon {
+  color: var(--color-primary);
 }
 
 .navItemActive {

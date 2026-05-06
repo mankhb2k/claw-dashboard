@@ -5,11 +5,15 @@ import {
   upsertProjectEnvSchema,
   projectEnvMaskedRowSchema,
   gatewayTokenResponseSchema,
+  connectorDefinitionSchema,
+  projectConnectorSchema,
   type Project,
   type CreateProjectInput,
   type ProjectHealth,
   type UpsertProjectEnvInput,
   type GatewayTokenResponse,
+  type ConnectorDefinition,
+  type ProjectConnector,
 } from '@/schemas/project.schema'
 import { z } from 'zod'
 
@@ -67,5 +71,56 @@ export const projectApi = {
 
   deleteEnvKey: async (id: string, key: string): Promise<void> => {
     await api.delete(`/api/projects/${id}/env`, { data: { key } })
+  },
+
+  listConnectorDefinitions: async (): Promise<ConnectorDefinition[]> => {
+    const res = await api.get('/api/projects/connectors/definitions')
+    return z.array(connectorDefinitionSchema).parse(res.data)
+  },
+
+  listConnectors: async (id: string): Promise<ProjectConnector[]> => {
+    const res = await api.get(`/api/projects/${id}/connectors`)
+    return z.array(projectConnectorSchema).parse(res.data)
+  },
+
+  createConnector: async (
+    id: string,
+    input: {
+      connectorSlug: string
+      displayName?: string
+      enabled?: boolean
+      config?: Record<string, unknown>
+    },
+  ): Promise<void> => {
+    await api.post(`/api/projects/${id}/connectors`, input)
+  },
+
+  updateConnector: async (
+    id: string,
+    connectorId: string,
+    input: { displayName?: string; enabled?: boolean; config?: Record<string, unknown> },
+  ): Promise<void> => {
+    await api.patch(`/api/projects/${id}/connectors/${connectorId}`, input)
+  },
+
+  upsertConnectorSecret: async (
+    id: string,
+    connectorId: string,
+    secretKey: string,
+    value: string,
+  ): Promise<void> => {
+    await api.put(`/api/projects/${id}/connectors/${connectorId}/secrets/${secretKey}`, { value })
+  },
+
+  deleteConnectorSecret: async (
+    id: string,
+    connectorId: string,
+    secretKey: string,
+  ): Promise<void> => {
+    await api.delete(`/api/projects/${id}/connectors/${connectorId}/secrets/${secretKey}`)
+  },
+
+  testConnector: async (id: string, connectorId: string): Promise<void> => {
+    await api.post(`/api/projects/${id}/connectors/${connectorId}/test`)
   },
 }

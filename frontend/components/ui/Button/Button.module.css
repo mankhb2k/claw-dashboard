@@ -1,21 +1,30 @@
 /* =============================================================================
-   1. NÚT — nền tả chung & focus
+   1. NÚT — Nền tảng chung & Trạng thái
    ============================================================================= */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  background-clip: padding-box;
+  font-size: var(--font-size-sm);
   font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
   transition:
     background var(--transition-fast) ease,
     border-color var(--transition-fast) ease,
     box-shadow var(--transition-fast) ease,
+    transform var(--transition-fast) ease,
     opacity var(--transition-fast) ease;
-  white-space: nowrap;
-  outline: none;
+}
+
+/* Hiệu ứng nhấn xuống */
+.btn:active:not([aria-haspopup="true"]) {
+  transform: translateY(1px);
 }
 
 .btn:focus-visible {
@@ -23,77 +32,182 @@
 }
 
 .btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Trạng thái lỗi (Aria-invalid) */
+.btn[aria-invalid="true"] {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-dim);
+}
+
+/* Icon trong nút */
+.btn svg {
+  pointer-events: none;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 /* =============================================================================
-   2. KÍCH THƯỚC
+   2. BIẾN THỂ (VARIANT)
    ============================================================================= */
-.md {
-  height: 38px;
-  padding: 0 var(--space-4);
-  font-size: var(--font-size-sm);
-}
 
-.sm {
-  height: 30px;
-  padding: 0 var(--space-3);
-  font-size: var(--font-size-xs);
-}
-
-/* =============================================================================
-   3. BIẾN THỂ MÀU (variant)
-   ============================================================================= */
-.primary {
+/* Primary */
+.v_primary {
   background: var(--color-primary);
   color: #fff;
-  border-color: var(--color-primary);
 }
-
-.primary:hover:not(:disabled) {
+.v_primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
 }
 
-.ghost {
-  background: transparent;
-  color: var(--color-text-muted);
+/* Outline */
+.v_outline {
   border-color: var(--color-border);
-}
-
-.ghost:hover:not(:disabled) {
-  background: var(--bg-hover);
+  background: var(--color-white);
   color: var(--color-text);
+}
+.v_outline:hover:not(:disabled),
+.v_outline[aria-expanded="true"] {
+  background: var(--color-bg);
   border-color: var(--color-border-strong);
 }
 
-.danger {
-  background: transparent;
-  color: var(--color-danger);
-  border-color: var(--color-danger);
+/* Secondary */
+.v_secondary {
+  background: var(--color-white-2);
+  color: var(--color-text);
+}
+.v_secondary:hover:not(:disabled),
+.v_secondary[aria-expanded="true"] {
+  background: var(--color-border);
 }
 
-.danger:hover:not(:disabled) {
+/* Ghost */
+.v_ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+.v_ghost:hover:not(:disabled),
+.v_ghost[aria-expanded="true"] {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Danger */
+.v_danger {
   background: var(--color-danger-dim);
+  color: var(--color-danger);
+}
+.v_danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.2);
+}
+.v_danger:focus-visible {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-dim);
+}
+
+/* Link */
+.v_link {
+  background: transparent;
+  color: var(--color-primary);
+  padding: 0 !important;
+  height: auto !important;
+}
+.v_link:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* =============================================================================
-   4. SPINNER (loading inline)
+   3. KÍCH THƯỚC (SIZE)
    ============================================================================= */
+
+.s_default {
+  height: 36px;
+  padding: 0 var(--space-3);
+  gap: 6px;
+}
+
+.s_xs {
+  height: 24px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  gap: 4px;
+}
+.s_xs svg {
+  width: 12px;
+  height: 12px;
+}
+
+.s_sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  gap: 4px;
+}
+
+.s_lg {
+  height: 40px;
+  padding: 0 var(--space-4);
+  gap: 6px;
+}
+
+/* Icon variants */
+.s_icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+.s_icon_xs {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+.s_icon_xs svg {
+  width: 12px;
+  height: 12px;
+}
+.s_icon_sm {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+.s_icon_lg {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+/* =============================================================================
+   4. LOADING & SPINNER
+   ============================================================================= */
+.loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
 .spinner {
-  width: 14px;
-  height: 14px;
+  position: absolute;
+  width: 16px;
+  height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
-  flex-shrink: 0;
 }
 
-/* =============================================================================
-   5. Animation
-   ============================================================================= */
+/* Spinner color logic */
+.v_outline .spinner,
+.v_secondary .spinner,
+.v_ghost .spinner,
+.v_link .spinner {
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: var(--color-text-muted);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

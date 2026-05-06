@@ -4,6 +4,16 @@
 
 ---
 
+## 0. Nguyên tắc Lắp ghép & Tái sử dụng (BẮT BUỘC)
+
+- **Kiểm tra UI Primitives trước**: Khi cần làm bất kỳ UI nào (Button, Input, Card, Modal...), **luôn phải kiểm tra thư mục `frontend/components/ui/` đầu tiên**.
+- **Ưu tiên lắp ghép (Composition)**: Luôn cố gắng sử dụng các component nhỏ có sẵn trong `components/ui` để ghép lại thành các component phức tạp hơn. 
+- **Không tự ý viết mới**: Tuyệt đối không tự ý viết mới một component nào mà chưa xem xét liệu các component trong `ui` có thể lắp ghép hoặc mở rộng để đáp ứng nhu cầu được hay không.
+- **Mở rộng thay vì tạo mới**: Nếu component hiện có thiếu tính năng, hãy ưu tiên bổ sung `props`, `variant`, hoặc `size` cho nó thay vì tạo một component song song.
+- **Refactor bắt buộc**: Khi review code, nếu phát hiện các đoạn UI tự viết (hardcoded HTML/CSS) mà có thể thay thế bằng `components/ui`, bắt buộc phải refactor về dùng shared component.
+
+---
+
 ## 1. CSS — Tự build UI, không dùng framework
 
 ### Nguyên tắc chung
@@ -12,6 +22,25 @@
 - Mỗi component có file `.module.css` riêng đặt cùng thư mục với component.
 - Global styles chỉ ở `app/globals.css`: reset, CSS variables, typography base, utility classes tối thiểu.
 - Dùng **CSS Custom Properties** (variables) cho color, spacing, radius, shadow — không hardcode giá trị.
+- **Quy tắc Radius**: Tuân thủ phân cấp bo góc để tạo phân cấp thị giác:
+  - **Button, Input, Alert, Menu**: Sử dụng `var(--radius-md)` (10px).
+  - **Card, Modal, Large Containers**: Sử dụng `var(--radius-lg)` (14px).
+
+### Chuẩn giao diện Card (Card UI Standard)
+
+Tất cả các thẻ Card (Skill, Channel, Project, v.v.) phải sử dụng chung một chuẩn hover effect sau để đảm bảo tính đồng nhất trên toàn hệ thống:
+- Mặc định: `border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);`
+- Hover: `border-color: var(--color-border-focus); box-shadow: var(--shadow-md);` (KHÔNG dùng `transform: translateY(-2px)` hay `border-color: var(--color-primary)`).
+- Focus: `box-shadow: var(--focus-ring), var(--shadow-md); outline: none;`
+- Transition: `transition: border-color var(--transition-base) ease, box-shadow var(--transition-base) ease, transform var(--transition-fast) ease;`
+
+### Chuẩn giao diện Menu Dropdown (Dropdown Menu Standard)
+
+Các Menu Dropdown popup (ví dụ nhấn vào dấu 3 chấm) phải sử dụng chung cấu trúc CSS sau:
+- **Nút mở (Kebab/Dots Button)**: `width: 34px; height: 34px; border-radius: var(--radius-sm); color: var(--color-text-muted); background: transparent;`. Khi hover: `background: var(--color-primary-dim); color: var(--color-text);`.
+- **Menu Container (.dropdownMenu)**: `background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); padding: var(--space-1); z-index: 50;`.
+- **Item (.dropdownItem)**: `padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: var(--font-size-sm); color: var(--color-text);`. Khi hover: `background: var(--color-primary-dim);`.
+- **Item nguy hiểm (.danger)**: `color: var(--color-danger);`. Khi hover: `background: var(--color-danger-dim);`.
 
 ### Cấu trúc CSS variables (định nghĩa trong `globals.css`) — Control-UI Design System
 
@@ -125,7 +154,23 @@ Mọi file `*.module.css` phải **sắp xếp từ cấu trúc tổng thể và
 
 ---
 
-## 2. Zod — Validation bắt buộc
+## 2. Shared UI Components — Primitives
+
+Mọi component dùng chung (trong `components/ui/`) phải tuân thủ nghiêm ngặt các quy định về Props và Variant để đảm bảo tính nhất quán của Design System.
+
+### 2.1. Button Component
+
+- **File**: `components/ui/Button/Button.tsx`
+- **Variants hỗ trợ**: Chỉ được dùng các giá trị sau cho prop `variant`:
+  - `primary`: Màu chính (màu đỏ accent của hệ thống).
+  - `ghost`: Nền trong suốt, chỉ hiện màu khi hover (dùng cho nút Hủy, Đóng, hoặc các nút phụ).
+  - `danger`: Màu đỏ cảnh báo (dùng cho các thao tác Xóa).
+- **Tuyệt đối không dùng**: `secondary`, `outline`, `link` hay các giá trị lạ từ UI Framework khác. Nếu cần variant mới, phải bổ sung vào `ButtonProps` và `Button.module.css`.
+- **Pattern**: Hỗ trợ `asChild` (Radix Slot) để linh hoạt chuyển đổi giữa `button` và `Link`.
+
+---
+
+## 3. Zod — Validation bắt buộc
 
 ### Nguyên tắc
 
@@ -171,7 +216,7 @@ const form = useForm<CreateProjectInput>({
 
 ---
 
-## 3. React Hook Form — Form handling
+## 4. React Hook Form — Form handling
 
 ### Nguyên tắc
 
@@ -216,7 +261,7 @@ export function LoginForm() {
 
 ---
 
-## 4. Zustand — State Management
+## 5. Zustand — State Management
 
 ### Nguyên tắc
 
@@ -282,7 +327,7 @@ const store = useProjectStore();
 
 ---
 
-## 5. Axios — HTTP Client
+## 6. Axios — HTTP Client
 
 ### Setup
 
@@ -333,7 +378,7 @@ export const projectApi = {
 
 ---
 
-## 6. Cấu trúc thư mục chuẩn
+## 7. Cấu trúc thư mục chuẩn
 
 ```
 frontend/
@@ -357,7 +402,7 @@ frontend/
 
 ---
 
-## 7. TypeScript
+## 8. TypeScript
 
 - Không dùng `any` — dùng `unknown` nếu type chưa biết, sau đó parse qua Zod.
 - Props của mọi component phải có interface rõ ràng.
@@ -365,10 +410,22 @@ frontend/
 
 ---
 
-## 8. Auth — Better-Auth
+## 9. Auth — Better-Auth
 
 - Backend dùng **Better-Auth** → session lưu bằng **HttpOnly cookie**.
 - Frontend không lưu token trong `localStorage` hay `sessionStorage`.
 - Axios gửi `withCredentials: true` để cookie được gửi tự động.
 - Auth state (user info, isLoggedIn) lưu trong `stores/auth.store.ts`.
 - Middleware Next.js (`middleware.ts`) kiểm tra session cookie, redirect nếu chưa login.
+
+---
+
+## 10. Storybook — Quy tắc viết Story
+
+- **Vị trí**: Đặt các file story trong thư mục `frontend/stories/ui/[ComponentName]/`.
+- **Nguyên tắc Self-contained (Tự thân)**:
+  - Hạn chế tạo thêm file `.module.css` phụ cho story nếu không thật sự cần thiết.
+  - Sử dụng các **Helper Components** nội bộ (như `DemoBox`, `DemoLabel`) ngay trong file `.stories.tsx` để quản lý layout demo (grid, flex, padding...).
+  - Mục tiêu: Giúp AI Agent và lập trình viên khác chỉ cần đọc 1 file duy nhất là hiểu toàn bộ cách sử dụng và demo của component.
+- **Tận dụng UI Primitives**: Sử dụng chính các component trong `components/ui` để xây dựng nội dung cho story (theo nguyên tắc Composition).
+- **Tags**: Luôn thêm `tags: ['autodocs']` để Storybook tự động sinh tài liệu.

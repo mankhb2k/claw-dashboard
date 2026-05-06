@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../core/database/prisma.service';
 import { QueueService } from '../../core/queue/queue.service';
@@ -275,6 +276,203 @@ export class ProjectsService {
     await this.projectSecrets.deleteEnvKey(projectId, key);
   }
 
+  async listConnectors(projectId: string, userId: string) {
+    await this.findOwned(projectId, userId);
+    const rows = await this.prisma.projectConnector.findMany({
+      where: { projectId },
+      include: {
+        connectorDefinition: true,
+      },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+
+    const out = await Promise.all(
+      rows.map(async (row) => {
+        const secrets = await this.projectSecrets.listConnectorSecretMeta(row.id);
+        return {
+          id: row.id,
+          projectId: row.projectId,
+          connectorDefinitionId: row.connectorDefinitionId,
+          connectorSlug: row.connectorDefinition.slug,
+          connectorName: row.connectorDefinition.displayName,
+          connectorKind: row.connectorDefinition.kind,
+          displayName: row.displayName ?? row.connectorDefinition.displayName,
+          enabled: row.enabled,
+          connectionStatus: row.connectionStatus,
+          config: row.config,
+          lastTestedAt: row.lastTestedAt?.toISOString() ?? null,
+          lastError: row.lastError,
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: row.updatedAt.toISOString(),
+          secrets,
+          definition: {
+            description: row.connectorDefinition.description,
+            status: row.connectorDefinition.status,
+            configSchema: row.connectorDefinition.configSchema,
+          },
+        };
+      }),
+    );
+
+    return out;
+  }
+
+  async createConnector(
+    projectId: string,
+    userId: string,
+    input: {
+      connectorSlug: string;
+      displayName?: string;
+      enabled?: boolean;
+      config?: Record<string, unknown>;
+    },
+  ) {
+    await this.findOwned(projectId, userId);
+    const slug = input.connectorSlug.trim().toLowerCase();
+    const definition = await this.prisma.connectorDefinition.findUnique({
+      where: { slug },
+    });
+    if (!definition) {
+      throw new NotFoundException('Connector definition not found');
+    }
+    if (definition.status !== 'ACTIVE') {
+      throw new BadRequestException(`Connector "${slug}" is not active`);
+    }
+    try {
+      const created = await this.prisma.projectConnector.create({
+        data: {
+          projectId,
+          connectorDefinitionId: definition.id,
+          displayName: input.displayName?.trim() || null,
+          enabled: Boolean(input.enabled),
+          ...(input.config !== undefined
+            ? { config: input.config as Prisma.InputJsonValue }
+            : {}),
+          connectionStatus: input.enabled ? 'CONNECTED' : 'DISCONNECTED',
+        },
+      });
+      await this.recordConnectorEvent(created.id, 'CREATED', 'Connector created');
+      return created;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new BadRequestException(`Connector "${slug}" already exists for this project`);
+      }
+      throw e;
+    }
+  }
+
+  async updateConnector(
+    projectId: string,
+    connectorId: string,
+    userId: string,
+    input: { displayName?: string; enabled?: boolean; config?: Record<string, unknown> },
+  ) {
+    const owned = await this.findOwnedConnector(projectId, userId, connectorId);
+    const updated = await this.prisma.projectConnector.update({
+      where: { id: connectorId },
+      data: {
+        ...(input.displayName !== undefined
+          ? { displayName: input.displayName.trim() || null }
+          : {}),
+        ...(input.enabled !== undefined ? { enabled: input.enabled } : {}),
+        ...(input.enabled !== undefined
+          ? { connectionStatus: input.enabled ? 'CONNECTED' : 'DISCONNECTED' }
+          : {}),
+        ...(input.config !== undefined
+          ? { config: input.config as Prisma.InputJsonValue }
+          : {}),
+      },
+    });
+    if (input.enabled !== undefined) {
+      await this.recordConnectorEvent(
+        connectorId,
+        input.enabled ? 'ENABLED' : 'DISABLED',
+        input.enabled ? 'Connector enabled' : 'Connector disabled',
+      );
+    } else {
+      await this.recordConnectorEvent(connectorId, 'UPDATED', 'Connector config updated');
+    }
+    return {
+      ...updated,
+      connectorSlug: owned.connectorDefinition.slug,
+      connectorName: owned.connectorDefinition.displayName,
+    };
+  }
+
+  async upsertConnectorSecret(
+    projectId: string,
+    connectorId: string,
+    userId: string,
+    secretKey: string,
+    value: string,
+  ) {
+    await this.findOwnedConnector(projectId, userId, connectorId);
+    await this.projectSecrets.upsertConnectorSecret(connectorId, secretKey, value);
+    await this.recordConnectorEvent(connectorId, 'SECRET_ROTATED', `Secret ${secretKey} upserted`);
+  }
+
+  async deleteConnectorSecret(
+    projectId: string,
+    connectorId: string,
+    userId: string,
+    secretKey: string,
+  ) {
+    await this.findOwnedConnector(projectId, userId, connectorId);
+    await this.projectSecrets.deleteConnectorSecret(connectorId, secretKey);
+    await this.recordConnectorEvent(connectorId, 'UPDATED', `Secret ${secretKey} deleted`);
+  }
+
+  async testConnector(projectId: string, connectorId: string, userId: string) {
+    await this.findOwnedConnector(projectId, userId, connectorId);
+    const hasApiKey = await this.projectSecrets.hasConnectorSecret(connectorId, 'API_KEY');
+    const now = new Date();
+    if (!hasApiKey) {
+      await this.prisma.projectConnector.update({
+        where: { id: connectorId },
+        data: {
+          connectionStatus: 'ERROR',
+          lastError: 'Missing API_KEY secret',
+          lastTestedAt: now,
+        },
+      });
+      await this.recordConnectorEvent(
+        connectorId,
+        'TEST_FAIL',
+        'Connector test failed: missing API_KEY secret',
+      );
+      throw new BadRequestException('API_KEY secret is required before testing connector');
+    }
+    await this.prisma.projectConnector.update({
+      where: { id: connectorId },
+      data: {
+        connectionStatus: 'CONNECTED',
+        enabled: true,
+        lastError: null,
+        lastTestedAt: now,
+      },
+    });
+    await this.recordConnectorEvent(connectorId, 'TEST_OK', 'Connector test successful');
+    return { ok: true, testedAt: now.toISOString() };
+  }
+
+  async listConnectorDefinitions() {
+    const defs = await this.prisma.connectorDefinition.findMany({
+      where: { status: { not: 'DEPRECATED' } },
+      orderBy: [{ displayName: 'asc' }],
+    });
+    return defs.map((d) => ({
+      id: d.id,
+      slug: d.slug,
+      displayName: d.displayName,
+      description: d.description,
+      kind: d.kind,
+      status: d.status,
+      configSchema: d.configSchema,
+      createdAt: d.createdAt.toISOString(),
+      updatedAt: d.updatedAt.toISOString(),
+    }));
+  }
+
   // ── Internal API ─────────────────────────────────────────────────────────
 
   async updateProjectStatus(
@@ -412,5 +610,38 @@ export class ProjectsService {
     if (project.userId !== userId) throw new ForbiddenException('Not your project');
 
     return project;
+  }
+
+  private async findOwnedConnector(projectId: string, userId: string, connectorId: string) {
+    await this.findOwned(projectId, userId);
+    const connector = await this.prisma.projectConnector.findUnique({
+      where: { id: connectorId },
+      include: { connectorDefinition: true },
+    });
+    if (!connector || connector.projectId !== projectId) {
+      throw new NotFoundException('Connector not found');
+    }
+    return connector;
+  }
+
+  private async recordConnectorEvent(
+    projectConnectorId: string,
+    eventType:
+      | 'CREATED'
+      | 'UPDATED'
+      | 'ENABLED'
+      | 'DISABLED'
+      | 'TEST_OK'
+      | 'TEST_FAIL'
+      | 'SECRET_ROTATED',
+    message: string,
+  ): Promise<void> {
+    await this.prisma.projectConnectorEvent.create({
+      data: {
+        projectConnectorId,
+        eventType,
+        message,
+      },
+    });
   }
 }

@@ -1,0 +1,35 @@
+/* =============================================================================
+   1. ROOT MODAL — lớp phủ toàn viewport
+   ============================================================================= */
+.modalRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  isolation: isolate;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 0;
+  background: rgba(8, 10, 15, 0.62);
+}
+
+/* =============================================================================
+   2. THẺ NỘI DUNG TRUNG TÂM
+   ============================================================================= */
+.modalCard {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  background: #0f1117;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+  opacity: 1;
+  box-shadow: var(--shadow-lg);
+}

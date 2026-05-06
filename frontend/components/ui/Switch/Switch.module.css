@@ -1,0 +1,62 @@
+/* =============================================================================
+   1. VỎ BỌC (WRAPPER)
+   ============================================================================= */
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* =============================================================================
+   2. THANH TRƯỢT (ROOT)
+   ============================================================================= */
+.root {
+  all: unset;
+  width: 36px;
+  height: 20px;
+  background-color: var(--color-border);
+  border-radius: 9999px;
+  position: relative;
+  transition: background-color var(--transition-fast) ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.root:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* Trạng thái On */
+.root[data-state='checked'] {
+  background-color: var(--color-primary);
+}
+
+/* =============================================================================
+   3. NÚT TRƯỢT (THUMB)
+   ============================================================================= */
+.thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform var(--transition-fast) ease;
+  transform: translateX(2px);
+  will-change: transform;
+}
+
+.root[data-state='checked'] .thumb {
+  transform: translateX(18px);
+}
+
+/* =============================================================================
+   4. NHÃN (LABEL)
+   ============================================================================= */
+.label {
+  font-size: 14px;
+  color: var(--color-text);
+  user-select: none;
+  cursor: pointer;
+  line-height: 1;
+}

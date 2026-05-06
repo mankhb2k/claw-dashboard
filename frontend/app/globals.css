@@ -1,4 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
 :root {
+  --font-inter: 'Inter', sans-serif;
   /* Colors — light (default) */
   --color-bg: #f4f5f8;
   --color-white: #ffffff;
@@ -12,6 +15,7 @@
   --color-primary: #ff5f00;
   --color-primary-hover: #ff8c00;
   --color-primary-dim: rgba(255, 95, 0, 0.14);
+  --color-backgroud-hover: rgba(255, 95, 0, 0.06);
   --color-danger: #dc2626;
   --color-danger-dim: rgba(239, 68, 68, 0.1);
   --color-success: #22c55e;
@@ -121,7 +125,7 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family:
-    var(--font-geist-sans),
+    var(--font-inter),
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",

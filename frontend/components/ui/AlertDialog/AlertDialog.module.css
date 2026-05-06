@@ -1,0 +1,92 @@
+/* =============================================================================
+   1. OVERLAY — Lớp nền mờ
+   ============================================================================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* =============================================================================
+   2. CONTAINER — Căn giữa content
+   ============================================================================= */
+.container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 51;
+  pointer-events: none;
+}
+
+/* =============================================================================
+   3. CONTENT — Hộp thoại chính
+   ============================================================================= */
+.content {
+  pointer-events: auto;
+  background-color: var(--color-white);
+  width: 90vw;
+  max-width: 440px;
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  animation: contentShow 0.2s ease-out;
+}
+
+.content:focus {
+  outline: none;
+}
+
+/* =============================================================================
+   4. HEADER, FOOTER, TITLE, DESCRIPTION
+   ============================================================================= */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+
+/* =============================================================================
+   5. ANIMATIONS
+   ============================================================================= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

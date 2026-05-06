@@ -75,6 +75,54 @@ export const projectEnvMaskedRowSchema = z.object({
   masked: z.string(),
 })
 
+export const connectorKindSchema = z.enum(['API', 'MCP', 'OAUTH'])
+export const connectorStatusSchema = z.enum(['DISCONNECTED', 'CONNECTED', 'ERROR', 'NEEDS_REAUTH'])
+
+export const connectorDefinitionSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  kind: connectorKindSchema,
+  status: z.enum(['ACTIVE', 'DISABLED', 'DEPRECATED']),
+  configSchema: z.unknown().optional().nullable(),
+  createdAt: z.coerce.string().optional(),
+  updatedAt: z.coerce.string().optional(),
+})
+
+export const projectConnectorSchema = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  connectorDefinitionId: z.string(),
+  connectorSlug: z.string(),
+  connectorName: z.string(),
+  connectorKind: connectorKindSchema,
+  displayName: z.string(),
+  enabled: z.boolean(),
+  connectionStatus: connectorStatusSchema,
+  config: z.unknown().optional().nullable(),
+  lastTestedAt: z.coerce.string().nullable().optional(),
+  lastError: z.string().nullable().optional(),
+  createdAt: z.coerce.string(),
+  updatedAt: z.coerce.string(),
+  secrets: z
+    .array(
+      z.object({
+        key: z.string(),
+        updatedAt: z.coerce.string(),
+        masked: z.string(),
+      }),
+    )
+    .default([]),
+  definition: z
+    .object({
+      description: z.string(),
+      status: z.enum(['ACTIVE', 'DISABLED', 'DEPRECATED']),
+      configSchema: z.unknown().optional().nullable(),
+    })
+    .optional(),
+})
+
 /** Form draft: empty string means "do not send / leave unchanged in mock until user types" */
 export const agentProviderKeysFormSchema = z.object({
   OPENAI_API_KEY: z.string().max(5000),
@@ -85,3 +133,5 @@ export const agentProviderKeysFormSchema = z.object({
 })
 
 export type AgentProviderKeysFormInput = z.infer<typeof agentProviderKeysFormSchema>
+export type ConnectorDefinition = z.infer<typeof connectorDefinitionSchema>
+export type ProjectConnector = z.infer<typeof projectConnectorSchema>

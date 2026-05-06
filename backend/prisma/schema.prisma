@@ -124,6 +124,7 @@ model Project {
   heavyJobs          HeavyJob[]
   containerInstances ContainerInstance[]
   projectSecrets     ProjectSecret[]
+  connectors         ProjectConnector[]
 
   @@index([userId])
   @@index([lastActiveAt], map: "idx_projects_idle")
@@ -144,6 +145,104 @@ model ProjectSecret {
   @@unique([projectId, secretKey], map: "uq_project_secret_key")
   @@index([projectId])
   @@map("project_secrets")
+}
+
+model ConnectorDefinition {
+  id           String                  @id @default(cuid())
+  slug         String                  @unique @db.VarChar(100)
+  displayName  String                  @db.VarChar(200)
+  description  String                  @default("")
+  kind         ConnectorKind           @default(API)
+  status       ConnectorDefinitionStatus @default(ACTIVE)
+  configSchema Json?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  projectConnectors ProjectConnector[]
+
+  @@map("connector_definitions")
+}
+
+model ProjectConnector {
+  id                   String                    @id @default(cuid())
+  projectId            String
+  connectorDefinitionId String
+  displayName          String?
+  enabled              Boolean                   @default(false)
+  connectionStatus     ProjectConnectorStatus    @default(DISCONNECTED)
+  config               Json?
+  lastTestedAt         DateTime?
+  lastError            String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  project              Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  connectorDefinition  ConnectorDefinition       @relation(fields: [connectorDefinitionId], references: [id], onDelete: Restrict)
+  secrets              ProjectConnectorSecret[]
+  events               ProjectConnectorEvent[]
+
+  @@unique([projectId, connectorDefinitionId], map: "uq_project_connector_definition")
+  @@index([projectId, enabled], map: "idx_project_connectors_project_enabled")
+  @@index([projectId, connectionStatus], map: "idx_project_connectors_project_status")
+  @@map("project_connectors")
+}
+
+model ProjectConnectorSecret {
+  id                 String            @id @default(cuid())
+  projectConnectorId String
+  secretKey          String            @db.VarChar(128)
+  payloadEnc         String            @db.Text
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  projectConnector   ProjectConnector  @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
+
+  @@unique([projectConnectorId, secretKey], map: "uq_project_connector_secret_key")
+  @@index([projectConnectorId], map: "idx_project_connector_secret_connector")
+  @@map("project_connector_secrets")
+}
+
+model ProjectConnectorEvent {
+  id                 String                    @id @default(cuid())
+  projectConnectorId String
+  eventType          ProjectConnectorEventType
+  message            String                    @default("")
+  meta               Json?
+  createdAt          DateTime                  @default(now())
+
+  projectConnector   ProjectConnector          @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
+
+  @@index([projectConnectorId, createdAt], map: "idx_project_connector_events_connector_created")
+  @@map("project_connector_events")
+}
+
+enum ConnectorKind {
+  API
+  MCP
+  OAUTH
+}
+
+enum ConnectorDefinitionStatus {
+  ACTIVE
+  DISABLED
+  DEPRECATED
+}
+
+enum ProjectConnectorStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+  NEEDS_REAUTH
+}
+
+enum ProjectConnectorEventType {
+  CREATED
+  UPDATED
+  ENABLED
+  DISABLED
+  TEST_OK
+  TEST_FAIL
+  SECRET_ROTATED
 }
 
 // ─── Container Instances ──────────────────────────────────────────────────────

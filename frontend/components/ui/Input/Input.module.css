@@ -1,66 +1,58 @@
 /* =============================================================================
-   1. FIELD — label + ô nhập chồng dọc
+   1. VỎ BỌC (FIELD)
    ============================================================================= */
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
 .label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--color-text);
-  letter-spacing: -0.005em;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 
+/* =============================================================================
+   2. Ô NHẬP (INPUT)
+   ============================================================================= */
 .input {
-  height: 40px;
-  padding: 8px 12px;
-  background: var(--bg-elevated);
+  height: 38px;
+  padding: 0 12px;
+  background: var(--color-white);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
-  transition:
-    border-color var(--transition-fast) ease,
-    box-shadow var(--transition-fast) ease,
-    background var(--transition-fast) ease;
+  transition: all var(--transition-fast) ease;
   width: 100%;
 }
 
 .input::placeholder {
-  color: var(--color-text-muted);
-  opacity: 0.6;
+  color: var(--color-text-subtle);
+  opacity: 0.5;
 }
 
-.input:hover:not(:focus-visible) {
-  border-color: var(--color-border-strong);
-}
-
-.input:focus-visible {
+/* Trạng thái Active/Focus */
+.input:focus {
   border-color: var(--color-primary);
-  background: var(--bg-hover);
+  /* Chỉ dùng shadow cực nhẹ, không dùng vòng đệm màu bg để tránh lỗi 2 border */
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
 }
 
 /* =============================================================================
-   2. TRẠNG THÁI LỖI VALIDATION
+   3. TRẠNG THÁI LỖI
    ============================================================================= */
 .inputError {
-  border-color: var(--color-danger);
+  border-color: var(--color-danger) !important;
 }
 
-.inputError:hover:not(:focus-visible) {
-  border-color: var(--color-danger);
-}
-
-.inputError:focus-visible {
-  border-color: var(--color-danger);
-  background: var(--bg-hover);
+.inputError:focus {
+  box-shadow: 0 0 0 3px var(--color-danger-dim);
 }
 
 .error {
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   color: var(--color-danger);
 }

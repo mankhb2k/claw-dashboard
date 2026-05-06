@@ -1,0 +1,235 @@
+/* =============================================================================
+   1. OVERLAY PHÍA SAU — mở/đóng
+   ============================================================================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 15, 0.5);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  transition: opacity 0.2s ease;
+}
+
+.overlayOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* =============================================================================
+   2. PANEL SLIDE TRÁI PHẢI — drawer cài đặt
+   ============================================================================= */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 100vw);
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarOpen {
+  transform: translateX(0);
+}
+
+/* =============================================================================
+   3. HEADER PANEL — tiêu đề & nút đóng
+   ============================================================================= */
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast) ease,
+    border-color var(--transition-fast) ease,
+    background var(--transition-fast) ease;
+}
+
+.closeBtn:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
+/* =============================================================================
+   4. THÂN CUỘN — các section chi tiết
+   ============================================================================= */
+.body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.separator {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dl {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.dt {
+  color: var(--color-text-muted);
+}
+
+.dd {
+  color: var(--color-text);
+  text-align: right;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--font-size-xs);
+  word-break: break-word;
+}
+
+.url {
+  color: var(--color-primary);
+  text-align: right;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--font-size-xs);
+  word-break: break-all;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.refreshWrap {
+  margin-top: var(--space-1);
+}
+
+/* =============================================================================
+   5. VÙNG CẢNH BÁO (danger)
+   ============================================================================= */
+.danger {
+  padding-top: var(--space-1);
+}
+
+.dangerNote {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* =============================================================================
+   6. BADGE TRẠNG THÁI DỰ ÁN — (dùng chung pattern BEM --)
+   ============================================================================= */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  margin-top: var(--space-2);
+  white-space: nowrap;
+}
+
+.badge--running {
+  background: var(--color-success-dim);
+  color: var(--color-success);
+}
+
+.badge--stopped {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.badge--starting,
+.badge--creating,
+.badge--stopping {
+  background: var(--color-primary-dim);
+  color: var(--color-primary);
+}
+
+.badge--error {
+  background: var(--color-danger-dim);
+  color: var(--color-danger);
+}
+
+.badgeSpinner {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  opacity: 0.7;
+}
+
+/* =============================================================================
+   7. Animation
+   ============================================================================= */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
