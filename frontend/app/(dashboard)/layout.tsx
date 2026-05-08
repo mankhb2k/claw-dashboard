@@ -1,22 +1,35 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Sidebar } from '@/components/layout/Sidebar/Sidebar'
-import { ProjectStatusPoller } from '@/components/ProjectStatusPoller/ProjectStatusPoller'
-import { CreateProjectModalHost } from '@/components/project/CreateProjectModalHost/CreateProjectModalHost'
-import styles from './dashboard.layout.module.css'
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { Sidebar } from "@/components/dashboard/Sidebar/Sidebar";
+import { CreateProjectModalHost } from "@/components/dashboard/CreateProjectModalHost/CreateProjectModalHost";
+import styles from "./dashboard.layout.module.css";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(true)
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(true);
+  const hasProjectSidebar = pathname.startsWith("/project/");
 
   return (
     <div className={styles.shell}>
-      <ProjectStatusPoller />
       <CreateProjectModalHost />
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
-      <div className={[styles.main, collapsed ? styles.mainCollapsed : ''].join(' ')}>
+      {hasProjectSidebar ? (
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+      ) : null}
+      <div
+        className={[
+          styles.main,
+          hasProjectSidebar ? "" : styles.mainNoSidebar,
+          hasProjectSidebar && collapsed ? styles.mainCollapsed : "",
+        ].join(" ")}
+      >
         {children}
       </div>
     </div>
-  )
+  );
 }

@@ -266,7 +266,74 @@
 }
 
 /* =============================================================================
-   9. Animation
+   9. MODAL XÁC NHẬN / THÔNG BÁO
+   ============================================================================= */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: var(--space-4);
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.modalBody {
+  padding: var(--space-5);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.modalFooter {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  background: #f9fafb;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+[data-theme="dark"] .modalContent {
+  background: var(--color-surface);
+}
+
+[data-theme="dark"] .modalFooter {
+  background: var(--color-surface-2);
+}
+
+/* =============================================================================
+   10. Animation
    ============================================================================= */
 @keyframes spin {
   to {
@@ -275,7 +342,7 @@
 }
 
 /* =============================================================================
-   10. Responsive
+   11. Responsive
    ============================================================================= */
 @media (max-width: 900px) {
   .page {

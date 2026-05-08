@@ -3,9 +3,9 @@
 import { useEffect } from "react";
 import { useProjectStore } from "@/stores/project.store";
 import { useCreateProjectModalStore } from "@/stores/create-project-modal.store";
-import { Header } from "@/components/layout/Header/Header";
-import { Button } from "@/components/ui/Button/Button";
-import { ProjectCard } from "@/components/project/ProjectCard/ProjectCard";
+import { Header } from "@/components/dashboard/Header/Header";
+import { ProjectCard } from "@/components/dashboard/ProjectCard/ProjectCard";
+import { Button, Typography } from "@/components/ui";
 import styles from "./dashboard.module.css";
 
 export default function DashboardPage() {
@@ -26,27 +26,37 @@ export default function DashboardPage() {
       <div className={styles.page}>
         <div className={styles.topbar}>
           <div>
-            <h2 className={styles.heading}>Projects của bạn</h2>
-            <p className={styles.sub}>
+            <Typography as="h2" variant="h3" className={styles.heading}>
+              Projects của bạn
+            </Typography>
+            <Typography as="p" variant="p" className={styles.sub}>
               Mỗi project chạy trên 1 container riêng biệt
-            </p>
+            </Typography>
           </div>
           <Button type="button" onClick={() => openCreateModal("dashboard")}>
             + Tạo project
           </Button>
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <Typography as="p" className={styles.error}>
+            {error}
+          </Typography>
+        )}
 
         {isLoading ? (
           <div className={styles.empty}>
             <span className={styles.spinner} />
-            <p>Đang tải...</p>
+            <Typography as="p">Đang tải...</Typography>
           </div>
         ) : projects.length === 0 ? (
           <div className={styles.empty}>
-            <p className={styles.emptyIcon}>◈</p>
-            <p className={styles.emptyText}>Chưa có project nào</p>
+            <Typography as="p" className={styles.emptyIcon}>
+              ◈
+            </Typography>
+            <Typography as="p" className={styles.emptyText}>
+              Chưa có project nào
+            </Typography>
             <Button type="button" onClick={() => openCreateModal("dashboard")}>
               Tạo project đầu tiên
             </Button>

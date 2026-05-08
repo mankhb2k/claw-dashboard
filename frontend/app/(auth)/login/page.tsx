@@ -10,7 +10,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { authApi } from "@/lib/api/auth";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
-import { SocialLoginButton } from "@/components/ui/SocialLoginButton/SocialLoginButton";
+import { SocialLoginButton } from "@/components/SocialLoginButton/SocialLoginButton";
 import styles from "./login.module.css";
 
 export default function LoginPage() {

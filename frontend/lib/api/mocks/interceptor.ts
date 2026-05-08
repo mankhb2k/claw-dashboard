@@ -1,7 +1,7 @@
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { authHandlers, projectHandlers } from './handlers'
 
-const MOCK_ENABLED = true
+const MOCK_ENABLED = process.env.NEXT_PUBLIC_MOCK_API === 'true'
 
 function normalizePath(inputUrl: string): string {
   const raw = inputUrl.trim()
@@ -27,9 +27,11 @@ function isMockRoute(url: string, method: string): boolean {
     { url: '/api/auth/get-session', method: 'get' },
     { url: '/api/projects', methods: ['get', 'post'] },
     { url: '/api/projects/mine', methods: ['get'] },
+    { url: '/api/projects/connectors/definitions', methods: ['get'] },
     {
-      pattern: /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/env|$)/,
-      methods: ['get', 'post', 'put', 'delete'],
+      pattern:
+        /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/env|\/connectors(\/[\w-]+(\/secrets\/[\w-]+|\/test)?)?|$)/,
+      methods: ['get', 'post', 'put', 'patch', 'delete'],
     },
   ]
 
@@ -120,6 +122,17 @@ export function setupMockInterceptor(api: AxiosInstance) {
 
         if ((url === '/api/projects' || url === '/api/projects/mine') && method === 'get') {
           responseData = projectHandlers.list()
+          return Promise.resolve({
+            data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        if (url === '/api/projects/connectors/definitions' && method === 'get') {
+          responseData = projectHandlers.connectorDefinitions()
           return Promise.resolve({
             data: responseData,
             status: 200,
@@ -229,6 +242,84 @@ export function setupMockInterceptor(api: AxiosInstance) {
           responseData = projectHandlers.getEnv(id)
           return Promise.resolve({
             data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        const connectorsMatch = url.match(/^\/api\/projects\/([\w-]+)\/connectors$/)
+        if (connectorsMatch && method === 'get') {
+          const [, id] = connectorsMatch
+          responseData = projectHandlers.listConnectors(id)
+          return Promise.resolve({
+            data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        if (connectorsMatch && method === 'post') {
+          const [, id] = connectorsMatch
+          projectHandlers.createConnector(id, { config, data: reqData })
+          return Promise.resolve({
+            data: {},
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        const connectorUpdateMatch = url.match(/^\/api\/projects\/([\w-]+)\/connectors\/([\w-]+)$/)
+        if (connectorUpdateMatch && method === 'patch') {
+          const [, id, connectorId] = connectorUpdateMatch
+          projectHandlers.updateConnector(id, connectorId, { config, data: reqData })
+          return Promise.resolve({
+            data: {},
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        const connectorSecretMatch = url.match(
+          /^\/api\/projects\/([\w-]+)\/connectors\/([\w-]+)\/secrets\/([\w-]+)$/,
+        )
+        if (connectorSecretMatch && method === 'put') {
+          const [, id, connectorId, secretKey] = connectorSecretMatch
+          projectHandlers.upsertConnectorSecret(id, connectorId, secretKey, { config, data: reqData })
+          return Promise.resolve({
+            data: {},
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        if (connectorSecretMatch && method === 'delete') {
+          const [, id, connectorId, secretKey] = connectorSecretMatch
+          projectHandlers.deleteConnectorSecret(id, connectorId, secretKey)
+          return Promise.resolve({
+            data: {},
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        const connectorTestMatch = url.match(/^\/api\/projects\/([\w-]+)\/connectors\/([\w-]+)\/test$/)
+        if (connectorTestMatch && method === 'post') {
+          const [, id, connectorId] = connectorTestMatch
+          projectHandlers.testConnector(id, connectorId)
+          return Promise.resolve({
+            data: {},
             status: 200,
             statusText: 'OK',
             headers: {},

@@ -19,6 +19,11 @@
   transition: margin-left var(--transition-base) var(--ease-out);
 }
 
+/* --- Không có sidebar: nội dung full width --- */
+.mainNoSidebar {
+  margin-left: 0;
+}
+
 /* --- Sidebar thu nhỏ: thu margin --- */
 .mainCollapsed {
   margin-left: var(--sidebar-collapsed-width);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/layout/Header/Header";
+import { Header } from "@/components/dashboard/Header/Header";
 import { CreateProjectFormCard } from "@/components/project/CreateProjectFormCard/CreateProjectFormCard";
 import styles from "./new-project.module.css";
 

@@ -2,16 +2,16 @@ import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import styles from './Button.module.css'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'ghost' | 'danger'
-  size?: 'sm' | 'md'
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'outline' | 'secondary' | 'ghost' | 'danger' | 'link'
+  size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon_xs' | 'icon_sm' | 'icon_lg'
   loading?: boolean
   asChild?: boolean
 }
 
 export function Button({
   variant = 'primary',
-  size = 'md',
+  size = 'default',
   loading = false,
   asChild = false,
   disabled,
@@ -21,16 +21,18 @@ export function Button({
 }: ButtonProps) {
   const Comp = asChild ? Slot : 'button'
 
+  const buttonClasses = [
+    styles.btn,
+    styles[`v_${variant}`],
+    styles[`s_${size}`],
+    loading ? styles.loading : '',
+    className ?? '',
+  ].join(' ')
+
   if (asChild) {
     return (
       <Comp
-        className={[
-          styles.btn,
-          styles[variant],
-          styles[size],
-          loading ? styles.loading : '',
-          className ?? '',
-        ].join(' ')}
+        className={buttonClasses}
         data-disabled={disabled || loading ? '' : undefined}
         data-loading={loading ? '' : undefined}
         {...props}
@@ -42,13 +44,7 @@ export function Button({
 
   return (
     <Comp
-      className={[
-        styles.btn,
-        styles[variant],
-        styles[size],
-        loading ? styles.loading : '',
-        className ?? '',
-      ].join(' ')}
+      className={buttonClasses}
       disabled={disabled || loading}
       {...props}
     >
