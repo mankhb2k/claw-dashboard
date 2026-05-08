@@ -9,7 +9,7 @@
 **/*.tsbuildinfo
 *.log
 /openclaw-worker/
-/frontend/
 .DS_Store
 .tmp-openclaw-upstream
 /generated/prisma
+/frontend/

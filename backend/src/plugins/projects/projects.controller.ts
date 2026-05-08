@@ -20,6 +20,11 @@ import { StopProjectDto } from './dto/stop-project.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DeleteProjectEnvDto, UpsertProjectEnvDto } from './dto/project-env.dto';
+import {
+  CreateProjectConnectorDto,
+  UpdateProjectConnectorDto,
+  UpsertProjectConnectorSecretDto,
+} from './dto/project-connector.dto';
 
 @ApiTags('Projects')
 @ApiCookieAuth('better-auth.session_token')
@@ -107,6 +112,103 @@ export class ProjectsController {
   ) {
     await this.projectsService.deleteProjectEnv(id, user.id, dto.key);
     return ok({ deleted: true });
+  }
+
+  // GET /api/projects/connectors/definitions
+  @Get('connectors/definitions')
+  @ApiOperation({ summary: 'List available connector definitions' })
+  async connectorDefinitions() {
+    const rows = await this.projectsService.listConnectorDefinitions();
+    return ok(rows);
+  }
+
+  // GET /api/projects/:id/connectors
+  @Get(':id/connectors')
+  @ApiOperation({ summary: 'List project connectors' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  async listConnectors(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    const rows = await this.projectsService.listConnectors(id, user.id);
+    return ok(rows);
+  }
+
+  // POST /api/projects/:id/connectors
+  @Post(':id/connectors')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Create connector installation for a project' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  async createConnector(
+    @Param('id') id: string,
+    @Body() dto: CreateProjectConnectorDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const row = await this.projectsService.createConnector(id, user.id, dto);
+    return ok(row);
+  }
+
+  // PATCH /api/projects/:id/connectors/:connectorId
+  @Patch(':id/connectors/:connectorId')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Update project connector settings (enabled/config/displayName)' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  @ApiParam({ name: 'connectorId', description: 'ProjectConnector ID' })
+  async updateConnector(
+    @Param('id') id: string,
+    @Param('connectorId') connectorId: string,
+    @Body() dto: UpdateProjectConnectorDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const row = await this.projectsService.updateConnector(id, connectorId, user.id, dto);
+    return ok(row);
+  }
+
+  // PUT /api/projects/:id/connectors/:connectorId/secrets/:secretKey
+  @Put(':id/connectors/:connectorId/secrets/:secretKey')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Upsert one encrypted connector secret' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  @ApiParam({ name: 'connectorId', description: 'ProjectConnector ID' })
+  @ApiParam({ name: 'secretKey', description: 'Secret key, e.g. API_KEY' })
+  async upsertConnectorSecret(
+    @Param('id') id: string,
+    @Param('connectorId') connectorId: string,
+    @Param('secretKey') secretKey: string,
+    @Body() dto: UpsertProjectConnectorSecretDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    await this.projectsService.upsertConnectorSecret(id, connectorId, user.id, secretKey, dto.value);
+    return ok({ saved: true });
+  }
+
+  // DELETE /api/projects/:id/connectors/:connectorId/secrets/:secretKey
+  @Delete(':id/connectors/:connectorId/secrets/:secretKey')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Delete one connector secret key' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  @ApiParam({ name: 'connectorId', description: 'ProjectConnector ID' })
+  @ApiParam({ name: 'secretKey', description: 'Secret key, e.g. API_KEY' })
+  async deleteConnectorSecret(
+    @Param('id') id: string,
+    @Param('connectorId') connectorId: string,
+    @Param('secretKey') secretKey: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    await this.projectsService.deleteConnectorSecret(id, connectorId, user.id, secretKey);
+    return ok({ deleted: true });
+  }
+
+  // POST /api/projects/:id/connectors/:connectorId/test
+  @Post(':id/connectors/:connectorId/test')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Run a lightweight connector config test' })
+  @ApiParam({ name: 'id', description: 'Project ID' })
+  @ApiParam({ name: 'connectorId', description: 'ProjectConnector ID' })
+  async testConnector(
+    @Param('id') id: string,
+    @Param('connectorId') connectorId: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const result = await this.projectsService.testConnector(id, connectorId, user.id);
+    return ok(result);
   }
 
   // POST /api/projects/:id/start

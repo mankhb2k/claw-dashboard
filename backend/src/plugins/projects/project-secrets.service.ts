@@ -127,4 +127,88 @@ export class ProjectSecretsService {
       throw e;
     }
   }
+
+  async listConnectorSecretMeta(
+    projectConnectorId: string,
+  ): Promise<Array<{ key: string; updatedAt: Date; masked: string }>> {
+    const rows = await this.prisma.projectConnectorSecret.findMany({
+      where: { projectConnectorId },
+      orderBy: { secretKey: 'asc' },
+    });
+    return rows.map((r) => ({
+      key: r.secretKey,
+      updatedAt: r.updatedAt,
+      masked: '••••••••••••',
+    }));
+  }
+
+  async hasConnectorSecret(projectConnectorId: string, key: string): Promise<boolean> {
+    const secretKey = this.normalizeConnectorSecretKey(key);
+    const row = await this.prisma.projectConnectorSecret.findUnique({
+      where: {
+        projectConnectorId_secretKey: {
+          projectConnectorId,
+          secretKey,
+        },
+      },
+      select: { id: true },
+    });
+    return !!row;
+  }
+
+  async upsertConnectorSecret(
+    projectConnectorId: string,
+    key: string,
+    value: string,
+  ): Promise<void> {
+    const secretKey = this.normalizeConnectorSecretKey(key);
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length > 5000) {
+      throw new BadRequestException(`Invalid value for ${secretKey}`);
+    }
+    const payloadEnc = this.crypto.encryptUtf8(trimmed);
+    await this.prisma.projectConnectorSecret.upsert({
+      where: {
+        projectConnectorId_secretKey: {
+          projectConnectorId,
+          secretKey,
+        },
+      },
+      create: {
+        projectConnectorId,
+        secretKey,
+        payloadEnc,
+      },
+      update: {
+        payloadEnc,
+      },
+    });
+  }
+
+  async deleteConnectorSecret(projectConnectorId: string, key: string): Promise<void> {
+    const secretKey = this.normalizeConnectorSecretKey(key);
+    try {
+      await this.prisma.projectConnectorSecret.delete({
+        where: {
+          projectConnectorId_secretKey: {
+            projectConnectorId,
+            secretKey,
+          },
+        },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+        return;
+      }
+      throw e;
+    }
+  }
+
+  private normalizeConnectorSecretKey(key: string): string {
+    const normalized = key.trim().toUpperCase();
+    if (!normalized || normalized.length > 128 || !/^[A-Z0-9_]+$/.test(normalized)) {
+      throw new BadRequestException(`Secret key not allowed: ${key}`);
+    }
+    return normalized;
+  }
 }
