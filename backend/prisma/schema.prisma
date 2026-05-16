@@ -124,7 +124,8 @@ model Project {
   heavyJobs          HeavyJob[]
   containerInstances ContainerInstance[]
   projectSecrets     ProjectSecret[]
-  connectors         ProjectConnector[]
+  connectors         ProjectToolsConnector[]
+  aiModelConnections ProjectAIModelConnection[]
 
   @@index([userId])
   @@index([lastActiveAt], map: "idx_projects_idle")
@@ -158,18 +159,18 @@ model ConnectorDefinition {
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
 
-  projectConnectors ProjectConnector[]
+  projectConnectors ProjectToolsConnector[]
 
   @@map("connector_definitions")
 }
 
-model ProjectConnector {
+model ProjectToolsConnector {
   id                   String                    @id @default(cuid())
   projectId            String
   connectorDefinitionId String
   displayName          String?
   enabled              Boolean                   @default(false)
-  connectionStatus     ProjectConnectorStatus    @default(DISCONNECTED)
+  connectionStatus     ProjectToolsConnectorStatus    @default(DISCONNECTED)
   config               Json?
   lastTestedAt         DateTime?
   lastError            String?
@@ -184,7 +185,7 @@ model ProjectConnector {
   @@unique([projectId, connectorDefinitionId], map: "uq_project_connector_definition")
   @@index([projectId, enabled], map: "idx_project_connectors_project_enabled")
   @@index([projectId, connectionStatus], map: "idx_project_connectors_project_status")
-  @@map("project_connectors")
+  @@map("project_tools_connectors")
 }
 
 model ProjectConnectorSecret {
@@ -195,7 +196,7 @@ model ProjectConnectorSecret {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
-  projectConnector   ProjectConnector  @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
+  projectConnector   ProjectToolsConnector  @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
 
   @@unique([projectConnectorId, secretKey], map: "uq_project_connector_secret_key")
   @@index([projectConnectorId], map: "idx_project_connector_secret_connector")
@@ -205,12 +206,12 @@ model ProjectConnectorSecret {
 model ProjectConnectorEvent {
   id                 String                    @id @default(cuid())
   projectConnectorId String
-  eventType          ProjectConnectorEventType
+  eventType          ProjectToolsConnectorEventType
   message            String                    @default("")
   meta               Json?
   createdAt          DateTime                  @default(now())
 
-  projectConnector   ProjectConnector          @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
+  projectConnector   ProjectToolsConnector          @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
 
   @@index([projectConnectorId, createdAt], map: "idx_project_connector_events_connector_created")
   @@map("project_connector_events")
@@ -228,14 +229,14 @@ enum ConnectorDefinitionStatus {
   DEPRECATED
 }
 
-enum ProjectConnectorStatus {
+enum ProjectToolsConnectorStatus {
   DISCONNECTED
   CONNECTED
   ERROR
   NEEDS_REAUTH
 }
 
-enum ProjectConnectorEventType {
+enum ProjectToolsConnectorEventType {
   CREATED
   UPDATED
   ENABLED
@@ -243,6 +244,45 @@ enum ProjectConnectorEventType {
   TEST_OK
   TEST_FAIL
   SECRET_ROTATED
+}
+
+// ─── AI Models ────────────────────────────────────────────────────────────────
+
+model ProjectAIModelConnection {
+  id                String   @id @default(cuid())
+  projectId         String
+  providerId        String   // e.g., 'openai', 'anthropic', 'google'
+  name              String   // Tên kết nối do user đặt
+  
+  enabled           Boolean  @default(true)
+  isDefault         Boolean  @default(false) // Đánh dấu model mặc định của Project
+  
+  lastTestedAt      DateTime?
+  errorMessage      String?  // Lưu lỗi nếu token/key bị tèo
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secrets           ProjectAIModelSecret[]
+
+  @@index([projectId, providerId])
+  @@map("project_ai_model_connections")
+}
+
+model ProjectAIModelSecret {
+  id                          String                 @id @default(cuid())
+  projectAIModelConnectionId  String
+  secretKey                   String                 @db.VarChar(128) 
+  payloadEnc                  String                 @db.Text
+  
+  createdAt                   DateTime               @default(now())
+  updatedAt                   DateTime               @updatedAt
+
+  connection                  ProjectAIModelConnection @relation(fields: [projectAIModelConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([projectAIModelConnectionId, secretKey], map: "uq_project_ai_model_secret_key")
+  @@map("project_ai_model_secrets")
 }
 
 // ─── Container Instances ──────────────────────────────────────────────────────
