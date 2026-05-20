@@ -5,6 +5,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger as PinoNestLogger } from 'nestjs-pino';
@@ -24,6 +25,8 @@ async function bootstrap() {
   );
   app.useLogger(app.get(PinoNestLogger));
   app.setGlobalPrefix('api');
+
+  await app.register(fastifyCookie);
 
   await app.register(fastifyCors, {
     origin: [
@@ -47,7 +50,7 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('OpenClaw Auth API')
-    .setDescription('Auth — JWT access + refresh, register / login / me')
+    .setDescription('Auth — JWT cookie, đăng ký/đăng nhập bằng login (email hoặc username)')
     .setVersion('0.1.0')
     .addBearerAuth()
     .build();

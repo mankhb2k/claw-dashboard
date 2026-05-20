@@ -1,6 +1,5 @@
-# Phase 1: Postgres là đủ. Redis optional (Phase 2 / queue). Dùng khi dev backend không cần worker fleet.
-# Chạy: docker compose -f docker-compose.deps.yml up -d
-# Chuỗi kết nối mặc định trùng với docker-compose.yml gốc.
+# Dev local: chỉ Postgres. Backend chạy `npm run dev` trên host.
+# Chạy: npm run docker:deps   hoặc   docker compose -f docker-compose.deps.yml up -d
 services:
   postgres:
     image: postgres:16-alpine
@@ -20,18 +19,6 @@ services:
       retries: 10
     restart: unless-stopped
 
-  redis:
-    image: redis:7-alpine
-    container_name: clawsaas-redis-deps
-    command: redis-server --appendonly yes
-    ports:
-      - '6379:6379'
-    volumes:
-      - clawsaas_redis_deps:/data
-    restart: unless-stopped
-
 volumes:
   clawsaas_postgres_deps:
     name: clawsaas-postgres-data-deps
-  clawsaas_redis_deps:
-    name: clawsaas-redis-data-deps

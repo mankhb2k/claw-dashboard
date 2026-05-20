@@ -6,15 +6,17 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Self-host: `login` là email hoặc username (unique), không xác thực email.
 model User {
   id           String   @id @default(cuid())
-  email        String   @unique
+  login        String   @unique
   passwordHash String   @map("password_hash")
   name         String?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   refreshTokens RefreshToken[]
+  projects      Project[]
 
   @@map("users")
 }
@@ -30,4 +32,33 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+/// Một user ≈ một project (self-host MVP).
+model Project {
+  id            String        @id @default(cuid())
+  userId        String        @unique @map("user_id")
+  displayName   String        @map("display_name")
+  subdomain     String        @unique
+  containerName String?       @map("container_name")
+  containerId   String?       @map("container_id")
+  hostPort      Int?          @map("host_port")
+  gatewayToken  String?       @map("gateway_token")
+  status        ProjectStatus @default(CREATING)
+  errorMessage  String?       @map("error_message")
+  lastActiveAt  DateTime      @default(now()) @map("last_active_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  CREATING
+  STARTING
+  RUNNING
+  STOPPED
+  ERROR
 }

@@ -7,19 +7,19 @@ async function main() {
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
   });
-  const email = process.env.SEED_USER_EMAIL ?? 'dev@example.com';
-  const password = process.env.SEED_USER_PASSWORD ?? 'devpassword123';
+  const login = (process.env.SEED_USER_LOGIN ?? 'admin').trim().toLowerCase();
+  const password = process.env.SEED_USER_PASSWORD ?? 'admin123';
   const hash = await bcrypt.hash(password, 12);
   await prisma.user.upsert({
-    where: { email },
+    where: { login },
     create: {
-      email,
+      login,
       passwordHash: hash,
-      name: 'Dev User',
+      name: 'Admin',
     },
     update: {},
   });
-  console.log(`Seed ok: ${email}`);
+  console.log(`Seed ok: login=${login}`);
   await prisma.$disconnect();
 }
 

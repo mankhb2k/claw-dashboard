@@ -9,8 +9,15 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../database/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { toPublicUser, normalizeLogin, type PublicUser } from './auth-user.util';
 
 const REFRESH_DAYS = () => Number(process.env.JWT_REFRESH_DAYS ?? 7);
+
+export type AuthTokensResult = {
+  accessToken: string;
+  refreshToken: string;
+  user: PublicUser;
+};
 
 @Injectable()
 export class AuthService {
@@ -19,30 +26,35 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (exists) throw new ConflictException('Email already registered');
+  async register(dto: RegisterDto): Promise<AuthTokensResult> {
+    const login = normalizeLogin(dto.login);
+    const exists = await this.prisma.user.findUnique({ where: { login } });
+    if (exists) throw new ConflictException('Login already taken');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        login,
         passwordHash,
-        name: dto.name ?? null,
+        name: dto.name?.trim() || null,
       },
     });
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.login);
   }
 
-  async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+  async login(dto: LoginDto): Promise<AuthTokensResult> {
+    const login = normalizeLogin(dto.login);
+    const user = await this.prisma.user.findUnique({ where: { login } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.login);
   }
 
-  async refresh(refreshTokenRaw: string) {
+  async refresh(refreshTokenRaw: string | undefined): Promise<AuthTokensResult> {
+    if (!refreshTokenRaw?.trim()) {
+      throw new UnauthorizedException('Missing refresh token');
+    }
     const tokenHash = createHash('sha256').update(refreshTokenRaw).digest('hex');
     const row = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
     if (!row || row.expiresAt < new Date()) {
@@ -52,20 +64,26 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
 
     await this.prisma.refreshToken.delete({ where: { id: row.id } });
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.login);
   }
 
-  async me(userId: string) {
+  async me(userId: string): Promise<PublicUser> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, createdAt: true, updatedAt: true },
+      select: { id: true, login: true, name: true, createdAt: true },
     });
     if (!user) throw new UnauthorizedException();
-    return user;
+    return toPublicUser(user);
   }
 
-  private async issueTokens(userId: string, email: string) {
-    const accessToken = this.jwt.sign({ sub: userId, email });
+  async logout(refreshTokenRaw: string | undefined): Promise<void> {
+    if (!refreshTokenRaw?.trim()) return;
+    const tokenHash = createHash('sha256').update(refreshTokenRaw).digest('hex');
+    await this.prisma.refreshToken.deleteMany({ where: { tokenHash } });
+  }
+
+  private async issueTokens(userId: string, login: string): Promise<AuthTokensResult> {
+    const accessToken = this.jwt.sign({ sub: userId, login });
     const rawRefresh = randomBytes(48).toString('base64url');
     const tokenHash = createHash('sha256').update(rawRefresh).digest('hex');
     const expiresAt = new Date(Date.now() + REFRESH_DAYS() * 864e5);
@@ -76,13 +94,14 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, createdAt: true },
+      select: { id: true, login: true, name: true, createdAt: true },
     });
+    if (!user) throw new UnauthorizedException('User not found');
 
     return {
       accessToken,
       refreshToken: rawRefresh,
-      user,
+      user: toPublicUser(user),
     };
   }
 }

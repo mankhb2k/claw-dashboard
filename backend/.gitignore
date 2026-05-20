@@ -7,3 +7,4 @@ dist/
 *.log
 
 /generated/prisma
+.prisma/
