@@ -1,4 +1,4 @@
-# Infra chỉ Postgres + Redis — dùng khi dev/test backend không cần vps-worker / openclaw-worker.
+# Phase 1: Postgres là đủ. Redis optional (Phase 2 / queue). Dùng khi dev backend không cần worker fleet.
 # Chạy: docker compose -f docker-compose.deps.yml up -d
 # Chuỗi kết nối mặc định trùng với docker-compose.yml gốc.
 services:

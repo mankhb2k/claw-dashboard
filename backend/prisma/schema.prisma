@@ -6,483 +6,90 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Better-Auth tables ───────────────────────────────────────────────────────
-
+/// Phase 1 OSS control plane — user tự host gateway; không billing / container / heavy jobs.
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  stripeCustomerId String?   @unique
-
-  accounts         Account[]
-  sessions         Session[]
-  projects         Project[]
-  heavyJobs        HeavyJob[]
-  subscription     Subscription?
-  invoices         Invoice[]
-  credits          UserCredits?
-  creditTransactions CreditTransaction[]
+  projects       Project[]
+  refreshTokens  RefreshToken[]
 
   @@map("users")
 }
 
-model Account {
-  id           String    @id @default(cuid())
-  userId       String
-  accountId    String
-  providerId   String
-  accessToken  String?
-  refreshToken String?
-  idToken      String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope        String?
-  expiresAt    DateTime?
-  password     String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("accounts")
-}
-
-model Session {
+/// Refresh token rotation (opaque); lưu hash, không lưu raw.
+model RefreshToken {
   id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@map("sessions")
+  @@map("refresh_tokens")
 }
-
-model Verification {
-  id         String   @id @default(cuid())
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([identifier])
-  @@map("verifications")
-}
-
-// ─── Plans ────────────────────────────────────────────────────────────────────
-
-model Plan {
-  id               String    @id @default(cuid())
-  name             String    @unique // 'free' | 'pro'
-  maxProjects      Int       @default(1)
-  ramMb            Int       @default(1024)
-  cpuVcpu          Decimal   @default(0.5) @db.Decimal(3, 1)
-  storageGb        Int       @default(4)
-  maxConcurrentRunning Int   @default(1)
-  maxKeepAliveProjects Int   @default(0)
-  monthlyCredits   Int       @default(0)
-  idleTimeoutMin   Int       @default(10)
-  priceMonthly     Int       @default(0)  // USD cents, 0 = free
-  stripeProductId  String?   @unique
-  stripePriceId    String?   @unique      // monthly price ID
-
-  subscriptions    Subscription[]
-
-  @@map("plans")
-}
-
-// ─── Projects ─────────────────────────────────────────────────────────────────
 
 model Project {
-  id             String        @id @default(cuid())
-  userId         String
-  /// Human-readable name (editable). Immutable slug is in `subdomain`.
-  displayName    String        @default("")
-  subdomain      String        @unique
-  containerName  String?
-  status         ProjectStatus @default(CREATING)
-  lastActiveAt   DateTime      @default(now())
-  vpsId          String        @default("vps-1")
-  keepAlive      Boolean       @default(false)
-  storageUsedMb  Int           @default(0)
-  errorMessage   String?
-  createdAt      DateTime      @default(now())
+  id           String           @id @default(cuid())
+  userId       String           @map("user_id")
+  /// URL-safe slug duy nhất toàn cục (dùng trong path / dashboard).
+  slug         String           @unique
+  displayName  String           @map("display_name")
+  /// Gợi ý nơi user mount OpenClaw (hiển thị / export, không bắt buộc).
+  syncPathHint String?          @map("sync_path_hint") @db.Text
+  lifecycle    ProjectLifecycle @default(ACTIVE)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
 
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  heavyJobs          HeavyJob[]
-  containerInstances ContainerInstance[]
-  projectSecrets     ProjectSecret[]
-  connectors         ProjectToolsConnector[]
-  aiModelConnections ProjectAIModelConnection[]
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceRevisions WorkspaceRevision[]
+  secrets            ProjectSecret[]
 
   @@index([userId])
-  @@index([lastActiveAt], map: "idx_projects_idle")
   @@map("projects")
 }
 
-model ProjectSecret {
-  id          String @id @default(cuid())
-  projectId   String
-  secretKey   String @db.VarChar(128)
-  payloadEnc String @db.Text
+enum ProjectLifecycle {
+  ACTIVE
+  ARCHIVED
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+/// Mỗi lần save workspace (bundle file path → nội dung text) tạo một revision.
+model WorkspaceRevision {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  /// Tăng dần theo project (1, 2, 3…).
+  sequence  Int      @map("sequence")
+  /// JSON: { "AGENTS.md": "...", "SOUL.md": "...", ... }
+  filesJson Json     @map("files_json")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, sequence])
+  @@index([projectId, createdAt])
+  @@map("workspace_revisions")
+}
+
+/// Bí mật per-project (API keys, token kênh) — ciphertext base64 từ SecretCryptoService.
+model ProjectSecret {
+  id         String @id @default(cuid())
+  projectId  String @map("project_id")
+  secretKey  String @map("secret_key") @db.VarChar(128)
+  payloadEnc String @map("payload_enc") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, secretKey], map: "uq_project_secret_key")
   @@index([projectId])
   @@map("project_secrets")
-}
-
-model ConnectorDefinition {
-  id           String                  @id @default(cuid())
-  slug         String                  @unique @db.VarChar(100)
-  displayName  String                  @db.VarChar(200)
-  description  String                  @default("")
-  kind         ConnectorKind           @default(API)
-  status       ConnectorDefinitionStatus @default(ACTIVE)
-  configSchema Json?
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
-
-  projectConnectors ProjectToolsConnector[]
-
-  @@map("connector_definitions")
-}
-
-model ProjectToolsConnector {
-  id                   String                    @id @default(cuid())
-  projectId            String
-  connectorDefinitionId String
-  displayName          String?
-  enabled              Boolean                   @default(false)
-  connectionStatus     ProjectToolsConnectorStatus    @default(DISCONNECTED)
-  config               Json?
-  lastTestedAt         DateTime?
-  lastError            String?
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-
-  project              Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  connectorDefinition  ConnectorDefinition       @relation(fields: [connectorDefinitionId], references: [id], onDelete: Restrict)
-  secrets              ProjectConnectorSecret[]
-  events               ProjectConnectorEvent[]
-
-  @@unique([projectId, connectorDefinitionId], map: "uq_project_connector_definition")
-  @@index([projectId, enabled], map: "idx_project_connectors_project_enabled")
-  @@index([projectId, connectionStatus], map: "idx_project_connectors_project_status")
-  @@map("project_tools_connectors")
-}
-
-model ProjectConnectorSecret {
-  id                 String            @id @default(cuid())
-  projectConnectorId String
-  secretKey          String            @db.VarChar(128)
-  payloadEnc         String            @db.Text
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-
-  projectConnector   ProjectToolsConnector  @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
-
-  @@unique([projectConnectorId, secretKey], map: "uq_project_connector_secret_key")
-  @@index([projectConnectorId], map: "idx_project_connector_secret_connector")
-  @@map("project_connector_secrets")
-}
-
-model ProjectConnectorEvent {
-  id                 String                    @id @default(cuid())
-  projectConnectorId String
-  eventType          ProjectToolsConnectorEventType
-  message            String                    @default("")
-  meta               Json?
-  createdAt          DateTime                  @default(now())
-
-  projectConnector   ProjectToolsConnector          @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
-
-  @@index([projectConnectorId, createdAt], map: "idx_project_connector_events_connector_created")
-  @@map("project_connector_events")
-}
-
-enum ConnectorKind {
-  API
-  MCP
-  OAUTH
-}
-
-enum ConnectorDefinitionStatus {
-  ACTIVE
-  DISABLED
-  DEPRECATED
-}
-
-enum ProjectToolsConnectorStatus {
-  DISCONNECTED
-  CONNECTED
-  ERROR
-  NEEDS_REAUTH
-}
-
-enum ProjectToolsConnectorEventType {
-  CREATED
-  UPDATED
-  ENABLED
-  DISABLED
-  TEST_OK
-  TEST_FAIL
-  SECRET_ROTATED
-}
-
-// ─── AI Models ────────────────────────────────────────────────────────────────
-
-model ProjectAIModelConnection {
-  id                String   @id @default(cuid())
-  projectId         String
-  providerId        String   // e.g., 'openai', 'anthropic', 'google'
-  name              String   // Tên kết nối do user đặt
-  
-  enabled           Boolean  @default(true)
-  isDefault         Boolean  @default(false) // Đánh dấu model mặc định của Project
-  
-  lastTestedAt      DateTime?
-  errorMessage      String?  // Lưu lỗi nếu token/key bị tèo
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  secrets           ProjectAIModelSecret[]
-
-  @@index([projectId, providerId])
-  @@map("project_ai_model_connections")
-}
-
-model ProjectAIModelSecret {
-  id                          String                 @id @default(cuid())
-  projectAIModelConnectionId  String
-  secretKey                   String                 @db.VarChar(128) 
-  payloadEnc                  String                 @db.Text
-  
-  createdAt                   DateTime               @default(now())
-  updatedAt                   DateTime               @updatedAt
-
-  connection                  ProjectAIModelConnection @relation(fields: [projectAIModelConnectionId], references: [id], onDelete: Cascade)
-
-  @@unique([projectAIModelConnectionId, secretKey], map: "uq_project_ai_model_secret_key")
-  @@map("project_ai_model_secrets")
-}
-
-// ─── Container Instances ──────────────────────────────────────────────────────
-
-model ContainerInstance {
-  id           String                  @id @default(cuid())
-  projectId    String
-  containerId  String?                 // Docker container ID (64-char hex)
-  imageVersion String                  // vd: "openclaw:1.4.2"
-  cpuLimit     Decimal                 @db.Decimal(3, 1) // vCPU
-  ramLimit     Int                     // MB
-  status       ContainerInstanceStatus @default(STARTING)
-  nodeId       String                  @default("vps-1")
-  exitCode     Int?
-  errorMessage String?
-  startedAt    DateTime?
-  stoppedAt    DateTime?
-  createdAt    DateTime                @default(now())
-
-  project      Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([nodeId, status], map: "idx_instances_node_status")
-  @@map("container_instances")
-}
-
-enum ContainerInstanceStatus {
-  STARTING
-  RUNNING
-  STOPPING
-  STOPPED
-  ERROR
-  DESTROYED
-}
-
-enum ProjectStatus {
-  CREATING
-  RUNNING
-  STOPPED
-  STARTING
-  ERROR
-}
-
-// ─── Billing ──────────────────────────────────────────────────────────────────
-
-model Subscription {
-  id                   String             @id @default(cuid())
-  userId               String             @unique
-  planId               String
-  status               SubscriptionStatus @default(ACTIVE)
-  stripeSubscriptionId String?            @unique
-  currentPeriodStart   DateTime           @default(now())
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean            @default(false)
-  cancelledAt          DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan                 Plan               @relation(fields: [planId], references: [id])
-
-  @@map("subscriptions")
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  PAST_DUE
-  CANCELLED
-  TRIALING
-  INCOMPLETE
-}
-
-model Invoice {
-  id                String        @id @default(cuid())
-  userId            String
-  stripeInvoiceId   String?       @unique
-  stripePaymentIntent String?     @unique
-  amount            Int                    // USD cents
-  currency          String        @default("usd")
-  status            InvoiceStatus @default(PENDING)
-  description       String?
-  invoiceUrl        String?               // Stripe hosted invoice URL
-  pdfUrl            String?
-  periodStart       DateTime?
-  periodEnd         DateTime?
-  paidAt            DateTime?
-  createdAt         DateTime      @default(now())
-
-  user              User          @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@map("invoices")
-}
-
-enum InvoiceStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
-  VOID
-}
-
-// ─── Heavy Jobs ───────────────────────────────────────────────────────────────
-
-model HeavyJob {
-  id           String         @id @default(cuid())
-  userId       String
-  projectId    String
-  tool         HeavyTool
-  creditCost   Int
-  params       Json
-  status       HeavyJobStatus @default(PENDING)
-  resultPath   String?
-  resultSizeMb Int?
-  errorMessage String?
-  submittedAt  DateTime       @default(now())
-  completedAt  DateTime?
-  expiresAt    DateTime?
-
-  user         User           @relation(fields: [userId], references: [id])
-  project      Project        @relation(fields: [projectId], references: [id])
-  creditTransactions CreditTransaction[]
-
-  @@index([userId, status], map: "idx_heavy_jobs_active")
-  @@map("heavy_jobs")
-}
-
-enum HeavyTool {
-  FFMPEG_SHORT
-  FFMPEG_LONG
-  PLAYWRIGHT
-  TTS
-  STT
-}
-
-model UserCredits {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  monthlyBalance   Int      @default(0)
-  purchasedBalance Int      @default(0)
-  monthlyResetAt   DateTime?
-  totalGranted     Int      @default(0)
-  totalUsed        Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_credits")
-}
-
-enum CreditTransactionType {
-  MONTHLY_GRANT
-  PURCHASE
-  USAGE
-  REFUND
-  EXPIRY
-}
-
-model CreditPack {
-  id               String   @id @default(cuid())
-  name             String   @unique
-  credits          Int
-  priceUsd         Int
-  stripeProductId  String?  @unique
-  stripePriceId    String?  @unique
-  active           Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  creditTransactions CreditTransaction[]
-
-  @@map("credit_packs")
-}
-
-model CreditTransaction {
-  id                    String                @id @default(cuid())
-  userId                String
-  type                  CreditTransactionType
-  amount                Int
-  balanceAfter          Int
-  description           String
-  heavyJobId            String?
-  creditPackId          String?
-  stripePaymentIntentId String?
-  createdAt             DateTime              @default(now())
-
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  heavyJob    HeavyJob?  @relation(fields: [heavyJobId], references: [id], onDelete: SetNull)
-  creditPack  CreditPack? @relation(fields: [creditPackId], references: [id], onDelete: SetNull)
-
-  @@index([userId, createdAt])
-  @@index([heavyJobId])
-  @@map("credit_transactions")
-}
-
-enum HeavyJobStatus {
-  PENDING
-  PROCESSING
-  DONE
-  FAILED
-  CANCELLED
 }

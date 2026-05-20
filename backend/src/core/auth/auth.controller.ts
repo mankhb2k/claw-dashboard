@@ -1,47 +1,36 @@
-import {
-  Controller,
-  All,
-  Inject,
-  Req,
-  Res,
-} from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
-import { FastifyReply, FastifyRequest } from 'fastify';
-import type { Auth } from 'better-auth';
-import { BETTER_AUTH } from './auth.constants';
-import { toHeaders } from './node-headers.util';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser, JwtPayloadUser } from '../common/decorators/current-user.decorator';
 
-@ApiExcludeController()
-@Controller('api/auth')
+@ApiTags('auth')
+@Controller('auth')
 export class AuthController {
-  constructor(@Inject(BETTER_AUTH) private readonly auth: Auth) {}
+  constructor(private readonly auth: AuthService) {}
 
-  @All('*')
-  async handleAuth(
-    @Req() req: FastifyRequest,
-    @Res() reply: FastifyReply,
-  ) {
-    const host = req.headers.host ?? 'localhost:3001';
-    const protocol = req.protocol ?? 'http';
-    const requestUrl = new URL(req.url, `${protocol}://${host}`);
-    const headers = toHeaders(req.headers);
+  @Post('register')
+  register(@Body() dto: RegisterDto) {
+    return this.auth.register(dto);
+  }
 
-    const requestInit: RequestInit = {
-      method: req.method,
-      headers,
-    };
+  @Post('login')
+  login(@Body() dto: LoginDto) {
+    return this.auth.login(dto);
+  }
 
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body !== undefined) {
-      requestInit.body = JSON.stringify(req.body);
-    }
+  @Post('refresh')
+  refresh(@Body() dto: RefreshDto) {
+    return this.auth.refresh(dto.refreshToken);
+  }
 
-    const response = await this.auth.handler(new Request(requestUrl.toString(), requestInit));
-    response.headers.forEach((value, key) => {
-      reply.header(key, value);
-    });
-    reply.status(response.status);
-
-    const body = await response.text();
-    return body ? reply.send(body) : reply.send();
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  me(@CurrentUser() user: JwtPayloadUser) {
+    return this.auth.me(user.sub);
   }
 }

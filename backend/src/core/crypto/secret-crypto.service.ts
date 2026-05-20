@@ -19,7 +19,7 @@ export class SecretCryptoService implements OnModuleInit {
       }
       this.key = crypto.createHash('sha256').update('openclaw-dev-project-secrets').digest();
       this.logger.warn(
-        'PROJECT_SECRETS_MASTER_KEY not set; using deterministic dev derivation (do not use in production)',
+        'PROJECT_SECRETS_MASTER_KEY not set; using deterministic dev key (never in production)',
       );
       return;
     }

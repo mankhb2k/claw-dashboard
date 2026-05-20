@@ -2,14 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'OpenClaw SaaS API';
-  }
-
-  getHealth() {
+  health() {
     return {
-      status: 'healthy',
-      time: new Date().toISOString(),
-    }
+      ok: true,
+      phase: '1',
+      service: 'openclaw-control-plane',
+    };
   }
 }

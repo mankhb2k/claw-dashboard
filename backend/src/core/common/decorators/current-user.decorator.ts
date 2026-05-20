@@ -1,18 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { FastifyRequest } from 'fastify';
 
-export interface RequestUser {
-  id: string;
-  email: string;
-  name: string;
-  image: string | null;
-  emailVerified: boolean;
-  createdAt: Date;
-}
+export type JwtPayloadUser = { sub: string; email: string };
 
 export const CurrentUser = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): RequestUser => {
-    const req = ctx.switchToHttp().getRequest<FastifyRequest & { user: RequestUser }>();
+  (_data: unknown, ctx: ExecutionContext): JwtPayloadUser => {
+    const req = ctx.switchToHttp().getRequest();
     return req.user;
   },
 );
