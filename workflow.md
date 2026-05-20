@@ -13,7 +13,7 @@
 | Thuộc | Không thuộc |
 | ----- | ----------- |
 | Luồng vận hành **Phase 1 (OSS, self-host)** | Chi tiết giá/credit hosted (→ `billing-plan.md`) |
-| Sketch **Phase 2** (cloud bạn bán) | Schema Prisma từng bảng (→ `backend-architecture.md`) |
+| Sketch **Phase 2** (cloud bạn bán) | Schema Prisma từng bảng (→ `backend/prisma/schema.prisma`) |
 | Ranh OSS vs hosted commercial | Danh sách sprint (→ `roadmap-plan.md`) |
 
 **Thuật ngữ**

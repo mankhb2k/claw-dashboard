@@ -6,7 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Phase 1 OSS control plane — user tự host gateway; không billing / container / heavy jobs.
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -21,7 +20,7 @@ model User {
   @@map("users")
 }
 
-/// Refresh token rotation (opaque); lưu hash, không lưu raw.
+
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
@@ -60,7 +59,7 @@ enum ProjectLifecycle {
   ARCHIVED
 }
 
-/// Mỗi lần save workspace (bundle file path → nội dung text) tạo một revision.
+
 model WorkspaceRevision {
   id        String   @id @default(cuid())
   projectId String   @map("project_id")
@@ -77,7 +76,7 @@ model WorkspaceRevision {
   @@map("workspace_revisions")
 }
 
-/// Bí mật per-project (API keys, token kênh) — ciphertext base64 từ SecretCryptoService.
+
 model ProjectSecret {
   id         String @id @default(cuid())
   projectId  String @map("project_id")

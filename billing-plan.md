@@ -8,7 +8,7 @@
 
 - **Purpose:** Nguồn chuẩn cho billing/quota policy.
 - **Owns:** plan limits, credit wallet rules, charging/deduct/refund flow.
-- **Does not own:** kiến trúc runtime chi tiết (`workflow.md`), kế hoạch triển khai theo phase (`roadmap-plan.md`), schema đầy đủ (`backend-architecture.md`).
+- **Does not own:** kiến trúc runtime chi tiết (`workflow.md`), kế hoạch triển khai theo phase (`roadmap-plan.md`), schema đầy đủ (`backend/prisma/schema.prisma`).
 - **Terminology note:** Dùng `project` làm đơn vị sản phẩm; runtime hiện tại map 1:1, tức **1 project = 1 container worker**.
 
 ---
@@ -133,7 +133,7 @@
 
 Để tránh ghi trùng schema ở nhiều nơi:
 
-- Schema chi tiết và quan hệ bảng xem `backend-architecture.md`
+- Schema chi tiết và quan hệ bảng xem `backend/prisma/schema.prisma`
 - Flow runtime và lifecycle xem `workflow.md`
 
 Trong file này chỉ giữ policy billing/quota.
