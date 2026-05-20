@@ -14,12 +14,10 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  projects       Project[]
-  refreshTokens  RefreshToken[]
+  refreshTokens RefreshToken[]
 
   @@map("users")
 }
-
 
 model RefreshToken {
   id        String   @id @default(cuid())
@@ -32,63 +30,4 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
-}
-
-model Project {
-  id           String           @id @default(cuid())
-  userId       String           @map("user_id")
-  /// URL-safe slug duy nhất toàn cục (dùng trong path / dashboard).
-  slug         String           @unique
-  displayName  String           @map("display_name")
-  /// Gợi ý nơi user mount OpenClaw (hiển thị / export, không bắt buộc).
-  syncPathHint String?          @map("sync_path_hint") @db.Text
-  lifecycle    ProjectLifecycle @default(ACTIVE)
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
-
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspaceRevisions WorkspaceRevision[]
-  secrets            ProjectSecret[]
-
-  @@index([userId])
-  @@map("projects")
-}
-
-enum ProjectLifecycle {
-  ACTIVE
-  ARCHIVED
-}
-
-
-model WorkspaceRevision {
-  id        String   @id @default(cuid())
-  projectId String   @map("project_id")
-  /// Tăng dần theo project (1, 2, 3…).
-  sequence  Int      @map("sequence")
-  /// JSON: { "AGENTS.md": "...", "SOUL.md": "...", ... }
-  filesJson Json     @map("files_json")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, sequence])
-  @@index([projectId, createdAt])
-  @@map("workspace_revisions")
-}
-
-
-model ProjectSecret {
-  id         String @id @default(cuid())
-  projectId  String @map("project_id")
-  secretKey  String @map("secret_key") @db.VarChar(128)
-  payloadEnc String @map("payload_enc") @db.Text
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, secretKey], map: "uq_project_secret_key")
-  @@index([projectId])
-  @@map("project_secrets")
 }

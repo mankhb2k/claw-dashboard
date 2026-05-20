@@ -2,7 +2,7 @@
 
 > **Cập nhật:** 2026-05-20  
 > **Phân kỳ:**  
-> - **Phase 1 — Mã nguồn mở (OSS):** toàn bộ stack “control plane + cách nối OpenClaw” **công khai**, cộng đồng **tự clone, tự host**, tự gắn gateway trên máy/VPS của họ.  
+> - **Phase 1 — Mã nguồn mở (OSS):** một **`docker compose`** (frontend, backend, PostgreSQL) để user tự host; **mỗi project trong dashboard = một container** chạy từ image **OpenClaw / `openclaw-worker`** — metadata & workspace **lưu trong DB** (và volume theo `project_id` tùy triển khai). Backend điều phối vòng đời container qua **Docker API** (thường mount `docker.sock` trên host).  
 > - **Phase 2 — Dịch vụ SaaS thương mại:** bạn **bán** bản **hosted** (đa tenant, vận hành thay khách), mô hình kinh doanh giống kiểu **[Supabase](https://supabase.com)** (sản phẩm mở + cloud trả phí) hay **[n8n](https://n8n.io)** (tự host mở + **n8n Cloud** do nhà phát hành vận hành) — không đồng nghĩa Phase 1 là “bản demo” của Phase 2; Phase 1 là **sản phẩm gốc** cho community.  
 > **Tham chiếu:** `openclaw-architecture.md`, `billing-plan.md` (Phase 2), `proxy-guide.md`.
 
@@ -18,8 +18,8 @@
 
 **Thuật ngữ**
 
-- **Project:** đơn vị trong dashboard (cấu hình agent, workspace, bí mật tham chiếu).
-- **Worker / Gateway:** tiến trình OpenClaw xử lý kênh + agent. **Phase 1:** gateway **luôn** chạy trên hạ tầng người deploy OSS (không phải VM bạn thuê cho họ). **Phase 2:** gateway (hoặc tầng tương đương) có thể chạy trên **hạ tầng hosted** bạn vận hành.
+- **Project:** đơn vị trong dashboard (cấu hình agent, workspace, bí mật); đồng thời **map 1:1** tới **một container** OpenClaw (trạng thái runtime lưu trong DB hoặc label container).
+- **Worker / Gateway:** tiến trình OpenClaw trong **container riêng của project**. **Phase 1:** stack self-host — container chạy trên **cùng máy/VPS** với `docker compose` (hoặc Docker engine remote bạn cấu hình). **Phase 2:** cùng mental model nhưng runtime trên **hạ tầng SaaS** bạn vận hành + billing / quota / multi-tenant hardening.
 
 ---
 
@@ -32,38 +32,42 @@ Cộng đồng và team muốn **UI + persistence** cho project/bot đa kênh, *
 | **1 — OSS** | Người dùng / tổ chức tự deploy repo mở | **Self-host**; source công khai; mọi người có thể fork, đóng góp, chạy trên infra riêng. |
 | **2 — SaaS** | Bạn (nhà cung cấp) | **Hosted product** trả phí: provisioning, backup, SLA, billing, scale — tương tự cloud của Supabase / n8n (khách không bắt buộc tự cài worker). |
 
-- **Phase 1** giải “**một nguồn thật cho metadata + file workspace**” + **đồng bộ xuống đĩa** mà OpenClaw Gateway đọc (`openclaw.json`, `AGENTS.md`, …). Auth API self-host dùng **JWT** (hoặc tương đương bạn chọn cho bản OSS).
+- **Phase 1** giải “**một nguồn thật trong DB**” (user, project, revision workspace, secrets) + **mỗi project một container** OpenClaw nhận cấu hình / volume tương ứng (`openclaw.json`, `AGENTS.md`, … — xem `openclaw-architecture.md` §4.5.1). Auth API self-host dùng **JWT**. Container gateway dùng **`gateway.auth`** riêng (không dùng JWT dashboard cho lưu lượng chat).
 - **Phase 2** là **sản phẩm đám mây** bạn bán: multi-tenant, orchestration, quota, có thể kèm phần **không publish** (infra, abuse, cost controls) — **không thay thế** cam kết Phase 1 vẫn là nền mở cho community.
 
 ---
 
 ## 2. Phase 1 — Kiến trúc tổng quan
 
-```mermaid
-flowchart LR
-    subgraph UserNet["Người dùng / mạng riêng"]
-        GW["OpenClaw Gateway\nopenclaw-worker\n(port 18789 mặc định)"]
-        Vol[("Volume: workspace +\nopenclaw.json")]
-        GW <--> Vol
-    end
+**Self-host một lần:** `docker compose up` khởi chạy **frontend**, **backend**, **PostgreSQL** (và biến môi trường trỏ tới image OpenClaw build từ `openclaw-worker/`).
 
-    subgraph Cloud["Control plane OSS — self-host\n(Phase 1: repo mở, ai cũng deploy được)"]
+```mermaid
+flowchart TB
+    subgraph Compose["docker compose — Phase 1 OSS"]
         FE["Next.js frontend\n(dashboard)"]
         API["Backend API\n(NestJS)"]
-        DB[("PostgreSQL\nprojects, users, …")]
+        DB[("PostgreSQL\nusers, projects,\nrevisions, secrets,\ncontainer metadata…")]
         FE --> API
         API --> DB
     end
 
+    subgraph Engine["Docker Engine (host)"]
+        C1["Container OpenClaw\n← project A"]
+        C2["Container OpenClaw\n← project B"]
+        CN["Container OpenClaw\n← project …"]
+    end
+
     U["👤 User"] --> FE
-    API -->|"Đồng bộ file / snapshot\n(SFTP, agent nhẹ, API pull… — tùy triển khai)"| Vol
+    API -->|create / start / stop / inspect\nDocker API| Engine
+    DB -.->|1 row project ↔\n1 container runtime| API
 ```
 
 **Nguyên tắc Phase 1**
 
-1. Sau khi user lưu cấu hình agent/project trên dashboard, hệ thống **ghi persistence** (DB + object storage tùy chọn) và **xuất cùng một bộ file** mà OpenClaw đã hỗ trợ (xem `openclaw-architecture.md` §4.5.1 — gateway **watch** `openclaw.json`).
-2. **Không** spawn Docker container per user, **không** BullMQ `vps-worker` cho lifecycle container trong scope Phase 1.
-3. **Không** billing/credit/heavy-job queue trong **OSS Phase 1** (có thể để hook hoặc stub cho người self-host mở rộng; **SaaS Phase 2** mới bắt buộc đầy đủ thương mại).
+1. **Một project = một container** từ image OpenClaw (tag tùy bạn, build từ `openclaw-worker`). Khi tạo (hoặc “bật”) project, backend **provision container**; khi xóa / tắt project, **dừng & gỡ** container (chính sách volume giữ/xóa tùy bạn ghi rõ trong runbook).
+2. **Nguồn sự thật** cho slug, workspace revisions, secrets — **PostgreSQL**; runtime (container id, port published, trạng thái) **cũng lưu hoặc đồng bộ vào DB** để dashboard hiển thị và API kiểm soát.
+3. Sau khi user lưu workspace trên dashboard, hệ thống **ghi revision vào DB** và **đẩy file vào volume/bind mount** của đúng container project (hoặc sync trước khi `start`) để gateway **watch** `openclaw.json` / file workspace — xem `openclaw-architecture.md` §4.5.1.
+4. **Không** bắt buộc BullMQ `vps-worker`, billing, credit, heavy-job fleet trong **OSS Phase 1** (có thể stub); **SaaS Phase 2** thêm kinh tế hóa, quota, fleet lớn, ingress wildcard thương mại.
 
 ---
 
@@ -87,7 +91,7 @@ sequenceDiagram
 
 - **Auth chốt Phase 1:** **JWT** (access token + refresh theo policy bạn chọn). Gateway OpenClaw **không** dùng JWT này trực tiếp — nó dùng `gateway.auth` (token/password/…) riêng trên máy user.
 
-### 3.2 Tạo project & metadata
+### 3.2 Tạo project, metadata & container runtime
 
 ```mermaid
 sequenceDiagram
@@ -95,14 +99,19 @@ sequenceDiagram
     participant FE as Frontend
     participant API as Backend API
     participant DB as PostgreSQL
+    participant D as Docker Engine
 
     U->>FE: Tạo project
     FE->>API: POST /projects (+ JWT)
-    API->>DB: project, workspacePathHint, syncTarget...
-    API-->>FE: project id, slug
+    API->>DB: INSERT project\n(slug, displayName, syncPathHint …)
+    API->>D: Tạo container từ image OpenClaw\n(volume/env theo project_id)
+    D-->>API: container id, ports
+    API->>DB: Cập nhật metadata runtime\n(container_id, published ports…)
+    API-->>FE: project id, slug, trạng thái runtime
 ```
 
-- Project lưu **đường dẫn / mô hình đồng bộ** (ví dụ: “thư mục trên VPS user”, hoặc “chỉ lưu cloud, user tự tải zip”) tùy sản phẩm MVP của bạn.
+- **Một hàng `projects` trong DB** gắn với **đúng một container** (khi policy “luôn chạy” hoặc khi user “start”). Thuộc tính `sync_path_hint` có thể gợi ý mount path trên host; **volume có tên / bind mount theo `project_id`** khuyến nghị để cô lập dữ liệu.
+- Yêu cầu triển khai: backend có quyền gọi **Docker API** (socket trên host khi compose chạy local, hoặc daemon từ xa).
 
 ### 3.3 Soạn agent / skill trên dashboard → biên dịch → sync file
 
@@ -112,26 +121,26 @@ sequenceDiagram
     participant FE as Frontend
     participant API as Backend API
     participant DB as PostgreSQL
-    participant T as Sync target\n(volume user)
+    participant T as Project volume\n(mount vào container)
 
     U->>FE: Save agent editor
     FE->>FE: compile workspace\n(AGENTS.md, SOUL.md, …)
     FE->>API: PUT /projects/:id/workspace (payload hoặc hash)
     API->>DB: revision, audit
-    API->>T: Ghi file atomically\ntới mount OpenClaw
-    Note over T: Gateway watch file → áp dụng config\n(không bắt buộc HTTP /config/reload)
+    API->>T: Ghi file atomically\ntới volume / mount\ncontainer project
+    Note over T: Container OpenClaw watch file → áp dụng config\n(không bắt buộc HTTP /config/reload)
 ```
 
 **Ghi chú kỹ thuật**
 
 - Compiler phía frontend/backend nên khớp quy ước file OpenClaw (đã có hướng `frontend/lib/agent-workspace-compile.ts`).
-- **Phase 1:** ưu tiên **ghi file** lên path mà `OPENCLAW_CONFIG_PATH` / workspace trỏ tới. **Phase 2+** có thể bổ sung `config.patch` qua RPC hoặc `POST /tools/invoke` với operator token — xem `openclaw-architecture.md` §4.2, §4.5.1.
+- **Phase 1:** ưu tiên **ghi file** vào **volume gắn với container của đúng project** (cùng quy ước path với `OPENCLAW_CONFIG_PATH` trong container). **Phase 2+** có thể bổ sung `config.patch` qua RPC hoặc `POST /tools/invoke` với operator token — xem `openclaw-architecture.md` §4.2, §4.5.1.
 
-### 3.4 Người dùng chạy gateway locally / VPS riêng
+### 3.4 Kênh chat & lưu lượng thời gian thực
 
-1. User cài `openclaw` từ image/build của bạn hoặc từ upstream pin (`openclaw-worker` trong monorepo).
-2. Trỏ config + workspace vào thư mục đã sync.
-3. Kết nối kênh (Telegram, …) theo doc OpenClaw — **không** đi qua control plane cho lưu lượng chat thời gian thực.
+1. Mỗi project: **một container OpenClaw** (build từ `openclaw-worker` / image bạn publish) — channel (Telegram, …) được cấu hình trong workspace **trong container đó**.
+2. Lưu lượng bot **không** đi qua backend dashboard; API chỉ lo **auth người dùng, CRUD project, sync file/revision, lifecycle container**.
+3. **Tùy chọn nâng cao:** vẫn có thể chạy gateway “ngoài compose” (manual) nếu bạn hỗ trợ import/export; **luồng mặc định Phase 1 trong tài liệu này** là **do backend spawn container per project**.
 
 ---
 
@@ -140,14 +149,15 @@ sequenceDiagram
 | Hạng mục | Phase 1 |
 | -------- | ------- |
 | Auth JWT, user, session | Có |
-| CRUD project, metadata, (tuỳ chọn) revision workspace | Có |
-| Đồng bộ file xuống nơi gateway đọc được | Có (cơ chế triển khai tùy bạn: SSH, sidecar, download) |
+| CRUD project, metadata, revision workspace trong DB | Có |
+| **Một project = một container OpenClaw** (start/stop/remove qua Docker API) | **Có** (mô hình OSS đích) |
+| Ghi workspace xuống volume / mount mà container project đọc | Có |
 | Mã hóa bí mật lưu trữ (SecretCrypto) | Khuyến nghị |
 | Health DB + logging | Có |
-| Spawn/stop container per user, Traefik wildcard multi-tenant | **Không** |
-| BullMQ / `vps-worker` / idle-shutdown fleet | **Không** |
+| Traefik wildcard, ingress đa khách thương mại, autoscale fleet | Tuỳ chọn / chủ yếu **Phase 2** |
+| BullMQ / `vps-worker` / idle-shutdown fleet toàn nền tảng | **Không** bắt buộc OSS core |
 | Heavy jobs (FFmpeg, Playwright) + credits | **Không** (Phase 2) |
-| Worker callback nội bộ (PUT /api/internal/status…) cho fleet | **Không** (Phase 2) |
+| Worker callback nội bộ (PUT /api/internal/status…) cho fleet SaaS | **Không** bắt buộc Phase 1 |
 
 ---
 
@@ -157,7 +167,7 @@ sequenceDiagram
 openclaw-saas/                    # Phase 1: công khai — community self-host
 ├── frontend/                     # Dashboard Next.js (OSS)
 ├── backend/                      # API NestJS (OSS)
-├── openclaw-worker/              # Pin/fork OpenClaw gateway — người dùng tự chạy
+├── openclaw-worker/              # Nguồn image OpenClaw — **mỗi project = một container** build/pull từ đây
 ├── vps-worker/                   # Chủ yếu cho Phase 2 hosted orchestrator (tuỳ policy công bố)
 └── vps-heavy/                    # Phase 2 hosted heavy compute
 ```
@@ -208,8 +218,8 @@ flowchart TB
 | -------- | ------------------------- | ------------------------------- |
 | **Mô hình** | Self-host, fork, PR | Đăng ký cloud, trả phí / free tier |
 | **Tương tự thị trường** | Postgres self-host / n8n self-host | Supabase Cloud / n8n Cloud |
-| Gateway chạy ở đâu | Máy / VPS **người deploy OSS** | Hạ tầng **bạn** |
-| Đồng bộ cấu hình | **Ghi file** (+ DB local/self-host) | Orchestrator + volume hosted + (tuỳ) RPC nội bộ |
+| Gateway chạy ở đâu | **Một container / project** trên Docker của người self-host | Container trên **hạ tầng bạn** (fleet, quota) |
+| Đồng bộ cấu hình | **DB revisions** + **ghi file** vào volume container project | Tương tự + orchestrator / billing / multi-tenant hardening |
 | Auth | **JWT** (API do người self-host chạy) | Auth do **dịch vụ cloud** bạn cung cấp + billing |
 | `vps-worker` / `vps-heavy` | Không bắt buộc OSS core | Thường **có** cho fleet |
 | **Cam kết mở** | Core dashboard + API + hướng dẫn deploy **công khai** | Phần vận hành cloud **tuỳ bạn** công bố hay giữ riêng |
@@ -226,4 +236,4 @@ flowchart TB
 
 ---
 
-*Ghi chú phiên bản: tài liệu **phân tách đúng** “**OSS cho cộng đồng**” vs “**SaaS bạn kinh doanh**”. Lược đồ MVP cũ (một phase gộp control plane + fleet + heavy) có thể **tái sử dụng** trong tài liệu nội bộ “Phase 2 runbook” hoặc `billing-plan.md`.*
+*Ghi chú: tài liệu mô tả **mô hình đích** “**1 project = 1 container**”; code `backend/` (Docker API, cột metadata runtime) có thể **chưa** khớp — cần bổ sung migration/module orchestration. Tài liệu vẫn **phân tách** OSS community vs SaaS bạn kinh doanh; lược đồ fleet/heavy thương mại có thể tái dùng trong “Phase 2 runbook” hoặc `billing-plan.md`.*

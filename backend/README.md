@@ -1,6 +1,6 @@
-# Backend — Phase 1 (OSS control plane)
+# Backend — Auth API (JWT)
 
-NestJS + Fastify + Prisma (Postgres). **JWT** auth, **projects**, **workspace revisions** (JSON file bundle), **encrypted project secrets**.
+NestJS + Fastify + Prisma (Postgres). **Đăng ký / đăng nhập / refresh token / JWT Bearer** (`/api/auth/*`).
 
 ## Env
 
@@ -10,7 +10,6 @@ Bắt buộc local:
 
 - `DATABASE_URL`
 - `JWT_SECRET` (production)
-- `PROJECT_SECRETS_MASTER_KEY` (production) — 64 hex hoặc base64 32 byte
 
 Tuỳ chọn:
 
@@ -27,7 +26,7 @@ npx prisma migrate deploy
 # hoặc dev: npx prisma migrate dev
 ```
 
-**Lưu ý:** migration `20260520120000_phase1_init` tạo schema mới. Nếu DB cũ đã có bảng legacy, cần DB mới hoặc `DROP` thủ công trước khi migrate.
+**Breaking:** migration cũ (projects / workspace / secrets) đã gỡ. Database đã từng migrate bản cũ: dùng DB mới hoặc `npx prisma migrate reset` (mất dữ liệu).
 
 Seed (tuỳ chọn):
 
@@ -47,7 +46,7 @@ npm run dev
 - API: `http://localhost:3001/api`
 - Swagger: `http://localhost:3001/api/docs`
 
-## Endpoints (tóm tắt)
+## Endpoints
 
 | Method | Path | Auth |
 |--------|------|------|
@@ -56,10 +55,3 @@ npm run dev
 | POST | `/api/auth/refresh` | — |
 | GET | `/api/auth/me` | Bearer |
 | GET | `/api/health` | — |
-| CRUD | `/api/projects/*` | Bearer |
-| POST | `/api/projects/:id/workspace` | Bearer |
-| GET | `/api/projects/:id/workspace/latest` | Bearer |
-| GET | `/api/projects/:id/workspace/revisions` | Bearer |
-| `/api/projects/:id/secrets` | list / put / get / delete | Bearer |
-
-Phase 2 (billing, queue, worker callbacks) **không** có trong codebase này.

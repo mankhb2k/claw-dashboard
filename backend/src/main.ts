@@ -46,8 +46,8 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('OpenClaw Control Plane API')
-    .setDescription('Phase 1 — JWT · Projects · Workspace revisions · Secrets')
+    .setTitle('OpenClaw Auth API')
+    .setDescription('Auth — JWT access + refresh, register / login / me')
     .setVersion('0.1.0')
     .addBearerAuth()
     .build();

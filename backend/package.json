@@ -1,7 +1,7 @@
 {
   "name": "backend",
-  "version": "0.1.0-phase1",
-  "description": "OpenClaw SaaS — Phase 1 control plane (OSS self-host): JWT auth, projects, workspace revisions, encrypted secrets",
+  "version": "0.1.0-auth",
+  "description": "OpenClaw SaaS backend — JWT auth (register, login, refresh, me)",
   "private": true,
   "license": "MIT",
   "scripts": {
