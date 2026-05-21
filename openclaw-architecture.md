@@ -3260,4 +3260,359 @@ flowchart LR
 
 ---
 
-_Tài liệu được tổng hợp từ `openclaw-worker/README.md`, `VISION.md`, `docs/` (250+ files) của dự án OpenClaw._
+## 31. Cấu Trúc Mã Nguồn `openclaw-worker` — Kết Nối & Phân Tầng
+
+> Phạm vi: **chỉ** repo `openclaw-worker/` — đây là bản OpenClaw (runtime Gateway). Không mô tả các repo khác trong monorepo SaaS. Nguồn: `src/`, `ui/`, `extensions/`, `apps/`, `README.md`.
+
+### 31.1 OpenClaw Là Gì Trong Repo Này?
+
+`openclaw-worker` chạy **một process Gateway** (`openclaw gateway run`) — control plane trung tâm của OpenClaw:
+
+- Nhận tin từ **channels** (Telegram, Discord, WhatsApp, …).
+- Điều phối **agent** (gọi LLM, tools, MCP).
+- Phục vụ **Control UI** (static + WebSocket RPC), **CLI**, **TUI**, **native apps**, **nodes**.
+
+```mermaid
+flowchart TB
+    subgraph CLIENTS["Clients kết nối tới Gateway"]
+        CUI["Control UI\nui/ — browser"]
+        CLI["CLI\nsrc/cli/"]
+        TUI["TUI\nsrc/tui/"]
+        APPS["Native apps\napps/"]
+        NODES["Nodes\nnode-host"]
+        EXT_HTTP["Script / API client\nHTTP OpenAI-compat"]
+    end
+
+    GW["Gateway process\nsrc/gateway/"]
+
+    subgraph RUNTIME["Runtime trong cùng process"]
+        CH["channels +\nextensions/"]
+        AR["auto-reply/"]
+        AG["agents/"]
+    end
+
+    subgraph EXTERNAL["Ra ngoài Internet"]
+        CHAPI["Chat provider APIs"]
+        LLM["LLM providers"]
+        MCP["MCP servers"]
+    end
+
+    CUI -->|WS RPC| GW
+    CLI -->|WS RPC| GW
+    TUI -->|WS RPC| GW
+    APPS -->|WS RPC| GW
+    NODES -->|WS RPC| GW
+    EXT_HTTP -->|HTTP| GW
+    GW --> CH --> CHAPI
+    GW --> AR --> AG --> LLM
+    AG --> MCP
+```
+
+| Thư mục gốc | Vai trò |
+|-------------|---------|
+| `src/` | Core: gateway, agents, channels, config, tools, plugins host |
+| `ui/` | Control UI (Lit) — client WebSocket tới gateway |
+| `extensions/` | Bundled channel/provider plugins |
+| `apps/` | macOS / iOS / Android — WS clients |
+| `skills/` | Skill markdown |
+| `dist/` | Build output (`openclaw.mjs` chạy từ đây) |
+
+---
+
+### 31.2 Phương Thức Kết Nối — Tổng Quan
+
+OpenClaw **không** dùng một loại kết nối duy nhất. Gateway là **một HTTP server** (Node `http`/`https`) **multiplex** nhiều giao thức trên **cùng port** (mặc định `18789`).
+
+```mermaid
+flowchart TB
+    subgraph INBOUND["Kết nối VÀO Gateway"]
+        CH["Channels\n(WhatsApp, Telegram, Discord, Slack, ...)"]
+        WH["Webhooks /hooks/*"]
+        HTTP_EXT["HTTP API\n/v1/*, /tools/invoke"]
+        WS_IN["WebSocket clients\n(Control UI, CLI, Nodes, TUI)"]
+    end
+
+    subgraph GATEWAY["openclaw-worker — src/gateway/"]
+        HTTP["server-http.ts\nHTTP dispatcher"]
+        WS["server/ws-connection.ts\nWebSocket RPC"]
+        RPC["server-methods/*\nagent, chat, config, channels..."]
+        CHRUN["server-channels.ts\nchannel runtimes"]
+    end
+
+    subgraph INTERNAL["Nội bộ cùng process"]
+        AR["auto-reply/\nmessage → agent"]
+        AG["agents/\nPi embedded runner"]
+        PL["plugins/\nhooks + HTTP routes"]
+    end
+
+    subgraph OUTBOUND["Kết nối RA ngoài"]
+        LLM["Provider HTTP\n(OpenAI, Anthropic, ...)"]
+        MCP["MCP servers\nstdio / SSE / HTTP"]
+        CHAPI["Channel APIs\n(Bot API, Baileys, Bolt, ...)"]
+    end
+
+    CH --> CHRUN
+    WH --> HTTP
+    HTTP_EXT --> HTTP
+    WS_IN --> WS
+    HTTP --> RPC
+    WS --> RPC
+    RPC --> AR
+    AR --> AG
+    AG --> LLM
+    RPC --> MCP
+    CHRUN --> CHAPI
+    PL --> HTTP
+```
+
+#### Bảng phân loại kết nối
+
+| Loại | Cơ chế | Ai kết nối với ai | File tham chiếu |
+|------|--------|-------------------|-----------------|
+| **WebSocket RPC (nội bộ product)** | JSON frames `req`/`res`/`event` trên cùng port HTTP | Control UI, CLI, macOS/iOS/Android app, **Nodes** → Gateway | `src/gateway/server/ws-connection.ts`, `src/gateway/protocol/` |
+| **HTTP nội bộ (cùng process)** | Plugin routes gọi gateway context (client mode `backend` trong OpenClaw — **không** phải API NestJS bên ngoài) | Plugin code → Gateway handlers | `src/gateway/server/plugins-http.ts` |
+| **HTTP ra ngoài (tương thích OpenAI)** | REST trên gateway | App/script bên ngoài → Gateway | `src/gateway/server-http.ts`, `openai-http.ts`, `openresponses-http.ts` |
+| **Channel inbound** | Long-lived connection / webhook / polling **từ Gateway ra** provider chat | Gateway → Telegram/Discord/WhatsApp API | `extensions/whatsapp`, `extensions/discord`, `src/gateway/server-channels.ts` |
+| **Webhook inbound** | HTTP POST vào Gateway | Zapier, GitHub Actions, Gmail PubSub bridge → `/hooks/*` | `src/gateway/server/hooks.ts` |
+| **LLM outbound** | HTTPS tới cloud/local model | Agent runner → provider API | `src/agents/`, `src/provider-runtime/` |
+| **MCP outbound** | Subprocess stdio hoặc SSE/HTTP | Agent → MCP server → GitHub/Drive/... | `src/mcp/` |
+| **Control UI static** | Gateway **serve file** build từ `ui/`; browser **WebSocket** RPC | Browser ↔ Gateway (cùng origin hoặc reverse proxy phía trước) | `ui/`, `src/gateway/control-ui.js`, `server-control-ui-root.ts` |
+
+#### `gateway.bind` — ai được phép kết nối tới socket
+
+| Mode | Ý nghĩa | Nguồn |
+|------|---------|-------|
+| `loopback` | Chỉ `127.0.0.1` / `::1` — mặc định an toàn | `src/config/types.gateway.ts`, `src/gateway/net.ts` |
+| `lan` | Bind LAN IP — truy cập trong mạng local | Cùng trên |
+| `tailnet` | Tailscale; thường kèm `loopback` + Serve | `server-runtime-config.ts` |
+| `custom` | IPv4 tùy chỉnh (`customBindHost`) | Cùng trên |
+| `auto` | Tự chọn theo môi trường | Cùng trên |
+
+Khi deploy Docker, thường dùng `--bind lan` để process lắng nghe trong container; laptop dev thường `loopback` + tunnel/SSH.
+
+#### WebSocket client IDs (phân biệt loại client)
+
+Định nghĩa trong `src/gateway/protocol/client-info.ts`:
+
+| Client ID | Mục đích |
+|-----------|----------|
+| `openclaw-control-ui` | Control UI (browser) |
+| `webchat-ui` / `webchat` | WebChat embedded |
+| `cli` | OpenClaw CLI |
+| `node-host` | Companion devices (macOS/iOS/Android) |
+| `openclaw-macos` / `openclaw-ios` / `openclaw-android` | Native apps |
+| `gateway-client` | Gọi nội bộ từ plugin HTTP routes |
+
+Mỗi client kết nối qua frame `connect` (auth token/password/device pairing + protocol version), sau đó gọi RPC methods (`agent`, `chat.send`, `config.get`, ...).
+
+---
+
+### 31.3 UI Hiển Thị vs Logic Nghiệp Vụ
+
+#### Nguyên tắc tách lớp
+
+| Lớp | Thư mục | Công nghệ | Trách nhiệm |
+|-----|---------|-----------|-------------|
+| **UI (hiển thị)** | `openclaw-worker/ui/` | **Lit** + **Vite** | Render Control UI; **không** chứa business logic gateway |
+| **UI → Gateway bridge** | `ui/src/ui/gateway.ts` | WebSocket client | Auth, reconnect, `request(method, params)` |
+| **UI controllers** | `ui/src/ui/controllers/` | TypeScript thuần | Gọi RPC: `config`, `chat`, `channels`, `agents`, `cron`, `nodes`, ... |
+| **UI views** | `ui/src/ui/views/` | Lit components | Form, chat panel, navigation |
+| **Gateway (control plane)** | `openclaw-worker/src/gateway/` | Node.js | HTTP + WS server, auth, routing RPC |
+| **RPC handlers** | `src/gateway/server-methods/` | Handlers | Logic từng method: `agent`, `sessions`, `config`, ... |
+| **Channels** | `extensions/*` + `src/channels/` | Plugins | Kết nối Telegram/Discord/...; đưa message vào pipeline |
+| **Auto-reply / routing** | `src/auto-reply/`, `src/routing/` | Core | Queue message, route session/agent |
+| **Agent runtime** | `src/agents/` | Pi embedded | Gọi model, tool loop, streaming |
+| **Tools** | `src/tools/` | Built-in tools | `exec`, `browser`, `message`, `sessions_spawn`, ... |
+| **Plugins host** | `src/plugins/`, `extensions/` | Plugin SDK | Đăng ký channel, tool, HTTP route, hook |
+| **CLI** | `src/cli/`, `src/commands/` | Commander | `openclaw gateway`, `openclaw agent`, onboarding |
+| **Config** | `src/config/` | JSON5 `openclaw.json` | Đọc/ghi config, sessions, auth profiles |
+
+```mermaid
+flowchart TB
+    subgraph UI_LAYER["Lớp UI — ui/"]
+        VIEWS["views/\n(Lit components)"]
+        CTRL["controllers/\n(chat, config, channels...)"]
+        GW_CLIENT["gateway.ts\n(WebSocket browser client)"]
+        VIEWS --> CTRL --> GW_CLIENT
+    end
+
+    subgraph GW_LAYER["Lớp Gateway — src/gateway/"]
+        WS_SRV["server/ws-connection.ts"]
+        METHODS["server-methods/\nagent, chat, config..."]
+        HTTP_SRV["server-http.ts"]
+        WS_SRV --> METHODS
+        HTTP_SRV --> METHODS
+    end
+
+    subgraph BIZ_LAYER["Lớp nghiệp vụ"]
+        AR["auto-reply/"]
+        AG["agents/"]
+        CH["channels/ + extensions/"]
+    end
+
+    GW_CLIENT -->|"WebSocket RPC\nws://host:18789"| WS_SRV
+    METHODS --> AR --> AG
+    METHODS --> CH
+```
+
+**Control UI được serve như thế nào**
+
+1. Build: `ui/` → static assets (Vite) → bundle vào package/dist.
+2. Startup: `server-control-ui-root.ts` resolve path (`infra/control-ui-assets.js`).
+3. Request browser: `server-http.ts` serve static + SPA fallback.
+4. Browser load JS → `GatewayBrowserClient` connect WebSocket → RPC (`config.get`, `chat.history`, ...).
+
+**Không** có REST riêng cho từng màn hình UI — hầu hết thao tác qua **WebSocket RPC**.
+
+---
+
+### 31.4 Cây Thư Mục `src/` — Logic Chính
+
+| Thư mục | Vai trò nghiệp vụ |
+|---------|-------------------|
+| `src/gateway/` | **Trung tâm**: HTTP/WS server, auth, RPC registry, channel supervisor, cron, hooks |
+| `src/gateway/server-methods/` | Handler từng RPC method (`agent.ts`, `chat.ts`, `config.ts`, `channels.ts`, `nodes.ts`, ...) |
+| `src/gateway/server/` | Transport: `ws-connection`, `http-listen`, `hooks`, `plugins-http` |
+| `src/gateway/protocol/` | Schema AJV, client-info, connect errors, protocol version |
+| `src/channels/` | Abstractions channel: plugins registry, inbound event, transport |
+| `src/auto-reply/` | Pipeline trả lời tự động khi có tin nhắn channel |
+| `src/routing/` | Session key, bindings, account routing → agent |
+| `src/agents/` | Agent loop (Pi embedded), system prompt, tool execution |
+| `src/tools/` | Built-in tool implementations |
+| `src/plugins/` | Plugin loader, registry, runtime hooks |
+| `src/config/` | `openclaw.json`, sessions store, merge patch |
+| `src/cron/` | Scheduled jobs trong gateway |
+| `src/hooks/` | Internal + webhook hooks |
+| `src/mcp/` | MCP client registry cho agent |
+| `src/node-host/` | Logic companion node (pair với gateway qua WS) |
+| `src/secrets/` | SecretRef resolution tại gateway startup/reload |
+| `src/provider-runtime/` | Gọi HTTP tới LLM providers |
+| `src/cli/` + `src/commands/` | CLI entry, wizard, doctor |
+| `src/tui/` | Terminal UI (TUI) — client WS riêng |
+| `src/web/` | WebChat-related helpers |
+| `src/memory/` | Memory plugin host integration |
+| `src/context-engine/` | Pluggable context assembly |
+
+| Thư mục | Vai trò |
+|---------|---------|
+| `extensions/` | **Bundled plugins**: mỗi channel/provider extension (discord, slack, whatsapp, codex, ...) |
+| `ui/` | **Control UI** — chỉ presentation + WS client |
+| `apps/` | Native apps (macOS, iOS, Android) — WS clients |
+| `skills/` | Skill markdown bundles |
+| `packages/` | Workspace packages nội bộ monorepo |
+| `dist/` | Build output chạy production |
+
+---
+
+### 31.5 Luồng Tin Nhắn (Channel → Agent → Channel)
+
+```mermaid
+sequenceDiagram
+    participant TG as Telegram API
+    participant EXT as extensions/telegram
+    participant CH as server-channels.ts
+    participant AR as auto-reply/
+    participant RPC as server-methods/agent
+    participant AG as agents/ (Pi)
+    participant LLM as LLM Provider
+
+    TG->>EXT: Long poll / webhook event
+    EXT->>CH: Inbound message
+    CH->>AR: Dispatch theo routing/session
+    AR->>RPC: agent / chat pipeline
+    RPC->>AG: runEmbeddedPiAgent
+    AG->>LLM: HTTPS inference
+    LLM-->>AG: stream + tool calls
+    AG-->>AR: assistant reply
+    AR-->>EXT: Outbound message tool
+    EXT-->>TG: Send message
+```
+
+**Điểm quan trọng:** Channel **không** gọi LLM trực tiếp — mọi thứ đi qua **gateway routing + agent runtime**.
+
+---
+
+### 31.6 Luồng Control UI (Browser)
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Static as Gateway HTTP\n(static ui/)
+    participant WS as Gateway WebSocket
+    participant CFG as server-methods/config
+    participant CHAT as server-methods/chat
+
+    Browser->>Static: GET /openclaw (hoặc base path)
+    Static-->>Browser: index.html + JS bundle
+    Browser->>WS: connect (token + device identity)
+    WS-->>Browser: hello-ok
+    Browser->>WS: req config.get
+    WS->>CFG: handler
+    CFG-->>Browser: res snapshot
+    Browser->>WS: req chat.send / agent
+    WS->>CHAT: handler → agent loop
+    WS-->>Browser: event:chat / event:agent (stream)
+```
+
+File UI chính:
+
+- `ui/src/ui/gateway.ts` — WebSocket client, reconnect, device auth
+- `ui/src/ui/controllers/chat.ts` — chat history, send, streaming
+- `ui/src/ui/controllers/config.ts` — load/save `openclaw.json` qua RPC
+- `ui/src/ui/controllers/channels.ts` — channel status/start/stop
+- `ui/src/ui/controllers/agents.ts` — danh sách agent theo `openclaw.json` (RPC `agents` / config gateway)
+
+---
+
+### 31.7 Các Client Trong Ecosystem OpenClaw (Cùng Gateway)
+
+Tất cả đều nằm trong hoặc gọi vào `openclaw-worker` — **không** có repo UI riêng ngoài `ui/`:
+
+| Client | Thư mục / entry | Kết nối | Ghi chú |
+|--------|-----------------|---------|---------|
+| **Control UI** | `ui/` | WebSocket RPC (`openclaw-control-ui`) | UI chính: chat, config, channels, cron |
+| **CLI** | `src/cli/`, `openclaw.mjs` | WebSocket RPC (`cli`) | `openclaw gateway`, `openclaw agent`, doctor |
+| **TUI** | `src/tui/` | WebSocket RPC (`openclaw-tui`) | Terminal UI |
+| **WebChat** | `src/web/` | WS (`webchat-ui` / `webchat`) | Embedded chat |
+| **Native apps** | `apps/` (macOS, iOS, Android) | WS (`openclaw-macos`, …) | Companion / node pairing |
+| **Nodes** | `src/node-host/` | WS (`node-host`) | Thiết bị paired, exec/camera/… |
+| **HTTP API** | — | HTTP REST | OpenAI-compat, `/tools/invoke` — không cần UI |
+
+---
+
+### 31.8 Entry Point Chạy Gateway
+
+| Lệnh / file | Mô tả |
+|-------------|-------|
+| `openclaw.mjs` | CLI entry production |
+| `src/cli/gateway-cli/` | `openclaw gateway run` |
+| `src/gateway/server.impl.ts` | Khởi tạo server: plugins, channels, WS, HTTP, cron, config reload |
+| `src/gateway/server-http.ts` | Mount routes: OpenAI API, tools, Control UI, hooks, canvas, plugins |
+| `pnpm gateway:dev` | Dev mode (README) |
+| `pnpm dev` | Dev tổng thể (README) |
+| `docker build` | Image production (`Dockerfile` trong repo) |
+
+Ví dụ chạy gateway:
+
+```bash
+openclaw gateway run --bind loopback --port 18789
+# hoặc trong Docker: --bind lan
+```
+
+Biến môi trường thường gặp: `OPENCLAW_GATEWAY_TOKEN`, config `~/.openclaw/openclaw.json` (hoặc path tùy `OPENCLAW_STATE_DIR`).
+
+---
+
+### 31.9 Tóm Tắt Trả Lời Câu Hỏi
+
+| Câu hỏi | Trả lời ngắn |
+|---------|--------------|
+| Kết nối **nội bộ**? | **Có** — WebSocket RPC trong cùng process; plugin HTTP routes gọi gateway context nội bộ (`gateway-client` / `backend` mode). |
+| Kết nối **ra ngoài**? | **Có** — Channels (outbound tới chat APIs), LLM HTTPS, MCP subprocess/HTTP, webhooks inbound HTTP. |
+| **UI ở đâu**? | `openclaw-worker/ui/` — Lit/Vite; serve static qua Gateway; logic hiển thị + `controllers/` gọi WS. |
+| **Logic nghiệp vụ ở đâu**? | `src/gateway/` (RPC), `src/auto-reply/`, `src/agents/`, `src/channels/`, `extensions/`. |
+| Có phải mọi thứ qua HTTP REST? | **Không** — Control plane chính là **WebSocket RPC**; HTTP dùng cho OpenAI-compat API, hooks, static UI, tools/invoke. |
+
+---
+
+_Tài liệu được tổng hợp từ `openclaw-worker/README.md`, `VISION.md`, `docs/` (250+ files) và mã nguồn `openclaw-worker/src/`, `openclaw-worker/ui/` của dự án OpenClaw._

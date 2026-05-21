@@ -7,6 +7,9 @@ export type ProjectDto = {
   publicUrl?: string;
   status: string;
   containerName: string | null;
+  /** Docker container đã mất — cần spawn lại, không tạo project mới. */
+  containerMissing: boolean;
+  errorMessage: string | null;
   lastActiveAt: string | null;
   createdAt: string;
 };
@@ -17,7 +20,7 @@ function statusLower(s: ProjectStatus): string {
 
 export function toProjectDto(
   project: Project,
-  opts?: { appDomain?: string },
+  opts?: { appDomain?: string; containerMissing?: boolean },
 ): ProjectDto {
   const domain = opts?.appDomain ?? process.env.APP_DOMAIN ?? 'localhost';
   const publicUrl =
@@ -27,6 +30,12 @@ export function toProjectDto(
         ? `https://${project.subdomain}.${domain}`
         : undefined;
 
+  const containerMissing =
+    opts?.containerMissing ??
+    (!project.containerId ||
+      project.errorMessage === 'Container not found' ||
+      project.errorMessage === 'No container to start');
+
   return {
     id: project.id,
     displayName: project.displayName,
@@ -34,6 +43,8 @@ export function toProjectDto(
     publicUrl,
     status: statusLower(project.status),
     containerName: project.containerName,
+    containerMissing,
+    errorMessage: project.errorMessage,
     lastActiveAt: project.lastActiveAt?.toISOString() ?? null,
     createdAt: project.createdAt.toISOString(),
   };

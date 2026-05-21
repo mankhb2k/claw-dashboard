@@ -17,6 +17,7 @@ Tuỳ chọn:
 - `JWT_REFRESH_DAYS` — refresh token (mặc định 7)
 - `FRONTEND_URL` — CORS
 - `PORT` — mặc định 3001
+- `SELF_HOST_USER_LOGIN` / `SELF_HOST_USER_PASSWORD` — tài khoản mặc định (tự sync vào DB khi start; thêm user khác qua đăng ký)
 
 ## DB
 
@@ -28,11 +29,11 @@ npx prisma migrate deploy
 
 **Breaking:** migration cũ (projects / workspace / secrets) đã gỡ. Database đã từng migrate bản cũ: dùng DB mới hoặc `npx prisma migrate reset` (mất dữ liệu).
 
-Seed (tuỳ chọn):
+Seed (tuỳ chọn, cùng logic với startup):
 
 ```bash
 npx prisma db seed
-# SEED_USER_EMAIL / SEED_USER_PASSWORD
+# SELF_HOST_USER_LOGIN / SELF_HOST_USER_PASSWORD
 ```
 
 ## Chạy

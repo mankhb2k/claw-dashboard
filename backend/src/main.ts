@@ -7,6 +7,7 @@ import {
 } from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
+import fastifyWebsocket from '@fastify/websocket';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger as PinoNestLogger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -18,9 +19,13 @@ async function bootstrap() {
     throw new Error('JWT_SECRET is required in production');
   }
 
+  const fastifyAdapter = new FastifyAdapter();
+  // Phải register trước NestFactory.create — OnModuleInit chạy sớm hơn app.register() ở dưới.
+  await fastifyAdapter.getInstance().register(fastifyWebsocket);
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    fastifyAdapter,
     { bufferLogs: true },
   );
   app.useLogger(app.get(PinoNestLogger));

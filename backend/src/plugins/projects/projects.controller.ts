@@ -27,6 +27,12 @@ export class ProjectsController {
     return this.projects.start(user.sub, id);
   }
 
+  /** Spawn lại container khi Docker container đã bị xóa (giữ project + volume). */
+  @Post(':id/respawn')
+  respawn(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
+    return this.projects.respawn(user.sub, id);
+  }
+
   @Post(':id/stop')
   stop(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
     return this.projects.stop(user.sub, id);

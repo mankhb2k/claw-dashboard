@@ -1,25 +1,14 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import * as bcrypt from 'bcrypt';
+import { ensureSelfHostDefaultUser } from '../src/core/auth/self-host-user';
 
 async function main() {
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
   });
-  const login = (process.env.SEED_USER_LOGIN ?? 'admin').trim().toLowerCase();
-  const password = process.env.SEED_USER_PASSWORD ?? 'admin123';
-  const hash = await bcrypt.hash(password, 12);
-  await prisma.user.upsert({
-    where: { login },
-    create: {
-      login,
-      passwordHash: hash,
-      name: 'Admin',
-    },
-    update: {},
-  });
-  console.log(`Seed ok: login=${login}`);
+  const { login, created } = await ensureSelfHostDefaultUser(prisma);
+  console.log(`Seed ok: login=${login} (${created ? 'created' : 'updated'})`);
   await prisma.$disconnect();
 }
 

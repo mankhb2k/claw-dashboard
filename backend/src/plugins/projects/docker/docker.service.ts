@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Docker from 'dockerode';
-import { randomBytes } from 'node:crypto';
+import path from 'node:path';
+import { CONTAINER_STATE_DIR } from '../workspace/openclaw-config';
 
 const GATEWAY_PORT = 18789;
 
@@ -49,11 +50,16 @@ export class DockerService {
     });
   }
 
-  async spawnWorker(subdomain: string): Promise<SpawnResult> {
+  async spawnWorker(params: {
+    subdomain: string;
+    hostDataPath: string;
+    gatewayToken: string;
+  }): Promise<SpawnResult> {
     await this.ensureImage();
     const image = this.imageRef();
-    const containerName = `oc-${subdomain}`;
-    const gatewayToken = randomBytes(32).toString('base64url');
+    const containerName = `oc-${params.subdomain}`;
+    const gatewayToken = params.gatewayToken;
+    const bindSource = path.resolve(params.hostDataPath);
 
     const existing = await this.findByName(containerName);
     if (existing) {
@@ -72,10 +78,16 @@ export class DockerService {
     const container = await this.docker.createContainer({
       Image: image,
       name: containerName,
-      Env: [`OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`, 'NODE_ENV=production'],
+      Env: [
+        `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`,
+        `OPENCLAW_STATE_DIR=${CONTAINER_STATE_DIR}`,
+        `OPENCLAW_CONFIG_PATH=${CONTAINER_STATE_DIR}/openclaw.json`,
+        'NODE_ENV=production',
+      ],
       Cmd: ['node', 'openclaw.mjs', 'gateway', '--bind', 'lan'],
       ExposedPorts: { [`${GATEWAY_PORT}/tcp`]: {} },
       HostConfig: {
+        Binds: [`${bindSource}:${CONTAINER_STATE_DIR}`],
         PortBindings: {
           [`${GATEWAY_PORT}/tcp`]: [{ HostIp: '127.0.0.1', HostPort: '0' }],
         },
@@ -129,6 +141,17 @@ export class DockerService {
       return inspect.State?.Running ? 'running' : 'stopped';
     } catch {
       return 'missing';
+    }
+  }
+
+  /** Published host port for gateway (changes when container is recreated/restarted). */
+  async getPublishedPort(containerId: string): Promise<number> {
+    try {
+      const inspect = await this.docker.getContainer(containerId).inspect();
+      const binding = inspect.NetworkSettings?.Ports?.[`${GATEWAY_PORT}/tcp`]?.[0];
+      return binding?.HostPort ? Number(binding.HostPort) : 0;
+    } catch {
+      return 0;
     }
   }
 
