@@ -1,6 +1,9 @@
 import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import type { AgentFormInput } from '../agents/agent-form.types';
+import { compileOpenClawAgentConfig } from '../agents/agent-workspace-compile';
 import { PROVIDER_REGISTRY } from '../providers/provider-registry';
+import { CONTAINER_STATE_DIR, CONTAINER_WORKSPACE_DIR } from './openclaw-config';
 
 const PROVIDER_ENV_KEYS = new Set(PROVIDER_REGISTRY.map((p) => p.envKey));
 
@@ -58,6 +61,55 @@ export function mergeProviderKeysIntoConfig(
     config.agents = agents;
   }
 
+  return config;
+}
+
+export type ProjectAgentMergeRow = {
+  slug: string;
+  name: string;
+  formData: AgentFormInput;
+  isDefault: boolean;
+};
+
+/** Merge user agents vào `agents.list`; giữ `env` và `agents.defaults.model` từ bước provider. */
+export function mergeAgentsIntoConfig(
+  config: Record<string, unknown>,
+  enabledAgents: ProjectAgentMergeRow[],
+): Record<string, unknown> {
+  const agents = (config.agents as Record<string, unknown> | undefined) ?? {};
+  const defaults = (agents.defaults as Record<string, unknown> | undefined) ?? {};
+  defaults.workspace = CONTAINER_WORKSPACE_DIR;
+
+  const list: Record<string, unknown>[] = [
+    {
+      id: 'main',
+      name: 'Main',
+      workspace: CONTAINER_WORKSPACE_DIR,
+    },
+  ];
+
+  const sorted = [...enabledAgents].sort((a, b) => {
+    if (a.isDefault !== b.isDefault) {
+      return a.isDefault ? -1 : 1;
+    }
+    return a.slug.localeCompare(b.slug);
+  });
+
+  for (const row of sorted) {
+    const patch = compileOpenClawAgentConfig(row.formData);
+    list.push({
+      id: row.slug,
+      name: row.name.trim() || row.slug,
+      workspace: `${CONTAINER_STATE_DIR}/workspace-${row.slug}`,
+      model: patch.model,
+      sandbox: patch.sandbox,
+      exec: patch.exec,
+    });
+  }
+
+  agents.defaults = defaults;
+  agents.list = list;
+  config.agents = agents;
   return config;
 }
 

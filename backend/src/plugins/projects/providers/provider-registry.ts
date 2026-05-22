@@ -1,4 +1,5 @@
 import { GEMINI_CHAT_MODELS, GEMINI_DEFAULT_OPENCLAW_MODEL, GEMINI_OPENCLAW_PROVIDER } from './gemini-models';
+import { OPENAI_CHAT_MODELS, OPENAI_DEFAULT_OPENCLAW_MODEL } from './openai-models';
 
 export type ProviderModelCatalogEntry = {
   id: string;
@@ -23,7 +24,20 @@ export type ProviderDefinition = {
 };
 
 export const PROVIDER_REGISTRY: ProviderDefinition[] = [
-  { id: 'openai', displayName: 'OpenAI', envKey: 'OPENAI_API_KEY', defaultModel: 'openai/gpt-4o-mini' },
+  {
+    id: 'openai',
+    displayName: 'OpenAI',
+    envKey: 'OPENAI_API_KEY',
+    defaultModel: OPENAI_DEFAULT_OPENCLAW_MODEL,
+    models: OPENAI_CHAT_MODELS.map((m) => ({
+      id: m.id,
+      name: m.name,
+      openclawId: m.openclawId,
+      tier: m.tier,
+      description: m.description,
+      recommended: m.recommended,
+    })),
+  },
   {
     id: 'anthropic',
     displayName: 'Anthropic',

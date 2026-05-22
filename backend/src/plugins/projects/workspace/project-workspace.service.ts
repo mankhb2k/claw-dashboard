@@ -3,7 +3,16 @@ import { WorkspaceRevisionKind } from '@prisma/client';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { decryptSecret } from '../../../core/crypto/secret-crypto';
+import { parseAgentFormData } from '../agents/agent-form.types';
 import { buildInitialOpenClawConfig, type OpenClawProjectConfig } from './openclaw-config';
+import {
+  mergeAgentsIntoConfig,
+  mergeProviderKeysIntoConfig,
+  readOpenClawConfigJson,
+  removeLegacyDotEnv,
+  writeOpenClawConfigJson,
+} from './openclaw-config-merge';
 
 @Injectable()
 export class ProjectWorkspaceService {
@@ -60,5 +69,36 @@ export class ProjectWorkspaceService {
       syncPathHint,
       volumeName: this.volumeNameFor(params.projectId),
     };
+  }
+
+  /**
+   * Một pipeline ghi `openclaw.json`: provider keys → agents.list (main implicit + user agents).
+   */
+  async syncProjectRuntime(projectId: string): Promise<void> {
+    const dataDir = await this.ensureProjectLayout(projectId);
+    const configPath = path.join(dataDir, 'openclaw.json');
+    const config = (await readOpenClawConfigJson(configPath)) ?? {};
+
+    const providerRows = await this.prisma.projectProviderKey.findMany({
+      where: { projectId },
+    });
+    mergeProviderKeysIntoConfig(config, providerRows, decryptSecret);
+
+    const agentRows = await this.prisma.projectAgent.findMany({
+      where: { projectId, enabled: true },
+    });
+    mergeAgentsIntoConfig(
+      config,
+      agentRows.map((row) => ({
+        slug: row.slug,
+        name: row.name,
+        formData: parseAgentFormData(row.formData),
+        isDefault: row.isDefault,
+      })),
+    );
+
+    await writeOpenClawConfigJson(configPath, config);
+    await removeLegacyDotEnv(dataDir);
+    await this.recordRevision(projectId, WorkspaceRevisionKind.OPENCLAW_JSON, config);
   }
 }

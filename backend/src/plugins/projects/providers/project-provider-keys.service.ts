@@ -1,16 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import path from 'node:path';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { decryptSecret, encryptSecret, maskSecret } from '../../../core/crypto/secret-crypto';
 import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
-import {
-  mergeProviderKeysIntoConfig,
-  readOpenClawConfigJson,
-  removeLegacyDotEnv,
-  writeOpenClawConfigJson,
-} from '../workspace/openclaw-config-merge';
-import { testGeminiApiKey } from './gemini-test';
+import { runProviderKeyTest } from './provider-test';
 import { PROVIDER_REGISTRY, resolveProvider } from './provider-registry';
+
+export type ProviderKeyMaskedRow = {
+  key: string;
+  providerId: string;
+  label: string;
+  masked: string;
+  enabled: boolean;
+  defaultModel: string | null;
+  lastTestedAt: string | null;
+  lastTestOk: boolean | null;
+  lastError: string | null;
+  updatedAt: string;
+};
 
 @Injectable()
 export class ProjectProviderKeysService {
@@ -23,7 +29,7 @@ export class ProjectProviderKeysService {
     return PROVIDER_REGISTRY;
   }
 
-  async listMasked(projectId: string) {
+  async listMasked(projectId: string): Promise<ProviderKeyMaskedRow[]> {
     const rows = await this.prisma.projectProviderKey.findMany({
       where: { projectId },
       orderBy: { updatedAt: 'desc' },
@@ -31,7 +37,7 @@ export class ProjectProviderKeysService {
     return rows.map((row) => ({
       key: row.envKey,
       providerId: row.providerId,
-      label: row.label,
+      label: row.label ?? row.envKey,
       masked: maskSecret(decryptSecret(row.ciphertext)),
       enabled: row.enabled,
       defaultModel: row.defaultModel,
@@ -48,6 +54,7 @@ export class ProjectProviderKeysService {
     apiKey: string;
     label?: string;
     defaultModel?: string;
+    enabled?: boolean;
   }) {
     const provider = resolveProvider(params.providerId);
     if (!provider) {
@@ -57,6 +64,8 @@ export class ProjectProviderKeysService {
     if (apiKey.length < 8) {
       throw new BadRequestException('API key too short');
     }
+
+    const enabled = params.enabled ?? false;
 
     const row = await this.prisma.projectProviderKey.upsert({
       where: {
@@ -71,13 +80,13 @@ export class ProjectProviderKeysService {
         envKey: provider.envKey,
         label: params.label?.trim() || provider.displayName,
         ciphertext: encryptSecret(apiKey),
-        enabled: true,
+        enabled,
         defaultModel: params.defaultModel?.trim() || (provider.defaultModel ?? null),
       },
       update: {
         label: params.label?.trim() || provider.displayName,
         ciphertext: encryptSecret(apiKey),
-        enabled: true,
+        enabled,
         defaultModel: params.defaultModel?.trim() || (provider.defaultModel ?? null),
         lastError: null,
       },
@@ -89,6 +98,56 @@ export class ProjectProviderKeysService {
       providerId: row.providerId,
       envKey: row.envKey,
       masked: maskSecret(apiKey),
+      enabled: row.enabled,
+    };
+  }
+
+  /** Lưu key (enabled=false) → smoke test → bật toggle nếu OK trong timeout. */
+  async saveAndTest(params: {
+    projectId: string;
+    providerId: string;
+    apiKey: string;
+    label?: string;
+    defaultModel?: string;
+  }) {
+    await this.upsert({
+      ...params,
+      enabled: false,
+    });
+    return this.testProvider(params.projectId, params.providerId, { applyEnabled: true });
+  }
+
+  async setEnabled(projectId: string, providerId: string, enabled: boolean) {
+    const provider = resolveProvider(providerId);
+    if (!provider) {
+      throw new BadRequestException(`Unknown provider: ${providerId}`);
+    }
+
+    const row = await this.prisma.projectProviderKey.findUnique({
+      where: {
+        projectId_providerId: { projectId, providerId: provider.id },
+      },
+    });
+    if (!row) {
+      throw new NotFoundException('No API key stored for this provider');
+    }
+
+    if (!enabled) {
+      await this.prisma.projectProviderKey.update({
+        where: { id: row.id },
+        data: { enabled: false },
+      });
+      await this.syncOpenClawConfig(projectId);
+      return { ok: true, enabled: false };
+    }
+
+    const test = await this.testProvider(projectId, providerId, { applyEnabled: true });
+    return {
+      ok: test.ok,
+      enabled: test.ok,
+      error: test.error,
+      model: test.model,
+      message: test.message,
     };
   }
 
@@ -102,7 +161,11 @@ export class ProjectProviderKeysService {
     await this.syncOpenClawConfig(projectId);
   }
 
-  async testProvider(projectId: string, providerId: string) {
+  async testProvider(
+    projectId: string,
+    providerId: string,
+    options?: { applyEnabled?: boolean },
+  ) {
     const provider = resolveProvider(providerId);
     if (!provider) {
       throw new BadRequestException(`Unknown provider: ${providerId}`);
@@ -118,13 +181,8 @@ export class ProjectProviderKeysService {
     }
 
     const apiKey = decryptSecret(row.ciphertext);
-    let result: { ok: boolean; model?: string; message?: string; error?: string };
-
-    if (provider.id === 'gemini') {
-      result = await testGeminiApiKey(apiKey);
-    } else {
-      result = { ok: false, error: `Test not implemented for provider ${provider.id}` };
-    }
+    const result = await runProviderKeyTest(provider.id, apiKey);
+    const enabled = options?.applyEnabled ? result.ok : row.enabled;
 
     await this.prisma.projectProviderKey.update({
       where: { id: row.id },
@@ -132,24 +190,23 @@ export class ProjectProviderKeysService {
         lastTestedAt: new Date(),
         lastTestOk: result.ok,
         lastError: result.ok ? null : (result.error ?? 'Test failed'),
+        enabled,
       },
     });
 
-    return result;
+    await this.syncOpenClawConfig(projectId);
+
+    return {
+      ...result,
+      enabled,
+      masked: maskSecret(apiKey),
+      providerId: provider.id,
+      envKey: provider.envKey,
+    };
   }
 
-  /** Đồng bộ API keys + default model vào `openclaw.json.env` (gateway watch reload). */
   async syncOpenClawConfig(projectId: string): Promise<void> {
-    const dataDir = await this.workspace.ensureProjectLayout(projectId);
-    const configPath = path.join(dataDir, 'openclaw.json');
-    const config = (await readOpenClawConfigJson(configPath)) ?? {};
-    const rows = await this.prisma.projectProviderKey.findMany({
-      where: { projectId },
-    });
-
-    mergeProviderKeysIntoConfig(config, rows, decryptSecret);
-    await writeOpenClawConfigJson(configPath, config);
-    await removeLegacyDotEnv(dataDir);
+    await this.workspace.syncProjectRuntime(projectId);
   }
 
   resolveProviderIdFromEnvKey(envKey: string): string | undefined {

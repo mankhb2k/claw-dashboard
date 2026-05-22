@@ -20,12 +20,7 @@ export class ProjectEnvController {
   @Get(':id/env')
   async listEnv(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
     await this.projects.assertOwned(user.sub, id);
-    const rows = await this.providerKeys.listMasked(id);
-    return rows.map((r) => ({
-      key: r.key,
-      updatedAt: r.updatedAt,
-      masked: r.masked,
-    }));
+    return this.providerKeys.listMasked(id);
   }
 
   @Put(':id/env')
@@ -44,7 +39,9 @@ export class ProjectEnvController {
         projectId: id,
         providerId: provider.id,
         apiKey: entry.value,
+        enabled: false,
       });
+      await this.providerKeys.testProvider(id, provider.id, { applyEnabled: true });
     }
     return { ok: true };
   }

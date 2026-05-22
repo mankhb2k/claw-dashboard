@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { PrismaService } from '../../../core/database/prisma.service';
 import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
 
 export type ChatAgentSummary = {
@@ -11,9 +12,33 @@ export type ChatAgentSummary = {
 
 @Injectable()
 export class ChatAgentsService {
-  constructor(private readonly workspace: ProjectWorkspaceService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspace: ProjectWorkspaceService,
+  ) {}
 
   async listAgentsForProject(projectId: string): Promise<ChatAgentSummary[]> {
+    const userAgents = await this.prisma.projectAgent.findMany({
+      where: { projectId, enabled: true },
+      orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+    });
+
+    if (userAgents.length > 0) {
+      const hasUserDefault = userAgents.some((a) => a.isDefault);
+      return [
+        {
+          id: 'main',
+          name: 'Main',
+          isDefault: !hasUserDefault,
+        },
+        ...userAgents.map((row) => ({
+          id: row.slug,
+          name: row.name,
+          isDefault: row.isDefault,
+        })),
+      ];
+    }
+
     const dataDir = this.workspace.resolveProjectDataDir(projectId);
     const configPath = path.join(dataDir, 'openclaw.json');
     try {
@@ -32,8 +57,9 @@ export class ChatAgentsService {
           .map((row, idx) => ({ ...row, isDefault: idx === 0 }));
       }
     } catch {
-      /* use fallback */
+      /* fallback */
     }
+
     return [{ id: 'main', name: 'Main', isDefault: true }];
   }
 }

@@ -85,3 +85,32 @@ export const GEMINI_CHAT_MODELS: GeminiModelDef[] = [
 
 export const GEMINI_DEFAULT_OPENCLAW_MODEL =
   GEMINI_CHAT_MODELS.find((m) => m.id === 'gemini-2.5-flash')?.openclawId ?? 'google/gemini-2.5-flash';
+
+/** Skill AI assistant — 3 model dòng 3.x mới nhất (đầu catalog). */
+export const GEMINI_SKILL_ASSISTANT_MODEL_IDS = [
+  'gemini-3.5-flash',
+  'gemini-3.1-pro-preview',
+  'gemini-3-flash-preview',
+] as const;
+
+export const GEMINI_SKILL_ASSISTANT_MODELS = GEMINI_CHAT_MODELS.filter((m) =>
+  (GEMINI_SKILL_ASSISTANT_MODEL_IDS as readonly string[]).includes(m.id),
+);
+
+export const GEMINI_DEFAULT_SKILL_OPENCLAW_MODEL =
+  GEMINI_SKILL_ASSISTANT_MODELS.find((m) => m.id === 'gemini-3.5-flash')?.openclawId ??
+  'google/gemini-3.5-flash';
+
+export function isGeminiSkillAssistantModelId(modelOrOpenclawId: string): boolean {
+  const native = modelOrOpenclawId.includes('/')
+    ? modelOrOpenclawId.split('/').pop()!
+    : modelOrOpenclawId;
+  return (GEMINI_SKILL_ASSISTANT_MODEL_IDS as readonly string[]).includes(native);
+}
+
+export function resolveGeminiSkillDefaultModel(storedDefault: string | null): string {
+  if (storedDefault && isGeminiSkillAssistantModelId(storedDefault)) {
+    return storedDefault;
+  }
+  return GEMINI_DEFAULT_SKILL_OPENCLAW_MODEL;
+}
