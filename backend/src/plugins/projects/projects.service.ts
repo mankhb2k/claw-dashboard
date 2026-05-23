@@ -225,6 +225,13 @@ export class ProjectsService {
 
   /** Đồng bộ trạng thái DB với Docker (container còn tồn tại hay đã xóa). */
   private async syncDockerState(project: Project): Promise<Project> {
+    if (
+      project.status === ProjectStatus.CREATING ||
+      project.status === ProjectStatus.STARTING
+    ) {
+      return project;
+    }
+
     if (!project.containerId) {
       if (project.status === ProjectStatus.RUNNING) {
         return this.prisma.project.update({

@@ -97,14 +97,16 @@ export function mergeAgentsIntoConfig(
 
   for (const row of sorted) {
     const patch = compileOpenClawAgentConfig(row.formData);
-    list.push({
+    const entry: Record<string, unknown> = {
       id: row.slug,
       name: row.name.trim() || row.slug,
       workspace: `${CONTAINER_STATE_DIR}/workspace-${row.slug}`,
       model: patch.model,
-      sandbox: patch.sandbox,
-      exec: patch.exec,
-    });
+    };
+    if (patch.sandbox) {
+      entry.sandbox = patch.sandbox;
+    }
+    list.push(entry);
   }
 
   agents.defaults = defaults;
