@@ -71,6 +71,30 @@ export class ProjectWorkspaceService {
     };
   }
 
+  /** Respawn/start: đảm bảo `openclaw.json` tồn tại (tránh gateway crash loop). */
+  async ensureGatewayConfigOnDisk(projectId: string, gatewayToken: string): Promise<void> {
+    const dataDir = await this.ensureProjectLayout(projectId);
+    const configPath = path.join(dataDir, 'openclaw.json');
+    const existing = await readOpenClawConfigJson(configPath);
+    if (!existing) {
+      const config = buildInitialOpenClawConfig({ gatewayToken });
+      await this.recordRevision(projectId, WorkspaceRevisionKind.OPENCLAW_JSON, config);
+      await this.syncOpenClawJsonToDisk(projectId, config);
+      return;
+    }
+    const gateway = existing.gateway as Record<string, unknown> | undefined;
+    const auth = gateway?.auth as Record<string, unknown> | undefined;
+    if (!gateway?.mode) {
+      const config = buildInitialOpenClawConfig({ gatewayToken });
+      await this.syncOpenClawJsonToDisk(projectId, config);
+    } else if (auth?.mode === 'token' && typeof auth.token === 'string') {
+      /* giữ token hiện có */
+    } else {
+      const config = buildInitialOpenClawConfig({ gatewayToken });
+      await this.syncOpenClawJsonToDisk(projectId, config);
+    }
+  }
+
   /**
    * Một pipeline ghi `openclaw.json`: provider keys → agents.list (main implicit + user agents).
    */

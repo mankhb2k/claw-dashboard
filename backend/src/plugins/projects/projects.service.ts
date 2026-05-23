@@ -90,8 +90,9 @@ export class ProjectsService {
 
   async respawn(userId: string, projectId: string): Promise<ProjectDto> {
     const project = await this.requireOwned(userId, projectId);
-    const syncPathHint = await this.workspace.ensureProjectLayout(projectId);
     const gatewayToken = project.gatewayToken ?? randomBytes(32).toString('base64url');
+    await this.workspace.ensureGatewayConfigOnDisk(projectId, gatewayToken);
+    const syncPathHint = await this.workspace.ensureProjectLayout(projectId);
 
     await this.prisma.project.update({
       where: { id: projectId },
@@ -225,6 +226,29 @@ export class ProjectsService {
 
   /** Đồng bộ trạng thái DB với Docker (container còn tồn tại hay đã xóa). */
   private async syncDockerState(project: Project): Promise<Project> {
+    const live = await this.docker.resolveWorkerBySubdomain(project.subdomain);
+    if (live?.running) {
+      const needsLink =
+        project.containerId !== live.containerId ||
+        project.status !== ProjectStatus.RUNNING ||
+        (live.hostPort > 0 && live.hostPort !== project.hostPort) ||
+        project.errorMessage != null;
+      if (needsLink) {
+        return this.prisma.project.update({
+          where: { id: project.id },
+          data: {
+            status: ProjectStatus.RUNNING,
+            containerId: live.containerId,
+            containerName: live.containerName,
+            ...(live.hostPort > 0 ? { hostPort: live.hostPort } : {}),
+            errorMessage: null,
+            lastActiveAt: new Date(),
+          },
+        });
+      }
+      return project;
+    }
+
     if (!project.containerId) {
       if (project.status === ProjectStatus.RUNNING) {
         return this.prisma.project.update({

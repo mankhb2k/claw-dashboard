@@ -103,7 +103,7 @@ export class DockerService {
       throw new Error('Failed to resolve published gateway port');
     }
 
-    await this.waitGatewayReady(hostPort);
+    await this.waitGatewayReadyOrRunning(inspect.Id, hostPort);
 
     return {
       containerId: inspect.Id,
@@ -122,7 +122,7 @@ export class DockerService {
     const refreshed = await container.inspect();
     const binding = refreshed.NetworkSettings?.Ports?.[`${GATEWAY_PORT}/tcp`]?.[0];
     const hostPort = binding?.HostPort ? Number(binding.HostPort) : 0;
-    if (hostPort) await this.waitGatewayReady(hostPort);
+    if (hostPort) await this.waitGatewayReadyOrRunning(containerId, hostPort);
     return hostPort;
   }
 
@@ -169,10 +169,59 @@ export class DockerService {
     }
   }
 
+  workerContainerName(subdomain: string): string {
+    return `oc-${subdomain}`;
+  }
+
+  /** Tìm worker theo tên (khi DB còn containerId cũ sau respawn / recreate). */
+  async resolveWorkerBySubdomain(subdomain: string): Promise<{
+    containerId: string;
+    containerName: string;
+    hostPort: number;
+    running: boolean;
+  } | null> {
+    const containerName = this.workerContainerName(subdomain);
+    const list = await this.docker.listContainers({
+      all: true,
+      filters: { name: [containerName] },
+    });
+    const row = list.find((c) => c.Names?.some((n) => n === `/${containerName}` || n === containerName));
+    if (!row) return null;
+    const running = row.State === 'running';
+    let hostPort = 0;
+    const binding = row.Ports?.find((p) => p.PrivatePort === GATEWAY_PORT);
+    if (binding?.PublicPort) {
+      hostPort = Number(binding.PublicPort);
+    }
+    if (running && !hostPort) {
+      hostPort = await this.getPublishedPort(row.Id);
+    }
+    return {
+      containerId: row.Id,
+      containerName,
+      hostPort,
+      running,
+    };
+  }
+
   private async findByName(name: string) {
     const list = await this.docker.listContainers({ all: true, filters: { name: [name] } });
     const row = list.find((c) => c.Names?.some((n) => n === `/${name}` || n === name));
     return row ? this.docker.getContainer(row.Id) : null;
+  }
+
+  /** Healthz chậm/fail trên Windows — vẫn cho spawn xong nếu container Docker đang chạy. */
+  private async waitGatewayReadyOrRunning(containerId: string, hostPort: number): Promise<void> {
+    try {
+      await this.waitGatewayReady(hostPort);
+    } catch (err) {
+      const state = await this.syncRunning(containerId);
+      if (state !== 'running') throw err;
+      const message = err instanceof Error ? err.message : String(err);
+      this.log.warn(
+        `Gateway health not ready yet (${message}); container is running — continuing.`,
+      );
+    }
   }
 
   private async waitGatewayReady(hostPort: number): Promise<void> {
