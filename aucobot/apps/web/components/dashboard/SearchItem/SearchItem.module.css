@@ -1,0 +1,37 @@
+/* Khung bọc thanh tìm kiếm dùng chung */
+.searchContainer {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* Tùy chỉnh input padding phải để chừa khoảng trống cho nút Clear */
+.searchInput {
+  padding-right: 36px !important;
+}
+
+/* Nút xóa nhanh nội dung tìm kiếm */
+.clearButton {
+  position: absolute;
+  right: 10px;
+  top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast) ease, color var(--transition-fast) ease;
+  z-index: 10;
+}
+
+/* Hiệu ứng hover nút xóa */
+.clearButton:hover {
+  background-color: var(--color-accent);
+  color: var(--color-foreground);
+}

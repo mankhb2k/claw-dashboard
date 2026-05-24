@@ -1,0 +1,92 @@
+/* =============================================================================
+   SKILL EDITOR PAGE — CSS Module
+   ============================================================================= */
+
+/* --- 1. LAYOUT / VỎ NGOÀI --- */
+.page {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: var(--space-4) var(--space-12) 0;
+}
+
+.shell {
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2) 0 0;
+}
+
+.formStack {
+  flex: 1;
+  min-height: 0;
+}
+
+.editorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.assistantAside {
+  min-height: 0;
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .editorLayout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .assistantAside {
+    max-height: 420px;
+  }
+}
+
+/* --- 2. THÀNH PHẦN ĐIỀU HƯỚNG & TRẠNG THÁI --- */
+.back {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  margin-bottom: var(--space-4);
+  transition: color var(--transition-fast) ease;
+}
+
+.back:hover {
+  color: var(--color-primary);
+}
+
+.state {
+  flex: 1;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.bannerError {
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.success {
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+}
+

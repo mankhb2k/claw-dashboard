@@ -1,0 +1,29 @@
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  box-sizing: border-box;
+}
+
+/* Các kích thước giới hạn chiều rộng */
+.size_sm {
+  max-width: var(--container-sm);
+}
+
+.size_setting {
+  max-width: var(--container-setting);
+}
+
+.size_md {
+  max-width: var(--container-md);
+}
+
+.size_lg {
+  max-width: var(--container-lg);
+}
+
+.size_full {
+  max-width: var(--container-full);
+}

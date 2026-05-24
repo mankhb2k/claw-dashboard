@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Self-host: `login` is email or username (unique); email is not verified.
+model User {
+  id           String   @id @default(cuid())
+  login        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+  projects      Project[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// OSS: one user ≈ one project; shared gateway via env; token also stored on project for UI.
+model Project {
+  id           String        @id @default(cuid())
+  userId       String        @unique @map("user_id")
+  displayName  String        @map("display_name")
+  subdomain    String        @unique
+  gatewayToken String?       @map("gateway_token")
+  status       ProjectStatus @default(CREATING)
+  errorMessage String?       @map("error_message")
+  lastActiveAt DateTime      @default(now()) @map("last_active_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectProviderKeys ProjectProviderKey[]
+  projectSkills       ProjectSkill[]
+  projectAgents       ProjectAgent[]
+  projectConnectors   ProjectConnector[]
+  projectChannels     ProjectChannel[]
+
+  @@map("projects")
+}
+
+model ProjectConnector {
+  id               String                    @id @default(cuid())
+  projectId        String                    @map("project_id")
+  connectorSlug    String                    @map("connector_slug")
+  displayName      String                    @map("display_name")
+  enabled          Boolean                   @default(false)
+  connectionStatus ConnectorConnectionStatus @default(DISCONNECTED) @map("connection_status")
+  config           Json                      @default("{}")
+  lastTestedAt     DateTime?                 @map("last_tested_at")
+  lastError        String?                   @map("last_error")
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @updatedAt @map("updated_at")
+
+  project Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secrets ProjectConnectorSecret[]
+
+  @@unique([projectId, connectorSlug])
+  @@index([projectId])
+  @@map("project_connectors")
+}
+
+model ProjectConnectorSecret {
+  id                 String   @id @default(cuid())
+  projectConnectorId String   @map("project_connector_id")
+  secretKey          String   @map("secret_key")
+  ciphertext         String   @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  projectConnector ProjectConnector @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
+
+  @@unique([projectConnectorId, secretKey])
+  @@map("project_connector_secrets")
+}
+
+enum ConnectorConnectionStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+  NEEDS_REAUTH
+}
+
+model AgentTemplate {
+  slug              String   @id
+  name              String
+  description       String   @db.Text
+  avatar            String
+  vibe              String
+  defaultModel      String   @map("default_model")
+  toolsProfile      String   @map("tools_profile")
+  sandboxEnabled    Boolean  @default(false) @map("sandbox_enabled")
+  bootstrapIdentity String   @map("bootstrap_identity") @db.Text
+  bootstrapSoul     String   @map("bootstrap_soul") @db.Text
+  bootstrapAgents   String   @map("bootstrap_agents") @db.Text
+  sortOrder         Int      @default(0) @map("sort_order")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("agent_templates")
+}
+
+model ProjectAgent {
+  id            String    @id @default(cuid())
+  projectId     String    @map("project_id")
+  slug          String
+  name          String
+  description   String    @db.Text
+  avatar        String
+  formData      Json      @map("form_data")
+  enabled       Boolean   @default(false)
+  isDefault     Boolean   @default(false) @map("is_default")
+  lastSyncedAt  DateTime? @map("last_synced_at")
+  lastSyncError String?   @map("last_sync_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+  @@map("project_agents")
+}
+
+model ProjectSkill {
+  id            String    @id @default(cuid())
+  projectId     String    @map("project_id")
+  slug          String
+  name          String
+  description   String    @db.Text
+  heading       String?
+  bodyMarkdown  String    @default("") @map("body_markdown") @db.Text
+  enabled       Boolean   @default(false)
+  lastSyncedAt  DateTime? @map("last_synced_at")
+  lastSyncError String?   @map("last_sync_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+  @@map("project_skills")
+}
+
+model ProjectProviderKey {
+  id           String    @id @default(cuid())
+  projectId    String    @map("project_id")
+  providerId   String    @map("provider_id")
+  envKey       String    @map("env_key")
+  label        String?
+  ciphertext   String    @db.Text
+  enabled      Boolean   @default(true)
+  defaultModel String?   @map("default_model")
+  lastTestedAt DateTime? @map("last_tested_at")
+  lastTestOk   Boolean?  @map("last_test_ok")
+  lastError    String?   @map("last_error")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, providerId])
+  @@index([projectId])
+  @@map("project_provider_keys")
+}
+
+/// OpenClaw messaging channel on a project (telegram, discord, zalo, …). MVP: one account per channelId.
+model ProjectChannel {
+  id               String                  @id @default(cuid())
+  projectId        String                  @map("project_id")
+  channelId        String                  @map("channel_id")
+  enabled          Boolean                 @default(false)
+  connectionStatus ChannelConnectionStatus @default(DISCONNECTED) @map("connection_status")
+  config           Json                    @default("{}")
+  lastError        String?                 @map("last_error")
+  lastTestedAt     DateTime?               @map("last_tested_at")
+  lastSyncedAt     DateTime?               @map("last_synced_at")
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+
+  project Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secrets ProjectChannelSecret[]
+
+  @@unique([projectId, channelId])
+  @@index([projectId])
+  @@map("project_channels")
+}
+
+model ProjectChannelSecret {
+  id               String   @id @default(cuid())
+  projectChannelId String   @map("project_channel_id")
+  secretKey        String   @map("secret_key")
+  ciphertext       String   @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  projectChannel ProjectChannel @relation(fields: [projectChannelId], references: [id], onDelete: Cascade)
+
+  @@unique([projectChannelId, secretKey])
+  @@map("project_channel_secrets")
+}
+
+enum ChannelConnectionStatus {
+  DISCONNECTED
+  CONFIGURED
+  CONNECTED
+  NEEDS_REAUTH
+  ERROR
+}
+
+enum ProjectStatus {
+  CREATING
+  RUNNING
+  ERROR
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@aucobot-cloud/ingress",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Traefik / worker callbacks — Phase 4 placeholder"
+}

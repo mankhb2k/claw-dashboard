@@ -1,0 +1,45 @@
+/* =============================================================================
+   1. CONTAINER NHÓM NÚT
+   ============================================================================= */
+.group {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* =============================================================================
+   2. XỬ LÝ CÁC PHẦN TỬ CON
+   ============================================================================= */
+.group > * {
+  border-radius: 0 !important; /* Ghi đè pill radius mặc định của Button */
+  margin-left: -1px;
+  position: relative;
+}
+
+/* Nút đầu tiên */
+.group > *:first-child {
+  margin-left: 0;
+  border-top-left-radius: var(--radius-md) !important;
+  border-bottom-left-radius: var(--radius-md) !important;
+}
+
+/* Nút cuối cùng */
+.group > *:last-child {
+  border-top-right-radius: var(--radius-md) !important;
+  border-bottom-right-radius: var(--radius-md) !important;
+}
+
+/* Nút duy nhất (vừa là đầu vừa là cuối) */
+.group > *:first-child:last-child {
+  border-radius: var(--radius-md) !important;
+}
+
+/* =============================================================================
+   3. TRẠNG THÁI HOVER & FOCUS
+   ============================================================================= */
+.group > *:hover {
+  z-index: 1;
+}
+
+.group > *:focus-visible {
+  z-index: 2;
+}

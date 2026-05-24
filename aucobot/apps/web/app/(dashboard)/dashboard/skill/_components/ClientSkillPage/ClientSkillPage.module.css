@@ -1,0 +1,64 @@
+/* =============================================================================
+   CLIENT SKILL PAGE — Component Styles
+   ============================================================================= */
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.headerTitleArea {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerDesc {
+  max-width: 52ch;
+}
+
+/* =============================================================================
+   NỘI DUNG CHÍNH & TRẠNG THÁI
+   ============================================================================= */
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: var(--space-4);
+}
+
+.warningBanner {
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  border: 1px solid var(--color-warning);
+  border-radius: 8px;
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-dark);
+}
+
+.cardWrapper {
+  position: relative;
+}
+
+.cardFooter {
+  margin-top: var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+.emptyText {
+  grid-column: span 4;
+  text-align: center;
+  padding: var(--space-10) 0;
+}
+
+.errorText {
+  color: var(--color-danger);
+}
+
+.loadingContainer {
+  flex: 1;
+  padding: var(--space-10) var(--space-6);
+}

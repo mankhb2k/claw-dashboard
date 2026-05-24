@@ -1,0 +1,111 @@
+/* Runtime Section Specific Styles */
+
+.cardRow {
+  gap: var(--space-8);
+}
+
+.rowInfo {
+  gap: var(--space-1);
+}
+
+.rowAction {
+  max-width: 400px;
+  gap: var(--space-3);
+}
+
+/* Status specific */
+
+.statusDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-4);
+  background: var(--color-accent);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.statusInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot_green { background: var(--color-success); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); animation: pulse-green 2s infinite; }
+.dot_yellow { background: var(--color-warning); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); animation: pulse-yellow 1s infinite; }
+.dot_gray { background: var(--color-muted-foreground); }
+.dot_red { background: var(--color-danger); box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.2); }
+
+@keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes pulse-yellow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.actionBtns {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.actionBtnWithIcon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.errorMsg {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.statLink {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.statLink:hover {
+  text-decoration: underline;
+}
+
+.statValue {
+  color: var(--color-muted-foreground);
+}
+
+/* Storage bar */
+
+.storageBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.storageTrack {
+  height: 8px;
+  background: var(--color-accent);
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.storageFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 100px;
+  transition: width var(--transition-base) ease;
+}
+
+.storageText {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  font-family: tabular-nums;
+}

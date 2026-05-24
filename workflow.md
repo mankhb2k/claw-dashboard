@@ -1,10 +1,11 @@
-# OpenClaw SaaS — Workflow & kiến trúc vận hành
+# AucoBot — Workflow & kiến trúc vận hành
 
-> **Cập nhật:** 2026-05-21  
+> **Cập nhật:** 2026-05-23  
+> **Tên sản phẩm / monorepo:** AucoBot (xem `monorepoplan.md`)  
 > **Phân kỳ:**  
-> - **OSS (mã nguồn mở):** một **`docker compose`** (frontend, backend, PostgreSQL) để user tự host; **mỗi project trong dashboard = một container** chạy từ image **OpenClaw / `openclaw-worker`** — metadata & workspace **lưu trong DB** (và volume theo `project_id` tùy triển khai). Backend điều phối vòng đời container qua **Docker API** (thường mount `docker.sock` trên host).  
-> - **Cloud SaaS (hosted thương mại):** bạn **bán** bản cloud (đa tenant, vận hành thay khách), mô hình giống **[Supabase](https://supabase.com)** (engine mở + cloud trả phí) hay **[n8n](https://n8n.io)** (self-host mở + **n8n Cloud**). OSS **không** phải bản demo của Cloud — OSS là **sản phẩm gốc** cho community; Cloud **tái dùng** lõi OSS qua package/module, phần kinh doanh có thể **repo đóng**.  
-> **Tham chiếu:** `openclaw-architecture.md`, `billing-plan.md` (Cloud SaaS), `proxy-guide.md`.
+> - **OSS (mã nguồn mở):** một **`docker compose`** dựng **đủ stack** giống **[Supabase](https://supabase.com)** self-host: **frontend**, **backend**, **PostgreSQL**, và **một service gateway OpenClaw** (cổng **18789**). User chạy `docker compose up` — **không** spawn container qua Docker API khi tạo project. Backend **sync file** lên volume dùng chung và **proxy chat** tới `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).  
+> - **Cloud SaaS (hosted thương mại):** bạn **bán** bản cloud (đa tenant, vận hành thay khách). Runtime **mỗi project = một container** OpenClaw — backend **provision** qua Docker API / fleet (`vps-worker`, quota, billing). OSS **không** phải bản demo của Cloud — OSS là **sản phẩm gốc** cho community; Cloud **tái dùng** lõi OSS qua package/module, phần kinh doanh có thể **repo đóng**.  
+> **Tham chiếu:** `openclaw-architecture.md`, `monorepoplan.md`, `billing-plan.md` (Cloud SaaS), `proxy-guide.md`.
 
 ---
 
@@ -15,58 +16,136 @@
 | Luồng vận hành **OSS (self-host)** | Chi tiết giá/credit hosted (→ `billing-plan.md`) |
 | Sketch **Cloud SaaS** (cloud bạn bán) | Schema Prisma từng bảng (→ `backend/prisma/schema.prisma`) |
 | Ranh OSS vs Cloud / proprietary | Danh sách sprint (→ `roadmap-plan.md`) |
+| Cấu trúc monorepo pnpm, **ranh giới 4 service OSS** | → `monorepoplan.md` §2 |
 
 **Thuật ngữ**
 
-- **Project:** đơn vị trong dashboard (cấu hình agent, workspace, bí mật); đồng thời **map 1:1** tới **một container** OpenClaw (trạng thái runtime lưu trong DB hoặc label container).
-- **Worker / Gateway:** tiến trình OpenClaw trong **container riêng của project**. **OSS:** container trên **cùng máy/VPS** với `docker compose` (hoặc Docker remote). **Cloud SaaS:** cùng mental model, runtime trên **hạ tầng bạn** + billing / quota / fleet.
+- **Project:** đơn vị trong dashboard (cấu hình agent, workspace, bí mật, secrets). Metadata **lưu trong DB**; cấu hình runtime cho gateway qua **sync file** trên volume (`openclaw.json`, `AGENTS.md`, …).
+- **Worker / Gateway:** tiến trình OpenClaw (image `openclaw-worker`).  
+  - **OSS:** **một** gateway trong compose, cổng **18789** — dùng chung cho instance (MVP thường **1 user ≈ 1 project**).  
+  - **Cloud:** **một container gateway / project** — spawn động, `hostPort` lưu DB.
+- **Control plane:** App NestJS + Next.js + PostgreSQL — **không** đọc channel trực tiếp; điều phối DB, sync, proxy WS.
 
 ---
 
 ## 1. OSS và Cloud SaaS
 
-Cộng đồng và team muốn **UI + persistence** cho project/bot đa kênh, **không** phụ thuộc black box — đồng thời bạn muốn **engine mở** và **cloud trả phí** song song.
+Cộng đồng và team muốn **UI + persistence** cho project/bot đa kênh, **không** phụ thuộc black box — đồng thời muốn **engine mở** và **cloud trả phí** song song.
 
-| Sản phẩm | Ai vận hành control plane & gateway | Mô hình |
-| -------- | ------------------------------------- | ------- |
-| **OSS** | Người dùng / tổ chức tự deploy repo mở | **Self-host**; source công khai; fork, PR, chạy infra riêng. |
-| **Cloud SaaS** | Bạn (nhà cung cấp) | **Hosted** trả phí: provisioning, backup, SLA, billing, scale — khách không bắt buộc tự cài worker. |
+| Sản phẩm | Ai vận hành | Mô hình runtime gateway |
+| -------- | ----------- | ------------------------ |
+| **OSS** | Người dùng / tổ chức tự deploy | **Compose** bật sẵn `gateway:18789`; API **không** cần `docker.sock` |
+| **Cloud SaaS** | Nhà cung cấp (bạn) | **Spawn 1 container / project** trên hạ tầng hosted + fleet, billing, quota |
 
-- **OSS** giải “**một nguồn thật trong DB**” (user, project, revision workspace, secrets) + **mỗi project một container** OpenClaw nhận cấu hình / volume (`openclaw.json`, `AGENTS.md`, … — `openclaw-architecture.md` §4.5.1). Auth API self-host: **JWT**. Gateway: **`gateway.auth`** riêng (không dùng JWT dashboard cho chat).
-- **Cloud SaaS** thêm multi-tenant, orchestration fleet, quota, billing — phần **không publish** (infra, abuse, cost) có thể **repo đóng** import lõi OSS; **không thay thế** cam kết maintain OSS cho community.
+| Sản phẩm | Ai vận hành control plane | Mô hình sản phẩm |
+| -------- | -------------------------- | ---------------- |
+| **OSS** | Người dùng tự host | Self-host, fork, PR, source công khai |
+| **Cloud SaaS** | Bạn | Hosted trả phí — provisioning, SLA, scale |
+
+- **OSS:** “**một nguồn thật trong DB**” + **sync file** volume (`openclaw-architecture.md` §4.5.1, §4.7 Phase 1). Auth API: **JWT**. Gateway: **`gateway.auth`** / `OPENCLAW_GATEWAY_TOKEN` — **không** dùng JWT dashboard cho chat.
+- **Cloud:** Cùng sync file + thêm orchestration fleet, billing, multi-tenant — phần proprietary **repo đóng** import lõi OSS.
 
 ---
 
-## 2. Tư duy vận hành — Control plane vs OpenClaw
+## 2. Ranh giới service OSS (4 container + volume)
 
-App bạn xây = **control plane (DB + API + dashboard)** điều phối **runtime OpenClaw (container)**.  
-OpenClaw **không đọc PostgreSQL** — chỉ đọc **file + `openclaw.json`** trên volume project.
+OSS self-host **đủ** với **bốn container** trong `docker compose`. Chỉ **frontend** (`web`) và **backend** (`api`) là **code AucoBot**. **PostgreSQL** và **OpenClaw** (`gateway`) **pull image upstream** — fork để pin tag, **không sửa** runtime.
+
+> **Tóm tắt:** `web` + `api` (bạn build) + `gateway` + `postgres` (pull) **+ volume** `openclaw_data`. Không Redis / BullMQ / fleet. Chi tiết: `monorepoplan.md` §2.
+
+### 2.1 Bốn service
+
+| Service | Image | Sở hữu | Port | Vai trò |
+| ------- | ----- | ------- | ---- | ------- |
+| `web` | Build `frontend/` | **AucoBot** | 3000 | Dashboard → API |
+| `api` | Build `backend/` | **AucoBot** | 3001 | DB, sync file, proxy chat → gateway |
+| `gateway` | Pull OpenClaw | **Upstream** | **18789** | Kênh chat, agent (đọc volume) |
+| `postgres` | `postgres:16-alpine` | **Upstream** | 5432 | Metadata app |
+
+- Chat: **web → api → gateway** — FE **không** gọi thẳng `:18789`.
+- `api` **không** cần `docker.sock` (spawn = Cloud).
+
+### 2.2 Volume & env (bắt buộc, không phải container thứ 5)
+
+| Thành phần | Ghi chú |
+| ---------- | ------- |
+| Volume `openclaw_data` | `api` ghi sync; `gateway` đọc — cùng mount |
+| `OPENCLAW_GATEWAY_URL` | `http://gateway:18789` (trong compose) |
+| `OPENCLAW_GATEWAY_TOKEN` | Khớp token gateway; ≠ JWT dashboard |
+| `OPENCLAW_DATA_ROOT` | Đường ghi file trên volume |
+| `DATABASE_URL` | → `postgres` |
+
+### 2.3 Không có trong compose OSS
+
+Redis, BullMQ, `vps-worker`, Traefik (tuỳ chọn prod), `skill-hub` (catalog tĩnh), Docker socket trên `api`.
+
+### 2.4 Ngoài stack (integration)
+
+LLM API keys, Google OAuth (connectors), token kênh Telegram/Discord, reverse proxy TLS — **không** phải service container AucoBot.
+
+### 2.5 Sở hữu code
+
+```text
+AucoBot:     frontend/ + backend/
+Upstream:    postgres image + openclaw image (fork pin)
+Compose:     docker-compose.yml + volume + .env
+```
+
+`openclaw-worker/` trong repo: pin upstream / docs — runtime OSS **pull image**.
+
+---
+
+## 3. Tư duy vận hành — Control plane vs OpenClaw
+
+App = **control plane (DB + API + dashboard)** + **runtime OpenClaw (gateway)**.  
+OpenClaw **không đọc PostgreSQL** — chỉ đọc **file + `openclaw.json`** trên volume.
+
+### OSS (một gateway trong compose)
 
 ```mermaid
 flowchart TB
     U["👤 User"]
 
-    subgraph APP["App — chỉ DB, không cần OpenClaw"]
+    subgraph COMPOSE["docker compose — OSS"]
         FE["Frontend"]
+        API["Backend API"]
+        DB[("PostgreSQL")]
+        GW["Gateway :18789\nopenclaw-worker"]
+        VOL["Volume openclaw_data\nopenclaw.json · workspace/…"]
+        FE --> API --> DB
+        API -->|"ghi file sync"| VOL
+        API -->|"WS/HTTP proxy\nOPENCLAW_GATEWAY_URL"| GW
+        VOL --> GW
+        GW <-->|"lưu lượng bot"| CH["Kênh chat"]
+    end
+
+    U --> FE
+```
+
+### Cloud (gateway per project — spawn động)
+
+```mermaid
+flowchart TB
+    U["👤 User"]
+
+    subgraph APP["Control plane"]
+        FE["Frontend cloud"]
         API["Backend API"]
         DB[("PostgreSQL")]
         FE --> API --> DB
     end
 
-    subgraph SYNC["Sync — khi OpenClaw cần dùng"]
-        VOL["Volume project\nopenclaw.json · env keys\nskills/*/SKILL.md\nAGENTS.md · SOUL.md …"]
-        API -->|"ghi / xóa file"| VOL
+    subgraph FLEET["Fleet / Docker"]
+        C1["Container ← project A"]
+        C2["Container ← project B"]
     end
 
-    subgraph OC["OpenClaw — runtime (mỗi project 1 container)"]
-        GW["Gateway\nopenclaw-worker"]
-        CH["Kênh chat\nTelegram · WebChat …"]
-        VOL --> GW
-        GW <-->|"lưu lượng bot"| CH
-    end
-
+    API -->|"spawn / start / stop\nDocker API"| FLEET
+    API -->|"sync file"| VOL["Volume per project"]
+    VOL --> C1
+    VOL --> C2
     U --> FE
-    FE -.->|"chat (proxy WS)\nkhông qua body sync"| GW
+    FE -.->|"chat proxy\nhostPort từ DB"| C1
 ```
 
 ### Quy tắc một dòng
@@ -77,56 +156,66 @@ flowchart TB
 
 ### Ví dụ nhanh
 
-| Sync sang OpenClaw | Chỉ DB (app) |
-| ------------------ | ------------ |
+| Sync sang OpenClaw (volume) | Chỉ DB (app) |
+| --------------------------- | ------------ |
 | API key provider → `env` trong `openclaw.json` | User, JWT, plan, invoice |
-| Skill `enabled` → `workspace/skills/<slug>/SKILL.md` (bảng `project_skills`) | Skill draft metadata chỉ DB nếu chưa publish |
-| Agent workspace → `AGENTS.md`, `SOUL.md`, … | `container_id`, `hostPort`, Docker lifecycle |
-| Channel token (khi map workspace) | Danh sách project, slug hiển thị |
+| Skill `enabled` → `workspace/skills/<slug>/SKILL.md` | Skill draft chưa publish |
+| Agent workspace → `AGENTS.md`, `SOUL.md`, … | Danh sách project, slug hiển thị |
+| Channel token (khi map workspace) | — |
+| — | **OSS:** không lưu `container_id` / `host_port` |
+| — | **Cloud:** `container_id`, `host_port`, Docker lifecycle |
 
-**Khi user chat:** không gọi “inject skill/config” từng tin — file đã sync sẵn; gateway **watch** + build prompt. Chi tiết skill: `openclaw-architecture.md` §11.5, §4.7.
+**Khi user chat:** không inject config từng tin — file đã sync; gateway **watch** + build prompt (`openclaw-architecture.md` §11.5, §4.7).
 
-**Sync khi nào:** khi user **lưu / bật / đổi** cấu hình — **không** sync lại mỗi tin nhắn chat.
+**Sync khi nào:** khi user **lưu / bật / đổi** cấu hình — **không** sync mỗi tin nhắn.
 
 ---
 
-## 3. OSS — Kiến trúc tổng quan
+## 4. OSS — Kiến trúc tổng quan
 
-**Self-host một lần:** `docker compose up` khởi chạy **frontend**, **backend**, **PostgreSQL** (image OpenClaw build từ `openclaw-worker/`).
+**Self-host một lần:** `docker compose up` khởi chạy **bốn service** (xem §2): **web** + **api** (build AucoBot), **postgres** + **gateway** (pull upstream). Repo `openclaw-worker/` chỉ để pin image — runtime OSS không build custom OpenClaw.
 
 ```mermaid
 flowchart TB
-    subgraph Compose["docker compose — OSS"]
-        FE["Next.js frontend\n(dashboard)"]
-        API["Backend API\n(NestJS)"]
-        DB[("PostgreSQL\nusers, projects,\nrevisions, secrets,\ncontainer metadata…")]
-        FE --> API
-        API --> DB
-    end
-
-    subgraph Engine["Docker Engine (host)"]
-        C1["Container OpenClaw\n← project A"]
-        C2["Container OpenClaw\n← project B"]
-        CN["Container OpenClaw\n← project …"]
+    subgraph Compose["docker compose — OSS (Supabase-style)"]
+        FE["Next.js frontend\n:3000"]
+        API["NestJS backend\n:3001"]
+        DB[("PostgreSQL\n:5432")]
+        GW["OpenClaw gateway\n:18789"]
+        VOL["volume openclaw_data"]
+        FE --> API --> DB
+        API --> VOL
+        API -->|"OPENCLAW_GATEWAY_URL"| GW
+        VOL --> GW
     end
 
     U["👤 User"] --> FE
-    API -->|create / start / stop / inspect\nDocker API| Engine
-    DB -.->|1 row project ↔\n1 container runtime| API
+    GW <-->|channels| CHAT["Telegram · WebChat · …"]
 ```
 
 **Nguyên tắc OSS**
 
-1. **Một project = một container** từ image OpenClaw. Backend **provision** qua Docker API; xóa/tắt project → dừng container (policy volume tùy runbook).
-2. **PostgreSQL** = nguồn sự thật **app**. **OpenClaw chỉ đọc volume** — sync có chọn lọc (§2).
-3. Lưu cấu hình/skill/agent: **lưu DB** + **sync file** → gateway **watch**.
-4. **Không** bắt buộc BullMQ `vps-worker`, billing, heavy-job fleet trong **OSS core** (có thể stub no-op).
+1. **Một stack compose = một gateway** trên **18789** (service name `gateway` trong mạng Docker). Backend truy cập `http://gateway:18789` (trong compose) hoặc `http://127.0.0.1:18789` (dev host).
+2. **Không** spawn container per project qua Docker API; **không** mount `docker.sock` vào service `api`.
+3. **PostgreSQL** = nguồn sự thật **app**. OpenClaw chỉ đọc **volume** — sync có chọn lọc (§3).
+4. Tạo project trên OSS = **INSERT DB** + **bootstrap/sync file** + (tuỳ chọn) ping `GET /healthz` — **không** `docker create`.
+5. **Không** bắt buộc BullMQ, `vps-worker`, billing trong OSS core (`NoopPlanGuard`).
+6. **MVP:** thường **1 user ≈ 1 project**; volume `openclaw_data` mount chung cho api + gateway.
+
+**Env OSS (api)**
+
+```env
+RUNTIME_MODE=oss
+OPENCLAW_GATEWAY_URL=http://gateway:18789
+OPENCLAW_GATEWAY_TOKEN=...
+OPENCLAW_DATA_ROOT=/data/projects
+```
 
 ---
 
-## 4. OSS — Luồng vận hành (theo người dùng)
+## 5. OSS — Luồng vận hành (theo người dùng)
 
-### 4.1 Đăng ký / đăng nhập
+### 5.1 Đăng ký / đăng nhập
 
 ```mermaid
 sequenceDiagram
@@ -142,9 +231,31 @@ sequenceDiagram
     FE-->>U: Session; Bearer cho API
 ```
 
-- **Auth OSS:** **JWT**. Gateway OpenClaw **không** dùng JWT này — dùng `gateway.auth` riêng trên host/container.
+- **Auth OSS:** **JWT**. Gateway **không** dùng JWT dashboard — dùng `gateway.auth` / token compose.
 
-### 4.2 Tạo project, metadata & container runtime
+### 5.2 Khởi động stack & tạo project
+
+**Bước 0 — User (hoặc admin) bật stack:**
+
+```bash
+docker compose -f deploy/oss/docker-compose.yml up -d
+# postgres + gateway (healthz) + api + web
+```
+
+```mermaid
+sequenceDiagram
+    participant Admin as Admin / User
+    participant Compose as docker compose
+    participant GW as gateway :18789
+    participant API as Backend API
+
+    Admin->>Compose: up -d
+    Compose->>GW: start gateway
+    GW-->>Compose: /healthz OK
+    Compose->>API: start api (depends_on gateway)
+```
+
+**Bước 1 — Tạo project (không spawn container):**
 
 ```mermaid
 sequenceDiagram
@@ -152,21 +263,24 @@ sequenceDiagram
     participant FE as Frontend
     participant API as Backend API
     participant DB as PostgreSQL
-    participant D as Docker Engine
+    participant Disk as Volume
+    participant GW as gateway :18789
 
     U->>FE: Tạo project
     FE->>API: POST /projects (+ JWT)
-    API->>DB: INSERT project\n(slug, displayName, syncPathHint …)
-    API->>D: Tạo container từ image OpenClaw\n(volume/env theo project_id)
-    D-->>API: container id, ports
-    API->>DB: Cập nhật metadata runtime\n(container_id, published ports…)
-    API-->>FE: project id, slug, trạng thái runtime
+    API->>DB: INSERT project
+    API->>Disk: bootstrap openclaw.json + workspace/
+    API->>GW: GET /healthz (optional)
+    API->>DB: status=RUNNING
+    API-->>FE: project id, slug
 ```
 
-- **Một hàng `projects`** ↔ **một container**. Volume/bind mount theo `project_id` khuyến nghị cô lập dữ liệu.
-- Backend cần quyền **Docker API** (`docker.sock` hoặc daemon remote).
+- Volume: `{OPENCLAW_DATA_ROOT}/{projectId}/` — api **ghi**, gateway **đọc** (cùng mount `openclaw_data`).
+- Token gateway OSS: **`OPENCLAW_GATEWAY_TOKEN`** global từ compose (đồng bộ vào `openclaw.json` khi bootstrap).
+- **Không** lưu `container_id` / `host_port` trên OSS (hoặc để null).
+- Restart gateway: `docker compose restart gateway` — không có API “respawn project” trên OSS.
 
-### 4.3 Soạn trên dashboard → lưu DB → sync file (OpenClaw)
+### 5.3 Soạn trên dashboard → lưu DB → sync file (OpenClaw)
 
 ```mermaid
 sequenceDiagram
@@ -174,145 +288,171 @@ sequenceDiagram
     participant FE as Frontend
     participant API as Backend API
     participant DB as PostgreSQL
-    participant T as Project volume\n(mount vào container)
+    participant Disk as Volume (shared)
+    participant GW as gateway
 
     U->>FE: Save agent editor
-    FE->>FE: compile workspace\n(AGENTS.md, SOUL.md, …)
-    FE->>API: PUT /projects/:id/workspace (payload hoặc hash)
-    API->>DB: revision, audit\n(metadata app)
-    API->>T: Sync — ghi file OpenClaw\ncần (skills, openclaw.json, …)
-    Note over T: Gateway watch file → snapshot skill/config\nlượt chat tiếp theo
+    FE->>FE: compile workspace
+    FE->>API: PUT /projects/:id/workspace
+    API->>DB: revision
+    API->>Disk: sync skills, openclaw.json, AGENTS.md…
+    Note over Disk,GW: Gateway watch → lượt chat sau
 ```
 
-**Ghi chú kỹ thuật**
+- Agent compiler: `backend/src/plugins/projects/agents/agent-workspace-compile.ts` → sync runtime (provider keys, agents.list). Agent `main` implicit. Skill → `SKILL.md`.
+- **Cloud:** cùng sync; có thể thêm `config.patch` RPC — §4.7 `openclaw-architecture.md`.
 
-- **Lưu DB** = nguồn sự thật product; **sync file** = bản deploy cho gateway (§2).
-- Agent compiler (backend): `backend/src/plugins/projects/agents/agent-workspace-compile.ts` → `workspace-{slug}/*.md` + `syncProjectRuntime` (provider keys → `agents.list`). Agent `main` implicit, không hiện tab Agent. Skill → `SKILL.md`.
-- **OSS:** ghi volume container. **Cloud SaaS:** cùng sync; tuỳ chọn thêm `config.patch` RPC — `openclaw-architecture.md` §4.2, §4.5.1.
+### 5.4 Kênh chat & lưu lượng thời gian thực
 
-### 4.4 Kênh chat & lưu lượng thời gian thực
-
-1. Mỗi project: **một container OpenClaw** — channel trong workspace container đó.
-2. Lưu lượng bot **không** qua backend dashboard; API lo auth, CRUD, sync file, lifecycle container.
-3. **Luồng mặc định OSS:** backend spawn container per project (không bắt buộc gateway manual ngoài compose).
+1. **OSS:** Một gateway trong compose — channel cấu hình trong workspace/volume project đó.
+2. Lưu lượng bot **không** qua body HTTP sync; FE ↔ API **proxy WebSocket** → `OPENCLAW_GATEWAY_URL` (cổng **18789**).
+3. API lo: auth JWT, CRUD, sync file — **không** lifecycle Docker trên OSS.
 
 ---
 
-## 5. OSS — Phạm vi backend (“có” / “chưa”)
+## 6. OSS — Phạm vi backend (“có” / “chưa”)
 
 | Hạng mục | OSS |
 | -------- | --- |
 | Auth JWT, user, session | Có |
 | CRUD project, metadata, revision workspace trong DB | Có |
-| **Một project = một container OpenClaw** (Docker API) | **Có** (mô hình đích) |
-| Ghi workspace xuống volume container đọc | Có |
+| Service **gateway** trong compose, proxy tới **:18789** | **Có** (mô hình đích) |
+| Ghi workspace xuống volume gateway đọc | Có |
+| **Spawn container per project** (Docker API) | **Không** |
+| Mount **docker.sock** trên api | **Không** |
+| API start/stop/respawn container project | **Không** (restart stack / gateway) |
 | Mã hóa bí mật lưu trữ (SecretCrypto) | Khuyến nghị |
-| Health DB + logging | Có |
-| Traefik wildcard, ingress fleet, autoscale | Tuỳ chọn / chủ yếu **Cloud SaaS** |
-| BullMQ / `vps-worker` / idle-shutdown fleet | **Không** bắt buộc OSS core |
-| Heavy jobs (FFmpeg, Playwright) + credits | **Không** (Cloud SaaS) |
-| Worker callback nội bộ cho fleet hosted | **Không** bắt buộc OSS |
+| Health DB + gateway `/healthz` | Có |
+| Traefik wildcard, ingress fleet, autoscale | Chủ yếu **Cloud** |
+| BullMQ / `vps-worker` / idle-shutdown | **Không** OSS core |
+| Heavy jobs (FFmpeg, Playwright) + credits | **Không** (Cloud) |
+
+> **Ghi chú triển khai:** Code `backend/` hiện tại vẫn có `DockerService.spawnWorker` — đó là **hành vi Cloud**; OSS đích dùng `RUNTIME_MODE=oss` + `StaticGatewayProvisioner` (xem `monorepoplan.md` §14 Phase 2).
 
 ---
 
-## 6. Cấu trúc mã — OSS public vs Cloud (Supabase-style)
-
-**Không** đưa toàn bộ business logic lên repo public. Tách:
+## 7. Cấu trúc mã — OSS public vs Cloud (Supabase-style)
 
 | Repo / package | License | Nội dung |
 | -------------- | ------- | -------- |
-| **`openclaw-saas` (public)** | Apache-2.0 / MIT | `frontend/`, `backend/` core + `plugins/projects/`, `openclaw-worker/`, compose |
-| **`openclaw-cloud` (private)** hoặc `packages/cloud/` không publish | Proprietary | Billing, fleet (`vps-worker`), quota, ingress ops — **import** `@openclaw-saas/backend-core` |
+| **AucoBot / `openclaw-saas` (public)** | Apache-2.0 / MIT | `frontend/`, `backend/`, `openclaw-worker/`, compose OSS |
+| **`aucobot-cloud` (private)** hoặc `packages/cloud/` | Proprietary | Billing, fleet, quota — **import** `@aucobot/control-plane-core` |
 
 ```text
-openclaw-saas/                    # PUBLIC — community self-host
-├── frontend/                     # Dashboard OSS
-├── backend/                      # NestJS — core + plugins/projects
-│   └── src/plugins/projects/     # project, keys, sync, chat, Docker local
-├── openclaw-worker/              # Image OpenClaw — 1 project = 1 container
-├── vps-worker/                   # (tuỳ policy) có thể chỉ dùng Cloud
-└── vps-heavy/                    # Heavy compute — chủ yếu Cloud SaaS
+aucobot/                            # PUBLIC — self-host
+├── apps/oss-web/                   # Dashboard
+├── apps/oss-api/                   # NestJS — RUNTIME_MODE=oss
+├── workers/openclaw/               # Image gateway
+├── deploy/oss/docker-compose.yml   # postgres + api + web + gateway:18789
+└── packages/
+    ├── control-plane-core/
+    ├── runtime-oss/                # StaticGateway — URL cố định
+    └── runtime-contracts/
 
-openclaw-cloud/                   # PRIVATE — bạn deploy hosted (sketch)
-├── backend/                      # App Nest: import OSS core
-│   └── plugins/
-│       ├── billing/              # Stripe, plan, usage
-│       └── cloud-runtime/        # VpsWorkerProvisioner, fleet
-└── frontend-cloud/               # Shell branded (hoặc extend OSS FE)
+aucobot-cloud/                      # PRIVATE
+├── apps/cloud-api/                 # RUNTIME_MODE=cloud, docker.sock
+└── packages/cloud/
+    ├── fleet/                      # DockerPerProjectProvisioner
+    └── billing/
 ```
 
-**Tái dùng kỹ thuật (trong OSS public):**
+**Tái dùng kỹ thuật:**
 
-- Interface `RuntimeProvisioner` — OSS: `DockerLocal`; Cloud: impl riêng repo đóng.
-- Interface `PlanGuard` — OSS: `NoopPlanGuard`; Cloud: Stripe/quota.
-- Cùng luồng **sync file → OpenClaw** — không copy CRUD project.
+| Interface | OSS | Cloud |
+| --------- | --- | ----- |
+| `RuntimeProvisioner` | `StaticGatewayProvisioner` — health + sync only | `DockerPerProjectProvisioner` — spawn/stop |
+| `PlanGuard` | `NoopPlanGuard` | Stripe / quota |
+| Sync file → OpenClaw | **Chung** — không copy CRUD project |
+
+Chi tiết monorepo: **`monorepoplan.md`**.
 
 ---
 
-## 7. Cloud SaaS — Hosted (bạn bán)
+## 8. Cloud SaaS — Hosted (bạn bán)
 
-**Mục tiêu:** khách **đăng ký trên cloud của bạn**, trả phí / free tier, **không** tự cài Docker; bạn lo vận hành, patch, scale, backup.
+**Mục tiêu:** khách đăng ký cloud, trả phí / free tier — **không** tự `docker compose` worker; bạn lo spawn, scale, backup.
 
 | Thành phần | Gợi ý |
 | ---------- | ----- |
-| **Control plane** | API + DB managed; tenant isolation; JWT do dịch vụ phát hành. |
-| **Runtime** | Container/VM trên **hạ tầng bạn** — `vps-worker` / K8s, ingress (Traefik / LB). |
-| **Kinh doanh** | Plans, metered usage — `billing-plan.md`. |
-| **Heavy / queue** | `vps-heavy`, BullMQ (tuỳ sản phẩm). |
-| **Mã nguồn** | **Import lõi OSS**; phần vận hành + billing **proprietary** (giống Supabase Cloud / n8n Cloud). |
-| **Bảo mật** | JWT app ≠ `gateway.auth`; không public `POST /tools/invoke` — `openclaw-architecture.md`. |
+| **Control plane** | API + DB managed; tenant isolation |
+| **Runtime** | **1 container OpenClaw / project** — Docker API, `vps-worker` / K8s, ingress |
+| **Backend → gateway** | `http://127.0.0.1:{hostPort}` — lưu DB per project |
+| **Kinh doanh** | `billing-plan.md` |
+| **Heavy / queue** | `vps-heavy`, BullMQ |
+| **Mã nguồn** | Import lõi OSS; fleet + billing **proprietary** |
 
 ```mermaid
 flowchart TB
     subgraph CLOUD["Cloud SaaS — hosted"]
         FE2[Frontend cloud]
-        API2[Backend\nOSS core + plugins đóng]
+        API2[cloud-api\nRUNTIME_MODE=cloud]
         Q[Queues spawn / heavy]
         Orc[Orchestrator]
-        Pool[Worker pool]
+        Pool["Worker pool\n1 container / project"]
         FE2 --> API2
-        API2 --> Q
-        Q --> Orc
-        Orc --> Pool
+        API2 --> Q --> Orc --> Pool
     end
     User2[User] --> FE2
     Chat[Chat apps] <--> Pool
 ```
 
-**OSS ↔ Cloud:** cùng mental model **project + sync file**; Cloud thêm fleet, billing, SLA, observability — **song song** maintain OSS cho community. Khách cloud **không** chạy Backend OSS trên máy nhà song song; migrate/import là luồng riêng (export từ self-host).
+### Cloud — Tạo project (spawn container)
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant API as cloud-api
+    participant DB as PostgreSQL
+    participant D as Docker Engine
+    participant W as Worker container
+
+    U->>API: POST /projects
+    API->>DB: INSERT project
+    API->>D: create container\nimage OpenClaw, volume project_id
+    D-->>API: container_id, hostPort
+    API->>DB: runtime metadata
+    API->>W: sync file → volume mount
+    API-->>U: project RUNNING
+```
+
+**OSS ↔ Cloud:** Cùng **project + sync file**; Cloud thêm **spawn per project**, billing, fleet, SLA. Khách cloud không chạy stack OSS tại nhà song song; migrate/import là luồng riêng.
 
 ---
 
-## 8. Bảng so sánh nhanh
+## 9. Bảng so sánh nhanh
 
 | Tiêu chí | OSS (community) | Cloud SaaS (hosted) |
 | -------- | ----------------- | --------------------- |
-| **Mô hình** | Self-host, fork, PR | Đăng ký cloud, trả phí / free tier |
-| **Tương tự thị trường** | Postgres / n8n self-host | Supabase Cloud / n8n Cloud |
-| Gateway chạy ở đâu | **1 container / project** — Docker user | Container trên **hạ tầng bạn** (fleet, quota) |
-| Đồng bộ cấu hình | DB + **ghi file** volume project | Tương tự + orchestrator / billing |
-| Auth | **JWT** (API self-host) | Auth cloud + billing |
-| `vps-worker` / `vps-heavy` | Không bắt buộc core | Thường **có** |
-| **Mã nguồn** | Repo **public** | Lõi OSS + repo/package **đóng** |
+| **Mô hình** | Self-host `docker compose up` | Đăng ký cloud, trả phí |
+| **Tương tự thị trường** | Supabase self-host / n8n self-host | Supabase Cloud / n8n Cloud |
+| **Gateway** | **1 service** stack, **:18789** cố định | **1 container / project**, port động |
+| **Ai bật worker** | Compose (cùng lúc với api, db, web) | Orchestrator / Docker API |
+| **docker.sock trên api** | **Không** | **Có** (hoặc remote Docker) |
+| **Đồng bộ cấu hình** | DB + ghi file volume chung | DB + ghi file + spawn |
+| **Auth API** | JWT | JWT + billing |
+| `vps-worker` / `vps-heavy` | Không bắt buộc | Thường có |
+| **Mã nguồn** | Repo public | OSS core + package đóng |
 
 ---
 
-## 9. Liên kết tài liệu
+## 10. Liên kết tài liệu
 
 | Chủ đề | File |
 | ------ | ---- |
-| Gateway HTTP, session API, config watch, skills sync | `openclaw-architecture.md` (§4.7, §11.5) |
-| Giá, credit, quota (Cloud SaaS) | `billing-plan.md` |
+| Gateway HTTP, session API, config watch, skills | `openclaw-architecture.md` (§4.7, §11.5) |
+| Monorepo AucoBot, **4 service OSS**, compose, Phase migrate | `monorepoplan.md` §2, §14 |
+| Giá, credit, quota (Cloud) | `billing-plan.md` |
 | Proxy / ingress an toàn | `proxy-guide.md` |
 
 ---
 
-*Ghi chú: mô hình đích **1 project = 1 container**; code `backend/` có thể chưa khớp orchestration đầy đủ. Tài liệu dùng nhãn **OSS** / **Cloud SaaS**. Skills: `project_skills` + sync disk (xem `ProjectSkillsService`).*
+*OSS: **4 services** (`web`, `api`, `gateway`, `postgres`) + volume — chỉ web/api là code AucoBot; gateway/postgres pull upstream. Cloud: **1 project = 1 container**. Skills: sync `{OPENCLAW_DATA_ROOT}/<projectId>/workspace/skills/<slug>/SKILL.md`.*
 
-### E2E checklist — Skills
+### E2E checklist — Skills (OSS)
 
-1. Tạo skill trên dashboard → `POST /api/projects/:id/skills`.
-2. Soạn body → `PUT` debounced → bật **Bật & sync** hoặc Switch trên list.
-3. Kiểm tra file: `{OPENCLAW_DATA_ROOT}/<projectId>/workspace/skills/<slug>/SKILL.md`.
-4. Trong container: `openclaw skills list --eligible` (hoặc chat thử sau `/new`).
-5. Tắt skill → thư mục skill bị xóa khỏi volume; agent không còn thấy ở lượt sau.
+1. Stack đang chạy: `gateway` healthy tại `:18789`.
+2. Tạo skill trên dashboard → `POST /api/projects/:id/skills`.
+3. Soạn body → `PUT` debounced → bật **Bật & sync**.
+4. Kiểm tra file: `{OPENCLAW_DATA_ROOT}/<projectId>/workspace/skills/<slug>/SKILL.md`.
+5. Trong gateway container: `openclaw skills list --eligible` (hoặc chat sau `/new`).
+6. Tắt skill → xóa thư mục skill khỏi volume; agent không thấy ở lượt sau.

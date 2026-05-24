@@ -1,0 +1,21 @@
+{
+  "name": "aucobot",
+  "private": true,
+  "description": "AucoBot monorepo — OSS-first control plane + OpenClaw gateway",
+  "scripts": {
+    "dev": "turbo run dev --parallel --filter=@aucobot/api --filter=@aucobot/web",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev:deps": "docker compose -f deploy/docker-compose.deps.yml up -d",
+    "dev:stack": "docker compose -f deploy/docker-compose.yml up",
+    "db:migrate": "pnpm --filter @aucobot/database db:migrate",
+    "db:seed": "pnpm --filter @aucobot/database db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  }
+}

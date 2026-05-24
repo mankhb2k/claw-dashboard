@@ -1,0 +1,47 @@
+.card {
+  padding: 12px 12px;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.status {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+}
+
+.ready {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.textCol {
+  min-width: 0;
+  flex: 1;
+}
+
+.iconFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-foreground);
+  flex-shrink: 0;
+}

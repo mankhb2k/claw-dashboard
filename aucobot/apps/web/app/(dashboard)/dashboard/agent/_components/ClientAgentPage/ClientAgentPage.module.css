@@ -1,0 +1,65 @@
+/* Khung bọc danh sách Agent */
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--space-4);
+}
+
+/* Thanh công cụ tìm kiếm và hành động */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+
+
+/* Layout dạng lưới của danh sách Agent */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+
+/* Giao diện trống (Empty state) */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  background: var(--color-card);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  margin-top: var(--space-4);
+}
+
+/* Icon trống của robot */
+.emptyIcon {
+  font-size: 48px;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-4);
+}
+
+/* Tiêu đề trống */
+.emptyTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+/* Mô tả trống */
+.emptyDesc {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  max-width: 420px;
+  margin-bottom: var(--space-6);
+  line-height: 1.6;
+}

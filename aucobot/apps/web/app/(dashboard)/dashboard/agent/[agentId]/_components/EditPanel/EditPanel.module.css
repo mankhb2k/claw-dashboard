@@ -1,0 +1,105 @@
+/* Khung panel trái */
+.root {
+  flex: 0 0 55%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-background);
+  border-right: 1px solid var(--color-border);
+}
+
+/* Header cố định */
+.header {
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-background);
+}
+
+/* Thông báo đã lưu */
+.saveStatus {
+  color: var(--color-success);
+}
+
+/* Nút lưu kèm icon */
+.saveBtn {
+  gap: var(--space-2);
+}
+
+/* Form bọc tabs + nội dung */
+.form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Vùng nội dung tab — chỉ phần này scroll */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Thanh tab cố định */
+.tabList {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0 var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--space-6);
+  background: var(--color-background);
+}
+
+/* Gạch dưới trượt theo tab active */
+.tabIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  transition:
+    transform var(--transition-slow) var(--ease-out),
+    width var(--transition-slow) var(--ease-out);
+}
+
+.tabButton {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  background: none;
+  border: none;
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-base) ease;
+}
+
+.tabButton svg {
+  flex-shrink: 0;
+}
+
+.tabButton:hover {
+  color: var(--color-primary);
+}
+
+.tabButton.active {
+  color: var(--color-primary);
+  font-weight: 500;
+}

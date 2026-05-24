@@ -1,0 +1,57 @@
+import * as React from "react";
+import { Flex, Box } from "../../layout";
+import { Typography } from "../../ui";
+import styles from "./TitleHeader.module.css";
+
+interface TitleHeaderProps {
+  title: string;
+  description?: string;
+  actions?: React.ReactNode;
+  showBorder?: boolean;
+  sticky?: boolean;
+  className?: string;
+}
+
+/**
+ * TitleHeader Component
+ * Dùng để hiển thị tiêu đề trang, mô tả và các nút thao tác chính.
+ * Thường dùng ở đầu các trang Dashboard.
+ */
+export function TitleHeader({
+  title,
+  description,
+  actions,
+  showBorder = false,
+  sticky = false,
+  className = "",
+}: TitleHeaderProps) {
+  const rootClasses = [
+    styles.root,
+    sticky ? styles.sticky : "",
+    showBorder ? styles.border : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={rootClasses}>
+      <Flex direction="column" gap={8} className={styles.content}>
+        <Typography variant="h3" weight="bold">
+          {title}
+        </Typography>
+        {description && (
+          <Typography variant="p" color="muted" className={styles.description}>
+            {description}
+          </Typography>
+        )}
+      </Flex>
+
+      {actions && (
+        <Flex align="center" gap={12} className={styles.actions}>
+          {actions}
+        </Flex>
+      )}
+    </div>
+  );
+}

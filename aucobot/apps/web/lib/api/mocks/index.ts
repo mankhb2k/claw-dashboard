@@ -1,0 +1,2 @@
+export { setupMockInterceptor } from './interceptor'
+

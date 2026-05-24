@@ -1,0 +1,46 @@
+/* Shell dashboard project — cố định viewport, không scroll toàn trang */
+.shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  background: var(--color-background);
+}
+
+/* Cột phải: header + nội dung */
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+/* Slot trang — mặc định scroll nội dung (overview, list, settings…) */
+.contentScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Trang full-canvas (agent editor, skill editor) — scroll do component con */
+.contentCanvas {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gate {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-sm);
+}

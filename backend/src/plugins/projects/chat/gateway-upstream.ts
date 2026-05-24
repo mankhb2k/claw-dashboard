@@ -10,7 +10,11 @@ import {
   type GatewayDeviceIdentity,
 } from './gateway-device-identity';
 
-const PROTOCOL_VERSION = 4;
+/** Negotiation range: must include the gateway's PROTOCOL_VERSION (openclaw-worker:1.0.2 → v3). */
+const GATEWAY_MIN_PROTOCOL = Number(process.env.OPENCLAW_GATEWAY_MIN_PROTOCOL ?? 3) || 3;
+const GATEWAY_MAX_PROTOCOL = Number(
+  process.env.OPENCLAW_GATEWAY_MAX_PROTOCOL ?? 4,
+) || 4;
 const UPSTREAM_CONNECT_MS = Number(process.env.CHAT_PROXY_UPSTREAM_CONNECT_MS ?? 15_000) || 15_000;
 
 type GatewayFrame = Record<string, unknown>;
@@ -113,8 +117,8 @@ async function sendConnect(
       id,
       method: 'connect',
       params: {
-        minProtocol: PROTOCOL_VERSION,
-        maxProtocol: PROTOCOL_VERSION,
+        minProtocol: GATEWAY_MIN_PROTOCOL,
+        maxProtocol: GATEWAY_MAX_PROTOCOL,
         client: {
           id: 'gateway-client',
           version: 'openclaw-saas-proxy',

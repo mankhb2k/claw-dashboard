@@ -1,0 +1,91 @@
+.base {
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  color: var(--color-foreground);
+}
+
+/* =============================================================================
+   VARIANTS — Các biến thể về kích thước và định dạng
+   ============================================================================= */
+
+.h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.h4 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p {
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.small {
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.xs {
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* =============================================================================
+   MODIFIERS — Các hiệu chỉnh về màu sắc và trọng số
+   ============================================================================= */
+
+.muted {
+  color: var(--color-muted-foreground);
+}
+
+.subtle {
+  color: var(--color-muted-foreground);
+}
+
+.primary {
+  color: var(--color-primary);
+}
+
+.light {
+  font-weight: 300;
+}
+
+.regular {
+  font-weight: 400;
+}
+
+.medium {
+  font-weight: 500;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+/* Chữ nghiêng */
+.italic {
+  font-style: italic;
+}

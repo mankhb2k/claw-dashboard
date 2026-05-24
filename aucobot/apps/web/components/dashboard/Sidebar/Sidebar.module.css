@@ -1,0 +1,213 @@
+/* =============================================================================
+   1. VỎ SIDEBAR — layout & kích thước
+   ============================================================================= */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width, 240px);
+  background: var(--color-sidebar, #1a1b1e);
+  border-right: 1px solid var(--color-sidebar-border, #2c2d30);
+  height: 100%;
+  max-height: 100dvh;
+  flex-shrink: 0;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+  overflow: hidden;
+  /* Đảm bảo không bị tràn khi thu nhỏ */
+}
+
+.sidebarCollapsed {
+  width: var(--sidebar-collapsed-width, 64px);
+}
+
+/* =============================================================================
+   2. HEADER & LOGO
+   ============================================================================= */
+.header {
+  height: var(--header-height, 64px);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-sidebar-border, #2c2d30);
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex: 1;
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-sidebar-foreground, #ffffff);
+}
+
+.logoText {
+  font-weight: bold;
+  font-size: 14px;
+  white-space: nowrap;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.logoTextHidden {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+/* =============================================================================
+   3. NÚT THU GỌN
+   ============================================================================= */
+.collapseBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  color: var(--color-muted-foreground, #a0aec0);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.collapseBtn:hover {
+  background: var(--color-sidebar-accent, #2c2d30);
+  color: var(--color-sidebar-foreground, #ffffff);
+}
+
+.collapseIcon {
+  transition: transform 0.2s ease;
+}
+
+.collapseIconRotated {
+  transform: rotate(180deg);
+}
+
+/* =============================================================================
+   4. NAVIGATION — các mục menu
+   ============================================================================= */
+.navWrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Ẩn thanh cuộn nhưng vẫn cho phép cuộn */
+.navWrap::-webkit-scrollbar {
+  display: none;
+}
+.navWrap {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 10px;
+  color: var(--color-muted-foreground, #a0aec0);
+  text-decoration: none;
+  border-radius: 6px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    padding 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0; /* Ngăn item bị bóp nhỏ khi quá nhiều */
+}
+
+.navItem:hover:not(.navItemActive) {
+  background: var(--color-sidebar-accent, #2c2d30);
+  color: var(--color-sidebar-foreground, #ffffff);
+}
+
+.navItemActive {
+  background: var(--color-primary-dim, rgba(56, 189, 248, 0.1));
+  color: var(--color-primary, #38bdf8);
+}
+
+.navIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.navText {
+  margin-left: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.navTextHidden {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+/* =============================================================================
+   5. FOOTER
+   ============================================================================= */
+.footer {
+  padding: 16px;
+  border-top: 1px solid var(--color-sidebar-border, #2c2d30);
+  display: flex;
+  flex-direction: column;
+}
+
+/* =============================================================================
+   6. RESPONSIVE
+   ============================================================================= */
+
+/* Khi viewport <= 1024px: Tự động thu gọn */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width, 64px);
+  }
+
+  .logoText {
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+  }
+
+  .navText {
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+  }
+}
+
+/* Khi viewport <= 768px: Ẩn hoàn toàn */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+}

@@ -1,0 +1,53 @@
+---
+description: AucoBot monorepo — scope, forbidden changes, verify commands
+globs: aucobot/**/*
+alwaysApply: false
+---
+
+# AucoBot monorepo
+
+Read first: `aucobot/docs/monorepoplan.md`, `aucobot/docs/monorepo-diagram.md` (section matching the task).
+
+## Folder roles
+
+| Path | Role |
+|------|------|
+| `aucobot/apps/api` | Nest wiring, controllers, DTOs, guards — **thin** |
+| `aucobot/apps/web` | Next.js UI |
+| `aucobot/packages/*` | Shared libs (OSS + cloud import contracts) |
+| `aucobot/cloud/*` | Hosted cloud only — **do not** import into OSS apps |
+| `aucobot/deploy/` | OSS compose + Dockerfiles (api/web) |
+| Gateway/postgres | **Pull images** — not vendored in repo |
+
+## Forbidden without explicit user ask
+
+- New top-level folder, rename `apps/` / `packages/` / `cloud/`
+- New npm dependency (root or package) without reason
+- Abstractions used once (base class, factory, “future” config)
+- Cloud logic (docker spawn, billing) in `packages/` OSS or `apps/api` long-term
+- `workers/openclaw` inside `aucobot/` — use Hub image + `../openclaw-worker/` fork
+- Drive-by refactors, formatting, or “cleanup” outside task scope
+- New markdown docs unless user requested
+
+## Task discipline
+
+1. One task → one package **or** one app layer; small diff.
+2. **Move/copy** existing code before rewriting architecture.
+3. State verify command and run it before finishing.
+
+## Verify (from `aucobot/`)
+
+```bash
+pnpm --filter @aucobot/runtime-contracts build   # if runtime touched
+pnpm --filter @aucobot/runtime-oss build
+pnpm --filter @aucobot/api build
+pnpm --filter @aucobot/web build                 # if web touched
+```
+
+Compose E2E: `docker compose -f deploy/docker-compose.yml up -d --build`
+
+## Runtime placement
+
+- Interfaces → `packages/runtime-contracts`
+- OSS gateway URL/health → `packages/runtime-oss`
+- Cloud spawn → `cloud/packages/fleet` (later) — **never** `runtime-oss`

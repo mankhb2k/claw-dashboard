@@ -1,0 +1,76 @@
+/* Khung card instructions */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.header {
+  flex-wrap: wrap;
+}
+
+/* Nút AI (placeholder) */
+.aiBtn {
+  gap: var(--space-2);
+}
+
+/* Chuyển chế độ Đơn giản / Markdown */
+.modeToggle {
+  align-self: flex-start;
+}
+
+.modeItem {
+  gap: var(--space-2);
+}
+
+.simpleFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-foreground);
+  resize: vertical;
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: var(--color-border-focus);
+}
+
+.textareaTall {
+  min-height: 280px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.fieldError {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-2) 0;
+}

@@ -6,6 +6,9 @@ import { ProjectProvidersCatalogController } from './project-providers-catalog.c
 import { ProjectSkillsController } from './skills/project-skills.controller';
 import { ProjectAgentsController } from './agents/project-agents.controller';
 import { SkillAssistantController } from './skill-assistant/skill-assistant.controller';
+import { ProjectConnectorsCatalogController } from './connectors/project-connectors-catalog.controller';
+import { ProjectConnectorsController } from './connectors/project-connectors.controller';
+import { ConnectorOAuthController } from './connectors/connector-oauth.controller';
 import { ProjectsService } from './projects.service';
 import { DockerService } from './docker/docker.service';
 import { ProjectWorkspaceService } from './workspace/project-workspace.service';
@@ -13,6 +16,7 @@ import { ProjectProviderKeysService } from './providers/project-provider-keys.se
 import { ProjectSkillsService } from './skills/project-skills.service';
 import { ProjectAgentsService } from './agents/project-agents.service';
 import { SkillAssistantService } from './skill-assistant/skill-assistant.service';
+import { ProjectConnectorsService } from './connectors/project-connectors.service';
 import { AuthModule } from '../../core/auth/auth.module';
 
 @Module({
@@ -22,6 +26,9 @@ import { AuthModule } from '../../core/auth/auth.module';
     ProjectEnvController,
     ProjectProviderKeysController,
     ProjectProvidersCatalogController,
+    ProjectConnectorsCatalogController,
+    ProjectConnectorsController,
+    ConnectorOAuthController,
     ProjectSkillsController,
     ProjectAgentsController,
     SkillAssistantController,
@@ -31,6 +38,7 @@ import { AuthModule } from '../../core/auth/auth.module';
     DockerService,
     ProjectWorkspaceService,
     ProjectProviderKeysService,
+    ProjectConnectorsService,
     ProjectSkillsService,
     ProjectAgentsService,
     SkillAssistantService,
@@ -39,6 +47,7 @@ import { AuthModule } from '../../core/auth/auth.module';
     ProjectsService,
     ProjectWorkspaceService,
     ProjectProviderKeysService,
+    ProjectConnectorsService,
     ProjectSkillsService,
     ProjectAgentsService,
   ],

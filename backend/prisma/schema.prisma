@@ -58,8 +58,52 @@ model Project {
   projectProviderKeys  ProjectProviderKey[]
   projectSkills        ProjectSkill[]
   projectAgents        ProjectAgent[]
+  projectConnectors    ProjectConnector[]
 
   @@map("projects")
+}
+
+/// Kết nối dịch vụ bên ngoài (Google Drive, Calendar, …) — sync MCP vào openclaw.json.
+model ProjectConnector {
+  id               String                      @id @default(cuid())
+  projectId        String                      @map("project_id")
+  connectorSlug    String                      @map("connector_slug")
+  displayName      String                      @map("display_name")
+  enabled          Boolean                     @default(false)
+  connectionStatus ConnectorConnectionStatus   @default(DISCONNECTED) @map("connection_status")
+  config           Json                        @default("{}")
+  lastTestedAt     DateTime?                   @map("last_tested_at")
+  lastError        String?                     @map("last_error")
+  createdAt        DateTime                    @default(now()) @map("created_at")
+  updatedAt        DateTime                    @updatedAt @map("updated_at")
+
+  project Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secrets ProjectConnectorSecret[]
+
+  @@unique([projectId, connectorSlug])
+  @@index([projectId])
+  @@map("project_connectors")
+}
+
+model ProjectConnectorSecret {
+  id                 String   @id @default(cuid())
+  projectConnectorId String   @map("project_connector_id")
+  secretKey          String   @map("secret_key")
+  ciphertext         String   @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  projectConnector ProjectConnector @relation(fields: [projectConnectorId], references: [id], onDelete: Cascade)
+
+  @@unique([projectConnectorId, secretKey])
+  @@map("project_connector_secrets")
+}
+
+enum ConnectorConnectionStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+  NEEDS_REAUTH
 }
 
 /// Template khởi tạo agent (global catalog).

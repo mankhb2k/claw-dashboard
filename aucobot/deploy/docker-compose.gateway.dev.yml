@@ -1,0 +1,25 @@
+# Dev: one shared OpenClaw gateway on host port 18789 (OSS mode).
+# Usage (from repo root):
+#   cd aucobot
+#   docker compose -f deploy/docker-compose.gateway.dev.yml up -d
+#
+# Match apps/api/.env:
+#   OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
+#   OPENCLAW_GATEWAY_TOKEN=<same as below>
+#   OPENCLAW_DATA_ROOT=./data/projects  (relative to apps/api when API runs)
+
+services:
+  gateway:
+    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:1.0.3}
+    container_name: aucobot-gateway-dev
+    command: ['node', 'openclaw.mjs', 'gateway', '--bind', 'lan']
+    environment:
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
+      OPENCLAW_STATE_DIR: /home/node/.openclaw
+      OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
+    volumes:
+      # Project workspace (synced by API under OPENCLAW_DATA_ROOT)
+      - ../../backend/data/projects/${PROJECT_ID:-cmpedzekq0001d4k5op1bk8bi}:/home/node/.openclaw
+    ports:
+      - '127.0.0.1:18789:18789'
+    restart: unless-stopped

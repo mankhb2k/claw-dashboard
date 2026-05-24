@@ -1,0 +1,14 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  background: var(--surface-color, #ffffff);
+}
+
+:global(.dark) .section {
+  border-color: var(--border-color, #334155);
+  background: var(--surface-color, #1e1e1e);
+}

@@ -1,0 +1,65 @@
+/* =============================================================================
+   1. VỎ ICON — căn giữa, bo góc, viền nền
+   ============================================================================= */
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid transparent;
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+}
+
+.withBackground {
+  background: var(--color-background);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- KÍCH THƯỚC --- */
+.size_sm {
+  width: 24px;
+  height: 24px;
+}
+
+.size_md {
+  width: 32px;
+  height: 32px;
+}
+
+.size_lg {
+  width: 40px;
+  height: 40px;
+}
+
+.size_xl {
+  width: 52px;
+  height: 52px;
+}
+
+/* --- HÌNH DÁNG --- */
+.shape_square {
+  border-radius: var(--radius-md);
+}
+
+.shape_circle {
+  border-radius: 9999px;
+}
+
+/* =============================================================================
+   2. ẢNH ICON — giữ tỉ lệ đồng nhất
+   ============================================================================= */
+.image {
+  object-fit: contain;
+}
+
+/* =============================================================================
+   3. FALLBACK — ký tự thay thế khi thiếu icon
+   ============================================================================= */
+.fallback {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

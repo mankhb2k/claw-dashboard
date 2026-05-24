@@ -1,0 +1,12 @@
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+**/data/projects
+**/.env
+**/.env.local
+**/.git
+backend
+frontend
+openclaw-worker

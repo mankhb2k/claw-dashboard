@@ -1,0 +1,133 @@
+# AucoBot OSS — full stack (Supabase-style): postgres + api + web + gateway
+#
+# From aucobot/:
+#   cp deploy/.env.example deploy/.env
+#   docker compose -f deploy/docker-compose.yml up -d --build
+#
+# URLs:
+#   Web:     http://localhost:3000
+#   API:     http://localhost:3001
+#   Gateway: http://localhost:18789  (internal: http://gateway:18789)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aucobot-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-openclaw}
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-openclaw}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  gateway:
+    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:1.0.3}
+    container_name: aucobot-gateway
+    entrypoint: ['sh', '/entrypoint/gateway-entrypoint.sh']
+    environment:
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
+      OPENCLAW_DATA_ROOT: /data/projects
+      OSS_PROJECT_ID: ${OSS_PROJECT_ID:-}
+    volumes:
+      - openclaw_data:/data/projects
+      - ./scripts/gateway-entrypoint.sh:/entrypoint/gateway-entrypoint.sh:ro
+    ports:
+      - '127.0.0.1:18789:18789'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 8
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    image: aucobot-api:local
+    container_name: aucobot-api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      RUNTIME_MODE: oss
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-openclaw}
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-long-random-string}
+      JWT_ACCESS_SECONDS: ${JWT_ACCESS_SECONDS:-900}
+      JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-7}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      BACKEND_URL: http://localhost:3001
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+      OPENCLAW_GATEWAY_URL: http://gateway:18789
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
+      OPENCLAW_DATA_ROOT: /data/projects
+      OPENCLAW_RUNTIME_UID: ${OPENCLAW_RUNTIME_UID:-1000}
+      OPENCLAW_RUNTIME_GID: ${OPENCLAW_RUNTIME_GID:-1000}
+      OPENCLAW_GATEWAY_MIN_PROTOCOL: ${OPENCLAW_GATEWAY_MIN_PROTOCOL:-3}
+      OPENCLAW_GATEWAY_MAX_PROTOCOL: ${OPENCLAW_GATEWAY_MAX_PROTOCOL:-4}
+      SELF_HOST_USER_LOGIN: ${SELF_HOST_USER_LOGIN:-admin}
+      SELF_HOST_USER_PASSWORD: ${SELF_HOST_USER_PASSWORD:-admin123}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:3001/api/connectors/oauth/callback}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    volumes:
+      - openclaw_data:/data/projects
+    ports:
+      - '127.0.0.1:3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        # Empty = browser uses same-origin /api rewrite (cookies work for chat WebSocket).
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:3001}
+        NEXT_PUBLIC_RUNTIME_MODE: ${NEXT_PUBLIC_RUNTIME_MODE:-oss}
+        NEXT_PUBLIC_MOCK_API: ${NEXT_PUBLIC_MOCK_API:-false}
+    image: aucobot-web:local
+    container_name: aucobot-web
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:3001}
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: aucobot-postgres-data
+  openclaw_data:
+    name: aucobot-openclaw-data

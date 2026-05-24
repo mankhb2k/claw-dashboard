@@ -1,0 +1,27 @@
+/* =============================================================================
+   CLIENT AI MODEL PAGE — Bố cục vùng danh sách API Key Providers
+   ============================================================================= */
+
+.container {
+  margin-bottom: var(--space-8);
+}
+
+.title {
+  margin-bottom: 2rem;
+}
+
+.providerLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.error {
+  color: var(--color-destructive, #dc2626);
+  margin-bottom: var(--space-4);
+}

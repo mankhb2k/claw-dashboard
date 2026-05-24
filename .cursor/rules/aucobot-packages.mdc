@@ -1,0 +1,30 @@
+---
+description: AucoBot packages/* — no Nest, dependency rules
+globs: aucobot/packages/**/*
+alwaysApply: false
+---
+
+# packages/* conventions
+
+## Allowed dependencies
+
+- `runtime-oss` → `@aucobot/runtime-contracts` only
+- Future `database` → Prisma client only
+- Future `workspace-sync` → Node fs/path; **no** `@nestjs/*`
+
+## Forbidden in packages/*
+
+- `@nestjs/common`, `@nestjs/core`, Fastify, Express adapters
+- Import from `apps/api` or `apps/web`
+- Import from `cloud/packages/*` (OSS packages stay public)
+
+## Nest exceptions stay in apps/api
+
+- `BadRequestException`, guards, cookies → map errors at app boundary
+- Example: catch `GatewayConfigError` → `BadRequestException` in `apps/api/.../gateway-endpoint.ts`
+
+## Package scaffold
+
+Each package needs: `package.json` (main/types/exports), `tsconfig.json`, `src/index.ts`, `build` script.
+
+After extract: delete duplicate from `apps/api`; update `deploy/Dockerfile.api` if package is in api build graph.

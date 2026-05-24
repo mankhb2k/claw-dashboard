@@ -16,9 +16,15 @@ export interface AgentBootstrapBundle {
   };
 }
 
+/** OpenClaw worker schema — xem openclaw-architecture.md §13.3 / §25. */
+export type OpenClawAgentSandbox = {
+  mode: 'all' | 'non-main';
+  scope: 'agent' | 'session';
+};
+
 export interface OpenClawAgentConfigPatch {
   model: { primary: string };
-  sandbox: { enabled: boolean };
+  sandbox?: OpenClawAgentSandbox;
   exec: {
     ask: 'always' | 'on-miss' | 'off';
     safeBins: string[];
@@ -138,18 +144,38 @@ export function compileToolsMd(input: Pick<AgentFormInput, 'toolsNotes'>): strin
   return ['# TOOLS.md - Ghi chú công cụ', '', '## Ghi chú môi trường', '', notes].join('\n').trim();
 }
 
+function normalizeModelPrimary(model: string): string {
+  const m = model.trim();
+  if (!m || m.includes('/')) {
+    return m;
+  }
+  if (/^gpt-|^o\d/i.test(m)) {
+    return `openai/${m}`;
+  }
+  if (/^claude-/i.test(m)) {
+    return `anthropic/${m}`;
+  }
+  if (/^gemini-/i.test(m)) {
+    return `google/${m}`;
+  }
+  return m;
+}
+
 export function compileOpenClawAgentConfig(
   input: Pick<AgentFormInput, 'model' | 'sandboxEnabled' | 'askPolicy' | 'safeBins' | 'timeoutSec'>,
 ): OpenClawAgentConfigPatch {
-  return {
-    model: { primary: input.model },
-    sandbox: { enabled: input.sandboxEnabled },
+  const patch: OpenClawAgentConfigPatch = {
+    model: { primary: normalizeModelPrimary(input.model) },
     exec: {
       ask: input.askPolicy,
       safeBins: input.safeBins,
       timeoutSec: input.timeoutSec,
     },
   };
+  if (input.sandboxEnabled) {
+    patch.sandbox = { mode: 'all', scope: 'agent' };
+  }
+  return patch;
 }
 
 export function compileAgentBootstrap(input: AgentFormInput): AgentBootstrapBundle {

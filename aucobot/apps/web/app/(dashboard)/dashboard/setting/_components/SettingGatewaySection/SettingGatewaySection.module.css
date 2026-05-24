@@ -1,0 +1,130 @@
+/* Gateway Section Specific Styles */
+
+.cardRow {
+  gap: var(--space-8);
+}
+
+.rowInfo {
+  gap: var(--space-1);
+}
+
+.rowAction {
+  max-width: 400px;
+  gap: var(--space-3);
+}
+
+.warningRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-8);
+  background: color-mix(in srgb, var(--color-warning) 5%, transparent);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.warningIcon {
+  font-size: var(--font-size-base);
+  flex-shrink: 0;
+  color: var(--color-warning);
+  margin-top: 2px;
+}
+
+.warningText {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-foreground);
+  line-height: 1.5;
+}
+
+
+
+/* Token block */
+
+.tokenDisplay {
+  background: var(--color-accent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  overflow: hidden;
+  width: 100%;
+}
+
+.tokenCode {
+  font-size: var(--font-size-sm);
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: var(--color-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.tokenActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.actionBtnWithIcon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.errorText {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+/* Value with copy */
+
+.valueWithCopy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.urlCode {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-family: "SF Mono", "Fira Code", monospace;
+  background: var(--color-accent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: var(--space-2);
+  cursor: pointer;
+  color: var(--color-muted-foreground);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copyBtn:hover {
+  background: var(--color-accent);
+  color: var(--color-foreground);
+  border-color: var(--color-border-hover, var(--color-border));
+}
+
+.controlUiLink {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.controlUiLink:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@aucobot/runtime-oss",
+  "version": "0.0.0",
+  "private": true,
+  "description": "StaticGateway — OPENCLAW_GATEWAY_URL :18789",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@aucobot/runtime-contracts": "workspace:*"
+  }
+}

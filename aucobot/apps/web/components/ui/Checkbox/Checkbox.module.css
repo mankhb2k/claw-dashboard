@@ -1,0 +1,69 @@
+/* =============================================================================
+   1. VỎ BỌC (WRAPPER)
+   ============================================================================= */
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* =============================================================================
+   2. NÚT CHECKBOX (ROOT)
+   ============================================================================= */
+.root {
+  all: unset;
+  background-color: var(--color-background);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  transition: all var(--transition-fast) ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.root:hover {
+  border-color: var(--color-ring);
+}
+
+.root:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-color: var(--color-primary);
+}
+
+/* Trạng thái đã chọn */
+.root[data-state='checked'] {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* =============================================================================
+   3. CHỈ BÁO (INDICATOR) & ICON
+   ============================================================================= */
+.indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-foreground);
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3.5px;
+}
+
+/* =============================================================================
+   4. NHÃN (LABEL)
+   ============================================================================= */
+.label {
+  font-size: 14px;
+  color: var(--color-foreground);
+  user-select: none;
+  cursor: pointer;
+  line-height: 1;
+}

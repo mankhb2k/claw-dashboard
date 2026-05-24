@@ -1,0 +1,12 @@
+.root {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 64px);
+  width: 100%;
+  overflow: hidden;
+  background: var(--background-primary, #ffffff);
+}
+
+:global(.dark) .root {
+  background: var(--background-primary, #0f172a);
+}

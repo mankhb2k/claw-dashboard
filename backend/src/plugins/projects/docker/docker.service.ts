@@ -5,15 +5,33 @@ import { CONTAINER_STATE_DIR } from '../workspace/openclaw-config';
 
 const GATEWAY_PORT = 18789;
 
-/** Mặc định ~3 phút: 60 lần × (fetch 3s + nghỉ 2s). */
-function healthPollConfig() {
-  const attempts = Math.max(1, Number(process.env.OPENCLAW_HEALTH_ATTEMPTS ?? 60) || 60);
-  const intervalMs = Math.max(500, Number(process.env.OPENCLAW_HEALTH_INTERVAL_MS ?? 2000) || 2000);
-  const fetchTimeoutMs = Math.max(
-    1000,
-    Number(process.env.OPENCLAW_HEALTH_FETCH_TIMEOUT_MS ?? 3000) || 3000,
-  );
-  return { attempts, intervalMs, fetchTimeoutMs };
+function spawnTimeoutMs(): number {
+  const n = Number(process.env.OPENCLAW_SPAWN_TIMEOUT_MS ?? 60_000);
+  return Math.max(15_000, Number.isFinite(n) ? n : 60_000);
+}
+
+function healthPollIntervalMs(): number {
+  const n = Number(process.env.OPENCLAW_HEALTH_INTERVAL_MS ?? 2000);
+  return Math.max(500, Number.isFinite(n) ? n : 2000);
+}
+
+function healthFetchTimeoutMs(): number {
+  const n = Number(process.env.OPENCLAW_HEALTH_FETCH_TIMEOUT_MS ?? 3000);
+  return Math.max(1000, Number.isFinite(n) ? n : 3000);
+}
+
+/** Windows Docker Desktop: `D:\foo` → `/d/foo` cho bind mount. */
+export function toDockerBindSource(hostPath: string): string {
+  const resolved = path.resolve(hostPath);
+  if (process.platform !== 'win32') {
+    return resolved;
+  }
+  const normalized = resolved.replace(/\\/g, '/');
+  const driveMatch = /^([a-zA-Z]):\/(.*)$/.exec(normalized);
+  if (driveMatch) {
+    return `/${driveMatch[1].toLowerCase()}/${driveMatch[2]}`;
+  }
+  return normalized;
 }
 
 export type SpawnResult = {
@@ -30,6 +48,10 @@ export class DockerService {
 
   imageRef(): string {
     return process.env.OPENCLAW_IMAGE?.trim() || 'mankhb2k/clawsaas-worker:1.0.0';
+  }
+
+  async ping(): Promise<void> {
+    await this.docker.ping();
   }
 
   async ensureImage(): Promise<void> {
@@ -55,11 +77,12 @@ export class DockerService {
     hostDataPath: string;
     gatewayToken: string;
   }): Promise<SpawnResult> {
+    await this.ping();
     await this.ensureImage();
     const image = this.imageRef();
     const containerName = `oc-${params.subdomain}`;
     const gatewayToken = params.gatewayToken;
-    const bindSource = path.resolve(params.hostDataPath);
+    const bindSource = toDockerBindSource(params.hostDataPath);
 
     const existing = await this.findByName(containerName);
     if (existing) {
@@ -75,42 +98,59 @@ export class DockerService {
       }
     }
 
-    const container = await this.docker.createContainer({
-      Image: image,
-      name: containerName,
-      Env: [
-        `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`,
-        `OPENCLAW_STATE_DIR=${CONTAINER_STATE_DIR}`,
-        `OPENCLAW_CONFIG_PATH=${CONTAINER_STATE_DIR}/openclaw.json`,
-        'NODE_ENV=production',
-      ],
-      Cmd: ['node', 'openclaw.mjs', 'gateway', '--bind', 'lan'],
-      ExposedPorts: { [`${GATEWAY_PORT}/tcp`]: {} },
-      HostConfig: {
-        Binds: [`${bindSource}:${CONTAINER_STATE_DIR}`],
-        PortBindings: {
-          [`${GATEWAY_PORT}/tcp`]: [{ HostIp: '127.0.0.1', HostPort: '0' }],
+    let containerId = '';
+    try {
+      const container = await this.docker.createContainer({
+        Image: image,
+        name: containerName,
+        Env: [
+          `OPENCLAW_GATEWAY_TOKEN=${gatewayToken}`,
+          `OPENCLAW_STATE_DIR=${CONTAINER_STATE_DIR}`,
+          `OPENCLAW_CONFIG_PATH=${CONTAINER_STATE_DIR}/openclaw.json`,
+          'NODE_ENV=production',
+        ],
+        Cmd: ['node', 'openclaw.mjs', 'gateway', '--bind', 'lan'],
+        ExposedPorts: { [`${GATEWAY_PORT}/tcp`]: {} },
+        HostConfig: {
+          Binds: [`${bindSource}:${CONTAINER_STATE_DIR}`],
+          PortBindings: {
+            [`${GATEWAY_PORT}/tcp`]: [{ HostIp: '127.0.0.1', HostPort: '0' }],
+          },
+          RestartPolicy: { Name: 'unless-stopped' },
         },
-        RestartPolicy: { Name: 'unless-stopped' },
-      },
-    });
+      });
 
-    await container.start();
-    const inspect = await container.inspect();
-    const binding = inspect.NetworkSettings?.Ports?.[`${GATEWAY_PORT}/tcp`]?.[0];
-    const hostPort = binding?.HostPort ? Number(binding.HostPort) : 0;
-    if (!hostPort) {
-      throw new Error('Failed to resolve published gateway port');
+      await container.start();
+      const inspect = await container.inspect();
+      containerId = inspect.Id;
+      const binding = inspect.NetworkSettings?.Ports?.[`${GATEWAY_PORT}/tcp`]?.[0];
+      const hostPort = binding?.HostPort ? Number(binding.HostPort) : 0;
+      if (!hostPort) {
+        throw new Error('Failed to resolve published gateway port');
+      }
+
+      await this.waitGatewayReady(hostPort, containerId);
+
+      return {
+        containerId,
+        containerName,
+        hostPort,
+        gatewayToken,
+      };
+    } catch (err) {
+      if (containerId) {
+        await this.removeContainer(containerId);
+      }
+      const detail = err instanceof Error ? err.message : 'spawn failed';
+      const logs = containerId ? await this.tailLogs(containerId, 20) : '';
+      const hint =
+        process.platform === 'win32'
+          ? ' Trên Windows: bật Docker Desktop, share ổ đĩa chứa OPENCLAW_DATA_ROOT (Settings → Resources → File sharing).'
+          : '';
+      throw new Error(
+        logs ? `${detail}${hint}\n--- container log ---\n${logs}` : `${detail}${hint}`,
+      );
     }
-
-    await this.waitGatewayReadyOrRunning(inspect.Id, hostPort);
-
-    return {
-      containerId: inspect.Id,
-      containerName,
-      hostPort,
-      gatewayToken,
-    };
   }
 
   async startContainer(containerId: string): Promise<number> {
@@ -122,7 +162,10 @@ export class DockerService {
     const refreshed = await container.inspect();
     const binding = refreshed.NetworkSettings?.Ports?.[`${GATEWAY_PORT}/tcp`]?.[0];
     const hostPort = binding?.HostPort ? Number(binding.HostPort) : 0;
-    if (hostPort) await this.waitGatewayReadyOrRunning(containerId, hostPort);
+    if (!hostPort) {
+      throw new Error('Failed to resolve published gateway port');
+    }
+    await this.waitGatewayReady(hostPort, containerId);
     return hostPort;
   }
 
@@ -144,7 +187,6 @@ export class DockerService {
     }
   }
 
-  /** Published host port for gateway (changes when container is recreated/restarted). */
   async getPublishedPort(containerId: string): Promise<number> {
     try {
       const inspect = await this.docker.getContainer(containerId).inspect();
@@ -169,81 +211,64 @@ export class DockerService {
     }
   }
 
-  workerContainerName(subdomain: string): string {
-    return `oc-${subdomain}`;
-  }
-
-  /** Tìm worker theo tên (khi DB còn containerId cũ sau respawn / recreate). */
-  async resolveWorkerBySubdomain(subdomain: string): Promise<{
-    containerId: string;
-    containerName: string;
-    hostPort: number;
-    running: boolean;
-  } | null> {
-    const containerName = this.workerContainerName(subdomain);
-    const list = await this.docker.listContainers({
-      all: true,
-      filters: { name: [containerName] },
-    });
-    const row = list.find((c) => c.Names?.some((n) => n === `/${containerName}` || n === containerName));
-    if (!row) return null;
-    const running = row.State === 'running';
-    let hostPort = 0;
-    const binding = row.Ports?.find((p) => p.PrivatePort === GATEWAY_PORT);
-    if (binding?.PublicPort) {
-      hostPort = Number(binding.PublicPort);
-    }
-    if (running && !hostPort) {
-      hostPort = await this.getPublishedPort(row.Id);
-    }
-    return {
-      containerId: row.Id,
-      containerName,
-      hostPort,
-      running,
-    };
-  }
-
   private async findByName(name: string) {
     const list = await this.docker.listContainers({ all: true, filters: { name: [name] } });
     const row = list.find((c) => c.Names?.some((n) => n === `/${name}` || n === name));
     return row ? this.docker.getContainer(row.Id) : null;
   }
 
-  /** Healthz chậm/fail trên Windows — vẫn cho spawn xong nếu container Docker đang chạy. */
-  private async waitGatewayReadyOrRunning(containerId: string, hostPort: number): Promise<void> {
+  private async tailLogs(containerId: string, tail: number): Promise<string> {
     try {
-      await this.waitGatewayReady(hostPort);
-    } catch (err) {
-      const state = await this.syncRunning(containerId);
-      if (state !== 'running') throw err;
-      const message = err instanceof Error ? err.message : String(err);
-      this.log.warn(
-        `Gateway health not ready yet (${message}); container is running — continuing.`,
-      );
+      const container = this.docker.getContainer(containerId);
+      const buf = await container.logs({
+        stdout: true,
+        stderr: true,
+        tail,
+        timestamps: false,
+      });
+      const text = Buffer.isBuffer(buf) ? buf.toString('utf8') : String(buf);
+      return text.slice(-4000).trim();
+    } catch {
+      return '';
     }
   }
 
-  private async waitGatewayReady(hostPort: number): Promise<void> {
-    const { attempts, intervalMs, fetchTimeoutMs } = healthPollConfig();
+  private async waitGatewayReady(hostPort: number, containerId?: string): Promise<void> {
+    const timeoutMs = spawnTimeoutMs();
+    const intervalMs = healthPollIntervalMs();
+    const fetchTimeoutMs = healthFetchTimeoutMs();
     const url = `http://127.0.0.1:${hostPort}/healthz`;
-    this.log.log(
-      `Waiting for gateway ${url} (up to ~${Math.round((attempts * (fetchTimeoutMs + intervalMs)) / 1000)}s)`,
-    );
-    for (let i = 0; i < attempts; i++) {
+    const deadline = Date.now() + timeoutMs;
+    let attempt = 0;
+
+    this.log.log(`Waiting for gateway ${url} (timeout ${Math.round(timeoutMs / 1000)}s)`);
+
+    while (Date.now() < deadline) {
+      attempt += 1;
+      if (containerId) {
+        const state = await this.syncRunning(containerId);
+        if (state !== 'running') {
+          const logs = await this.tailLogs(containerId, 30);
+          throw new Error(
+            `Container stopped before gateway became healthy (check ${url}).${logs ? `\n${logs}` : ''}`,
+          );
+        }
+      }
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(fetchTimeoutMs) });
         if (res.ok) {
-          this.log.log(`Gateway ready at ${url} (attempt ${i + 1})`);
+          this.log.log(`Gateway ready at ${url} (attempt ${attempt})`);
           return;
         }
       } catch {
-        /* retry */
+        /* retry until deadline */
       }
       await new Promise((r) => setTimeout(r, intervalMs));
     }
+
+    const sec = Math.round(timeoutMs / 1000);
     throw new Error(
-      `Gateway not healthy at ${url} after ${attempts} attempts (~${Math.round((attempts * (fetchTimeoutMs + intervalMs)) / 1000)}s)`,
+      `Gateway not healthy at ${url} after ${sec}s. Image: ${this.imageRef()}. Ensure Docker is running and port ${hostPort} is reachable on the host.`,
     );
   }
 }

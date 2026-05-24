@@ -1,0 +1,8 @@
+.notConnectedBorder {
+  border-style: dashed;
+  background-color: var(--color-surface-1);
+}
+
+.loadingBox {
+  min-height: 120px;
+}

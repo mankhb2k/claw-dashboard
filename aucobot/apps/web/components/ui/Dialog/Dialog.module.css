@@ -1,0 +1,102 @@
+/* =============================================================================
+   1. OVERLAY — Lớp nền mờ
+   ============================================================================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* =============================================================================
+   2. CONTAINER — Căn giữa content
+   ============================================================================= */
+.container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 65;
+  pointer-events: none;
+  padding: var(--space-4);
+}
+
+/* =============================================================================
+   3. CONTENT — Hộp thoại chính
+   ============================================================================= */
+.content {
+  position: relative;
+  pointer-events: auto;
+  background-color: var(--color-card);
+  width: min(560px, 100%);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  animation: contentShow 0.2s ease-out;
+}
+
+.content:focus {
+  outline: none;
+}
+
+/* =============================================================================
+   4. HEADER, FOOTER, TITLE, DESCRIPTION
+   ============================================================================= */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-foreground);
+  line-height: 1.2;
+}
+
+.description {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+/* =============================================================================
+   5. CLOSE BUTTON — Nút đóng tuyệt đối
+   ============================================================================= */
+.closeBtn {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+}
+
+/* =============================================================================
+   6. ANIMATIONS
+   ============================================================================= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

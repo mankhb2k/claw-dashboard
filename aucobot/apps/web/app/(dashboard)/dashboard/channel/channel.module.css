@@ -1,0 +1,18 @@
+/* =============================================================================
+   1. KHUNG TRANG (PAGE SHELL) — Bố cục tổng thể cho trang kênh trò chuyện
+   ============================================================================= */
+
+.page {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--space-4) var(--space-8) 0;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--space-2);
+  flex-direction: column;
+}
