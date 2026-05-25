@@ -10,10 +10,10 @@ import {
   normalizeLogin,
   refreshExpiresAt,
   signAccessToken,
-  toPublicUser,
   type PublicUser,
 } from '@aucobot/control-plane-core';
 import { PrismaService } from '../database/prisma.service';
+import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -25,10 +25,13 @@ export type AuthTokensResult = {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly users: UsersService,
+  ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokensResult> {
-    const login = normalizeLogin(dto.login);
+    const login = normalizeLogin(dto.username);
     const exists = await this.prisma.user.findUnique({ where: { login } });
     if (exists) throw new ConflictException('Login already taken');
 
@@ -44,7 +47,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthTokensResult> {
-    const login = normalizeLogin(dto.login);
+    const login = normalizeLogin(dto.username);
     const user = await this.prisma.user.findUnique({ where: { login } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
@@ -52,16 +55,22 @@ export class AuthService {
     return this.issueTokens(user.id, user.login);
   }
 
-  async refresh(refreshTokenRaw: string | undefined): Promise<AuthTokensResult> {
+  async refresh(
+    refreshTokenRaw: string | undefined,
+  ): Promise<AuthTokensResult> {
     if (!refreshTokenRaw?.trim()) {
       throw new UnauthorizedException('Missing refresh token');
     }
     const tokenHash = hashRefreshToken(refreshTokenRaw);
-    const row = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
+    const row = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+    });
     if (!row || row.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    const user = await this.prisma.user.findUnique({ where: { id: row.userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: row.userId },
+    });
     if (!user) throw new UnauthorizedException('User not found');
 
     await this.prisma.refreshToken.delete({ where: { id: row.id } });
@@ -69,12 +78,7 @@ export class AuthService {
   }
 
   async me(userId: string): Promise<PublicUser> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, login: true, name: true, createdAt: true },
-    });
-    if (!user) throw new UnauthorizedException();
-    return toPublicUser(user);
+    return this.users.getPublicUser(userId);
   }
 
   async logout(refreshTokenRaw: string | undefined): Promise<void> {
@@ -83,7 +87,10 @@ export class AuthService {
     await this.prisma.refreshToken.deleteMany({ where: { tokenHash } });
   }
 
-  private async issueTokens(userId: string, login: string): Promise<AuthTokensResult> {
+  private async issueTokens(
+    userId: string,
+    login: string,
+  ): Promise<AuthTokensResult> {
     const accessToken = signAccessToken(userId, login);
     const rawRefresh = generateRefreshTokenRaw();
     const tokenHash = hashRefreshToken(rawRefresh);
@@ -93,16 +100,12 @@ export class AuthService {
       data: { userId, tokenHash, expiresAt },
     });
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, login: true, name: true, createdAt: true },
-    });
-    if (!user) throw new UnauthorizedException('User not found');
+    const user = await this.users.getPublicUser(userId);
 
     return {
       accessToken,
       refreshToken: rawRefresh,
-      user: toPublicUser(user),
+      user,
     };
   }
 }

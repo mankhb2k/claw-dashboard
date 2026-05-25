@@ -287,8 +287,17 @@ Gateway → Client: res(ok|error)
   - `config.apply` — thay toàn bộ config khi có chủ đích
   - `update.run` / `update.status` — cập nhật bản thân gateway + restart sentinel
 - **Rate limit** (theo doc): các thao tác control-plane ghi (`config.apply`, `config.patch`, `update.run`) bị giới hạn tần suất theo `deviceId` + IP; restart được gom và có cooldown giữa các chu kỳ restart.
+- **Định dạng file**: upstream dùng **JSON5** (comment, trailing comma); AucoBot ghi **JSON thuần** qua `writeOpenClawConfigJson` — gateway vẫn parse được.
+- **Hot vs restart** (đối chiếu `configuration.md` § Config hot reload + `config-reload-plan.ts`):
 
-Gọi RPC thường qua **`openclaw gateway call <method>`** hoặc client WebSocket; không đồng nhất với chỉ JWT của ứng dụng SaaS — xem §4.7.
+| Nhóm | Ví dụ prefix | Cần restart gateway? |
+| ---- | ------------- | -------------------- |
+| Channels, agents, models, hooks, cron, session, messages, tools, skills, **mcp** | `channels.*`, `agents.*`, `mcp.*` | Không (hot / restart kênh hoặc dispose MCP runtime) |
+| Plugins (entries) | `plugins` (không phải `plugins.load`) | Hot — reload plugin registry |
+| Gateway server, discovery, `plugins.load` | `gateway.*`, `discovery`, `plugins.load` | **Có** |
+| Ngoại lệ | `gateway.reload`, `gateway.remote` | Đổi **không** kích hoạt restart |
+
+Gọi RPC thường qua **`openclaw gateway call <method>`** hoặc client WebSocket; không đồng nhất với chỉ JWT của ứng dụng SaaS — xem §4.7 và §4.7.1.
 
 ### 4.6 Multi-Gateway Setup
 
@@ -309,6 +318,100 @@ OPENCLAW_CONFIG_PATH=~/.openclaw/b.json OPENCLAW_STATE_DIR=~/.openclaw-b opencla
 | **Phase 2** | Tuỳ chọn: gọi **`config.patch` / `config.apply`** qua RPC (cần credential operator của gateway), hoặc tiếp tục ghi file. **`POST /tools/invoke`** cho automation tool-level; cùng yêu cầu **gateway auth** (token/password/trusted-proxy/…). | Tách bạch: JWT = biên SaaS; `OPENCLAW_GATEWAY_TOKEN` (v.v.) = biên operator worker. Chỉ nối hai lớp qua dịch vụ nội bộ / proxy tin cậy. |
 
 **Tóm tắt**: Phase 1 an toàn và đơn giản nhất là **sync file + mount**. Phase 2 thêm RPC HTTP-compat (`/tools/invoke`) hoặc patch config qua WS khi cần và khi đã có chiến lược bảo mật operator credential.
+
+#### 4.7.1 AucoBot (`aucobot/`) — `openclaw.json`, volume, sync DB ↔ disk
+
+Phần này mô tả **triển khai thực tế** trong monorepo `aucobot/` (OSS control plane + gateway container), đã đối chiếu với upstream tại `openclaw-saas/openclaw-worker/`:
+
+- Doc: `docs/gateway/configuration.md` (§ Config hot reload, § Config RPC, JSON5, `env`, `channels.*`)
+- Mã reload: `src/gateway/config-reload-plan.ts`, `config-reload.ts` (watcher `chokidar`)
+- Entrypoint gateway image: `aucobot/deploy/scripts/gateway-entrypoint.sh`
+- Merge/sync: `packages/workspace-sync/` + `ProjectWorkspaceService.syncProjectRuntime()` (`packages/control-plane-core/`)
+
+##### Hai lớp dữ liệu (ẩn dụ)
+
+| Lớp | Vai trò | Ví dụ AucoBot |
+| --- | ------- | --------------- |
+| **DB (Postgres)** | Nguồn sự thật cho UI/API — project, user, provider keys, channel secrets, agents, connectors | Prisma models trong `packages/database/` |
+| **Disk (volume)** | File gateway **đọc trực tiếp** khi chạy | `{OPENCLAW_DATA_ROOT}/{projectId}/openclaw.json`, `workspace/`, `skills/` |
+
+Control plane **không** bắt gateway gọi API Nest để lấy cấu hình. Luồng chuẩn: API ghi DB → **`syncProjectRuntime`** merge ra `openclaw.json` → gateway **watch file** và áp dụng (§4.5.1).
+
+##### Layout thư mục project
+
+```
+{OPENCLAW_DATA_ROOT}/
+  {projectId}/
+    openclaw.json          # config gateway (JSON thuần; upstream hỗ trợ JSON5 khi user tự sửa tay)
+    workspace/             # AGENTS.md, SOUL.md, … (bootstrap agent)
+    skills/{slug}/SKILL.md # skill do user tạo (watcher skill riêng, §11.5)
+```
+
+- Path resolve: `packages/workspace-sync/src/project-paths.ts` (`openClawConfigPath`, `resolveProjectDataDir`)
+- Dev OSS: `OPENCLAW_DATA_ROOT` trên host thường là `apps/api/data/projects` (bind mount, xem bảng Docker bên dưới)
+- Trong container: `OPENCLAW_STATE_DIR=/data/projects/{projectId}` (entrypoint), workspace mặc định `/home/node/.openclaw/workspace` (`CONTAINER_WORKSPACE_DIR` trong `openclaw-config.ts`)
+
+##### `syncProjectRuntime` — thứ tự merge (AucoBot → file)
+
+Gọi từ `ProjectWorkspaceService` sau khi tạo project, đổi provider keys, agents, channels, connectors, v.v. Thứ tự ghi (đơn giản hóa):
+
+1. Đảm bảo layout thư mục + file `openclaw.json` ban đầu (`buildInitialOpenClawConfig` nếu chưa có)
+2. `mergeProviderKeysIntoConfig` → nhánh `env` (API keys LLM)
+3. `mergeAgentsIntoConfig` → `agents.defaults` + `agents.list[]`
+4. `mergeChannelsIntoConfig` → `channels.<id>` (Telegram: `botToken`, `dmPolicy`, `groupPolicy`, `allowFrom` — khớp upstream `channels.telegram`)
+5. `mergeConnectorsIntoConfig` → `plugins.entries` + `mcp.servers` (credential file trên disk nếu cần, ví dụ Google Drive)
+6. Bootstrap workspace files (`compileAgentWorkspace`, skills markdown, …)
+
+Package export: `packages/workspace-sync/src/index.ts`. Chi tiết workflow tab web: `aucobot/docs/workflow.md` §5.3–5.5.
+
+##### Bảng nhánh JSON AucoBot thường ghi
+
+| Nhánh `openclaw.json` | Nguồn DB / code | Ghi chú upstream reload |
+| --------------------- | --------------- | ------------------------ |
+| `gateway.*` | Token cố định lúc tạo project; `port`, `bind`, `controlUi` | Prefix `gateway` → **restart gateway** (`config-reload-plan.ts`) |
+| `env.*` | `ProjectProviderKey` | Hot-apply; keys theo `PROVIDER_ENV_KEYS` (`provider-env-keys.ts`) |
+| `agents.defaults` / `agents.list` | Agents + model primary | Hot (`agents.list` → restart heartbeat) |
+| `channels.*` | `ProjectChannel` + secrets | Hot — restart từng kênh khi token/policy đổi (upstream bảng Channels = không downtime) |
+| `plugins.entries` | Connectors | Hot — `reload-plugins` + có thể `dispose-mcp-runtimes` |
+| `mcp.servers` | Connectors MCP | Hot — `dispose-mcp-runtimes` |
+
+**Lưu ý:** Đổi `gateway.auth.token` trong file vẫn thuộc prefix `gateway` → có thể **restart** gateway ở mode `hybrid`. Dev local cần khớp token giữa `.env` API (`OPENCLAW_GATEWAY_TOKEN` / project token) và `openclaw.json`.
+
+##### Gateway container — entrypoint
+
+`deploy/scripts/gateway-entrypoint.sh`:
+
+- Chờ `openclaw.json` tồn tại (API/sync tạo sau khi user tạo project)
+- `export OPENCLAW_CONFIG_PATH=.../openclaw.json`
+- `export OPENCLAW_STATE_DIR=/data/projects/{projectId}` (hoặc tương đương theo mount)
+- Chạy `openclaw gateway` — process upstream watch config path
+
+##### Docker: dev bind mount vs prod named volume
+
+| Compose | Volume | Khi nào dùng |
+| ------- | ------ | ------------ |
+| `deploy/docker-compose.runtime.yml` | Bind `../apps/api/data/projects:/data/projects` | **Dev OSS**: API chạy trên host (`pnpm dev:api`), gateway + postgres trong Docker; API và gateway **cùng** thư mục project trên máy host |
+| `deploy/docker-compose.yml` | Named volume `openclaw_data` | Stack đầy đủ (API trong container); dữ liệu project trong volume Docker |
+
+Script gốc (`aucobot/package.json`): `pnpm dev:runtime` (postgres + gateway), `pnpm dev:db` (chỉ postgres qua `docker-compose.postgres.dev.yml`).
+
+##### Hai lớp auth (không trộn)
+
+| Lớp | Dùng cho | AucoBot |
+| --- | -------- | ------- |
+| **JWT / session** | REST API Nest (`/api/auth/*`, `/api/users/me`, …) | User đăng nhập web; **không** gửi thẳng vào gateway trừ khi tự build proxy |
+| **`gateway.auth.token`** | WebSocket/HTTP tới gateway (Control UI, RPC, hooks) | Ghi trong `openclaw.json`; client UI kết nối gateway với token này |
+
+##### Kiểm thử gateway (thứ tự gợi ý)
+
+1. **AI Model** — thêm provider key → sync `env` → gateway nhận model (tránh tab Connect trước khi có LLM)
+2. **Agents** — model primary + workspace bootstrap
+3. **Channels** — Telegram token + policy
+4. **Connect / MCP** — sau khi core chạy ổn
+
+##### OSS API modules (tham chiếu, không thay gateway)
+
+Monolith Nest `apps/api/`: `AuthModule` (login/register/token), `UsersModule` (`GET/PATCH /api/users/me`, avatar, password), `ProjectsModule` (project + sync). Shared contract: `@aucobot/shared` (`ApiResponse`, auth types). Logic nặng nằm ở `packages/control-plane-core`, không import `apps/api` từ Cloud.
 
 ### 4.8 Đối chiếu nhanh với upstream vừa pin (`110042d840`)
 
@@ -3833,4 +3936,4 @@ Biến môi trường thường gặp: `OPENCLAW_GATEWAY_TOKEN`, config `~/.open
 
 ---
 
-_Tài liệu được tổng hợp từ `openclaw-worker/README.md`, `VISION.md`, `docs/` (250+ files) và mã nguồn `openclaw-worker/src/`, `openclaw-worker/ui/` của dự án OpenClaw._
+_Tài liệu được tổng hợp từ `openclaw-saas/openclaw-worker/` (`README.md`, `VISION.md`, `docs/gateway/configuration.md`, `src/gateway/config-reload-plan.ts`, …) và triển khai AucoBot trong `aucobot/` (`packages/workspace-sync`, `deploy/`, `docs/workflow.md`). Cập nhật §4.5.1, §4.7.1: 2026-05-25._

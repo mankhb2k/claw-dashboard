@@ -15,12 +15,15 @@ import { ResponseInterceptor } from './core/common/interceptors/response.interce
 import { HttpExceptionFilter } from './core/common/filters/http-exception.filter';
 
 async function bootstrap() {
-  if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET?.trim()) {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    !process.env.JWT_SECRET?.trim()
+  ) {
     throw new Error('JWT_SECRET is required in production');
   }
 
   const fastifyAdapter = new FastifyAdapter();
-  // Phải register trước NestFactory.create — OnModuleInit chạy sớm hơn app.register() ở dưới.
+  // FastifyWebsocket must be registered before NestFactory.create
   await fastifyAdapter.getInstance().register(fastifyWebsocket);
 
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -55,7 +58,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('OpenClaw Auth API')
-    .setDescription('Auth — JWT cookie, đăng ký/đăng nhập bằng login (email hoặc username)')
+    .setDescription(
+      'Auth — JWT cookie, đăng ký/đăng nhập bằng login (email hoặc username)',
+    )
     .setVersion('0.1.0')
     .addBearerAuth()
     .build();

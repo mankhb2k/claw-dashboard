@@ -1,7 +1,8 @@
+export { type ApiResponse } from './types/api-response.js';
 export {
   AUTH_COOKIES,
   type AuthCookieName,
-} from './auth.js';
+} from './auth/auth.js';
 export {
   PROJECT_STATUSES,
   type ProjectStatus,
@@ -23,4 +24,4 @@ export {
   readTelegramAccessFromConfig,
   TELEGRAM_DM_POLICY_OPTIONS,
   type TelegramAccessValidation,
-} from './channels.js';
+} from './channels/channels.js';

@@ -10,9 +10,9 @@
 
 services:
   gateway:
-    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:1.0.3}
+    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:latest}
     container_name: aucobot-gateway-dev
-    command: ['node', 'openclaw.mjs', 'gateway', '--bind', 'lan']
+    command: ["node", "openclaw.mjs", "gateway", "--bind", "lan"]
     environment:
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
       OPENCLAW_STATE_DIR: /home/node/.openclaw
@@ -21,5 +21,5 @@ services:
       # Project workspace (synced by API under OPENCLAW_DATA_ROOT)
       - ../../backend/data/projects/${PROJECT_ID:-cmpedzekq0001d4k5op1bk8bi}:/home/node/.openclaw
     ports:
-      - '127.0.0.1:18789:18789'
+      - "127.0.0.1:18789:18789"
     restart: unless-stopped

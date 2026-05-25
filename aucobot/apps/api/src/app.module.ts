@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { LoggingModule } from './core/logging/logging.module';
 import { PrismaModule } from './core/database/prisma.module';
 import { AuthModule } from './core/auth/auth.module';
+import { UsersModule } from './core/users/users.module';
 import { ProjectsModule } from './plugins/projects/projects.module';
 import { ChatModule } from './plugins/projects/chat/chat.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
@@ -22,6 +23,7 @@ import { DbHealthMiddleware } from './core/common/middleware/db-health.middlewar
     }),
     PrismaModule,
     AuthModule,
+    UsersModule,
     ProjectsModule,
     ChatModule,
   ],

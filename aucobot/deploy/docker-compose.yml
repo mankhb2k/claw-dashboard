@@ -18,14 +18,14 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-openclaw}
     ports:
-      - '127.0.0.1:5432:5432'
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test:
         [
-          'CMD-SHELL',
-          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-openclaw}',
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-openclaw}",
         ]
       interval: 5s
       timeout: 5s
@@ -33,9 +33,9 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:1.0.3}
+    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:latest}
     container_name: aucobot-gateway
-    entrypoint: ['sh', '/entrypoint/gateway-entrypoint.sh']
+    entrypoint: ["sh", "/entrypoint/gateway-entrypoint.sh"]
     environment:
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
       OPENCLAW_DATA_ROOT: /data/projects
@@ -44,16 +44,16 @@ services:
       - openclaw_data:/data/projects
       - ./scripts/gateway-entrypoint.sh:/entrypoint/gateway-entrypoint.sh:ro
     ports:
-      - '127.0.0.1:18789:18789'
+      - "127.0.0.1:18789:18789"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
       test:
         [
-          'CMD',
-          'node',
-          '-e',
+          "CMD",
+          "node",
+          "-e",
           "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
@@ -95,7 +95,7 @@ services:
     volumes:
       - openclaw_data:/data/projects
     ports:
-      - '127.0.0.1:3001:3001'
+      - "127.0.0.1:3001:3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,7 +120,7 @@ services:
       PORT: 3000
       API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:3001}
     ports:
-      - '127.0.0.1:3000:3000'
+      - "127.0.0.1:3000:3000"
     depends_on:
       api:
         condition: service_started

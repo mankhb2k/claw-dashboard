@@ -3,8 +3,8 @@ import { ensureSelfHostDefaultUser } from '@aucobot/control-plane-core';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
-export class DefaultUserService implements OnModuleInit {
-  private readonly log = new Logger(DefaultUserService.name);
+export class SeedUserService implements OnModuleInit {
+  private readonly log = new Logger(SeedUserService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 

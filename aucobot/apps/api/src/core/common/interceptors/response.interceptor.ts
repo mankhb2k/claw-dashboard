@@ -5,7 +5,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
-import { ApiResponse } from '../types/api-response.type';
+import { type ApiResponse } from '@aucobot/shared';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {

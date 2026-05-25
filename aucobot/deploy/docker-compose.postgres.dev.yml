@@ -1,5 +1,6 @@
-# Dev local: chỉ Postgres. Backend chạy `npm run dev` trên host.
-# Chạy: npm run docker:deps   hoặc   docker compose -f docker-compose.deps.yml up -d
+# Dev local: chỉ Postgres. API/web chạy trên host.
+# Chạy: pnpm dev:db   |   Dừng: pnpm dev:db:down
+# Cần thêm gateway: pnpm dev:runtime
 services:
   postgres:
     image: postgres:16-alpine
