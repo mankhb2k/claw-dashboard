@@ -69,6 +69,10 @@
   color: var(--color-primary);
 }
 
+.extralight {
+  font-weight: 200;
+}
+
 .light {
   font-weight: 300;
 }
@@ -79,6 +83,10 @@
 
 .medium {
   font-weight: 500;
+}
+
+.semibold {
+  font-weight: 600;
 }
 
 .bold {

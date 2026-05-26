@@ -1,16 +1,15 @@
 'use client'
 
 import { useLayoutEffect, useSyncExternalStore } from 'react'
-import { Theme } from '@radix-ui/themes'
 import { I18nProvider } from '@/lib/i18n'
 import type { Locale } from '@/lib/i18n'
-import { readRadixAppearance, subscribeRadixAppearance } from '@/lib/theme-sync'
+import { readThemeAppearance, subscribeThemeAppearance } from '@/lib/theme-sync'
 import { ToastProvider } from '@/components/ui'
 
-/** Đồng bộ `data-theme` với `readRadixAppearance()` (LS / store), không tin `appearance` một mình trên frame hydrate. */
+/** Đồng bộ `data-theme` với theme store / localStorage. */
 function ThemeDocumentSync({ appearance }: { appearance: 'light' | 'dark' }) {
   useLayoutEffect(() => {
-    const mode = readRadixAppearance()
+    const mode = readThemeAppearance()
     if (mode === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark')
     } else {
@@ -31,21 +30,19 @@ export function Providers({
   defaultLocale: Locale
 }) {
   const appearance = useSyncExternalStore(
-    subscribeRadixAppearance,
-    readRadixAppearance,
+    subscribeThemeAppearance,
+    readThemeAppearance,
     () => defaultAppearance,
   )
 
   return (
     <div suppressHydrationWarning>
-      <Theme appearance={appearance} accentColor="orange" grayColor="slate" radius="medium" scaling="100%">
-        <I18nProvider defaultLocale={defaultLocale}>
-          <ToastProvider>
-            <ThemeDocumentSync appearance={appearance} />
-            {children}
-          </ToastProvider>
-        </I18nProvider>
-      </Theme>
+      <I18nProvider defaultLocale={defaultLocale}>
+        <ToastProvider>
+          <ThemeDocumentSync appearance={appearance} />
+          {children}
+        </ToastProvider>
+      </I18nProvider>
     </div>
   )
 }

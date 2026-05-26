@@ -7,7 +7,7 @@
 ## 1. Nguyên tắc Tái sử dụng UI (Composition First)
 
 - **Kiểm tra UI Primitives trước**: Khi xây dựng bất kỳ thành phần giao diện nào (Button, Input, Card, Modal...), **luôn luôn phải kiểm tra thư mục `components/ui/` đầu tiên**.
-- **Đọc Storybook để hiểu cách dùng**: Trước khi sử dụng bất kỳ component nào trong `components/ui/`, **bắt buộc phải đọc file `.stories.tsx` tương ứng** (trong `stories/ui/`) để hiểu rõ các props, variant và cách dùng chuẩn.
+- **Đọc Storybook để hiểu cách dùng**: Trước khi sử dụng bất kỳ component nào trong `components/ui/`, **bắt buộc phải đọc file `.stories.tsx` cùng thư mục** (ví dụ `components/ui/Button/Button.stories.tsx`) để hiểu rõ các props, variant và cách dùng chuẩn.
 - **Lắp ghép thay vì viết mới**: Ưu tiên sử dụng các component nhỏ có sẵn trong `components/ui` để ghép lại thành các giao diện phức tạp hơn. Không tự ý viết mới khi các component sẵn có có thể lắp ghép hoặc mở rộng được.
 - **Không ghi đè style của UI Primitives**: Các component cấp cao (như Dashboard components) tuyệt đối không viết lại CSS cho những gì các UI Primitives (`Button`, `Avatar`, `DropdownMenu`...) đã đảm nhiệm. Sử dụng đúng các `variant`, `size`, hoặc bổ sung `props` vào chính UI component đó nếu cần mở rộng.
 - **Quy tắc Import gọn**: Khi import các component từ `components/ui/` hoặc `components/layout/`, **bắt buộc phải import gộp trên một dòng** (ví dụ: `import { Card, Typography } from "@/components/ui"`). Không import rải rác từng file nhỏ lẻ.
@@ -96,7 +96,7 @@
 
 ## 6. Storybook — Quy tắc viết Story
 
-- **Vị trí lưu trữ**: Đặt các file story trong thư mục `frontend/stories/ui/[ComponentName]/`.
+- **Vị trí lưu trữ**: Đặt file `.stories.tsx` **cạnh component** trong `components/ui/[ComponentName]/`, `components/layout/[ComponentName]/`, hoặc `components/dashboard/[ComponentName]/`.
 - **Nguyên tắc Self-contained (Tự thân)**:
   - Hạn chế tạo thêm file CSS phụ cho story. Sử dụng các **Helper Components** nội bộ (như `DemoBox`, `DemoLabel`) ngay trong file `.stories.tsx` để quản lý layout demo (grid, flex, spacing...).
   - Mục tiêu: Giúp nhà phát triển hoặc AI Agent chỉ cần đọc duy nhất 1 file `.stories.tsx` là hiểu trọn vẹn cách dùng và demo trực quan của component.

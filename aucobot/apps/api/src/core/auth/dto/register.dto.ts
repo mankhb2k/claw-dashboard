@@ -6,7 +6,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(3)
   @MaxLength(128)
-  username!: string;
+  login!: string;
 
   @ApiProperty({ minLength: 6 })
   @IsString()

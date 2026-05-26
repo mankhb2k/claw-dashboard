@@ -7,7 +7,7 @@ import styles from './Typography.module.css'
 export interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'small' | 'xs'
   color?: 'default' | 'muted' | 'subtle' | 'primary'
-  weight?: 'light' | 'regular' | 'medium' | 'bold'
+  weight?: 'extralight' | 'light' | 'regular' | 'medium' | 'semibold' | 'bold'
   italic?: boolean
   asChild?: boolean
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label'
@@ -25,12 +25,13 @@ export const Typography = React.forwardRef<HTMLElement, TypographyProps>(
     ...props 
   }, ref) => {
     const Comp = asChild ? Slot : (as || (['h1', 'h2', 'h3', 'h4'].includes(variant) ? variant : 'p')) as any
+    const weightClass = weight ? styles[weight] : ''
 
     const classes = [
       styles.base,
       styles[variant],
       color !== 'default' ? styles[color] : '',
-      weight ? styles[weight] : '',
+      weightClass,
       italic ? styles.italic : '',
       className || '',
     ].filter(Boolean).join(' ')

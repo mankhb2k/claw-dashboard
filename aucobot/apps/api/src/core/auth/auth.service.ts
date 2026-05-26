@@ -31,7 +31,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokensResult> {
-    const login = normalizeLogin(dto.username);
+    const login = normalizeLogin(dto.login);
     const exists = await this.prisma.user.findUnique({ where: { login } });
     if (exists) throw new ConflictException('Login already taken');
 
@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthTokensResult> {
-    const login = normalizeLogin(dto.username);
+    const login = normalizeLogin(dto.login);
     const user = await this.prisma.user.findUnique({ where: { login } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);

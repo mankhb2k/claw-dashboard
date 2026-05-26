@@ -32,10 +32,10 @@ function readThemeFromLocalStorage(): ThemeMode {
 }
 
 /**
- * Snapshot theme cho `<Theme appearance>`: trước khi hydrate xong đọc LS (hết nháy F5);
+ * Snapshot theme: trước khi hydrate xong đọc LS (hết nháy F5);
  * sau hydrate dùng bộ nhớ store (toggle cập nhật ngay, không phụ thuộc một frame LS).
  */
-export function readRadixAppearance(): ThemeMode {
+export function readThemeAppearance(): ThemeMode {
   if (typeof window === 'undefined') return 'light'
   try {
     const p = themePersist()
@@ -49,7 +49,7 @@ export function readRadixAppearance(): ThemeMode {
   }
 }
 
-export function subscribeRadixAppearance(onChange: () => void): () => void {
+export function subscribeThemeAppearance(onChange: () => void): () => void {
   const unsubStore = useThemeStore.subscribe(onChange)
 
   let unsubFinish: (() => void) | undefined
