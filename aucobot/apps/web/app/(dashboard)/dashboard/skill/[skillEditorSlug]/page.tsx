@@ -10,7 +10,7 @@ import { projectApi } from "@/lib/api/project";
 import type { ProjectSkillDetail } from "@/schemas/project.schema";
 import { useProjectStore } from "@/stores/project.store";
 import { SkillEditor, type SkillEditorHandle } from "./_components/SkillEditor";
-import { SkillAssistantPanel } from "./_components/SkillAssistantPanel/SkillAssistantPanel";
+import { SkillAiEditorPanel } from "./_components/SkillAiEditorPanel/SkillAiEditorPanel";
 import styles from "./skillEditorSlug.module.css";
 
 export default function ProjectSkillEditorPage() {
@@ -247,7 +247,7 @@ export default function ProjectSkillEditorPage() {
             onCopy={() => void handleCopy()}
           />
           <aside className={styles.assistantAside}>
-            <SkillAssistantPanel
+            <SkillAiEditorPanel
               projectId={projectId}
               skill={skill}
               currentBodyMarkdown={bodyMarkdown}

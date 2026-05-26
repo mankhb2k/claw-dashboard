@@ -18,9 +18,9 @@ import {
   agentTemplateRowSchema,
   projectAgentListRowSchema,
   projectAgentDetailSchema,
-  skillAssistantOptionsResponseSchema,
-  skillAssistantCompleteInputSchema,
-  skillAssistantCompleteResponseSchema,
+  skillAiEditorOptionsResponseSchema,
+  skillAiEditorCompleteInputSchema,
+  skillAiEditorCompleteResponseSchema,
   type ProjectSkillListRow,
   type ProjectSkillDetail,
   type CreateProjectSkillInput,
@@ -32,8 +32,8 @@ import {
   type UpdateProjectAgentInput,
   createProjectAgentSchema,
   updateProjectAgentSchema,
-  type SkillAssistantOptionsResponse,
-  type SkillAssistantCompleteInput,
+  type SkillAiEditorOptionsResponse,
+  type SkillAiEditorCompleteInput,
   type Project,
   type CreateProjectInput,
   type ProjectHealth,
@@ -312,20 +312,20 @@ export const projectApi = {
       .parse(res.data)
   },
 
-  skillAssistantOptions: async (id: string): Promise<SkillAssistantOptionsResponse> => {
-    const res = await api.get(`/api/projects/${id}/skill-assistant/options`)
-    return skillAssistantOptionsResponseSchema.parse(res.data)
+  skillAiEditorOptions: async (id: string): Promise<SkillAiEditorOptionsResponse> => {
+    const res = await api.get(`/api/projects/${id}/skill-ai-editor/options`)
+    return skillAiEditorOptionsResponseSchema.parse(res.data)
   },
 
-  skillAssistantComplete: async (
+  skillAiEditorComplete: async (
     id: string,
-    input: SkillAssistantCompleteInput,
+    input: SkillAiEditorCompleteInput,
   ): Promise<{ markdown: string }> => {
-    const body = skillAssistantCompleteInputSchema.parse(input)
-    const res = await api.post(`/api/projects/${id}/skill-assistant/complete`, body, {
+    const body = skillAiEditorCompleteInputSchema.parse(input)
+    const res = await api.post(`/api/projects/${id}/skill-ai-editor/complete`, body, {
       timeout: 130_000,
     })
-    return skillAssistantCompleteResponseSchema.parse(res.data)
+    return skillAiEditorCompleteResponseSchema.parse(res.data)
   },
 
   listAgentTemplates: async (id: string): Promise<AgentTemplateRow[]> => {

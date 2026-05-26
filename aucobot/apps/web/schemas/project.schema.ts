@@ -279,33 +279,33 @@ export type ProjectSkillDetail = z.infer<typeof projectSkillDetailSchema>
 export type CreateProjectSkillInput = z.infer<typeof createProjectSkillSchema>
 export type UpdateProjectSkillInput = z.infer<typeof updateProjectSkillSchema>
 
-/** GET /api/projects/:id/skill-assistant/options */
-export const skillAssistantOptionModelSchema = z.object({
+/** GET /api/projects/:id/skill-ai-editor/options */
+export const skillAiEditorOptionModelSchema = z.object({
   id: z.string(),
   name: z.string(),
   openclawId: z.string(),
 })
 
-export const skillAssistantOptionProviderSchema = z.object({
+export const skillAiEditorOptionProviderSchema = z.object({
   providerId: z.string(),
   displayName: z.string(),
   defaultModel: z.string().nullable(),
-  models: z.array(skillAssistantOptionModelSchema),
+  models: z.array(skillAiEditorOptionModelSchema),
 })
 
-export const skillAssistantOptionsResponseSchema = z.object({
-  providers: z.array(skillAssistantOptionProviderSchema),
+export const skillAiEditorOptionsResponseSchema = z.object({
+  providers: z.array(skillAiEditorOptionProviderSchema),
 })
 
-export const skillAssistantMessageSchema = z.object({
+export const skillAiEditorMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string(),
 })
 
-export const skillAssistantCompleteInputSchema = z.object({
+export const skillAiEditorCompleteInputSchema = z.object({
   providerId: z.string(),
   model: z.string(),
-  messages: z.array(skillAssistantMessageSchema).min(1).max(20),
+  messages: z.array(skillAiEditorMessageSchema).min(1).max(20),
   skillContext: z.object({
     slug: z.string(),
     name: z.string(),
@@ -315,16 +315,16 @@ export const skillAssistantCompleteInputSchema = z.object({
   }),
 })
 
-export const skillAssistantCompleteResponseSchema = z.object({
+export const skillAiEditorCompleteResponseSchema = z.object({
   markdown: z.string(),
 })
 
-export type SkillAssistantOptionsResponse = z.infer<
-  typeof skillAssistantOptionsResponseSchema
+export type SkillAiEditorOptionsResponse = z.infer<
+  typeof skillAiEditorOptionsResponseSchema
 >
-export type SkillAssistantMessage = z.infer<typeof skillAssistantMessageSchema>
-export type SkillAssistantCompleteInput = z.infer<
-  typeof skillAssistantCompleteInputSchema
+export type SkillAiEditorMessage = z.infer<typeof skillAiEditorMessageSchema>
+export type SkillAiEditorCompleteInput = z.infer<
+  typeof skillAiEditorCompleteInputSchema
 >
 
 /** GET /api/projects/:id/agents/templates */

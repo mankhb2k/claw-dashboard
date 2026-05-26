@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const projectId = process.argv[2]?.trim() || 'cmpedzekq0001d4k5op1bk8bi';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const modPath = path.join(root, 'dist', 'plugins', 'projects', 'workspace', 'workspace.service.js');
+const modPath = path.join(root, 'dist', 'features', 'projects', 'workspace', 'workspace.service.js');
 
 process.chdir(root);
 process.env.OPENCLAW_DATA_ROOT = process.env.OPENCLAW_DATA_ROOT ?? '../../../backend/data/projects';

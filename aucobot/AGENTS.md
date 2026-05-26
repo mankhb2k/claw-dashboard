@@ -53,7 +53,7 @@ Env: `apps/api/.env`, `deploy/.env` (compose), `deploy/.env.gateway` (gateway de
 | Types, `GatewayEndpointResolver`, `PlanGuard` | `@aucobot/runtime-contracts` |
 | OSS fixed gateway `:18789`, health poll | `@aucobot/runtime-oss` |
 | Cloud docker per project | `@aucobot-cloud/fleet` in `cloud/packages/` (future) |
-| Cloud branch in API (temporary) | `apps/api/src/plugins/projects/runtime/gateway-endpoint.ts` |
+| Cloud branch in API (temporary) | `apps/api/src/features/projects/runtime/gateway-endpoint.ts` |
 
 ## PR / task template for agents
 

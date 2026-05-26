@@ -18,7 +18,7 @@ Key derivation: `PROVIDER_KEY_ENCRYPTION_SECRET` or fallback `JWT_SECRET`.
 | Module | Source today | Status |
 | ------ | ------------- | ------ |
 | Secret crypto | ~~`core/crypto/secret-crypto.ts`~~ | ✅ moved |
-| Chat upstream | ~~`plugins/projects/chat/gateway-*.ts`~~ | ✅ moved |
+| Chat upstream | ~~`features/projects/chat/gateway-*.ts`~~ | ✅ moved |
 | Auth helpers (JWT OSS) | ~~`core/auth/*.util.ts`~~ | ✅ moved |
 | Project orchestration | `projects.service` (non-Nest parts) | pending |
 
