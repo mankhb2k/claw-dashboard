@@ -8,12 +8,12 @@ import { decryptSecret } from '@aucobot/control-plane-core';
 import {
   GEMINI_SKILL_ASSISTANT_MODELS,
   resolveGeminiSkillDefaultModel,
-} from '../providers/gemini-models';
+} from '../ai-providers/gemini/gemini-models';
 import {
   OPENAI_SKILL_ASSISTANT_MODELS,
   resolveOpenAiSkillDefaultModel,
-} from '../providers/openai-models';
-import { resolveProvider } from '../providers/provider-registry';
+} from '../ai-providers/openai/openai-models';
+import { resolveProvider } from '../ai-providers/provider-registry';
 import {
   SKILL_ASSISTANT_MAX_MARKDOWN_CHARS,
   SKILL_ASSISTANT_MAX_MESSAGES,

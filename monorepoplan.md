@@ -2,7 +2,7 @@
 
 > **Tên dự án:** AucoBot  
 > **Cập nhật:** 2026-05-23  
-> **Tham chiếu:** `openclaw-architecture.md`, `workflow.md`, `billing-plan.md`  
+> **Tham chiếu:** [`workflow.md`](workflow.md) (SSOT AucoBot), [`openclaw-architecture.md`](openclaw-architecture.md) (SSOT worker), `billing-plan.md`  
 > **Mô hình thị trường:** Engine mở (OSS self-host) + Cloud trả phí (Supabase / n8n style)
 
 ---
@@ -20,7 +20,7 @@ AucoBot là monorepo **pnpm** gồm:
 
 - **Spawn container per project = chỉ Cloud.** Code hiện tại (`DockerService.spawnWorker`, `hostPort` động) là mô hình Cloud.
 - **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
-- **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — `openclaw-architecture.md` §4.7).
+- **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — `workflow.md` §5.6).
 
 > **OSS compose = 4 services:** `web` + `api` (AucoBot) + `gateway` + `postgres` (upstream pull). **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài.
 
@@ -646,7 +646,8 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 
 | Chủ đề | File |
 | ------ | ---- |
-| Gateway, channels, skills sync | `openclaw-architecture.md` |
+| Gateway upstream | `openclaw-architecture.md` |
+| Sync, channels, chat proxy | `workflow.md` (§5.5–5.7) |
 | Luồng vận hành OSS / Cloud | `workflow.md` §2 |
 | Billing Cloud | `billing-plan.md` |
 | Kế hoạch monorepo (file này) | `monorepoplan.md` §2 (4 service) |

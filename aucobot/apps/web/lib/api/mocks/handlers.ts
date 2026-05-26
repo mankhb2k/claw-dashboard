@@ -242,41 +242,61 @@ export const projectHandlers = {
     return { token }
   },
 
-  upsertEnv: (id: string, req: MockRequest): void => {
-    if (!currentUser) throw new Error('Not authenticated')
-    if (!mockProjects.has(id)) throw new Error('Project not found')
-    const data = req.data as { env?: Array<{ key: string; value: string }> }
-    const list = data.env ?? []
-    const store = mockProjectEnv.get(id) ?? new Map<string, string>()
-    for (const entry of list) {
-      if (!entry?.key || !entry?.value) continue
-      store.set(entry.key, entry.value)
-    }
-    mockProjectEnv.set(id, store)
-  },
-
-  getEnv: (id: string): Array<{ key: string; updatedAt: string; masked: string }> => {
+  listProviderKeys: (
+    id: string,
+  ): Array<{
+    key: string
+    providerId: string
+    label: string
+    updatedAt: string
+    masked: string
+    enabled: boolean
+    lastTestOk: boolean | null
+  }> => {
     if (!currentUser) throw new Error('Not authenticated')
     if (!mockProjects.has(id)) throw new Error('Project not found')
     const store = mockProjectEnv.get(id)
     if (!store) return []
     const now = new Date().toISOString()
+    const envKeyToProviderId: Record<string, string> = {
+      OPENAI_API_KEY: 'openai',
+      ANTHROPIC_API_KEY: 'anthropic',
+      GEMINI_API_KEY: 'gemini',
+      OPENROUTER_API_KEY: 'openrouter',
+      GOOGLE_API_KEY: 'google',
+      DEEPSEEK_API_KEY: 'deepseek',
+      GROQ_API_KEY: 'groq',
+    }
     return Array.from(store.keys()).map((key) => ({
       key,
+      providerId: envKeyToProviderId[key] ?? key,
+      label: key,
       updatedAt: now,
       masked: '••••••••••••',
+      enabled: true,
+      lastTestOk: true,
     }))
   },
 
-  deleteEnvKey: (id: string, keyName: string): void => {
+  deleteProviderKey: (id: string, providerId: string): void => {
     if (!currentUser) throw new Error('Not authenticated')
     if (!mockProjects.has(id)) throw new Error('Project not found')
-    const trimmed = keyName.trim()
-    if (!trimmed) throw new Error('Missing key')
+    const trimmed = providerId.trim()
+    if (!trimmed) throw new Error('Missing providerId')
 
     const store = mockProjectEnv.get(id)
     if (!store) return
-    store.delete(trimmed)
+    const envKeyToProviderId: Record<string, string> = {
+      openai: 'OPENAI_API_KEY',
+      anthropic: 'ANTHROPIC_API_KEY',
+      gemini: 'GEMINI_API_KEY',
+      openrouter: 'OPENROUTER_API_KEY',
+      google: 'GOOGLE_API_KEY',
+      deepseek: 'DEEPSEEK_API_KEY',
+      groq: 'GROQ_API_KEY',
+    }
+    const envKey = envKeyToProviderId[trimmed] ?? trimmed
+    store.delete(envKey)
     if (store.size === 0) {
       mockProjectEnv.delete(id)
     }

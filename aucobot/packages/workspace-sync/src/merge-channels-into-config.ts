@@ -9,7 +9,7 @@ export type ChannelMergeRow = {
 };
 
 /** Channel ids managed by AucoBot sync (preserves other keys in openclaw.json). */
-const MANAGED_CHANNEL_IDS = new Set(['telegram']);
+const MANAGED_CHANNEL_IDS = new Set(['telegram', 'discord']);
 
 function mergePluginEntry(
   config: Record<string, unknown>,

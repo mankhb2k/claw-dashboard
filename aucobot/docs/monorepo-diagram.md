@@ -289,7 +289,7 @@ erDiagram
 | Project shell | `projects` | `ProjectsService` |
 | Agents | `agent_templates`, `project_agents` | `ProjectAgentsService` |
 | Skills | `project_skills` | `ProjectSkillsService` |
-| AI keys | `project_provider_keys` | `ProjectProviderKeysService` |
+| AI keys | `project_provider_keys` | `ProviderKeysService` |
 | Connectors (MCP/OAuth) | `project_connectors`, `…_secrets` | `ProjectConnectorsService` |
 | Channels (Telegram, …) | `project_channels`, `…_secrets` | *(schema ready — API TBD)* |
 

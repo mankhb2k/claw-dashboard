@@ -1,8 +1,8 @@
-/** Catalog model Gemini dùng cho agent/chat (generateContent). Nguồn: ai.google.dev/gemini-api/docs/models */
+/** Catalog Gemini model for agent/chat (generateContent). Source: ai.google.dev/gemini-api/docs/models */
 export type GeminiModelTier = 'stable' | 'preview' | 'deprecated';
 
 export type GeminiModelDef = {
-  /** ID gọi Gemini API, ví dụ gemini-2.5-flash */
+  /** ID call Gemini API, e.g. gemini-2.5-flash */
   id: string;
   name: string;
   /** ID OpenClaw: google/{id} */
@@ -22,42 +22,42 @@ export const GEMINI_CHAT_MODELS: GeminiModelDef[] = [
     openclawId: 'google/gemini-3.5-flash',
     tier: 'stable',
     recommended: true,
-    description: 'Mới nhất — agent & coding, hiệu năng cao',
+    description: 'Latest — agent & coding, high performance',
   },
   {
     id: 'gemini-3.1-pro-preview',
     name: 'Gemini 3.1 Pro',
     openclawId: 'google/gemini-3.1-pro-preview',
     tier: 'preview',
-    description: 'Preview — suy luận phức tạp, agentic',
+    description: 'Preview — complex reasoning, agentic',
   },
   {
     id: 'gemini-3-flash-preview',
     name: 'Gemini 3 Flash',
     openclawId: 'google/gemini-3-flash-preview',
     tier: 'preview',
-    description: 'Preview — cân bằng chi phí/hiệu năng',
+    description: 'Preview — balance cost/performance',
   },
   {
     id: 'gemini-3.1-flash-lite-preview',
     name: 'Gemini 3.1 Flash-Lite',
     openclawId: 'google/gemini-3.1-flash-lite-preview',
     tier: 'preview',
-    description: 'Preview — rẻ, latency thấp',
+    description: 'Preview — cheap, low latency',
   },
   {
     id: 'gemini-2.5-pro',
     name: 'Gemini 2.5 Pro',
     openclawId: 'google/gemini-2.5-pro',
     tier: 'stable',
-    description: 'Suy luận sâu, coding phức tạp',
+    description: 'Reasoning deep, complex coding',
   },
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     openclawId: 'google/gemini-2.5-flash',
     tier: 'stable',
-    description: 'Cân bằng giá/hiệu năng — mặc định SaaS',
+    description: 'Balance cost/performance — default SaaS',
   },
   {
     id: 'gemini-2.5-flash-lite',
@@ -65,28 +65,29 @@ export const GEMINI_CHAT_MODELS: GeminiModelDef[] = [
     openclawId: 'google/gemini-2.5-flash-lite',
     tier: 'stable',
     isFree: true,
-    description: 'Nhanh nhất, tiết kiệm nhất trong dòng 2.5',
+    description: 'Fastest, cheapest in 2.5 line',
   },
   {
     id: 'gemini-2.0-flash',
     name: 'Gemini 2.0 Flash',
     openclawId: 'google/gemini-2.0-flash',
     tier: 'deprecated',
-    description: 'Deprecated — migrate sang 2.5/3.x',
+    description: 'Deprecated — migrate to 2.5/3.x',
   },
   {
     id: 'gemini-2.0-flash-lite',
     name: 'Gemini 2.0 Flash-Lite',
     openclawId: 'google/gemini-2.0-flash-lite',
     tier: 'deprecated',
-    description: 'Deprecated — migrate sang 2.5 Flash-Lite',
+    description: 'Deprecated — migrate to 2.5 Flash-Lite',
   },
 ];
 
 export const GEMINI_DEFAULT_OPENCLAW_MODEL =
-  GEMINI_CHAT_MODELS.find((m) => m.id === 'gemini-2.5-flash')?.openclawId ?? 'google/gemini-2.5-flash';
+  GEMINI_CHAT_MODELS.find((m) => m.id === 'gemini-2.5-flash')?.openclawId ??
+  'google/gemini-2.5-flash';
 
-/** Skill AI assistant — 3 model dòng 3.x mới nhất (đầu catalog). */
+/** Skill AI assistant — 3 latest models in 3.x line (first in catalog). */
 export const GEMINI_SKILL_ASSISTANT_MODEL_IDS = [
   'gemini-3.5-flash',
   'gemini-3.1-pro-preview',
@@ -98,17 +99,23 @@ export const GEMINI_SKILL_ASSISTANT_MODELS = GEMINI_CHAT_MODELS.filter((m) =>
 );
 
 export const GEMINI_DEFAULT_SKILL_OPENCLAW_MODEL =
-  GEMINI_SKILL_ASSISTANT_MODELS.find((m) => m.id === 'gemini-3.5-flash')?.openclawId ??
-  'google/gemini-3.5-flash';
+  GEMINI_SKILL_ASSISTANT_MODELS.find((m) => m.id === 'gemini-3.5-flash')
+    ?.openclawId ?? 'google/gemini-3.5-flash';
 
-export function isGeminiSkillAssistantModelId(modelOrOpenclawId: string): boolean {
+export function isGeminiSkillAssistantModelId(
+  modelOrOpenclawId: string,
+): boolean {
   const native = modelOrOpenclawId.includes('/')
     ? modelOrOpenclawId.split('/').pop()!
     : modelOrOpenclawId;
-  return (GEMINI_SKILL_ASSISTANT_MODEL_IDS as readonly string[]).includes(native);
+  return (GEMINI_SKILL_ASSISTANT_MODEL_IDS as readonly string[]).includes(
+    native,
+  );
 }
 
-export function resolveGeminiSkillDefaultModel(storedDefault: string | null): string {
+export function resolveGeminiSkillDefaultModel(
+  storedDefault: string | null,
+): string {
   if (storedDefault && isGeminiSkillAssistantModelId(storedDefault)) {
     return storedDefault;
   }

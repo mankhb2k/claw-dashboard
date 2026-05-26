@@ -1,6 +1,6 @@
 # Dev local: chỉ Postgres. API/web chạy trên host.
 # Chạy: pnpm dev:db   |   Dừng: pnpm dev:db:down
-# Cần thêm gateway: pnpm dev:runtime
+# Postgres + gateway: pnpm dev:runtime (tự tắt dev:db trước — không dùng song song)
 services:
   postgres:
     image: postgres:16-alpine

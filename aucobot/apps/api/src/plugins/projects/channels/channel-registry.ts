@@ -1,13 +1,14 @@
-import type { ChannelDefinition } from './channel.types';
-import { TELEGRAM_CHANNEL } from './telegram.channel';
+import type { ChannelAdapter } from './channel-adapter.types';
+import { DISCORD_CHANNEL } from './discord/discord.channel';
+import { TELEGRAM_CHANNEL } from './telegram/telegram.channel';
 
-export const CHANNEL_REGISTRY: ChannelDefinition[] = [TELEGRAM_CHANNEL];
+export const CHANNEL_REGISTRY: ChannelAdapter[] = [TELEGRAM_CHANNEL, DISCORD_CHANNEL];
 
-export function resolveChannel(channelId: string): ChannelDefinition | undefined {
+export function resolveChannel(channelId: string): ChannelAdapter | undefined {
   const key = channelId.trim().toLowerCase();
   return CHANNEL_REGISTRY.find((c) => c.id === key);
 }
 
-export function listActiveChannels(): ChannelDefinition[] {
+export function listActiveChannels(): ChannelAdapter[] {
   return CHANNEL_REGISTRY.filter((c) => c.status === 'ACTIVE');
 }

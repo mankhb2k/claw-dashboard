@@ -1,6 +1,8 @@
 ﻿# OpenClaw — Kiến Trúc Tổng Quan Chi Tiết
 
-> Tài liệu này mô tả toàn diện kiến trúc, cách hoạt động, các kênh, gateway, model provider, tools, plugin và các tính năng của OpenClaw.
+> **Phạm vi:** Chỉ **`openclaw-worker/`** (runtime Gateway upstream). **Không** mô tả control plane AucoBot (API, DB, sync volume, chat proxy) — xem **`workflow.md`** (repo root).
+>
+> Tài liệu này mô tả kiến trúc, cách hoạt động, các kênh, gateway, model provider, tools, plugin và các tính năng của OpenClaw worker.
 
 ---
 
@@ -288,7 +290,7 @@ Gateway → Client: res(ok|error)
   - `update.run` / `update.status` — cập nhật bản thân gateway + restart sentinel
 - **Rate limit** (theo doc): các thao tác control-plane ghi (`config.apply`, `config.patch`, `update.run`) bị giới hạn tần suất theo `deviceId` + IP; restart được gom và có cooldown giữa các chu kỳ restart.
 
-Gọi RPC thường qua **`openclaw gateway call <method>`** hoặc client WebSocket; không đồng nhất với chỉ JWT của ứng dụng SaaS — xem §4.7.
+Gọi RPC thường qua **`openclaw gateway call <method>`** hoặc client WebSocket; credential là **`gateway.auth`** (token/password/…) — không thay thế bằng JWT hay session của ứng dụng bên ngoài trừ khi control plane tự map (chi tiết tích hợp AucoBot: `workflow.md`).
 
 ### 4.6 Multi-Gateway Setup
 
@@ -299,16 +301,6 @@ OPENCLAW_CONFIG_PATH=~/.openclaw/a.json OPENCLAW_STATE_DIR=~/.openclaw-a opencla
 OPENCLAW_CONFIG_PATH=~/.openclaw/b.json OPENCLAW_STATE_DIR=~/.openclaw-b openclaw gateway --port 19002
 ```
 
-### 4.7 Gợi ý tích hợp OpenClaw SaaS (Phase 1 / Phase 2)
-
-Áp dụng khi control plane (Nest/Node…) và frontend chỉ đồng bộ metadata, còn **openclaw-worker** chạy gần dữ liệu người dùng (self-host hoặc VM).
-
-| Giai đoạn   | Cách đồng bộ với worker | Auth                                                                 |
-| ----------- | ------------------------ | -------------------------------------------------------------------- |
-| **Phase 1** | **Chỉ ghi file** vào volume mount trùng path gateway đọc (`openclaw.json`, workspace `AGENTS.md` / `SOUL.md` / …, và skill user: `<workspace>/skills/<slug>/SKILL.md` — §11.5). Gateway tự áp dụng khi file hợp lệ (§4.5.1); skill watcher refresh snapshot lượt chat tiếp theo. Không bắt buộc gọi HTTP reload. | **JWT** (hoặc session) cho API **SaaS** — xác thực user/tenant khi chỉnh project; worker **không** dùng JWT đó trừ khi bạn tự làm proxy map sang gateway auth. |
-| **Phase 2** | Tuỳ chọn: gọi **`config.patch` / `config.apply`** qua RPC (cần credential operator của gateway), hoặc tiếp tục ghi file. **`POST /tools/invoke`** cho automation tool-level; cùng yêu cầu **gateway auth** (token/password/trusted-proxy/…). | Tách bạch: JWT = biên SaaS; `OPENCLAW_GATEWAY_TOKEN` (v.v.) = biên operator worker. Chỉ nối hai lớp qua dịch vụ nội bộ / proxy tin cậy. |
-
-**Tóm tắt**: Phase 1 an toàn và đơn giản nhất là **sync file + mount**. Phase 2 thêm RPC HTTP-compat (`/tools/invoke`) hoặc patch config qua WS khi cần và khi đã có chiến lược bảo mật operator credential.
 
 ### 4.8 Đối chiếu nhanh với upstream vừa pin (`110042d840`)
 
@@ -967,7 +959,7 @@ Khi agent đang chạy và nhận tin nhắn mới:
 
 ### 11.5 Skills — Skill tự tạo, import và cách agent dùng
 
-> **Độ đầy đủ tài liệu:** Phiên bản cũ của §11.5 chỉ liệt kê thư mục load — **chưa đủ** cho product/SaaS. Phần dưới đối chiếu `openclaw-worker/docs/tools/skills.md`, `creating-skills.md`, `skills-config.md`, `docs/cli/skills.md` và mã `src/agents/skills/*`, `src/agents/skills-install*.ts`, `src/gateway/server-methods/skills*.ts` (pin `110042d840`).
+> Phần dưới đối chiếu `openclaw-worker/docs/tools/skills.md`, `creating-skills.md`, `skills-config.md`, `docs/cli/skills.md` và mã `src/agents/skills/*`, `src/agents/skills-install*.ts`, `src/gateway/server-methods/skills*.ts` (pin `110042d840`). Cách AucoBot sync skill từ DB → volume: `workflow.md`.
 
 #### 11.5.1 Skill là gì
 
@@ -999,7 +991,7 @@ Trùng `name` → bản **ưu tiên cao hơn** thắng. Hỗ trợ nhóm một c
 | **B** | **CLI native** `openclaw skills install <slug>` | CLI | Workspace `skills/` hoặc `--global` → `~/.openclaw/skills` | Tải từ **ClawHub**; `--agent <id>`, `--force`, `update` |
 | **C** | **ClawHub CLI** `clawhub` | Publisher / sync | `./skills` (cwd) hoặc workspace | `clawhub sync`, publish; OpenClaw pick up ở lượt session tiếp |
 | **D** | **Gateway RPC upload zip** | Control UI / admin client | `<workspace>/skills/<slug>/` | `skills.upload.begin` → `chunk` → `commit` → `skills.install({ source: "upload", uploadId, slug })`; cần `skills.install.allowUploadedArchives: true` |
-| **E** | **Copy / mount / CI** | SaaS, DevOps | `<workspace>/skills/` | Phase 1 SaaS: **ghi file** vào volume workspace container (§4.7) — tương đương (A) |
+| **E** | **Copy / mount / CI** | DevOps, control plane | `<workspace>/skills/` | Ghi file vào workspace mount — gateway watcher pick up (tương đương (A)) |
 | **F** | **`skills.load.extraDirs` + symlink** | Monorepo | Thư mục ngoài workspace | `allowSymlinkTargets` cho layout `skills/foo -> ~/repo/skills` |
 | **G** | **Migrate Codex** `openclaw migrate codex` | Người dùng Codex cũ | Workspace hiện tại | Copy có chọn skill từ `~/.codex/skills` |
 | **H** | **Plugin kèm skill** | Cài plugin | Plugin root | Ví dụ browser plugin → skill `browser-automation` |
@@ -1007,8 +999,6 @@ Trùng `name` → bản **ưu tiên cao hơn** thắng. Hỗ trợ nhóm một c
 | **J** | **Bundled** | Mọi cài đặt | Package | Bật/tắt qua `skills.entries.<name>.enabled`, `skills.allowBundled` |
 
 **Không phải “import skill”:** `skills.install` RPC từ onboarding/UI macOS — chạy **installer metadata** trong frontmatter (brew/node/uv/download) cho dependency của skill đã có, không thay cho (B) ClawHub download.
-
-**SaaS `openclaw-saas` (hiện trạng):** Skill user lưu bảng `project_skills` (PostgreSQL) + API `GET/POST/PUT/PATCH/DELETE /api/projects/:id/skills`. Khi `enabled=true`, backend ghi `{dataDir}/workspace/skills/<slug>/SKILL.md` (cùng mount §4.7); gateway watcher refresh snapshot — agent **main** thấy skill ở lượt chat tiếp theo. UI: `frontend/app/(dashboard)/dashboard/skill/`.
 
 #### 11.5.4 User **dùng** skill sau khi đã có trên disk
 
@@ -1067,15 +1057,6 @@ Schema: `openclaw-worker/docs/tools/skills-config.md`.
 
 - Registry: [clawhub.ai](https://clawhub.ai)
 - CLI: `openclaw skills search | install | update | list | info | check` — `openclaw-worker/docs/cli/skills.md`
-
-#### 11.5.8 Liên kết SaaS (gợi ý triển khai)
-
-| Thành phần | Việc cần làm |
-|------------|----------------|
-| Dashboard Skill editor | `ProjectSkillsService` → ghi `data/<project>/workspace/skills/<slug>/SKILL.md` khi enabled |
-| Project container | `agents.defaults.workspace` trỏ đúng volume; không cần restart gateway nếu watcher bật |
-| Bảo mật | Coi skill như **untrusted code** trong prompt; sandbox cho tool rủi ro (§13) |
-| Phase 2 (tuỳ chọn) | Proxy `skills.install` / upload zip qua WS operator — chỉ khi đã có credential gateway |
 
 ---
 
@@ -3833,4 +3814,4 @@ Biến môi trường thường gặp: `OPENCLAW_GATEWAY_TOKEN`, config `~/.open
 
 ---
 
-_Tài liệu được tổng hợp từ `openclaw-worker/README.md`, `VISION.md`, `docs/` (250+ files) và mã nguồn `openclaw-worker/src/`, `openclaw-worker/ui/` của dự án OpenClaw._
+_Tài liệu được tổng hợp từ `openclaw-worker/` (`README.md`, `VISION.md`, `docs/gateway/configuration.md`, `src/gateway/config-reload-plan.ts`, …). **SSOT worker:** `openclaw-architecture.md` (repo root). **SSOT tính năng AucoBot:** `workflow.md`. Cập nhật: 2026-05-25._

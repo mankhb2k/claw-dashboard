@@ -1,12 +1,7 @@
-export type ChannelKind = 'BOT_TOKEN' | 'OAUTH' | 'WEBHOOK' | 'QR_PAIRING';
+import type { ChannelKind, ChannelTestResult } from '@aucobot/shared';
 
-export type ChannelTestResult = {
-  ok: boolean;
-  message?: string;
-  metadata?: Record<string, unknown>;
-};
-
-export type ChannelDefinition = {
+/** Server-side channel plugin contract (registry adapters). Not the REST catalog DTO. */
+export type ChannelAdapter = {
   id: string;
   displayName: string;
   description: string;
@@ -24,4 +19,6 @@ export type ChannelDefinition = {
     secrets: Record<string, string>,
     config: Record<string, unknown>,
   ): Record<string, unknown>;
+  defaultConfig(): Record<string, unknown>;
+  normalizeConfig(existing: unknown, patch: Record<string, unknown>): Record<string, unknown>;
 };

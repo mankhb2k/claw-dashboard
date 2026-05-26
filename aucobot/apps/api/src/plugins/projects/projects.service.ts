@@ -10,7 +10,7 @@ import { customAlphabet } from 'nanoid';
 import { PrismaService } from '../../core/database/prisma.service';
 import { toProjectDto, type ProjectDto } from './projects.mapper';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { ProjectWorkspaceService } from './workspace/project-workspace.service';
+import { WorkspaceService } from './workspace/workspace.service';
 import { resolveGatewayEndpoint, resolveOssGatewayToken } from './runtime/gateway-endpoint';
 import { gatewayTokenForNewProject } from '@aucobot/control-plane-core';
 import { StaticGatewayProvisioner } from '@aucobot/runtime-oss';
@@ -29,7 +29,7 @@ export class ProjectsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
   ) {}
 
   async listMine(userId: string): Promise<ProjectDto[]> {

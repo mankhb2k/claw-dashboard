@@ -8,7 +8,7 @@ import { ConnectorConnectionStatus } from '@aucobot/database';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { decryptSecret, encryptSecret, maskSecret } from '@aucobot/control-plane-core';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 import {
   listActiveConnectors,
   resolveConnector,
@@ -48,7 +48,7 @@ export type ProjectConnectorDto = {
 export class ProjectConnectorsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
     private readonly jwt: JwtService,
   ) {}
 

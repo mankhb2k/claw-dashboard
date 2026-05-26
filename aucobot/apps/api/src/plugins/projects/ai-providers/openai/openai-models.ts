@@ -1,4 +1,4 @@
-/** Catalog chat/agent OpenAI — nguồn: https://developers.openai.com/api/docs/models */
+/** Catalog chat/agent OpenAI — source: https://developers.openai.com/api/docs/models */
 export type OpenAiModelTier = 'stable' | 'preview' | 'deprecated';
 
 export type OpenAiModelDef = {
@@ -8,7 +8,7 @@ export type OpenAiModelDef = {
   tier: OpenAiModelTier;
   description?: string;
   recommended?: boolean;
-  /** Chỉ hiện trong Skill AI assistant (GPT-5 frontier). */
+  /** Only show in Skill AI assistant (GPT-5 frontier). */
   skillAssistant?: boolean;
 };
 
@@ -18,7 +18,7 @@ export const OPENAI_CHAT_MODELS: OpenAiModelDef[] = [
     name: 'GPT-5.5',
     openclawId: 'openai/gpt-5.5',
     tier: 'stable',
-    description: 'Flagship — coding, agent, suy luận phức tạp',
+    description: 'Flagship — coding, agent, complex reasoning',
     skillAssistant: true,
   },
   {
@@ -26,7 +26,7 @@ export const OPENAI_CHAT_MODELS: OpenAiModelDef[] = [
     name: 'GPT-5.4',
     openclawId: 'openai/gpt-5.4',
     tier: 'stable',
-    description: 'Cân bằng hiệu năng / chi phí',
+    description: 'Balance performance / cost',
     skillAssistant: true,
   },
   {
@@ -35,7 +35,7 @@ export const OPENAI_CHAT_MODELS: OpenAiModelDef[] = [
     openclawId: 'openai/gpt-5.4-mini',
     tier: 'stable',
     recommended: true,
-    description: 'Nhanh, rẻ — mặc định test key & agent nhẹ',
+    description: 'Fast, cheap — default test key & agent lightweight',
     skillAssistant: true,
   },
   {
@@ -43,7 +43,7 @@ export const OPENAI_CHAT_MODELS: OpenAiModelDef[] = [
     name: 'GPT-5.4 Nano',
     openclawId: 'openai/gpt-5.4-nano',
     tier: 'stable',
-    description: 'Latency thấp, chi phí tối thiểu',
+    description: 'Low latency, minimum cost',
     skillAssistant: true,
   },
 ];
@@ -52,19 +52,23 @@ export const OPENAI_DEFAULT_OPENCLAW_MODEL =
   OPENAI_CHAT_MODELS.find((m) => m.id === 'gpt-5.4-mini')?.openclawId ??
   'openai/gpt-5.4-mini';
 
-/** Model GPT-5 dùng cho Skill AI assistant dropdown. */
+/** Model GPT-5 for Skill AI assistant dropdown. */
 export const OPENAI_SKILL_ASSISTANT_MODELS = OPENAI_CHAT_MODELS.filter(
   (m) => m.skillAssistant === true,
 );
 
-export function isOpenAiSkillAssistantModelId(modelOrOpenclawId: string): boolean {
+export function isOpenAiSkillAssistantModelId(
+  modelOrOpenclawId: string,
+): boolean {
   const native = modelOrOpenclawId.includes('/')
     ? modelOrOpenclawId.split('/').pop()!
     : modelOrOpenclawId;
   return native.startsWith('gpt-5');
 }
 
-export function resolveOpenAiSkillDefaultModel(storedDefault: string | null): string {
+export function resolveOpenAiSkillDefaultModel(
+  storedDefault: string | null,
+): string {
   if (storedDefault && isOpenAiSkillAssistantModelId(storedDefault)) {
     return storedDefault;
   }

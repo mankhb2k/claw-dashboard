@@ -1,4 +1,5 @@
-import type { ChannelDefinition, ChannelTestResult } from './channel.types';
+import type { ChannelTestResult } from '@aucobot/shared';
+import type { ChannelAdapter } from '../channel-adapter.types';
 import { validateTelegramAccessConfig } from './telegram-access.util';
 
 const BOT_TOKEN_RE = /^\d+:[A-Za-z0-9_-]+$/;
@@ -60,7 +61,24 @@ function buildTelegramOpenClawConfig(
   return slice;
 }
 
-export const TELEGRAM_CHANNEL: ChannelDefinition = {
+function defaultTelegramConfig(): Record<string, unknown> {
+  return { dmPolicy: 'allowlist', allowFrom: [] as string[] };
+}
+
+function normalizeTelegramConfig(
+  existing: unknown,
+  patch: Record<string, unknown>,
+): Record<string, unknown> {
+  const base =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...(existing as Record<string, unknown>) }
+      : {};
+  const merged = { ...base, ...patch };
+  const access = validateTelegramAccessConfig(merged, { strict: false });
+  return { ...merged, dmPolicy: access.dmPolicy, allowFrom: access.allowFrom };
+}
+
+export const TELEGRAM_CHANNEL: ChannelAdapter = {
   id: 'telegram',
   displayName: 'Telegram',
   description: 'Connect a Telegram bot via BotFather token.',
@@ -71,4 +89,6 @@ export const TELEGRAM_CHANNEL: ChannelDefinition = {
   docsPath: '/channels/telegram',
   testConnection: testTelegramConnection,
   buildOpenClawConfig: buildTelegramOpenClawConfig,
+  defaultConfig: defaultTelegramConfig,
+  normalizeConfig: normalizeTelegramConfig,
 };

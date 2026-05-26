@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import WebSocket, { type RawData } from 'ws';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 import { isAllowedChatRpc, openGatewayUpstream } from '@aucobot/control-plane-core';
 
 type ClientSocket = WebSocket;
@@ -26,7 +26,7 @@ function parseFrame(raw: WsRaw): Record<string, unknown> | null {
 export class ChatGatewayProxyService {
   private readonly log = new Logger(ChatGatewayProxyService.name);
 
-  constructor(private readonly workspace: ProjectWorkspaceService) {}
+  constructor(private readonly workspace: WorkspaceService) {}
 
   async bridge(params: {
     client: ClientSocket;

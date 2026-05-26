@@ -30,7 +30,7 @@ function isMockRoute(url: string, method: string): boolean {
     { url: '/api/projects/connectors/definitions', methods: ['get'] },
     {
       pattern:
-        /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/env|\/connectors(\/[\w-]+(\/secrets\/[\w-]+|\/test)?)?|$)/,
+        /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/provider-keys(\/[\w-]+(\/enabled|\/test)?)?|\/connectors(\/[\w-]+(\/secrets\/[\w-]+|\/test)?)?|$)/,
       methods: ['get', 'post', 'put', 'patch', 'delete'],
     },
   ]
@@ -205,43 +205,26 @@ export function setupMockInterceptor(api: AxiosInstance) {
           } as AxiosResponse)
         }
 
-        const envMatch = url.match(/^\/api\/projects\/([\w-]+)\/env$/)
-        if (envMatch && method === 'put') {
-          const [, id] = envMatch
-          projectHandlers.upsertEnv(id, { config, data: reqData })
-          return Promise.resolve({
-            data: {},
-            status: 200,
-            statusText: 'OK',
-            headers: {},
-            config,
-          } as AxiosResponse)
-        }
-
-        if (envMatch && method === 'delete') {
-          const [, id] = envMatch
-          const keyName =
-            reqData &&
-            typeof reqData === 'object' &&
-            'key' in reqData &&
-            typeof (reqData as { key?: unknown }).key === 'string'
-              ? (reqData as { key: string }).key
-              : ''
-          projectHandlers.deleteEnvKey(id, keyName)
-          return Promise.resolve({
-            data: {},
-            status: 200,
-            statusText: 'OK',
-            headers: {},
-            config,
-          } as AxiosResponse)
-        }
-
-        if (envMatch && method === 'get') {
-          const [, id] = envMatch
-          responseData = projectHandlers.getEnv(id)
+        const providerKeysMatch = url.match(
+          /^\/api\/projects\/([\w-]+)\/provider-keys(?:\/([\w-]+)(?:\/(enabled|test))?)?$/,
+        )
+        if (providerKeysMatch && method === 'get' && !providerKeysMatch[2]) {
+          const [, id] = providerKeysMatch
+          responseData = projectHandlers.listProviderKeys(id)
           return Promise.resolve({
             data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
+        if (providerKeysMatch && method === 'delete' && providerKeysMatch[2] && !providerKeysMatch[3]) {
+          const [, id, providerId] = providerKeysMatch
+          projectHandlers.deleteProviderKey(id, providerId)
+          return Promise.resolve({
+            data: { ok: true },
             status: 200,
             statusText: 'OK',
             headers: {},

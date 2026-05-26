@@ -4,7 +4,6 @@ import { PROVIDER_TEST_TIMEOUT_MS } from '@/lib/provider-test'
 import {
   projectSchema,
   projectHealthSchema,
-  upsertProjectEnvSchema,
   projectEnvMaskedRowSchema,
   providerKeyTestResultSchema,
   providerDefinitionSchema,
@@ -38,7 +37,6 @@ import {
   type Project,
   type CreateProjectInput,
   type ProjectHealth,
-  type UpsertProjectEnvInput,
   type GatewayTokenResponse,
   type ConnectorDefinition,
   type ProjectConnector,
@@ -108,16 +106,6 @@ export const projectApi = {
     await api.delete(`/api/projects/${id}`)
   },
 
-  upsertEnv: async (id: string, input: UpsertProjectEnvInput): Promise<void> => {
-    const parsed = upsertProjectEnvSchema.parse(input)
-    await api.put(`/api/projects/${id}/env`, parsed)
-  },
-
-  listEnv: async (id: string): Promise<ProjectEnvMaskedRow[]> => {
-    const res = await api.get(`/api/projects/${id}/env`)
-    return z.array(projectEnvMaskedRowSchema).parse(res.data)
-  },
-
   listProviderKeys: async (id: string): Promise<ProjectEnvMaskedRow[]> => {
     const res = await api.get(`/api/projects/${id}/provider-keys`)
     return z.array(projectEnvMaskedRowSchema).parse(res.data)
@@ -160,8 +148,8 @@ export const projectApi = {
     return z.array(providerDefinitionSchema).parse(res.data)
   },
 
-  deleteEnvKey: async (id: string, key: string): Promise<void> => {
-    await api.delete(`/api/projects/${id}/env`, { data: { key } })
+  deleteProviderKey: async (id: string, providerId: string): Promise<void> => {
+    await api.delete(`/api/projects/${id}/provider-keys/${providerId}`)
   },
 
   listConnectorDefinitions: async (): Promise<ConnectorDefinition[]> => {

@@ -1,4 +1,14 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const packageDir =
+  typeof __dirname !== 'undefined'
+    ? __dirname
+    : dirname(fileURLToPath(import.meta.url));
+
+config({ path: resolve(packageDir, '../../apps/api/.env') });
+config({ path: resolve(packageDir, '../.env'), override: true });
 import { createPrismaClient } from '../src/create-prisma-client';
 import { AGENT_TEMPLATE_SEEDS } from './agent-templates.seed-data';
 

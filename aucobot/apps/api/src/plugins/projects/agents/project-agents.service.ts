@@ -7,7 +7,7 @@ import {
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaService } from '../../../core/database/prisma.service';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 import {
   compileAgentBootstrap,
   parseAgentFormData,
@@ -54,7 +54,7 @@ export type AgentTemplateRow = {
 export class ProjectAgentsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
   ) {}
 
   private hostAgentDir(dataDir: string, slug: string): string {

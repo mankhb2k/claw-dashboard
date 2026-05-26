@@ -1,22 +1,23 @@
-import {
-  PROVIDER_TEST_MAX_OUTPUT_TOKENS,
-  PROVIDER_TEST_TIMEOUT_MS,
-} from './provider-test.constants';
+/** Gọi OpenAI API thật để xác minh API key (không phải Jest). */
+const PROVIDER_KEY_TEST_TIMEOUT_MS = 15_000;
+const PROVIDER_KEY_TEST_MAX_OUTPUT_TOKENS = 16;
 
 type OpenAiChatResponse = {
   choices?: Array<{ message?: { content?: string | null } }>;
   error?: { message?: string };
 };
 
-export type OpenAiTestResult = {
+export type OpenAiApiKeySmokeResult = {
   ok: boolean;
   model?: string;
   message?: string;
   error?: string;
 };
 
-/** Smoke test OpenAI: minimal chat completion. */
-export async function testOpenAiApiKey(apiKey: string): Promise<OpenAiTestResult> {
+/** Call OpenAI chat completion minimally to verify API key. */
+export async function smokeTestOpenAiApiKey(
+  apiKey: string,
+): Promise<OpenAiApiKeySmokeResult> {
   const model = 'gpt-5.4-mini';
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -28,9 +29,9 @@ export async function testOpenAiApiKey(apiKey: string): Promise<OpenAiTestResult
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: 'Reply with exactly: ok' }],
-        max_tokens: PROVIDER_TEST_MAX_OUTPUT_TOKENS,
+        max_tokens: PROVIDER_KEY_TEST_MAX_OUTPUT_TOKENS,
       }),
-      signal: AbortSignal.timeout(PROVIDER_TEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(PROVIDER_KEY_TEST_TIMEOUT_MS),
     });
 
     const text = await res.text();
@@ -54,7 +55,10 @@ export async function testOpenAiApiKey(apiKey: string): Promise<OpenAiTestResult
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('timeout') || message.includes('aborted')) {
-      return { ok: false, error: `Test timeout (${PROVIDER_TEST_TIMEOUT_MS}ms)` };
+      return {
+        ok: false,
+        error: `Test timeout (${PROVIDER_KEY_TEST_TIMEOUT_MS}ms)`,
+      };
     }
     return { ok: false, error: message };
   }

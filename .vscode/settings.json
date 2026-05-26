@@ -1,0 +1,4 @@
+{
+  "typescript.tsdk": "aucobot/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}

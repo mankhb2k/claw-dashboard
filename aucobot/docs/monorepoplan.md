@@ -2,7 +2,7 @@
 
 > **Tên dự án:** AucoBot  
 > **Cập nhật:** 2026-05-24  
-> **Tham chiếu:** `openclaw-architecture.md`, `workflow.md`, `billing-plan.md`  
+> **Tham chiếu:** [`workflow.md`](../../workflow.md) (SSOT tính năng AucoBot), [`openclaw-architecture.md`](../../openclaw-architecture.md) (SSOT worker), `billing-plan.md`  
 > **Mô hình thị trường:** Engine mở (OSS self-host) + Cloud trả phí (Supabase / n8n style)
 
 ---
@@ -20,7 +20,7 @@ AucoBot là monorepo **pnpm** gồm:
 
 - **Spawn container per project = chỉ Cloud.** Code hiện tại (`DockerService.spawnWorker`, `hostPort` động) là mô hình Cloud.
 - **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
-- **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — `openclaw-architecture.md` §4.7).
+- **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — [`workflow.md`](../../workflow.md) §5.6).
 
 > **OSS compose = 4 services:** `web` + `api` (AucoBot) + `gateway` + `postgres` (upstream pull). **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài.
 
@@ -224,11 +224,12 @@ aucobot/                              # root monorepo (repo public OSS)
 │   └── skill-hub/                      # ← skill-hub/ (skill mẫu OSS)
 │
 └── docs/
-    ├── openclaw-architecture.md
     ├── workflow.md
     ├── billing-plan.md
     └── monorepoplan.md                 # file này
 ```
+
+`workflow.md` và `openclaw-architecture.md` nằm ở **repo root** — SSOT tính năng AucoBot vs worker upstream.
 
 ### Mapping từ repo hiện tại (`openclaw-saas`)
 
@@ -238,7 +239,7 @@ aucobot/                              # root monorepo (repo public OSS)
 | `frontend/` | `apps/web` |
 | `openclaw-worker/` | **Pull image** — repo gốc ở parent, không vendored trong `aucobot/` |
 | `skill-hub/` | `catalogs/skill-hub/` |
-| Docs root | `docs/` |
+| Docs root | `workflow.md`, `openclaw-architecture.md` (repo root) + `aucobot/docs/` |
 | Cloud (chưa có) | `cloud/{api,web,packages,deploy}` hoặc repo `aucobot-cloud` riêng |
 
 ---
@@ -699,7 +700,8 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 
 | Chủ đề | File |
 | ------ | ---- |
-| Gateway, channels, skills sync | `openclaw-architecture.md` |
+| Gateway upstream | [`openclaw-architecture.md`](../../openclaw-architecture.md) |
+| Sync, channels, chat WS proxy | [`workflow.md`](../../workflow.md) (§5.5–5.7) |
 | Luồng vận hành OSS / Cloud | `workflow.md` §2 |
 | Billing Cloud | `billing-plan.md` |
 | Kế hoạch monorepo (file này) | `monorepoplan.md` §2 (4 service) |

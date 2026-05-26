@@ -47,7 +47,7 @@ export default function ClientAIModelPage() {
     setLoading(true);
     setError(null);
     void projectApi
-      .listEnv(projectId)
+      .listProviderKeys(projectId)
       .then(setEnvRows)
       .catch((err) => {
         setEnvRows([]);

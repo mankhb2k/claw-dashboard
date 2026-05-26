@@ -1,7 +1,6 @@
-import {
-  PROVIDER_TEST_MAX_OUTPUT_TOKENS,
-  PROVIDER_TEST_TIMEOUT_MS,
-} from './provider-test.constants';
+/** Gọi Gemini API thật để xác minh API key (không phải Jest). */
+const PROVIDER_KEY_TEST_TIMEOUT_MS = 15_000;
+const PROVIDER_KEY_TEST_MAX_OUTPUT_TOKENS = 16;
 
 type GeminiGenerateResponse = {
   candidates?: Array<{
@@ -11,20 +10,22 @@ type GeminiGenerateResponse = {
   promptFeedback?: { blockReason?: string };
 };
 
-export type GeminiTestResult = {
+export type GeminiApiKeySmokeResult = {
   ok: boolean;
   model?: string;
   message?: string;
   error?: string;
 };
 
-/** Smoke test Gemini: minimal generateContent (maxOutputTokens 1–16). */
-export async function testGeminiApiKey(apiKey: string): Promise<GeminiTestResult> {
+/** Gọi Gemini generateContent tối thiểu để xác minh API key hợp lệ. */
+export async function smokeTestGeminiApiKey(
+  apiKey: string,
+): Promise<GeminiApiKeySmokeResult> {
   const model = 'gemini-2.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const body = {
     contents: [{ role: 'user', parts: [{ text: 'ok' }] }],
-    generationConfig: { maxOutputTokens: PROVIDER_TEST_MAX_OUTPUT_TOKENS },
+    generationConfig: { maxOutputTokens: PROVIDER_KEY_TEST_MAX_OUTPUT_TOKENS },
   };
 
   try {
@@ -32,7 +33,7 @@ export async function testGeminiApiKey(apiKey: string): Promise<GeminiTestResult
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(PROVIDER_TEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(PROVIDER_KEY_TEST_TIMEOUT_MS),
     });
 
     const text = await res.text();
@@ -71,7 +72,7 @@ export async function testGeminiApiKey(apiKey: string): Promise<GeminiTestResult
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('timeout') || message.includes('aborted')) {
-      return { ok: false, error: `Test timeout (${PROVIDER_TEST_TIMEOUT_MS}ms)` };
+      return { ok: false, error: `Test timeout (${PROVIDER_KEY_TEST_TIMEOUT_MS}ms)` };
     }
     return { ok: false, error: message };
   }

@@ -1,5 +1,5 @@
-import { GEMINI_CHAT_MODELS, GEMINI_DEFAULT_OPENCLAW_MODEL, GEMINI_OPENCLAW_PROVIDER } from './gemini-models';
-import { OPENAI_CHAT_MODELS, OPENAI_DEFAULT_OPENCLAW_MODEL } from './openai-models';
+import { GEMINI_CHAT_MODELS, GEMINI_DEFAULT_OPENCLAW_MODEL, GEMINI_OPENCLAW_PROVIDER } from './gemini/gemini-models';
+import { OPENAI_CHAT_MODELS, OPENAI_DEFAULT_OPENCLAW_MODEL } from './openai/openai-models';
 
 export type ProviderModelCatalogEntry = {
   id: string;

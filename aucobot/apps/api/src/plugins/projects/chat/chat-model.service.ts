@@ -5,14 +5,14 @@ import { parseAgentFormData, readOpenClawConfigJson } from '@aucobot/workspace-s
 import {
   GEMINI_CHAT_MODELS,
   resolveGeminiSkillDefaultModel,
-} from '../providers/gemini-models';
+} from '../ai-providers/gemini/gemini-models';
 import {
   OPENAI_CHAT_MODELS,
   resolveOpenAiSkillDefaultModel,
-} from '../providers/openai-models';
-import { ProjectProviderKeysService } from '../providers/project-provider-keys.service';
-import { PROVIDER_REGISTRY, resolveProvider } from '../providers/provider-registry';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+} from '../ai-providers/openai/openai-models';
+import { ProviderKeysService } from '../ai-providers/provider-keys.service';
+import { PROVIDER_REGISTRY, resolveProvider } from '../ai-providers/provider-registry';
+import { WorkspaceService } from '../workspace/workspace.service';
 import path from 'node:path';
 
 export type ChatModelOption = {
@@ -39,8 +39,8 @@ const OPENCLAW_PREFIX_TO_PROVIDER: Record<string, string> = {
 export class ChatModelService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
-    private readonly providerKeys: ProjectProviderKeysService,
+    private readonly workspace: WorkspaceService,
+    private readonly providerKeys: ProviderKeysService,
     private readonly agents: ProjectAgentsService,
   ) {}
 

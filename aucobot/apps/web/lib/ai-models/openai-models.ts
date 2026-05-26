@@ -1,5 +1,5 @@
 /**
- * Catalog UI — giữ đồng bộ với backend `providers/openai-models.ts`.
+ * Catalog UI — giữ đồng bộ với backend `ai-providers/openai/openai-models.ts`.
  * Nguồn: https://developers.openai.com/api/docs/models
  */
 export type OpenAiModelTier = 'stable' | 'preview' | 'deprecated';

@@ -13,21 +13,21 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
 import {
-  CreateProjectChannelDto,
-  UpdateProjectChannelDto,
+  CreateChannelDto,
+  UpdateChannelDto,
   UpsertChannelSecretDto,
-} from '../dto/project-channel.dto';
+} from '../dto/channel.dto';
 import { ProjectsService } from '../projects.service';
-import { ProjectChannelsService } from './project-channels.service';
+import { ChannelsService } from './channels.service';
 
-@ApiTags('projects-channels')
+@ApiTags('channels')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('projects')
-export class ProjectChannelsController {
+export class ChannelsController {
   constructor(
     private readonly projects: ProjectsService,
-    private readonly channels: ProjectChannelsService,
+    private readonly channels: ChannelsService,
   ) {}
 
   @Get(':id/channels')
@@ -40,7 +40,7 @@ export class ProjectChannelsController {
   async create(
     @CurrentUser() user: JwtPayloadUser,
     @Param('id') id: string,
-    @Body() dto: CreateProjectChannelDto,
+    @Body() dto: CreateChannelDto,
   ) {
     await this.projects.assertOwned(user.sub, id);
     return this.channels.create(id, dto);
@@ -51,7 +51,7 @@ export class ProjectChannelsController {
     @CurrentUser() user: JwtPayloadUser,
     @Param('id') id: string,
     @Param('channelRowId') channelRowId: string,
-    @Body() dto: UpdateProjectChannelDto,
+    @Body() dto: UpdateChannelDto,
   ) {
     await this.projects.assertOwned(user.sub, id);
     return this.channels.update(id, channelRowId, dto);

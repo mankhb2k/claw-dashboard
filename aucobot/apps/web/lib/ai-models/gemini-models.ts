@@ -1,5 +1,5 @@
 /**
- * Catalog UI — giữ đồng bộ với backend `providers/gemini-models.ts`.
+ * Catalog UI — giữ đồng bộ với backend `ai-providers/gemini/gemini-models.ts`.
  * Nguồn: https://ai.google.dev/gemini-api/docs/models
  */
 export type GeminiModelTier = 'stable' | 'preview' | 'deprecated';

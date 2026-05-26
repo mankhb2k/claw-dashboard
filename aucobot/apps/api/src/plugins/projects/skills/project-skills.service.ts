@@ -7,7 +7,7 @@ import {
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaService } from '../../../core/database/prisma.service';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 import {
   buildSkillMarkdown,
   MAX_SKILL_BODY_BYTES,
@@ -35,7 +35,7 @@ export type ProjectSkillDetail = ProjectSkillListRow & {
 export class ProjectSkillsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
   ) {}
 
   private skillDir(dataDir: string, slug: string): string {

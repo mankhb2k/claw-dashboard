@@ -24,7 +24,7 @@ import { resolveChannel } from '../channels/channel-registry';
 import { resolveOssGatewayToken } from '../runtime/gateway-endpoint';
 
 @Injectable()
-export class ProjectWorkspaceService {
+export class WorkspaceService {
   constructor(private readonly prisma: PrismaService) {}
 
   private layoutOptions() {

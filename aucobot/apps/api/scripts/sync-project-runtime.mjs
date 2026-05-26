@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const projectId = process.argv[2]?.trim() || 'cmpedzekq0001d4k5op1bk8bi';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const modPath = path.join(root, 'dist', 'plugins', 'projects', 'workspace', 'project-workspace.service.js');
+const modPath = path.join(root, 'dist', 'plugins', 'projects', 'workspace', 'workspace.service.js');
 
 process.chdir(root);
 process.env.OPENCLAW_DATA_ROOT = process.env.OPENCLAW_DATA_ROOT ?? '../../../backend/data/projects';
@@ -17,8 +17,8 @@ const { AppModule } = await import(pathToFileURL(path.join(root, 'dist', 'app.mo
 
 const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] });
 try {
-  const { ProjectWorkspaceService } = await import(pathToFileURL(modPath).href);
-  const workspace = app.get(ProjectWorkspaceService);
+  const { WorkspaceService } = await import(pathToFileURL(modPath).href);
+  const workspace = app.get(WorkspaceService);
   await workspace.syncProjectRuntime(projectId);
   console.log(`OK synced project ${projectId}`);
 } finally {

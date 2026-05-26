@@ -1,7 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
-import { decryptSecret, encryptSecret, maskSecret } from '@aucobot/control-plane-core';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import {
+  decryptSecret,
+  encryptSecret,
+  maskSecret,
+} from '@aucobot/control-plane-core';
+import { WorkspaceService } from '../workspace/workspace.service';
 import { runProviderKeyTest } from './provider-test';
 import { PROVIDER_REGISTRY, resolveProvider } from './provider-registry';
 
@@ -19,10 +27,10 @@ export type ProviderKeyMaskedRow = {
 };
 
 @Injectable()
-export class ProjectProviderKeysService {
+export class ProviderKeysService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
   ) {}
 
   listDefinitions() {
@@ -81,13 +89,15 @@ export class ProjectProviderKeysService {
         label: params.label?.trim() || provider.displayName,
         ciphertext: encryptSecret(apiKey),
         enabled,
-        defaultModel: params.defaultModel?.trim() || (provider.defaultModel ?? null),
+        defaultModel:
+          params.defaultModel?.trim() || (provider.defaultModel ?? null),
       },
       update: {
         label: params.label?.trim() || provider.displayName,
         ciphertext: encryptSecret(apiKey),
         enabled,
-        defaultModel: params.defaultModel?.trim() || (provider.defaultModel ?? null),
+        defaultModel:
+          params.defaultModel?.trim() || (provider.defaultModel ?? null),
         lastError: null,
       },
     });
@@ -102,7 +112,7 @@ export class ProjectProviderKeysService {
     };
   }
 
-  /** Lưu key (enabled=false) → smoke test → bật toggle nếu OK trong timeout. */
+  /** Save key (enabled=false) → smoke test → enable if OK in timeout. */
   async saveAndTest(params: {
     projectId: string;
     providerId: string;
@@ -114,7 +124,9 @@ export class ProjectProviderKeysService {
       ...params,
       enabled: false,
     });
-    return this.testProvider(params.projectId, params.providerId, { applyEnabled: true });
+    return this.testProvider(params.projectId, params.providerId, {
+      applyEnabled: true,
+    });
   }
 
   async setEnabled(projectId: string, providerId: string, enabled: boolean) {
@@ -141,7 +153,9 @@ export class ProjectProviderKeysService {
       return { ok: true, enabled: false };
     }
 
-    const test = await this.testProvider(projectId, providerId, { applyEnabled: true });
+    const test = await this.testProvider(projectId, providerId, {
+      applyEnabled: true,
+    });
     return {
       ok: test.ok,
       enabled: test.ok,
@@ -151,9 +165,14 @@ export class ProjectProviderKeysService {
     };
   }
 
-  async deleteByEnvKey(projectId: string, envKey: string) {
+  async deleteByProviderId(projectId: string, providerId: string) {
+    const provider = resolveProvider(providerId);
+    if (!provider) {
+      throw new BadRequestException(`Unknown provider: ${providerId}`);
+    }
+
     const deleted = await this.prisma.projectProviderKey.deleteMany({
-      where: { projectId, envKey },
+      where: { projectId, providerId: provider.id },
     });
     if (!deleted.count) {
       throw new NotFoundException('Provider key not found');
@@ -232,7 +251,9 @@ export class ProjectProviderKeysService {
       throw new NotFoundException('No API key stored for this provider');
     }
     if (!row.enabled) {
-      throw new BadRequestException(`Provider ${provider.displayName} is not enabled`);
+      throw new BadRequestException(
+        `Provider ${provider.displayName} is not enabled`,
+      );
     }
 
     await this.prisma.projectProviderKey.update({

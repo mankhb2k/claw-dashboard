@@ -246,10 +246,10 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
   };
 
   const handleDelete = async (connId: string) => {
-    if (!projectId || !providerData.envKey) return;
+    if (!projectId) return;
     setTestingConnId(connId);
     try {
-      await projectApi.deleteEnvKey(projectId, providerData.envKey);
+      await projectApi.deleteProviderKey(projectId, providerId);
       setConnections((prev) => prev.filter((c) => c.id !== connId));
       toast.success("Đã xóa API key");
     } catch (err) {

@@ -7,16 +7,11 @@ import {
 import { ChannelConnectionStatus } from '@aucobot/database';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { decryptSecret, encryptSecret, maskSecret } from '@aucobot/control-plane-core';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 import { listActiveChannels, resolveChannel } from './channel-registry';
-import { validateTelegramAccessConfig } from './telegram-access.util';
+import type { ChannelAdapter } from './channel-adapter.types';
 
-const DEFAULT_TELEGRAM_CONFIG = {
-  dmPolicy: 'allowlist',
-  allowFrom: [] as string[],
-};
-
-export type ProjectChannelDto = {
+export type ChannelDto = {
   id: string;
   projectId: string;
   channelId: string;
@@ -39,10 +34,10 @@ export type ProjectChannelDto = {
 };
 
 @Injectable()
-export class ProjectChannelsService {
+export class ChannelsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
   ) {}
 
   listDefinitions() {
@@ -61,7 +56,7 @@ export class ProjectChannelsService {
     }));
   }
 
-  async list(projectId: string): Promise<ProjectChannelDto[]> {
+  async list(projectId: string): Promise<ChannelDto[]> {
     const rows = await this.prisma.projectChannel.findMany({
       where: { projectId },
       include: { secrets: true },
@@ -73,7 +68,7 @@ export class ProjectChannelsService {
   async create(
     projectId: string,
     input: { channelId: string; enabled?: boolean; config?: Record<string, unknown> },
-  ): Promise<ProjectChannelDto> {
+  ): Promise<ChannelDto> {
     const def = resolveChannel(input.channelId);
     if (!def) {
       throw new BadRequestException(`Unknown channel: ${input.channelId}`);
@@ -93,9 +88,9 @@ export class ProjectChannelsService {
         enabled: Boolean(input.enabled),
         connectionStatus: ChannelConnectionStatus.DISCONNECTED,
         config: this.normalizeChannelConfig(
-          def.id,
+          def,
           {},
-          (input.config ?? DEFAULT_TELEGRAM_CONFIG) as Record<string, unknown>,
+          (input.config ?? def.defaultConfig()) as Record<string, unknown>,
         ) as object,
       },
       include: { secrets: true },
@@ -104,7 +99,7 @@ export class ProjectChannelsService {
     return this.toDto(row);
   }
 
-  async getOrCreate(projectId: string, channelId: string): Promise<ProjectChannelDto> {
+  async getOrCreate(projectId: string, channelId: string): Promise<ChannelDto> {
     const def = resolveChannel(channelId);
     if (!def) {
       throw new BadRequestException(`Unknown channel: ${channelId}`);
@@ -117,7 +112,7 @@ export class ProjectChannelsService {
         channelId: def.id,
         enabled: false,
         connectionStatus: ChannelConnectionStatus.DISCONNECTED,
-        config: DEFAULT_TELEGRAM_CONFIG as object,
+        config: def.defaultConfig() as object,
       },
       update: {},
       include: { secrets: true },
@@ -130,7 +125,7 @@ export class ProjectChannelsService {
     projectId: string,
     channelRowId: string,
     input: { enabled?: boolean; config?: Record<string, unknown> },
-  ): Promise<ProjectChannelDto> {
+  ): Promise<ChannelDto> {
     const row = await this.requireChannel(projectId, channelRowId);
     const def = resolveChannel(row.channelId);
     const data: {
@@ -140,17 +135,10 @@ export class ProjectChannelsService {
     } = {};
 
     if (input.config !== undefined) {
-      try {
-        data.config = this.normalizeChannelConfig(
-          row.channelId,
-          row.config,
-          input.config,
-        ) as object;
-      } catch (err) {
-        throw new BadRequestException(
-          err instanceof Error ? err.message : 'Invalid channel config',
-        );
+      if (!def) {
+        throw new BadRequestException(`Unknown channel: ${row.channelId}`);
       }
+      data.config = this.normalizeChannelConfig(def, row.config, input.config) as object;
     }
 
     if (input.enabled !== undefined) {
@@ -274,27 +262,17 @@ export class ProjectChannelsService {
   }
 
   private normalizeChannelConfig(
-    channelId: string,
+    def: ChannelAdapter,
     existing: unknown,
     patch: Record<string, unknown>,
   ): Record<string, unknown> {
-    const base =
-      existing && typeof existing === 'object' && !Array.isArray(existing)
-        ? { ...(existing as Record<string, unknown>) }
-        : {};
-    const merged = { ...base, ...patch };
-
-    if (channelId === 'telegram') {
-      try {
-        const access = validateTelegramAccessConfig(merged, { strict: false });
-        merged.dmPolicy = access.dmPolicy;
-        merged.allowFrom = access.allowFrom;
-      } catch (err) {
-        throw err instanceof Error ? err : new Error('Invalid Telegram access config');
-      }
+    try {
+      return def.normalizeConfig(existing, patch);
+    } catch (err) {
+      throw new BadRequestException(
+        err instanceof Error ? err.message : 'Invalid channel config',
+      );
     }
-
-    return merged;
   }
 
   private async syncOpenClawConfig(projectId: string): Promise<void> {
@@ -354,7 +332,7 @@ export class ProjectChannelsService {
       updatedAt: Date;
       secrets: Array<{ secretKey: string; ciphertext: string; updatedAt: Date }>;
     },
-  ): ProjectChannelDto {
+  ): ChannelDto {
     const def = resolveChannel(row.channelId);
     return {
       id: row.id,
@@ -363,7 +341,7 @@ export class ProjectChannelsService {
       channelName: def?.displayName ?? row.channelId,
       channelKind: def?.kind ?? 'BOT_TOKEN',
       enabled: row.enabled,
-      connectionStatus: row.connectionStatus.toLowerCase() as ProjectChannelDto['connectionStatus'],
+      connectionStatus: row.connectionStatus.toLowerCase() as ChannelDto['connectionStatus'],
       config: row.config,
       lastTestedAt: row.lastTestedAt?.toISOString() ?? null,
       lastError: row.lastError,

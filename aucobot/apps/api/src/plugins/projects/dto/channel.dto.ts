@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
-export class CreateProjectChannelDto {
+export class CreateChannelDto {
   @ApiProperty({ example: 'telegram' })
   @IsString()
   @MinLength(1)
@@ -19,7 +19,7 @@ export class CreateProjectChannelDto {
   config?: Record<string, unknown>;
 }
 
-export class UpdateProjectChannelDto {
+export class UpdateChannelDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()

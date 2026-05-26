@@ -4,7 +4,7 @@ import { Container, Flex } from "@/components/layout";
 import { TitleHeader } from "@/components/dashboard";
 import styles from "./channel.module.css";
 
-export default async function ProjectChannelsPage() {
+export default async function ChannelsPage() {
   const projectId = await getCurrentProjectId();
 
   return (

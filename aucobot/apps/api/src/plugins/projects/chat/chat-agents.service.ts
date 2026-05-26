@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PrismaService } from '../../../core/database/prisma.service';
-import { ProjectWorkspaceService } from '../workspace/project-workspace.service';
+import { WorkspaceService } from '../workspace/workspace.service';
 
 export type ChatAgentSummary = {
   id: string;
@@ -14,7 +14,7 @@ export type ChatAgentSummary = {
 export class ChatAgentsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspace: ProjectWorkspaceService,
+    private readonly workspace: WorkspaceService,
   ) {}
 
   async listAgentsForProject(projectId: string): Promise<ChatAgentSummary[]> {

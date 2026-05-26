@@ -1,22 +1,25 @@
 # AucoBot — Workflow & kiến trúc vận hành
 
-> **Cập nhật:** 2026-05-23  
-> **Tên sản phẩm / monorepo:** AucoBot (xem `monorepoplan.md`)  
+> **Cập nhật:** 2026-05-25  
+> **SSOT tính năng AucoBot** (control plane, API, sync, chat proxy, channels) — file này.  
+> **SSOT OpenClaw worker** (gateway, kênh upstream, RPC, skills load) — [`openclaw-architecture.md`](openclaw-architecture.md).  
+> **Tên sản phẩm / monorepo:** AucoBot (`aucobot/`, xem `aucobot/docs/monorepoplan.md`)  
 > **Phân kỳ:**  
 > - **OSS (mã nguồn mở):** một **`docker compose`** dựng **đủ stack** giống **[Supabase](https://supabase.com)** self-host: **frontend**, **backend**, **PostgreSQL**, và **một service gateway OpenClaw** (cổng **18789**). User chạy `docker compose up` — **không** spawn container qua Docker API khi tạo project. Backend **sync file** lên volume dùng chung và **proxy chat** tới `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).  
 > - **Cloud SaaS (hosted thương mại):** bạn **bán** bản cloud (đa tenant, vận hành thay khách). Runtime **mỗi project = một container** OpenClaw — backend **provision** qua Docker API / fleet (`vps-worker`, quota, billing). OSS **không** phải bản demo của Cloud — OSS là **sản phẩm gốc** cho community; Cloud **tái dùng** lõi OSS qua package/module, phần kinh doanh có thể **repo đóng**.  
-> **Tham chiếu:** `openclaw-architecture.md`, `monorepoplan.md`, `billing-plan.md` (Cloud SaaS), `proxy-guide.md`.
+> **Tham chiếu:** `openclaw-architecture.md` (worker), `aucobot/docs/monorepoplan.md`, `billing-plan.md` (Cloud SaaS), `proxy-guide.md`.
 
 ---
 
 ## Vai trò tài liệu
 
-| Thuộc | Không thuộc |
+| Thuộc (`workflow.md`) | Không thuộc (→ file khác) |
 | ----- | ----------- |
-| Luồng vận hành **OSS (self-host)** | Chi tiết giá/credit hosted (→ `billing-plan.md`) |
-| Sketch **Cloud SaaS** (cloud bạn bán) | Schema Prisma từng bảng (→ `backend/prisma/schema.prisma`) |
+| Luồng vận hành **OSS / Cloud**, sync DB → volume, chat WS proxy, channels API | Chi tiết gateway RPC, channel plugin upstream (→ `openclaw-architecture.md`) |
+| Phase 1 / 2 tích hợp control plane ↔ worker | Schema Prisma từng bảng (→ `packages/database/`) |
+| Sketch **Cloud SaaS** (cloud bạn bán) | Giá/credit hosted (→ `billing-plan.md`) |
 | Ranh OSS vs Cloud / proprietary | Danh sách sprint (→ `roadmap-plan.md`) |
-| Cấu trúc monorepo pnpm, **ranh giới 4 service OSS** | → `monorepoplan.md` §2 |
+| Cấu trúc monorepo, **4 service OSS** | → `aucobot/docs/monorepoplan.md` §2 |
 
 **Thuật ngữ**
 
@@ -42,7 +45,7 @@ Cộng đồng và team muốn **UI + persistence** cho project/bot đa kênh, *
 | **OSS** | Người dùng tự host | Self-host, fork, PR, source công khai |
 | **Cloud SaaS** | Bạn | Hosted trả phí — provisioning, SLA, scale |
 
-- **OSS:** “**một nguồn thật trong DB**” + **sync file** volume (`openclaw-architecture.md` §4.5.1, §4.7 Phase 1). Auth API: **JWT**. Gateway: **`gateway.auth`** / `OPENCLAW_GATEWAY_TOKEN` — **không** dùng JWT dashboard cho chat.
+- **OSS:** “**một nguồn thật trong DB**” + **sync file** volume (§5.6, Phase 1; gateway watch file — `openclaw-architecture.md` §4.5.1). Auth API: **JWT**. Gateway: **`gateway.auth`** / `OPENCLAW_GATEWAY_TOKEN` — chat dashboard qua **proxy WS** (§5.7), không JWT thẳng vào `:18789`.
 - **Cloud:** Cùng sync file + thêm orchestration fleet, billing, multi-tenant — phần proprietary **repo đóng** import lõi OSS.
 
 ---
@@ -165,7 +168,7 @@ flowchart TB
 | — | **OSS:** không lưu `container_id` / `host_port` |
 | — | **Cloud:** `container_id`, `host_port`, Docker lifecycle |
 
-**Khi user chat:** không inject config từng tin — file đã sync; gateway **watch** + build prompt (`openclaw-architecture.md` §11.5, §4.7).
+**Khi user chat:** không inject config từng tin — file đã sync; gateway **watch** + build prompt (`openclaw-architecture.md` §11.5; skills AucoBot §5.3).
 
 **Sync khi nào:** khi user **lưu / bật / đổi** cấu hình — **không** sync mỗi tin nhắn.
 
@@ -300,13 +303,155 @@ sequenceDiagram
 ```
 
 - Agent compiler: `backend/src/plugins/projects/agents/agent-workspace-compile.ts` → sync runtime (provider keys, agents.list). Agent `main` implicit. Skill → `SKILL.md`.
-- **Cloud:** cùng sync; có thể thêm `config.patch` RPC — §4.7 `openclaw-architecture.md`.
+- **Cloud:** cùng sync; có thể thêm `config.patch` RPC (Phase 2 — §5.6).
 
-### 5.4 Kênh chat & lưu lượng thời gian thực
+### 5.4 Tóm tắt lưu lượng realtime
 
-1. **OSS:** Một gateway trong compose — channel cấu hình trong workspace/volume project đó.
-2. Lưu lượng bot **không** qua body HTTP sync; FE ↔ API **proxy WebSocket** → `OPENCLAW_GATEWAY_URL` (cổng **18789**).
+1. **OSS:** Một gateway trong compose — channel cấu hình trong volume project (`openclaw.json`).
+2. Tin nhắn **không** đi qua body HTTP sync; xem §5.7 (dashboard WS vs kênh bot).
 3. API lo: auth JWT, CRUD, sync file — **không** lifecycle Docker trên OSS.
+
+### 5.5 Channels — Control plane vs OpenClaw worker (Telegram, Discord, …)
+
+**Channels** (Telegram, Discord, Zalo…) khác **connectors** (Google Drive, Calendar MCP). Cả hai lưu DB + sync file; **runtime chat** chỉ trong **openclaw-worker** (gateway — `openclaw-architecture.md` §3.3).
+
+| Lớp | Nơi làm | Vai trò |
+| --- | ------- | ------- |
+| **Runtime channel** | `openclaw-worker` | Nhận/gửi tin, pairing, RPC `channels.*` |
+| **Control plane** | `apps/api` + `@aucobot/workspace-sync` | UI, DB, mã hóa secret, test token, ghi `openclaw.json` |
+
+Backend **không inject code channel** vào worker — chỉ **cấu hình JSON** trên volume. Gateway **watch** file → plugin chạy.
+
+```mermaid
+flowchart LR
+  subgraph aucobot["AucoBot"]
+    UI["Dashboard channel/*"]
+    SVC["ChannelsService"]
+    REG["channel-registry adapters"]
+    SYNC["workspace-sync mergeChannelsIntoConfig"]
+  end
+
+  subgraph volume["Volume openclaw_data"]
+    JSON["openclaw.json channels.*"]
+  end
+
+  subgraph worker["openclaw-worker :18789"]
+    PLG["Channel plugins"]
+  end
+
+  UI --> SVC --> REG
+  SVC --> SYNC --> JSON
+  JSON -->|file watch| PLG
+  Internet((Chat apps)) <--> PLG
+```
+
+| Kênh | Backend MVP |
+| ---- | ------------- |
+| **Telegram** | `bot_token` → `channels.telegram.botToken` |
+| **Discord** | `bot_token` → `channels.discord.token` |
+
+```mermaid
+sequenceDiagram
+  participant UI as Web /channel/telegram
+  participant API as ChannelsController
+  participant SVC as ChannelsService
+  participant DB as PostgreSQL
+  participant Disk as openclaw.json
+
+  UI->>API: POST create · PUT secrets/bot_token
+  UI->>API: POST …/test · PATCH enabled=true
+  SVC->>DB: CONNECTED
+  SVC->>Disk: mergeChannelsIntoConfig
+```
+
+**REST:** `GET /api/projects/channels/definitions` · `GET|POST|PATCH|DELETE /api/projects/:id/channels` · `PUT|DELETE …/secrets/:key` · `POST …/test`
+
+### 5.6 Sync DB ↔ disk (`syncProjectRuntime`)
+
+| Giai đoạn | Đồng bộ với worker | Auth |
+| --------- | ------------------- | ---- |
+| **Phase 1** | Ghi file volume (`openclaw.json`, workspace, skills) — gateway **watch** (§4.5.1 upstream) | **JWT** cho API SaaS; worker dùng **`gateway.auth.token`** |
+| **Phase 2** | Tuỳ chọn RPC `config.patch` / `POST /tools/invoke` | Map JWT → operator credential nội bộ |
+
+**Hai lớp dữ liệu:** Postgres (SSOT UI) → `WorkspaceService.syncProjectRuntime()` → disk → gateway đọc.
+
+```
+{OPENCLAW_DATA_ROOT}/{projectId}/
+  openclaw.json
+  workspace/          # AGENTS.md, SOUL.md, …
+  skills/{slug}/SKILL.md
+```
+
+**Thứ tự merge:** `env` (provider keys) → `agents.*` → `channels.*` → `plugins.entries` / `mcp.servers` → bootstrap workspace.
+
+| Nhánh `openclaw.json` | Nguồn DB |
+| --------------------- | -------- |
+| `env.*` | `ProjectProviderKey` |
+| `agents.*` | `ProjectAgent` |
+| `channels.*` | `ProjectChannel` + secrets |
+| `plugins.entries` / `mcp.servers` | Connectors |
+
+Code: `apps/api/.../workspace/workspace.service.ts`, `packages/workspace-sync/`. Dev: `pnpm dev:runtime` (`aucobot/package.json`).
+
+### 5.7 Hai luồng chat — Dashboard WS proxy vs kênh bot
+
+Cùng một gateway; **ingress** khác nhau.
+
+```mermaid
+flowchart TB
+  subgraph ingress["Ingress"]
+    WS_UI["Dashboard chat"]
+    CH_APP["Telegram / Discord"]
+  end
+  subgraph api["apps/api"]
+    PROXY["ChatWsRegistrar + ChatGatewayProxyService"]
+    CH["ChannelsService REST"]
+    SYNC["WorkspaceService"]
+  end
+  subgraph gw["Gateway :18789"]
+    AG["Agent → LLM"]
+  end
+  WS_UI -->|JWT WS /api/projects/:id/chat/ws| PROXY
+  PROXY -->|openGatewayUpstream| gw
+  CH_APP <--> gw
+  CH --> SYNC --> gw
+```
+
+| Luồng | Vào gateway | Nest tham gia? |
+| ----- | ----------- | -------------- |
+| **Dashboard chat** | WS proxy → `chat.send`, `chat.history`, … | Có (JWT + RPC whitelist) |
+| **Kênh bot** | Plugin + `bot_token` trên disk | Chỉ **setup** REST; tin nhắn không qua Nest |
+
+`bot_token` **không** gọi LLM — chỉ đăng nhập bot; model từ `env.*` + `agents.*`.
+
+**Dashboard — WS 2 tầng** (`web → api → gateway`, không nối thẳng `:18789`):
+
+```mermaid
+sequenceDiagram
+  participant UI as ProjectChatClient
+  participant API as ChatWsRegistrar
+  participant GW as Gateway
+  participant LLM as LLM provider
+
+  UI->>API: REST chat/status, chat/model
+  UI->>API: WS /api/projects/:id/chat/ws
+  API->>GW: openGatewayUpstream
+  UI->>API: chat.send
+  API->>GW: forward whitelist
+  GW->>LLM: Agent
+  GW-->>UI: event:chat
+```
+
+**RPC whitelist** (`packages/control-plane-core/chat/chat-rpc-whitelist.ts`): `chat.history`, `chat.send`, `chat.abort`, `agents.list`. `connect` do proxy xử lý; `config.patch` **không** từ browser (Phase 1 REST + sync).
+
+| Thành phần | Path |
+| ---------- | ---- |
+| WS client | `apps/web/lib/chat/project-chat-client.ts` |
+| Registrar / proxy | `apps/api/.../chat/chat-ws.registrar.ts`, `chat.gateway-proxy.service.ts` |
+| Upstream | `packages/control-plane-core/chat/gateway-upstream.ts` |
+| Channels | `apps/api/.../channels/channels.service.ts` |
+
+Sơ đồ compose: `aucobot/docs/monorepo-diagram.md` §1.5.
 
 ---
 
@@ -439,7 +584,8 @@ sequenceDiagram
 
 | Chủ đề | File |
 | ------ | ---- |
-| Gateway HTTP, session API, config watch, skills | `openclaw-architecture.md` (§4.7, §11.5) |
+| Gateway upstream (RPC, channels, skills load) | `openclaw-architecture.md` |
+| Sync, chat proxy, channels API (AucoBot) | `workflow.md` (§5.5–5.7) |
 | Monorepo AucoBot, **4 service OSS**, compose, Phase migrate | `monorepoplan.md` §2, §14 |
 | Giá, credit, quota (Cloud) | `billing-plan.md` |
 | Proxy / ingress an toàn | `proxy-guide.md` |
