@@ -17,7 +17,7 @@ Tuỳ chọn:
 - `JWT_REFRESH_DAYS` — refresh token (mặc định 7)
 - `FRONTEND_URL` — CORS
 - `PORT` — mặc định 3001
-- `SELF_HOST_USER_LOGIN` / `SELF_HOST_USER_PASSWORD` — tài khoản mặc định (tự sync vào DB khi start; thêm user khác qua đăng ký)
+- `SELF_HOST_USER_USERNAME` / `SELF_HOST_USER_PASSWORD` — tài khoản mặc định (tự sync vào DB khi start; thêm user khác qua đăng ký)
 
 ## DB
 

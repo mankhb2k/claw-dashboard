@@ -1,19 +1,23 @@
 import { z } from 'zod'
 
-const loginId = z
+const usernameField = z
   .string()
   .min(3, 'Tối thiểu 3 ký tự')
-  .max(128, 'Tối đa 128 ký tự')
+  .max(32, 'Tối đa 32 ký tự')
+  .regex(
+    /^[a-zA-Z0-9_-]+$/,
+    'Chỉ dùng chữ, số, gạch dưới và gạch ngang',
+  )
   .transform((v) => v.trim().toLowerCase())
 
 export const loginSchema = z.object({
-  login: loginId,
+  username: usernameField,
   password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
 })
 
 export const registerSchema = z
   .object({
-    login: loginId,
+    username: usernameField,
     password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
     confirmPassword: z.string(),
   })
@@ -24,7 +28,7 @@ export const registerSchema = z
 
 export const userSchema = z.object({
   id: z.string(),
-  login: z.string(),
+  username: z.string(),
   name: z.string(),
   createdAt: z.coerce.string(),
 })

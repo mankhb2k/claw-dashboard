@@ -2,6 +2,9 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "paths": {
+      "@prisma/client": ["../../node_modules/@prisma/client"]
+    },
     "esModuleInterop": true,
     "declaration": true,
     "removeComments": true,

@@ -10,9 +10,9 @@ function Unwrap($json) {
 
 Write-Host ''
 Write-Host '=== Login admin ===' -ForegroundColor Cyan
-$loginRaw = Invoke-RestMethod -Uri "$base/auth/login" -Method Post -Body '{"login":"admin","password":"admin123"}' -ContentType 'application/json' -WebSession $session
+$loginRaw = Invoke-RestMethod -Uri "$base/auth/login" -Method Post -Body '{"username":"admin","password":"admin123"}' -ContentType 'application/json' -WebSession $session
 $login = Unwrap $loginRaw
-Write-Host "User: $($login.user.login) ($($login.user.id))"
+Write-Host "User: $($login.user.username) ($($login.user.id))"
 
 Write-Host ''
 Write-Host '=== GET projects/mine ===' -ForegroundColor Cyan

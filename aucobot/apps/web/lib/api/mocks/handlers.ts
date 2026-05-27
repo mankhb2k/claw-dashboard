@@ -68,8 +68,8 @@ let connectorCounter = 0
 
 export const authHandlers = {
   login: (req: MockRequest): { user: User } => {
-    const { login, password } = req.data as LoginInput
-    const key = login.trim().toLowerCase()
+    const { username, password } = req.data as LoginInput
+    const key = username.trim().toLowerCase()
 
     if (password.length < 6) {
       throw new Error('Mật khẩu tối thiểu 6 ký tự')
@@ -90,8 +90,8 @@ export const authHandlers = {
   },
 
   register: (req: MockRequest): { user: User } => {
-    const { login, password } = req.data as Omit<RegisterInput, 'confirmPassword'>
-    const key = login.trim().toLowerCase()
+    const { username, password } = req.data as Omit<RegisterInput, 'confirmPassword'>
+    const key = username.trim().toLowerCase()
 
     if (password.length < 6) {
       throw new Error('Mật khẩu tối thiểu 6 ký tự')
@@ -103,8 +103,8 @@ export const authHandlers = {
 
     const user: User = {
       id: Math.random().toString(36).slice(2, 9),
-      login: key,
-      name: key.includes('@') ? key.split('@')[0] : key,
+      username: key,
+      name: key,
       createdAt: new Date().toISOString(),
     }
 

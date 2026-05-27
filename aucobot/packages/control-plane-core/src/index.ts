@@ -24,7 +24,11 @@ export {
   refreshMaxAgeSec,
   refreshExpiresAt,
 } from './auth/auth.constants.js';
-export { toPublicUser, normalizeLogin, type PublicUser } from './auth/auth-user.util.js';
+export {
+  toPublicUser,
+  normalizeUsername,
+  type PublicUser,
+} from './auth/auth-user.util.js';
 export {
   signAccessToken,
   verifyAccessToken,
@@ -49,6 +53,7 @@ export {
 export {
   ensureSelfHostDefaultUser,
   selfHostDisplayNameFromEnv,
+  selfHostUsernameFromEnv,
   selfHostLoginFromEnv,
   selfHostPasswordFromEnv,
 } from './auth/self-host-user.js';

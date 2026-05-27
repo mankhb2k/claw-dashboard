@@ -39,7 +39,7 @@ export default function LoginPage() {
   return (
     <div className={styles.wrapper}>
       <h1 className={styles.title}>Đăng nhập</h1>
-      <p className={styles.subtitle}>Email hoặc tên đăng nhập + mật khẩu</p>
+      <p className={styles.subtitle}>Tên đăng nhập + mật khẩu</p>
 
       <form
         className={styles.form}
@@ -48,13 +48,13 @@ export default function LoginPage() {
         suppressHydrationWarning
       >
         <Input
-          id="login"
+          id="username"
           type="text"
-          label="Email hoặc tên đăng nhập"
-          placeholder="admin hoặc you@example.com"
+          label="Tên đăng nhập"
+          placeholder="admin"
           autoComplete="username"
-          error={errors.login?.message}
-          {...register("login")}
+          error={errors.username?.message}
+          {...register("username")}
         />
 
         <Input

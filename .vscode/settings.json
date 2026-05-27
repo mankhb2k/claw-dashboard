@@ -1,4 +1,10 @@
 {
   "typescript.tsdk": "aucobot/node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": ["**/backend/node_modules"]
+  },
+  "search.exclude": {
+    "**/backend/node_modules": true
+  }
 }

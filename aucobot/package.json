@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "turbo run dev --parallel --filter=@aucobot/api --filter=@aucobot/web",
     "build": "turbo run build",
-    "build:packages": "pnpm --filter @aucobot/shared --filter @aucobot/database --filter @aucobot/runtime-contracts --filter @aucobot/workspace-sync --filter @aucobot/runtime-oss --filter @aucobot/control-plane-core run build",
+    "build:packages": "pnpm db:generate && pnpm --filter @aucobot/shared --filter @aucobot/database --filter @aucobot/runtime-contracts --filter @aucobot/workspace-sync --filter @aucobot/runtime-oss --filter @aucobot/control-plane-core run build",
     "lint": "turbo run lint",
     "dev:db": "docker compose -f deploy/docker-compose.postgres.dev.yml up -d --remove-orphans",
     "dev:db:down": "docker compose -f deploy/docker-compose.postgres.dev.yml down --remove-orphans",
@@ -13,8 +13,10 @@
     "dev:runtime:down": "docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway down --remove-orphans",
     "dev:runtime:logs": "docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway logs -f postgres gateway",
     "dev:stack": "docker compose -f deploy/docker-compose.yml up",
+    "db:generate": "pnpm --filter @aucobot/database db:generate",
     "db:migrate": "pnpm --filter @aucobot/database db:migrate",
-    "db:seed": "pnpm --filter @aucobot/database db:seed"
+    "db:seed": "pnpm --filter @aucobot/database db:seed",
+    "postinstall": "pnpm db:generate"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

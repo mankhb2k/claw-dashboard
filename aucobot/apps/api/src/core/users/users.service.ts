@@ -13,7 +13,7 @@ import { UpdateUserNameDto } from './dto/update-user-name.dto';
 
 const publicUserSelect = {
   id: true,
-  login: true,
+  username: true,
   name: true,
   avatarUrl: true,
   createdAt: true,

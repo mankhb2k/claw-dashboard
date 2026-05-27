@@ -58,7 +58,7 @@ export function Header({
     router.push("/login");
   };
 
-  const initials = user?.login?.slice(0, 2).toUpperCase() ?? "??";
+  const initials = user?.username?.slice(0, 2).toUpperCase() ?? "??";
 
   return (
     <header className={styles.header}>
@@ -144,7 +144,7 @@ export function Header({
             sideOffset={8}
           >
             <DropdownMenuLabel className={styles.dropdownEmail}>
-              {user?.login ?? previewEmailLabel}
+              {user?.username ?? previewEmailLabel}
             </DropdownMenuLabel>
             <DropdownMenuSeparator className={styles.dropdownSeparator} />
             <DropdownMenuItem

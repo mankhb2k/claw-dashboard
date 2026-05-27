@@ -10,11 +10,11 @@ export class SeedUserService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     try {
-      const { login, created } = await ensureSelfHostDefaultUser(this.prisma);
+      const { username, created } = await ensureSelfHostDefaultUser(this.prisma);
       this.log.log(
         created
-          ? `Self-host default user created (login=${login})`
-          : `Self-host default user synced from env (login=${login})`,
+          ? `Self-host default user created (username=${username})`
+          : `Self-host default user synced from env (username=${username})`,
       );
     } catch (err) {
       this.log.error(

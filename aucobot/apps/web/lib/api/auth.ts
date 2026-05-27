@@ -1,19 +1,19 @@
 import { api } from '@/lib/axios'
-import { userSchema, type LoginInput, type RegisterInput, type User } from '@/schemas/auth.schema'
+import type { LoginInput, RegisterInput, User } from '@/schemas/auth.schema'
 
 export const authApi = {
   login: async (input: LoginInput): Promise<User> => {
     const res = await api.post<{ user: User }>('/api/auth/login', input)
-    return userSchema.parse(res.data.user)
+    return res.data.user
   },
 
-  register: async (input: Omit<RegisterInput, 'confirmPassword'>): Promise<User> => {
+  register: async (input: RegisterInput): Promise<User> => {
     const res = await api.post<{ user: User }>('/api/auth/register', {
-      login: input.login,
+      username: input.username,
       password: input.password,
-      name: input.login.includes('@') ? input.login.split('@')[0] : input.login,
+      name: input.username,
     })
-    return userSchema.parse(res.data.user)
+    return res.data.user
   },
 
   logout: async (): Promise<void> => {
@@ -22,6 +22,6 @@ export const authApi = {
 
   me: async (): Promise<User> => {
     const res = await api.get<{ user: User }>('/api/auth/session')
-    return userSchema.parse(res.data.user)
+    return res.data.user
   },
 }

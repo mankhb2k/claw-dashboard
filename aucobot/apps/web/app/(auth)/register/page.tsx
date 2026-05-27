@@ -39,7 +39,7 @@ export default function RegisterPage() {
   return (
     <div className={styles.wrapper}>
       <h1 className={styles.title}>Tạo tài khoản</h1>
-      <p className={styles.subtitle}>Self-host · Không xác thực email</p>
+      <p className={styles.subtitle}>Self-host · Đăng ký bằng tên đăng nhập</p>
 
       <form
         className={styles.form}
@@ -47,13 +47,13 @@ export default function RegisterPage() {
         noValidate
       >
         <Input
-          id="login"
+          id="username"
           type="text"
-          label="Email hoặc tên đăng nhập"
-          placeholder="admin hoặc you@example.com"
+          label="Tên đăng nhập"
+          placeholder="admin"
           autoComplete="username"
-          error={errors.login?.message}
-          {...register("login")}
+          error={errors.username?.message}
+          {...register("username")}
         />
 
         <Input

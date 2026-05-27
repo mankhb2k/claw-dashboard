@@ -1,7 +1,7 @@
 # AucoBot — Kế hoạch Monorepo (pnpm)
 
 > **Tên dự án:** AucoBot  
-> **Cập nhật:** 2026-05-24  
+> **Cập nhật:** 2026-05-25  
 > **Tham chiếu:** [`workflow.md`](../../workflow.md) (SSOT tính năng AucoBot), [`openclaw-architecture.md`](../../openclaw-architecture.md) (SSOT worker), `billing-plan.md`  
 > **Mô hình thị trường:** Engine mở (OSS self-host) + Cloud trả phí (Supabase / n8n style)
 
@@ -471,6 +471,179 @@ flowchart TB
     Pool <-->|hostPort động| API2
 ```
 
+### 10.1 Database — OSS core + Cloud extension (cùng Postgres)
+
+Cloud **không** tạo database “wrapper” bọc OSS. Tận dụng OSS = **cùng** package `@aucobot/database`, **cùng instance Postgres** trên môi trường cloud prod, **mở rộng** bằng bảng/cột mới nối **khóa ngoại** — không phải kế thừa OOP trong SQL.
+
+| Khái niệm | OSS self-host | Cloud hosted |
+| --------- | ------------- | ------------ |
+| **Instance Postgres** | Riêng từng deploy (`docker compose`) | Riêng do bạn quản lý (RDS, Neon, …) |
+| **Schema / Prisma** | `@aucobot/database` | **Cùng schema** + bảng billing/fleet |
+| **Auth** | `users`, `refresh_tokens` | **Cùng bảng** — module auth trong `cloud-api` |
+| **Billing** | Không dùng (`NoopPlanGuard`) | Bảng extension FK → `users.id` |
+| **Runtime fleet** | Gateway compose chung; không ghi `container_id` | Extension FK → `projects.id` hoặc cột optional |
+
+**Nguyên tắc** (theo [`billing-plan.md`](../../billing-plan.md)):
+
+- Plan gắn **User** (`subscriptions`), không gắn `plan_id` trên `projects`.
+- Quota credit: **một ví / user** (`credit_wallets`).
+- Runtime: **1 project = 1 container** — metadata fleet gắn **Project**.
+
+#### Sơ đồ quan hệ (ER) — ví dụ
+
+```mermaid
+erDiagram
+  users ||--o{ refresh_tokens : has
+  users ||--o{ projects : owns
+  projects ||--o{ project_channels : has
+  projects ||--o{ project_agents : has
+  projects ||--o{ project_provider_keys : has
+
+  users {
+    cuid id PK
+    string username UK
+    string password_hash
+  }
+
+  projects {
+    cuid id PK
+    cuid user_id FK
+    string subdomain UK
+    string gateway_token
+    enum status
+  }
+
+  project_channels {
+    cuid id PK
+    cuid project_id FK
+    string channel_id
+    json config
+  }
+
+  users ||--o| subscriptions : "1 active"
+  users ||--o| credit_wallets : "1 wallet"
+  users ||--o| billing_customers : "Stripe"
+  projects ||--o| project_runtimes : "1 container"
+
+  subscriptions {
+    cuid id PK
+    cuid user_id FK UK
+    enum plan "FREE|PRO"
+    string stripe_subscription_id
+    datetime current_period_end
+  }
+
+  credit_wallets {
+    cuid id PK
+    cuid user_id FK UK
+    int monthly_balance
+    int purchased_balance
+    datetime monthly_reset_at
+  }
+
+  billing_customers {
+    cuid id PK
+    cuid user_id FK UK
+    string stripe_customer_id UK
+  }
+
+  project_runtimes {
+    cuid id PK
+    cuid project_id FK UK
+    string container_id
+    int host_port
+    int ram_mb
+    float cpu_limit
+  }
+```
+
+| Kiểu bảng | Ví dụ | Gắn vào |
+| --------- | ----- | ------- |
+| **OSS core** | `users`, `projects`, `project_channels`, … | Self-host + Cloud |
+| **Cloud extension (User)** | `subscriptions`, `credit_wallets`, `billing_customers` | `user_id` → `users.id` |
+| **Cloud extension (Project)** | `project_runtimes` (hoặc cột trên `projects`) | `project_id` → `projects.id` |
+
+#### Luồng dữ liệu — ví dụ user Pro
+
+```mermaid
+flowchart LR
+  subgraph DB["PostgreSQL — 1 database cloud-prod"]
+    U[users]
+    S[subscriptions plan=PRO]
+    W[credit_wallets]
+    P1[projects 1]
+    P2[projects 2]
+    R1[project_runtimes]
+    CH[project_channels]
+  end
+
+  U --> S
+  U --> W
+  U --> P1
+  U --> P2
+  P1 --> R1
+  P1 --> CH
+```
+
+1. Đăng ký → `users` (+ `refresh_tokens`) — logic auth OSS.
+2. Onboarding cloud → `subscriptions`, `credit_wallets` — module billing.
+3. Tạo bot → `projects`, `project_channels` — logic OSS.
+4. Start worker → `project_runtimes` (hoặc `projects.container_id` / `host_port`) — module fleet.
+
+#### Hai pattern mở rộng schema
+
+**A — Bảng phụ 1–1** (tách domain rõ, khuyến nghị cho billing/fleet):
+
+```prisma
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+  plan   Plan   @default(FREE)
+  user   User   @relation(fields: [userId], references: [id])
+  @@map("subscriptions")
+}
+
+model ProjectRuntime {
+  projectId   String  @unique @map("project_id")
+  containerId String? @map("container_id")
+  hostPort    Int?    @map("host_port")
+  project     Project @relation(...)
+  @@map("project_runtimes")
+}
+```
+
+**B — Cột thêm trên bảng OSS** (ít JOIN; OSS để `null`):
+
+```prisma
+model Project {
+  // … fields OSS
+  containerId String? @map("container_id")
+  hostPort    Int?    @map("host_port")
+}
+```
+
+#### Evolution OSS → Cloud (multi-project)
+
+Schema hiện tại có thể `Project.userId` `@unique` (1 user ≈ 1 project). Cloud Pro cần nhiều project/user — **bỏ `@unique`**, thêm `@@index([userId])` trên cùng bảng `projects` (không tạo DB mới).
+
+```diff
+ model Project {
+-  userId String @unique @map("user_id")
++  userId String @map("user_id")
++  @@index([userId])
+ }
+```
+
+#### Không dùng
+
+```text
+❌ Postgres thứ hai “wrap” / sync copy từ OSS
+❌ users_cloud kế thừa users_oss (OOP inheritance)
+❌ plan_id trên projects — plan nằm ở subscriptions.user_id
+```
+
+Service auth/billing **tách code** (module hoặc `cloud-api`) vẫn có thể dùng **chung `DATABASE_URL`** — tách microservice + DB riêng chỉ khi scale/team buộc phải tách (xem §16).
+
 ### Env Cloud (sketch)
 
 ```env
@@ -671,7 +844,7 @@ Chi tiết kiến trúc channels: `workflow.md` §5.5.
 | Chủ đề | Quyết định |
 | ------ | ---------- |
 | Gateway upstream | Pull `openclaw-worker:*`; fork/patch ở `../openclaw-worker/` — **không** vendored trong `aucobot/` |
-| Prisma schema | Một schema OSS; Cloud thêm bảng billing hoặc schema riêng |
+| Prisma schema | Một schema OSS; Cloud thêm bảng extension FK (§10.1) — không DB wrapper |
 | Multi-project OSS | Một gateway + multi-agent / workspace path — không spawn N container |
 | `workflow.md` “1 project = 1 container” | Chỉ áp dụng **Cloud** |
 | FE Cloud | Bắt đầu extend `apps/web`; tách `ui-kit` khi >3 màn hình khác biệt |
@@ -704,6 +877,7 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 | Sync, channels, chat WS proxy | [`workflow.md`](../../workflow.md) (§5.5–5.7) |
 | Luồng vận hành OSS / Cloud | `workflow.md` §2 |
 | Billing Cloud | `billing-plan.md` |
+| DB OSS + Cloud extension (ER, luồng) | `monorepoplan.md` §10.1 |
 | Kế hoạch monorepo (file này) | `monorepoplan.md` §2 (4 service) |
 | Sơ đồ luồng (Mermaid) | `monorepo-diagram.md` |
 | AI / agent conventions | `../AGENTS.md` |

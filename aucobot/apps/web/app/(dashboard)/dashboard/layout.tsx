@@ -180,9 +180,9 @@ export default function DashboardLayout({
       />
 
       <div className={styles.main}>
-        <Header title={title} items={nav} />
-
-        <div className={canvasRoute ? styles.contentCanvas : styles.contentScroll}>
+        <div
+          className={canvasRoute ? styles.contentCanvas : styles.contentScroll}
+        >
           {children}
         </div>
       </div>

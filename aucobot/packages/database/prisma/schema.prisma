@@ -1,15 +1,17 @@
 generator client {
   provider = "prisma-client-js"
+  // Local output — avoid IDE resolving stale @prisma/client from sibling packages (e.g. backend/)
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-/// Self-host: `login` is email or username (unique); email is not verified.
+/// Self-host: unique username only (no email).
 model User {
   id           String   @id @default(cuid())
-  login        String   @unique
+  username     String   @unique
   passwordHash String   @map("password_hash")
   name         String?
   avatarUrl    String?  @map("avatar_url")

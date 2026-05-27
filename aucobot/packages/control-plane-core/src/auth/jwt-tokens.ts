@@ -3,7 +3,7 @@ import { accessMaxAgeSec } from './auth.constants.js';
 
 export type JwtAccessPayload = {
   sub: string;
-  login: string;
+  username: string;
 };
 
 export function getJwtSecret(): string {
@@ -14,8 +14,8 @@ export function getJwtSecret(): string {
   return secret || 'dev-only-change-me-in-env';
 }
 
-export function signAccessToken(userId: string, login: string): string {
-  return jwt.sign({ sub: userId, login } satisfies JwtAccessPayload, getJwtSecret(), {
+export function signAccessToken(userId: string, username: string): string {
+  return jwt.sign({ sub: userId, username } satisfies JwtAccessPayload, getJwtSecret(), {
     expiresIn: accessMaxAgeSec(),
   });
 }
@@ -25,12 +25,20 @@ export function verifyAccessToken(token: string | undefined): JwtAccessPayload |
   try {
     const payload = jwt.verify(token, getJwtSecret()) as JwtAccessPayload & {
       sub?: string;
+      username?: string;
+      /** @deprecated legacy JWT field */
       login?: string;
     };
     if (!payload?.sub || typeof payload.sub !== 'string') return null;
+    const username =
+      typeof payload.username === 'string'
+        ? payload.username
+        : typeof payload.login === 'string'
+          ? payload.login
+          : '';
     return {
       sub: payload.sub,
-      login: typeof payload.login === 'string' ? payload.login : '',
+      username,
     };
   } catch {
     return null;

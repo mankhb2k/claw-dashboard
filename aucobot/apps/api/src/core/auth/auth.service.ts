@@ -7,7 +7,7 @@ import * as bcrypt from 'bcrypt';
 import {
   generateRefreshTokenRaw,
   hashRefreshToken,
-  normalizeLogin,
+  normalizeUsername,
   refreshExpiresAt,
   signAccessToken,
   type PublicUser,
@@ -31,28 +31,28 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokensResult> {
-    const login = normalizeLogin(dto.login);
-    const exists = await this.prisma.user.findUnique({ where: { login } });
-    if (exists) throw new ConflictException('Login already taken');
+    const username = normalizeUsername(dto.username);
+    const exists = await this.prisma.user.findUnique({ where: { username } });
+    if (exists) throw new ConflictException('Username already taken');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const user = await this.prisma.user.create({
       data: {
-        login,
+        username,
         passwordHash,
         name: dto.name?.trim() || null,
       },
     });
-    return this.issueTokens(user.id, user.login);
+    return this.issueTokens(user.id, user.username);
   }
 
   async login(dto: LoginDto): Promise<AuthTokensResult> {
-    const login = normalizeLogin(dto.login);
-    const user = await this.prisma.user.findUnique({ where: { login } });
+    const username = normalizeUsername(dto.username);
+    const user = await this.prisma.user.findUnique({ where: { username } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
-    return this.issueTokens(user.id, user.login);
+    return this.issueTokens(user.id, user.username);
   }
 
   async refresh(
@@ -74,7 +74,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
 
     await this.prisma.refreshToken.delete({ where: { id: row.id } });
-    return this.issueTokens(user.id, user.login);
+    return this.issueTokens(user.id, user.username);
   }
 
   async me(userId: string): Promise<PublicUser> {
@@ -89,9 +89,9 @@ export class AuthService {
 
   private async issueTokens(
     userId: string,
-    login: string,
+    username: string,
   ): Promise<AuthTokensResult> {
-    const accessToken = signAccessToken(userId, login);
+    const accessToken = signAccessToken(userId, username);
     const rawRefresh = generateRefreshTokenRaw();
     const tokenHash = hashRefreshToken(rawRefresh);
     const expiresAt = refreshExpiresAt();

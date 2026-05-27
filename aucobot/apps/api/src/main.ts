@@ -59,7 +59,7 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('OpenClaw Auth API')
     .setDescription(
-      'Auth — JWT cookie, đăng ký/đăng nhập bằng login (email hoặc username)',
+      'Auth — JWT cookie, đăng ký/đăng nhập bằng username',
     )
     .setVersion('0.1.0')
     .addBearerAuth()

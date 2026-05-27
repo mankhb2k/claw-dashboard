@@ -6,7 +6,7 @@ export const mockUsers = new Map<string, User>([
     'demo',
     {
       id: '1',
-      login: 'demo',
+      username: 'demo',
       name: 'Demo',
       createdAt: '2026-04-22T00:00:00Z',
     },
