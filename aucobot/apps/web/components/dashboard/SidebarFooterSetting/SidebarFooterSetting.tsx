@@ -40,9 +40,16 @@ export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
     router.push("/login");
   };
 
+  const handleOpenQuickSettings = () => {
+    if (!collapsed) {
+      setOpen(true);
+    }
+  };
+
   return (
     <div
       className={`${styles.footerItem} ${collapsed ? styles.footerItemCollapsed : ""}`}
+      onClick={handleOpenQuickSettings}
     >
       <Avatar
         size="md"
@@ -57,7 +64,7 @@ export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
       </span>
 
       {!collapsed && (
-        <div className={styles.settingsWrap}>
+        <div className={styles.settingsWrap} onClick={(event) => event.stopPropagation()}>
           <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
             <DropdownMenuTrigger asChild variant="unstyled">
               <button

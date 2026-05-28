@@ -3,19 +3,24 @@
   align-items: center;
   justify-content: flex-start;
   gap: 16px;
-  width: 100%;
-  height: 40px;
-  padding: 0;
+  height: 58px;
   overflow: hidden;
   color: var(--color-muted-foreground, #a0aec0);
   flex-shrink: 0;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.footerItemCollapsed {
+  padding: 0;
+  transition: transform 0.1s ease;
 }
 
 .footerAvatar {
   flex-shrink: 0;
   align-self: center;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   font-size: 10px;
 }
 
@@ -54,7 +59,7 @@
   height: 32px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
   color: inherit;
   cursor: pointer;
