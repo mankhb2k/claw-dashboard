@@ -7,6 +7,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: number | string;
   height?: number | string;
   hover?: 'sm' | 'md' | 'lg' | 'xl';
+  radius?: 'sm' | 'md' | 'lg' | 'xl';
   disableHover?: boolean;
 }
 
@@ -20,6 +21,7 @@ export const Card: React.FC<CardProps> = ({
   width,
   height,
   hover,
+  radius = 'lg',
   disableHover,
   style,
   ...props 
@@ -35,6 +37,7 @@ export const Card: React.FC<CardProps> = ({
       className={`${styles.card} ${className}`} 
       style={combinedStyle}
       data-hover={hover}
+      data-radius={radius}
       data-disable-hover={disableHover}
       {...props}
     >

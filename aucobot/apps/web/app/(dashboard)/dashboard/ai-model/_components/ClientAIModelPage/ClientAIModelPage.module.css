@@ -11,8 +11,10 @@
 }
 
 .providerLink {
+  display: block;
   text-decoration: none;
   color: inherit;
+  border-radius: var(--radius-md);
 }
 
 .loading {

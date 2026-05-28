@@ -8,8 +8,8 @@ export default function ProjectSkillDirectoryPage() {
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="lg" display="flex" className={styles.content}>
         <TitleHeader
-          title="Danh sách Kỹ năng (Skills)"
-          description="Quản lý các kỹ năng cho dự án của bạn."
+          title="Skill Directory"
+          description="Manage and design intelligent AI agents for your projects."
           showBorder
         />
         <ClientSkillPage />

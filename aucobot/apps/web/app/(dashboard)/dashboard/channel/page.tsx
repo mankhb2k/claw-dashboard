@@ -11,8 +11,8 @@ export default async function ChannelsPage() {
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="md" display="flex" className={styles.content}>
         <TitleHeader
-          title="Kênh trò chuyện (Channels)"
-          description="Kết nối chatbot của bạn với các kênh giao tiếp phổ biến như Telegram, Facebook, Discord..."
+          title="Chat Channel"
+          description="Connect your chatbot with popular communication channels like Telegram, Facebook, Discord..."
           showBorder
         />
         <ClientChannelPage projectId={projectId} />

@@ -36,9 +36,7 @@
 
 /* Trạng thái Active/Focus */
 .input:focus {
-  border-color: var(--color-primary);
-  /* Chỉ dùng shadow cực nhẹ, không dùng vòng đệm màu bg để tránh lỗi 2 border */
-  box-shadow: 0 0 0 3px var(--color-primary-dim);
+  border-color: var(--color-input-focus);
 }
 
 /* =============================================================================

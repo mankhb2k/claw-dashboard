@@ -2,21 +2,47 @@
    1. CARD COMPONENT — Standard wrapper for content
    ============================================================================= */
 .card {
-  background: var(--color-card);
+  background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  /* Theo rule.md: Card dùng lg */
   box-shadow: var(--shadow-sm);
-  padding: var(--space-4);
+  padding: var(--space-5);
   transition:
     border-color var(--transition-base) ease,
     box-shadow var(--transition-base) ease,
     transform var(--transition-fast) ease;
 }
 
+/* --- RADIUS --- */
+.card[data-radius="sm"] {
+  border-radius: var(--radius-sm);
+}
+
+.card[data-radius="md"] {
+  border-radius: var(--radius-md);
+}
+
+.card[data-radius="lg"] {
+  border-radius: var(--radius-lg);
+}
+
+.card[data-radius="xl"] {
+  border-radius: var(--radius-xl);
+}
+
 /* --- TRẠNG THÁI HOVER --- */
 .card:not([data-disable-hover="true"]):hover {
-  border-color: var(--color-primary-dim);
+  border-color: var(--color-hover);
+}
+
+/* Keyboard focus on parent link should behave like hover */
+:global(a:focus-visible:has(> [data-hover])) {
+  outline: none;
+}
+
+:global(a:focus-visible:has(> [data-hover]))
+  > .card:not([data-disable-hover="true"]) {
+  border-color: var(--color-hover);
   box-shadow: var(--shadow-sm);
 }
 
@@ -28,11 +54,26 @@
   box-shadow: var(--shadow-md);
 }
 
+:global(a:focus-visible:has(> [data-hover]))
+  > .card[data-hover="md"]:not([data-disable-hover="true"]) {
+  box-shadow: var(--shadow-md);
+}
+
 .card[data-hover="lg"]:hover {
   box-shadow: var(--shadow-lg);
 }
 
+:global(a:focus-visible:has(> [data-hover]))
+  > .card[data-hover="lg"]:not([data-disable-hover="true"]) {
+  box-shadow: var(--shadow-lg);
+}
+
 .card[data-hover="xl"]:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+:global(a:focus-visible:has(> [data-hover]))
+  > .card[data-hover="xl"]:not([data-disable-hover="true"]) {
   box-shadow: var(--shadow-xl);
 }
 

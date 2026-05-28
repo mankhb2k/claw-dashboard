@@ -36,7 +36,7 @@ export function buildAuthCookieSpecs(tokens: {
     {
       name: AUTH_COOKIES.REFRESH,
       value: tokens.refreshToken,
-      options: { ...base, path: '/api', maxAge: refreshMaxAgeSec() },
+      options: { ...base, path: '/', maxAge: refreshMaxAgeSec() },
     },
   ];
 }
@@ -52,7 +52,7 @@ export function buildClearAuthCookieSpecs(): AuthCookieSpec[] {
     {
       name: AUTH_COOKIES.REFRESH,
       value: '',
-      options: { ...base, path: '/api', maxAge: 0 },
+      options: { ...base, path: '/', maxAge: 0 },
     },
   ];
 }

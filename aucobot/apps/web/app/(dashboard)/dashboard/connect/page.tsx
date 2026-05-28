@@ -13,13 +13,19 @@ export default async function ProjectConnectPage() {
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="md" display="flex" className={styles.content}>
         <TitleHeader
-          title="Trung tâm kết nối"
-          description="Kết nối dự án của bạn với các dịch vụ bên ngoài."
+          title="Connect Center"
+          description="Connect your project with external services."
           showBorder
         />
         <Suspense
           fallback={
-            <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-10)" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "var(--space-10)",
+              }}
+            >
               <Spinner size="md" />
             </div>
           }

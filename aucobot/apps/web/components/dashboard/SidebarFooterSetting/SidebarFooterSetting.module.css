@@ -1,0 +1,94 @@
+.footerItem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  height: 40px;
+  padding: 0;
+  overflow: hidden;
+  color: var(--color-muted-foreground, #a0aec0);
+}
+
+.footerAvatar {
+  flex-shrink: 0;
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  font-size: 10px;
+}
+
+.footerText {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.footerTextHidden {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+.settingsWrap {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.footerSettingsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.footerSettingsBtn:hover {
+  background: var(--color-sidebar-accent, #2c2d30);
+  color: var(--color-sidebar-foreground, #ffffff);
+}
+
+.footerSettingsBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.dropdownLabel {
+  font-size: var(--font-size-sm);
+}
+
+.dropdown {
+  min-width: 180px;
+}
+
+@media (max-width: 1024px) {
+  .footerText {
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+  }
+
+  .footerItem {
+    gap: 0;
+  }
+}

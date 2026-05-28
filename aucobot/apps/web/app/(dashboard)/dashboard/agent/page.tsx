@@ -9,8 +9,8 @@ export default function AgentPage() {
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="lg" display="flex" className={styles.content}>
         <TitleHeader
-          title="Đội ngũ Agent"
-          description="Quản lý và thiết kế các trợ lý AI thông minh cho dự án của bạn."
+          title="Agent Team"
+          description="Manage and design intelligent AI agents for your projects."
           showBorder
         />
         <ClientAgentPage />

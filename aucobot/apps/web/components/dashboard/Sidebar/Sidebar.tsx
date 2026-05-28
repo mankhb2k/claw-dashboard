@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { ChevronsLeft } from "lucide-react";
+import { SidebarFooterSetting } from "@/components/dashboard/SidebarFooterSetting/SidebarFooterSetting";
 import styles from "./Sidebar.module.css";
 
 const ICON_STROKE = 1.25;
@@ -22,8 +23,12 @@ interface SidebarProps {
   homeHref?: string;
 }
 
-
-export function Sidebar({ items, collapsed, onToggle, homeHref = "/" }: SidebarProps) {
+export function Sidebar({
+  items,
+  collapsed,
+  onToggle,
+  homeHref = "/",
+}: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -32,15 +37,11 @@ export function Sidebar({ items, collapsed, onToggle, homeHref = "/" }: SidebarP
     >
       <header className={styles.header}>
         <div className={styles.brand}>
-          <Link
-            href={homeHref}
-            title="Dashboard"
-            className={styles.brandLink}
-          >
+          <Link href={homeHref} title="Dashboard" className={styles.brandLink}>
             <span
               className={`${styles.logoText} ${collapsed ? styles.logoTextHidden : ""}`}
             >
-              CLAWSANDBOX
+              AUCOBOT
             </span>
           </Link>
         </div>
@@ -87,7 +88,7 @@ export function Sidebar({ items, collapsed, onToggle, homeHref = "/" }: SidebarP
       </nav>
 
       <footer className={styles.footer}>
-        {/* Footer content if any */}
+        <SidebarFooterSetting collapsed={collapsed} />
       </footer>
     </aside>
   );
