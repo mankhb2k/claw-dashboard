@@ -8,13 +8,14 @@
   padding: 0;
   overflow: hidden;
   color: var(--color-muted-foreground, #a0aec0);
+  flex-shrink: 0;
 }
 
 .footerAvatar {
   flex-shrink: 0;
   align-self: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   font-size: 10px;
 }
 
@@ -35,7 +36,6 @@
 
 .footerTextHidden {
   width: 0;
-  min-width: 0;
   opacity: 0;
   transform: translateX(-10px);
   pointer-events: none;

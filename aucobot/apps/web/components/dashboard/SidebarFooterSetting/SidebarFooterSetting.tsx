@@ -45,7 +45,7 @@ export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
       className={`${styles.footerItem} ${collapsed ? styles.footerItemCollapsed : ""}`}
     >
       <Avatar
-        size="lg"
+        size="md"
         className={styles.footerAvatar}
         fallback={initials}
         alt={user?.username ?? "User avatar"}
