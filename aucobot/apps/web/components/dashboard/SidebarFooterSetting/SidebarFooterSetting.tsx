@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, Moon, Settings, Sun } from "lucide-react";
@@ -24,7 +24,8 @@ interface SidebarFooterSettingProps {
 }
 
 export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
-  const [open, setOpen] = useState(false);
+  const [openCollapsedMenu, setOpenCollapsedMenu] = useState(false);
+  const [openExpandedMenu, setOpenExpandedMenu] = useState(false);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -35,52 +36,105 @@ export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
   const displayName = user?.name?.trim() || user?.username || "User";
 
   const handleLogout = async () => {
-    setOpen(false);
+    setOpenCollapsedMenu(false);
+    setOpenExpandedMenu(false);
     await logout();
     router.push("/login");
   };
 
-  const handleOpenQuickSettings = () => {
-    if (!collapsed) {
-      setOpen(true);
-    }
-  };
+  useEffect(() => {
+    setOpenCollapsedMenu(false);
+    setOpenExpandedMenu(false);
+  }, [collapsed]);
 
   return (
     <div
       className={`${styles.footerItem} ${collapsed ? styles.footerItemCollapsed : ""}`}
-      onClick={handleOpenQuickSettings}
     >
-      <Avatar
-        size="md"
-        className={styles.footerAvatar}
-        fallback={initials}
-        alt={user?.username ?? "User avatar"}
-      />
-      <span
-        className={`${styles.footerText} ${collapsed ? styles.footerTextHidden : ""}`}
+      <DropdownMenu
+        open={openCollapsedMenu}
+        onOpenChange={setOpenCollapsedMenu}
+        modal={false}
       >
-        {displayName}
-      </span>
+        <DropdownMenuTrigger asChild variant="unstyled">
+          <button
+            type="button"
+            className={styles.footerAvatarTrigger}
+            aria-label="Mở cài đặt nhanh"
+            aria-expanded={openCollapsedMenu}
+            disabled={!collapsed}
+          >
+            <Avatar
+              size="md"
+              className={styles.footerAvatar}
+              fallback={initials}
+              alt={user?.username ?? "User avatar"}
+            />
+          </button>
+        </DropdownMenuTrigger>
+
+        {collapsed && (
+          <DropdownMenuContent
+            className={styles.dropdown}
+            side="top"
+            align="start"
+            sideOffset={8}
+          >
+            <DropdownMenuLabel className={styles.dropdownLabel}>
+              {user?.username ?? displayName}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={toggleTheme}>
+              {theme === "dark" ? (
+                <>
+                  <Sun size={14} aria-hidden />
+                  Chế độ sáng
+                </>
+              ) : (
+                <>
+                  <Moon size={14} aria-hidden />
+                  Chế độ tối
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/setting">
+                <Settings size={14} aria-hidden />
+                Cài đặt
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="danger" onClick={handleLogout}>
+              <LogOut size={14} aria-hidden />
+              Đăng xuất
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        )}
+      </DropdownMenu>
+
+      {!collapsed && <span className={styles.footerText}>{displayName}</span>}
 
       {!collapsed && (
-        <div className={styles.settingsWrap} onClick={(event) => event.stopPropagation()}>
-          <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+        <div className={styles.settingsWrap}>
+          <DropdownMenu
+            open={openExpandedMenu}
+            onOpenChange={setOpenExpandedMenu}
+            modal={false}
+          >
             <DropdownMenuTrigger asChild variant="unstyled">
               <button
                 type="button"
                 className={styles.footerSettingsBtn}
                 aria-label="Mở cài đặt nhanh"
-                aria-expanded={open}
+                aria-expanded={openExpandedMenu}
               >
                 <Settings size={18} strokeWidth={ICON_STROKE} aria-hidden />
               </button>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent
               className={styles.dropdown}
               side="top"
-              align="end"
+              align="start"
               sideOffset={8}
             >
               <DropdownMenuLabel className={styles.dropdownLabel}>

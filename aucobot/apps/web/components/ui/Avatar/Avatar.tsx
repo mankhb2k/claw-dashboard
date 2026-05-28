@@ -27,7 +27,7 @@ export const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
         )}
         <AvatarPrimitive.Fallback
           className={styles.fallback}
-          delayMs={600}
+          delayMs={0}
         >
           {fallback}
         </AvatarPrimitive.Fallback>
