@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
+import { ChevronRight } from 'lucide-react'
 import styles from './DropdownMenu.module.css'
 
 export const DropdownMenu = DropdownMenuPrimitive.Root
@@ -21,19 +22,33 @@ export const DropdownMenuTrigger = React.forwardRef<
 ))
 DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName
 
+export type DropdownMenuContentProps =
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
+    /** Độ rộng tối thiểu của menu (số = px, chuỗi = CSS length). */
+    width?: number | string
+  }
+
 export const DropdownMenuContent = React.forwardRef<
   HTMLDivElement,
-  DropdownMenuPrimitive.DropdownMenuContentProps
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={`${styles.content} ${className || ''}`}
-      {...props}
-    />
-  </DropdownMenuPrimitive.Portal>
-))
+  DropdownMenuContentProps
+>(({ className, sideOffset = 4, width, style, ...props }, ref) => {
+  const widthStyle =
+    width !== undefined
+      ? { minWidth: typeof width === 'number' ? `${width}px` : width }
+      : undefined
+
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        ref={ref}
+        sideOffset={sideOffset}
+        className={`${styles.content} ${className || ''}`}
+        style={{ ...widthStyle, ...style }}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  )
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 export const DropdownMenuItem = React.forwardRef<
@@ -71,3 +86,56 @@ export const DropdownMenuSeparator = React.forwardRef<
   />
 ))
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
+
+export const DropdownMenuSub = DropdownMenuPrimitive.Sub
+
+export type DropdownMenuSubContentProps =
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent> & {
+    width?: number | string
+  }
+
+export const DropdownMenuSubContent = React.forwardRef<
+  HTMLDivElement,
+  DropdownMenuSubContentProps
+>(({ className, sideOffset = 4, width, style, ...props }, ref) => {
+  const widthStyle =
+    width !== undefined
+      ? { minWidth: typeof width === 'number' ? `${width}px` : width }
+      : undefined
+
+  return (
+    <DropdownMenuPrimitive.SubContent
+      ref={ref}
+      sideOffset={sideOffset}
+      className={`${styles.content} ${className || ''}`}
+      style={{ ...widthStyle, ...style }}
+      {...props}
+    />
+  )
+})
+DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName
+
+export type DropdownMenuItemExtendProps = React.ComponentPropsWithoutRef<
+  typeof DropdownMenuPrimitive.SubTrigger
+> & {
+  /** Giá trị phụ hiển thị trước icon mở rộng (vd. "Light"). */
+  detail?: React.ReactNode
+}
+
+export const DropdownMenuItemExtend = React.forwardRef<
+  HTMLDivElement,
+  DropdownMenuItemExtendProps
+>(({ className, children, detail, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref}
+    className={`${styles.item} ${styles.itemExtend} ${className || ''}`}
+    {...props}
+  >
+    <span className={styles.itemExtendMain}>{children}</span>
+    {detail != null && detail !== '' ? (
+      <span className={styles.itemExtendDetail}>{detail}</span>
+    ) : null}
+    <ChevronRight size={14} className={styles.itemExtendChevron} aria-hidden />
+  </DropdownMenuPrimitive.SubTrigger>
+))
+DropdownMenuItemExtend.displayName = 'DropdownMenuItemExtend'

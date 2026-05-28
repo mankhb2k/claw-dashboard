@@ -3,34 +3,97 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Moon, Settings, Sun } from "lucide-react";
+import { LogOut, Monitor, Moon, Palette, Settings, Sun } from "lucide-react";
 import {
   Avatar,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@/components/ui";
+import type { ThemePreference } from "@/schemas/theme.schema";
 import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/stores/theme.store";
-import styles from "./SidebarFooterSetting.module.css";
+import styles from "./SidebarFooter.module.css";
 
 const ICON_STROKE = 1.25;
 
-interface SidebarFooterSettingProps {
+interface SidebarFooterProps {
   collapsed: boolean;
 }
 
-export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
+function FooterDropdownMenuContent({ onLogout }: { onLogout: () => void }) {
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+
+  return (
+    <>
+      <div
+        className={styles.themeToggleWrap}
+        onPointerDown={(e) => e.preventDefault()}
+      >
+        <span className={styles.themeToggleLabel}>
+          <Palette size={14} aria-hidden />
+          Theme
+        </span>
+        <ToggleGroup
+          type="single"
+          size="sm"
+          className={styles.themeToggle}
+          value={theme}
+          onValueChange={(value) => {
+            if (value) setTheme(value as ThemePreference);
+          }}
+        >
+          <ToggleGroupItem
+            value="system"
+            className={styles.themeToggleItem}
+            aria-label="Hệ thống"
+          >
+            <Monitor size={13} aria-hidden />
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="light"
+            className={styles.themeToggleItem}
+            aria-label="Chế độ sáng"
+          >
+            <Sun size={13} aria-hidden />
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="dark"
+            className={styles.themeToggleItem}
+            aria-label="Chế độ tối"
+          >
+            <Moon size={13} aria-hidden />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem asChild>
+        <Link href="/dashboard/setting">
+          <Settings size={14} aria-hidden />
+          Cài đặt
+        </Link>
+      </DropdownMenuItem>
+
+      <DropdownMenuSeparator />
+      <DropdownMenuItem variant="danger" onClick={onLogout}>
+        <LogOut size={14} aria-hidden />
+        Đăng xuất
+      </DropdownMenuItem>
+    </>
+  );
+}
+
+export function SidebarFooter({ collapsed }: SidebarFooterProps) {
   const [openCollapsedMenu, setOpenCollapsedMenu] = useState(false);
   const [openExpandedMenu, setOpenExpandedMenu] = useState(false);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const theme = useThemeStore((s) => s.theme);
-  const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
   const initials = user?.username?.slice(0, 2).toUpperCase() ?? "??";
   const displayName = user?.name?.trim() || user?.username || "User";
@@ -75,39 +138,12 @@ export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
 
         {collapsed && (
           <DropdownMenuContent
-            className={styles.dropdown}
+            width={180}
             side="top"
             align="start"
             sideOffset={8}
           >
-            <DropdownMenuLabel className={styles.dropdownLabel}>
-              {user?.username ?? displayName}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={toggleTheme}>
-              {theme === "dark" ? (
-                <>
-                  <Sun size={14} aria-hidden />
-                  Chế độ sáng
-                </>
-              ) : (
-                <>
-                  <Moon size={14} aria-hidden />
-                  Chế độ tối
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/setting">
-                <Settings size={14} aria-hidden />
-                Cài đặt
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="danger" onClick={handleLogout}>
-              <LogOut size={14} aria-hidden />
-              Đăng xuất
-            </DropdownMenuItem>
+            <FooterDropdownMenuContent onLogout={handleLogout} />
           </DropdownMenuContent>
         )}
       </DropdownMenu>
@@ -132,39 +168,12 @@ export function SidebarFooterSetting({ collapsed }: SidebarFooterSettingProps) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className={styles.dropdown}
+              width={180}
               side="top"
               align="start"
               sideOffset={8}
             >
-              <DropdownMenuLabel className={styles.dropdownLabel}>
-                {user?.username ?? displayName}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={toggleTheme}>
-                {theme === "dark" ? (
-                  <>
-                    <Sun size={14} aria-hidden />
-                    Chế độ sáng
-                  </>
-                ) : (
-                  <>
-                    <Moon size={14} aria-hidden />
-                    Chế độ tối
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/setting">
-                  <Settings size={14} aria-hidden />
-                  Cài đặt
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="danger" onClick={handleLogout}>
-                <LogOut size={14} aria-hidden />
-                Đăng xuất
-              </DropdownMenuItem>
+              <FooterDropdownMenuContent onLogout={handleLogout} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -57,16 +57,14 @@
 
   /* Shadows */
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 10px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.14);
   --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
   --shadow-xl: 0 24px 48px rgba(15, 23, 42, 0.12);
 
-  /* Focus ring */
-  --focus-ring:
-    0 0 0 2px var(--color-background), 0 0 0 3px var(--color-primary-dim);
+  /* Focus ring — một viền primary, hoạt động trên mọi nền (sidebar, popover, card) */
+  --focus-ring: 0 0 0 2px var(--color-primary);
   --focus-glow:
-    0 0 0 2px var(--color-background), 0 0 0 3px var(--color-primary-dim),
-    0 0 14px var(--color-background-hover);
+    0 0 0 2px var(--color-primary), 0 0 12px var(--color-primary-dim);
 
   /* Spacing (rem — 1rem = root font size, typically 16px) */
   --space-1: 0.25rem;
@@ -180,11 +178,9 @@
   --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.5);
 
   /* Focus ring */
-  --focus-ring:
-    0 0 0 2px var(--color-background), 0 0 0 3px var(--color-primary-dim);
+  --focus-ring: 0 0 0 2px var(--color-primary);
   --focus-glow:
-    0 0 0 2px var(--color-background), 0 0 0 3px var(--color-primary-dim),
-    0 0 18px var(--color-background-hover);
+    0 0 0 2px var(--color-primary), 0 0 12px var(--color-primary-dim);
 
   color-scheme: dark;
 }

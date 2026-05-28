@@ -14,6 +14,7 @@ import "@blocknote/mantine/style.css";
 import { Flex } from "@/components/layout";
 import { Button, Typography, ToggleGroup, ToggleGroupItem } from "@/components/ui";
 import { Share, Edit3, FileText } from "lucide-react";
+import { resolveThemeAppearance } from "@/lib/theme-resolve";
 import { useThemeStore } from "@/stores/theme.store";
 import styles from "./SkillEditor.module.css";
 
@@ -146,7 +147,7 @@ export const SkillEditor = forwardRef<SkillEditorHandle, SkillEditorProps>(
             {viewMode === "editor" ? (
               <BlockNoteView
                 editor={editor}
-                theme={theme === "dark" ? "dark" : "light"}
+                theme={resolveThemeAppearance(theme)}
                 onChange={() => handleChange()}
               />
             ) : (

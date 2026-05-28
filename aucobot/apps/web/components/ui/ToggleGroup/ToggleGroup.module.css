@@ -3,7 +3,7 @@
    ============================================================================= */
 .root {
   display: inline-flex;
-  background-color: var(--color-muted);
+  background-color: var(--color-background);
   border-radius: var(--radius-md);
   padding: 2px;
   gap: 2px;
@@ -11,19 +11,19 @@
   position: relative; /* Thêm để định vị indicator */
 }
 
-/* Biến thể theo chiều dọc */
+/* Vertical variant */
 .root[data-orientation="vertical"] {
   flex-direction: column;
 }
 
-/* --- BIẾN THỂ KÍCH THƯỚC (SIZES) --- */
+/* --- Sizes --- */
 .root--sm {
   height: 28px;
 }
 
 .root--sm .item {
   padding: 0 var(--space-2);
-  font-size: 11px; /* Tương đương var(--font-size-xs) */
+  font-size: 11px;
   min-width: 28px;
 }
 
@@ -41,7 +41,7 @@
 }
 
 /* =============================================================================
-   2. ITEM — Các nút bấm thành phần
+   2. ITEM — Components
    ============================================================================= */
 .item {
   display: flex;
@@ -61,8 +61,8 @@
   min-width: 32px;
   height: 100%;
   outline: none;
-  position: relative; /* Thêm để z-index hoạt động */
-  z-index: 1; /* Nổi lên trên indicator */
+  position: relative;
+  z-index: 1;
 }
 
 /* Focus state */
@@ -78,7 +78,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* --- TRẠNG THÁI SINGLE SELECT (Có thanh trượt) --- */
+/* --- Single select state --- */
 .singleSelect .item[data-state="on"] {
   background-color: transparent;
   box-shadow: none;
@@ -90,7 +90,7 @@
   left: 0;
   background-color: var(--color-background);
   border-radius: calc(var(--radius-md) - 2px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   transition:
     transform var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1),
     width var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1),
@@ -99,7 +99,7 @@
   z-index: 0;
 }
 
-/* --- TRẠNG THÁI DISABLED --- */
+/* --- Disabled state --- */
 .item:disabled {
   opacity: 0.5;
   cursor: not-allowed;

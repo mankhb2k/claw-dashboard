@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth.store";
+import { resolveThemeAppearance } from "@/lib/theme-resolve";
 import { useThemeStore } from "@/stores/theme.store";
 import type { NavItem } from "@/components/dashboard/Sidebar/Sidebar";
 import styles from "./Header.module.css";
@@ -51,6 +52,7 @@ export function Header({
   const logout = useAuthStore((s) => s.logout);
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const isDark = resolveThemeAppearance(theme) === "dark";
   const pathname = usePathname();
 
   const handleLogout = async () => {
@@ -116,10 +118,10 @@ export function Header({
           size="icon_sm"
           className={styles.themeToggle}
           onClick={toggleTheme}
-          aria-label={theme === "dark" ? switchToLightLabel : switchToDarkLabel}
-          title={theme === "dark" ? themeLightTitle : themeDarkTitle}
+          aria-label={isDark ? switchToLightLabel : switchToDarkLabel}
+          title={isDark ? themeLightTitle : themeDarkTitle}
         >
-          {theme === "dark" ? (
+          {isDark ? (
             <FaSun size={16} aria-hidden />
           ) : (
             <FaMoon size={16} aria-hidden />

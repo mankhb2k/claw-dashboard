@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { ChevronsLeft } from "lucide-react";
-import { SidebarFooterSetting } from "@/components/dashboard/SidebarFooterSetting/SidebarFooterSetting";
+import { SidebarFooter } from "@/components/dashboard/SidebarFooter/SidebarFooter";
 import styles from "./Sidebar.module.css";
 
 const ICON_STROKE = 1.25;
@@ -88,7 +88,7 @@ export function Sidebar({
       </nav>
 
       <footer className={styles.footer}>
-        <SidebarFooterSetting collapsed={collapsed} />
+        <SidebarFooter collapsed={collapsed} />
       </footer>
     </aside>
   );

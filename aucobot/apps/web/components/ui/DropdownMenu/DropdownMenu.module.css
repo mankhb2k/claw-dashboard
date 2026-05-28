@@ -2,7 +2,7 @@
    1. MENU CONTAINER (CONTENT)
    ============================================================================= */
 .content {
-  background: var(--color-popover);
+  background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
@@ -19,7 +19,8 @@
 .item {
   display: flex;
   align-items: center;
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   color: var(--color-popover-foreground);
@@ -29,13 +30,13 @@
   user-select: none;
 }
 
-/* Hover state chuẩn dự án */
+/* Hover state*/
 .item:hover,
 .item[data-highlighted] {
   background: var(--color-primary-dim);
 }
 
-/* Item nguy hiểm (Xóa, v.v.) */
+/* Item danger */
 .item.danger {
   color: var(--color-danger);
 }
@@ -43,6 +44,29 @@
 .item.danger:hover,
 .item.danger[data-highlighted] {
   background: var(--color-danger-dim);
+}
+
+.itemExtend {
+  width: 100%;
+}
+
+.itemExtendMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.itemExtendDetail {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+}
+
+.itemExtendChevron {
+  flex-shrink: 0;
+  color: var(--color-muted-foreground);
 }
 
 /* =============================================================================
