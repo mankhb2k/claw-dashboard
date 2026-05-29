@@ -31,8 +31,9 @@ export function CardInstructions() {
       </Flex>
 
       <Typography variant="small" color="muted">
-        Biên dịch ra AGENTS.md (chỉ thị vận hành) và TOOLS.md (ghi chú môi trường). Giọng điệu
-        SOUL.md lấy từ tab Identity. Cấu hình model/sandbox nằm ở tab Capabilities.
+        {mode === 'simple'
+          ? 'Biên dịch ra AGENTS.md (chỉ thị vận hành) và TOOLS.md (ghi chú môi trường). Giọng điệu SOUL.md lấy từ tab Identity. Cấu hình model/sandbox nằm ở tab Capabilities.'
+          : 'Chỉnh sửa trực tiếp AGENTS.md (chỉ thị vận hành). Giọng điệu SOUL.md lấy từ tab Identity. Cấu hình model/sandbox nằm ở tab Capabilities.'}
       </Typography>
 
       <ToggleGroup
@@ -104,6 +105,27 @@ export function CardInstructions() {
               {...register('instructionsOutputFormat')}
             />
           </div>
+
+          <hr className={styles.divider} />
+
+          <Typography variant="p" weight="bold">
+            Ghi chú công cụ (TOOLS.md)
+          </Typography>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="tools-notes">
+              Ghi chú môi trường (tùy chọn)
+            </label>
+            <textarea
+              id="tools-notes"
+              className={styles.textarea}
+              rows={4}
+              placeholder="VD: Tên camera, host SSH, giọng TTS ưa thích..."
+              {...register('toolsNotes')}
+            />
+            <Typography variant="small" color="muted">
+              Ghi chú đặc thù setup — không thay thế cấu hình trong openclaw.json.
+            </Typography>
+          </div>
         </div>
       ) : (
         <div className={styles.field}>
@@ -122,27 +144,6 @@ export function CardInstructions() {
           ) : null}
         </div>
       )}
-
-      <hr className={styles.divider} />
-
-      <Typography variant="p" weight="bold">
-        Ghi chú công cụ (TOOLS.md)
-      </Typography>
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="tools-notes">
-          Ghi chú môi trường (tùy chọn)
-        </label>
-        <textarea
-          id="tools-notes"
-          className={styles.textarea}
-          rows={4}
-          placeholder="VD: Tên camera, host SSH, giọng TTS ưa thích..."
-          {...register('toolsNotes')}
-        />
-        <Typography variant="small" color="muted">
-          Ghi chú đặc thù setup — không thay thế cấu hình trong openclaw.json.
-        </Typography>
-      </div>
     </Card>
   )
 }

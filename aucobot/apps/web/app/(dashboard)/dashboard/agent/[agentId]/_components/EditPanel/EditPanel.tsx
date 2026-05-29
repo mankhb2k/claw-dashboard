@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Flex } from "@/components/layout";
+import { Container, Flex } from "@/components/layout";
 import { Typography, Button } from "@/components/ui";
 import {
   agentFormSchema,
@@ -21,6 +21,8 @@ import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import {
   ArrowLeft,
+  PanelRightClose,
+  PanelRightOpen,
   Save,
   UserRoundPen,
   Brain,
@@ -41,6 +43,8 @@ interface EditPanelProps {
   /** Required when editing an existing agent; omitted on create flow. */
   agentId?: string;
   isEditing?: boolean;
+  previewOpen?: boolean;
+  onTogglePreview?: () => void;
 }
 
 type EditTab =
@@ -61,7 +65,12 @@ const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
 ];
 
 /** Panel trái: form chỉnh sửa / tạo Agent (header + tabs + nội dung card). */
-export function EditPanel({ agentId, isEditing }: EditPanelProps) {
+export function EditPanel({
+  agentId,
+  isEditing,
+  previewOpen = true,
+  onTogglePreview,
+}: EditPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
@@ -93,7 +102,9 @@ export function EditPanel({ agentId, isEditing }: EditPanelProps) {
           setLoadError(null);
         })
         .catch((err) => {
-          setLoadError(err instanceof Error ? err.message : "Không tải được agent");
+          setLoadError(
+            err instanceof Error ? err.message : "Không tải được agent",
+          );
         })
         .finally(() => setFormReady(true));
       return;
@@ -109,7 +120,9 @@ export function EditPanel({ agentId, isEditing }: EditPanelProps) {
         })
         .catch((err) => {
           reset(buildAgentFormDefaults());
-          setLoadError(err instanceof Error ? err.message : "Không tải template");
+          setLoadError(
+            err instanceof Error ? err.message : "Không tải template",
+          );
         })
         .finally(() => setFormReady(true));
       return;
@@ -229,9 +242,47 @@ export function EditPanel({ agentId, isEditing }: EditPanelProps) {
     router.push(`/dashboard/agent`);
   };
 
+  const tabContent = (
+    <>
+      {activeTab === "identity" && <CardIdentity />}
+      {activeTab === "instructions" && <CardInstructions />}
+      {activeTab === "capabilities" && (
+        <CardCapabilities
+          model={model}
+          setModel={(val) => setValue("model", val, { shouldDirty: true })}
+          sandboxEnabled={sandboxEnabled}
+          setSandboxEnabled={(val) =>
+            setValue("sandboxEnabled", val, { shouldDirty: true })
+          }
+          askPolicy={askPolicy}
+          setAskPolicy={(val) =>
+            setValue("askPolicy", val, { shouldDirty: true })
+          }
+          safeBins={safeBins}
+          newTagInput={newTagInput}
+          setNewTagInput={setNewTagInput}
+          timeoutSec={timeoutSec}
+          setTimeoutSec={(val) =>
+            setValue("timeoutSec", val, { shouldDirty: true })
+          }
+          handleAddTag={handleAddTag}
+          handleRemoveTag={handleRemoveTag}
+        />
+      )}
+      {activeTab === "team" && <CardTeam />}
+      {activeTab === "integrations" && (
+        <CardIntegrations agentId={agentId ?? "new-agent"} />
+      )}
+    </>
+  );
+
   if (!formReady) {
     return (
-      <Flex align="center" justify="center" className={styles.root}>
+      <Flex
+        align="center"
+        justify="center"
+        className={`${styles.root} ${!previewOpen ? styles.rootExpanded : ""}`}
+      >
         <Typography variant="small" color="muted">
           Đang tải…
         </Typography>
@@ -239,55 +290,53 @@ export function EditPanel({ agentId, isEditing }: EditPanelProps) {
     );
   }
 
-  return (
-    <FormProvider {...formMethods}>
-      <div className={styles.root}>
-        {loadError && (
-          <Typography variant="small" color="muted" style={{ padding: "0 1rem" }}>
-            {loadError}
+  const panelMain = (
+    <>
+      {loadError && (
+        <Typography variant="small" color="muted" className={styles.loadError}>
+          {loadError}
+        </Typography>
+      )}
+      <div className={styles.header}>
+        <Flex align="center" gap={3}>
+          <Button variant="ghost" size="icon" onClick={handleBack}>
+            <ArrowLeft size={18} />
+          </Button>
+          <Typography variant="p" weight="bold">
+            {isEditing ? "Chỉnh sửa Agent" : "Tạo Agent mới"}
           </Typography>
-        )}
-        {/* Header*/}
-        <div className={styles.header}>
-          <Flex align="center" gap={3}>
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ArrowLeft size={18} />
-            </Button>
-            <Typography variant="p" weight="bold">
-              {isEditing ? "Chỉnh sửa Agent" : "Tạo Agent mới"}
-            </Typography>
-          </Flex>
-          <Flex align="center" gap={8}>
-            {showSaved && (
-              <Typography
-                variant="small"
-                italic
-                weight="regular"
-                className={styles.saveStatus}
-              >
-                Đã lưu ✓
-              </Typography>
-            )}
-            <Button
-              type="submit"
-              form={AGENT_FORM_ID}
-              size="sm"
-              className={styles.saveBtn}
-              disabled={isSaving || !projectId}
+        </Flex>
+        <Flex align="center" gap={8}>
+          {showSaved && (
+            <Typography
+              variant="small"
+              italic
+              weight="regular"
+              className={styles.saveStatus}
             >
-              <Save size={16} />
-              {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
-            </Button>
-          </Flex>
-        </div>
+              Đã lưu ✓
+            </Typography>
+          )}
+          <Button
+            type="submit"
+            form={AGENT_FORM_ID}
+            size="sm"
+            className={styles.saveBtn}
+            disabled={isSaving || !projectId}
+          >
+            <Save size={16} />
+            {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+          </Button>
+        </Flex>
+      </div>
 
-        <form
-          id={AGENT_FORM_ID}
-          className={styles.form}
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-        >
-          {/* Tabs */}
+      <form
+        id={AGENT_FORM_ID}
+        className={styles.form}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+      >
+        <div className={styles.tabBar}>
           <div className={styles.tabList} ref={tabListRef}>
             <span
               className={styles.tabIndicator}
@@ -315,51 +364,47 @@ export function EditPanel({ agentId, isEditing }: EditPanelProps) {
               );
             })}
           </div>
+          {onTogglePreview ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={styles.previewToggle}
+              onClick={onTogglePreview}
+              aria-label={previewOpen ? "Ẩn preview" : "Hiện preview"}
+              aria-pressed={previewOpen}
+              title={previewOpen ? "Ẩn preview" : "Hiện preview"}
+            >
+              {previewOpen ? (
+                <PanelRightClose size={18} />
+              ) : (
+                <PanelRightOpen size={18} />
+              )}
+            </Button>
+          ) : null}
+        </div>
 
-          {/* Tab Content */}
-          <div className={styles.body}>
-            {/* Tab Identity */}
-            {activeTab === "identity" && <CardIdentity />}
+        <div
+          className={`${styles.body} ${!previewOpen ? styles.bodyConstrained : ""}`}
+        >
+          <div className={styles.bodyInner}>{tabContent}</div>
+        </div>
+      </form>
+    </>
+  );
 
-            {/* Tab Instructions */}
-            {activeTab === "instructions" && <CardInstructions />}
-
-            {/* Tab Capabilities */}
-            {activeTab === "capabilities" && (
-              <CardCapabilities
-                model={model}
-                setModel={(val) =>
-                  setValue("model", val, { shouldDirty: true })
-                }
-                sandboxEnabled={sandboxEnabled}
-                setSandboxEnabled={(val) =>
-                  setValue("sandboxEnabled", val, { shouldDirty: true })
-                }
-                askPolicy={askPolicy}
-                setAskPolicy={(val) =>
-                  setValue("askPolicy", val, { shouldDirty: true })
-                }
-                safeBins={safeBins}
-                newTagInput={newTagInput}
-                setNewTagInput={setNewTagInput}
-                timeoutSec={timeoutSec}
-                setTimeoutSec={(val) =>
-                  setValue("timeoutSec", val, { shouldDirty: true })
-                }
-                handleAddTag={handleAddTag}
-                handleRemoveTag={handleRemoveTag}
-              />
-            )}
-
-            {/* Tab Team */}
-            {activeTab === "team" && <CardTeam />}
-
-            {/* Tab Integrations */}
-            {activeTab === "integrations" && (
-              <CardIntegrations agentId={agentId ?? "new-agent"} />
-            )}
-          </div>
-        </form>
+  return (
+    <FormProvider {...formMethods}>
+      <div
+        className={`${styles.root} ${!previewOpen ? styles.rootExpanded : ""}`}
+      >
+        {!previewOpen ? (
+          <Container size="md" display="flex" className={styles.constrainedShell}>
+            {panelMain}
+          </Container>
+        ) : (
+          panelMain
+        )}
       </div>
     </FormProvider>
   );

@@ -8,6 +8,27 @@
   overflow: hidden;
   background: var(--color-background);
   border-right: 1px solid var(--color-border);
+  transition: flex-basis var(--transition-slow) var(--ease-out);
+}
+
+/* Khi đóng preview — form chiếm toàn bộ chiều ngang */
+.rootExpanded {
+  flex: 1 1 auto;
+  border-right: none;
+  align-items: center;
+}
+
+/* Shell giới hạn chiều rộng khi đóng preview */
+.constrainedShell {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.loadError {
+  padding: 0 var(--space-2);
 }
 
 /* Header cố định */
@@ -18,6 +39,19 @@
   align-items: center;
   justify-content: space-between;
   background: var(--color-background);
+}
+
+.constrainedShell .header {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.constrainedShell .tabBar {
+  padding-right: 0;
+}
+
+.constrainedShell .tabList {
+  padding-left: 0;
 }
 
 /* Thông báo đã lưu */
@@ -48,18 +82,52 @@
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
 }
 
-/* Thanh tab cố định */
+.bodyInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.bodyConstrained {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Hàng tab + nút preview (cố định phải) */
+.tabBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding-right: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+
+/* Danh sách tab — scroll ngang khi hẹp */
 .tabList {
   position: relative;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   padding: 0 var(--space-6);
-  border-bottom: 1px solid var(--color-border);
   display: flex;
   gap: var(--space-6);
-  background: var(--color-background);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabList::-webkit-scrollbar {
+  display: none;
+}
+
+/* Nút đóng/mở preview — luôn bám phải */
+.previewToggle {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
 }
 
 /* Gạch dưới trượt theo tab active */

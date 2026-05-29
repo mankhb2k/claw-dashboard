@@ -23,18 +23,32 @@ interface ModalTemplateProps {
   projectId: string;
 }
 
-export function ModalTemplate({ isOpen, onClose, projectId }: ModalTemplateProps) {
+export function ModalTemplate({
+  isOpen,
+  onClose,
+  projectId,
+}: ModalTemplateProps) {
   const router = useRouter();
   const [templates, setTemplates] = useState<AgentTemplateRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen || !projectId) return;
     setLoading(true);
+    setLoadError(null);
     void projectApi
       .listAgentTemplates(projectId)
-      .then(setTemplates)
-      .catch(() => setTemplates([]))
+      .then((rows) => {
+        setTemplates(rows);
+        setLoadError(null);
+      })
+      .catch(() => {
+        setTemplates([]);
+        setLoadError(
+          "Không tải được danh sách template. Kiểm tra API đang chạy và đã seed database (pnpm db:seed).",
+        );
+      })
       .finally(() => setLoading(false));
   }, [isOpen, projectId]);
 
@@ -62,9 +76,11 @@ export function ModalTemplate({ isOpen, onClose, projectId }: ModalTemplateProps
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={styles.modalContent} showClose={true}>
         <DialogHeader style={{ gap: 10, marginBottom: "var(--space-6)" }}>
-          <DialogTitle>Chọn Template Khởi Tạo Agent</DialogTitle>
+          <DialogTitle>Choose a template to start your project</DialogTitle>
           <DialogDescription>
-            Khởi động dự án của bạn nhanh hơn bằng cách chọn các mẫu cấu hình tối ưu sẵn có từ thư viện OpenClaw, hoặc bắt đầu tự do từ con số không.
+            Start your project faster by choosing from the optimized templates
+            available in the OpenClaw library, or start from scratch with no
+            number.
           </DialogDescription>
         </DialogHeader>
 
@@ -72,6 +88,15 @@ export function ModalTemplate({ isOpen, onClose, projectId }: ModalTemplateProps
           <Flex align="center" justify="center" style={{ minHeight: 120 }}>
             <Spinner />
           </Flex>
+        ) : loadError ? (
+          <Typography variant="small" color="muted">
+            {loadError}
+          </Typography>
+        ) : templates.length === 0 ? (
+          <Typography variant="small" color="muted">
+            Chưa có template nào trong hệ thống. Chạy seed database từ thư mục{" "}
+            <code>packages/database</code>: <code>pnpm db:seed</code>
+          </Typography>
         ) : (
           <Grid columns={2} gap={12} className={styles.templateList}>
             {templates.map((template) => (
@@ -83,7 +108,9 @@ export function ModalTemplate({ isOpen, onClose, projectId }: ModalTemplateProps
                 onClick={() => handleSelectTemplate(template.slug)}
               >
                 <Flex gap={12} align="start">
-                  <div className={styles.iconContainer}>{getIcon(template.slug)}</div>
+                  <div className={styles.iconContainer}>
+                    {getIcon(template.slug)}
+                  </div>
                   <div className={styles.cardContent}>
                     <Typography
                       as="h4"
