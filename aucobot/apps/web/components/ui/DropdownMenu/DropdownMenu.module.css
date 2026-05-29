@@ -30,6 +30,19 @@
   user-select: none;
 }
 
+.itemSelectable {
+  position: relative;
+  padding-right: var(--space-8);
+}
+
+.itemIndicator {
+  position: absolute;
+  right: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  color: currentColor;
+}
+
 /* Hover state*/
 .item:hover,
 .item[data-highlighted] {

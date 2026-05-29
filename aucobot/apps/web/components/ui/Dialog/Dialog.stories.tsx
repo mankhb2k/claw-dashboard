@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/Dialog/Dialog';
 import { Button } from '@/components/ui/Button/Button';
 
-// Tạo interface mở rộng để Storybook nhận diện các props ảo cho việc demo
 interface InteractiveProps extends React.ComponentProps<typeof DialogContent> {
   title: string;
   description: string;
@@ -29,19 +28,19 @@ const meta: Meta<InteractiveProps> = {
   argTypes: {
     showClose: {
       control: 'boolean',
-      description: 'Hiển thị nút X đóng modal ở góc trên bên phải',
+      description: 'Show X close button in the top-right corner',
     },
     title: {
       control: 'text',
-      description: 'Tiêu đề của Modal (Dùng cho Demo)',
+      description: 'Modal title (demo only)',
     },
     description: {
       control: 'text',
-      description: 'Mô tả của Modal (Dùng cho Demo)',
+      description: 'Modal description (demo only)',
     },
     content: {
       control: 'text',
-      description: 'Nội dung bên trong Modal (Dùng cho Demo)',
+      description: 'Modal body content (demo only)',
     },
   },
 };
@@ -49,31 +48,29 @@ const meta: Meta<InteractiveProps> = {
 export default meta;
 type Story = StoryObj<InteractiveProps>;
 
-// Label helper cho demo
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-text-subtle)', 
+  <p style={{
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--color-text-subtle)',
     fontWeight: 600,
-    marginBottom: '12px'
+    marginBottom: '12px',
   }}>
     {children}
   </p>
 );
 
-// Container helper cho demo
-const DemoBox = ({ children, style }: { children: React.ReactNode, style?: React.CSSProperties }) => (
-  <div style={{ 
-    display: 'flex', 
+const DemoBox = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{
+    display: 'flex',
     flexDirection: 'column',
-    gap: '16px', 
-    padding: '32px', 
-    border: '1px dashed var(--color-border)', 
+    gap: '16px',
+    padding: '32px',
+    border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
     background: 'var(--color-white)',
-    ...style
+    ...style,
   }}>
     {children}
   </div>
@@ -82,17 +79,17 @@ const DemoBox = ({ children, style }: { children: React.ReactNode, style?: React
 export const Interactive: Story = {
   args: {
     showClose: true,
-    title: 'Tiêu đề Modal',
-    description: 'Bạn có thể thay đổi văn bản này ở bảng Controls bên dưới.',
-    content: 'Nội dung chính của modal nằm ở đây. Bạn cũng có thể sửa nó!',
+    title: 'Modal title',
+    description: 'You can change this text in the Controls panel below.',
+    content: 'Main modal content goes here. You can edit this too!',
   },
   render: (args) => (
     <div>
-      <DemoLabel>Bấm vào nút bên dưới để mở Dialog và test Props ở bảng Controls:</DemoLabel>
+      <DemoLabel>Click the button to open the dialog and test Controls props:</DemoLabel>
       <DemoBox>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="primary">Mở Dialog</Button>
+            <Button variant="primary">Open dialog</Button>
           </DialogTrigger>
           <DialogContent showClose={args.showClose}>
             <DialogHeader>
@@ -108,9 +105,9 @@ export const Interactive: Story = {
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">Hủy bỏ</Button>
+                <Button variant="ghost">Cancel</Button>
               </DialogClose>
-              <Button variant="primary">Lưu lại</Button>
+              <Button variant="primary">Save</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -122,33 +119,33 @@ export const Interactive: Story = {
 export const CustomContent: Story = {
   args: {
     showClose: false,
-    title: 'Xác nhận hành động',
+    title: 'Confirm action',
     description: '',
-    content: 'Bạn có chắc chắn muốn thực hiện hành động này không?',
+    content: 'Are you sure you want to perform this action?',
   },
   render: (args) => (
     <div>
-      <DemoLabel>Modal tùy chỉnh (Ẩn nút Close mặc định bằng props):</DemoLabel>
+      <DemoLabel>Custom modal (hide default close button via props):</DemoLabel>
       <DemoBox>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline">Mở Modal Tùy Chỉnh</Button>
+            <Button variant="outline">Open custom modal</Button>
           </DialogTrigger>
           <DialogContent showClose={args.showClose}>
             <DialogHeader>
               <DialogTitle>{args.title}</DialogTitle>
             </DialogHeader>
             <div style={{ padding: 'var(--space-4) 0', textAlign: 'center' }}>
-              <div style={{ 
-                width: '48px', 
-                height: '48px', 
-                borderRadius: '50%', 
-                background: 'var(--color-primary-dim)', 
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'var(--color-primary-dim)',
                 color: 'var(--color-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 16px'
+                margin: '0 auto 16px',
               }}>
                 ℹ️
               </div>
@@ -158,9 +155,9 @@ export const CustomContent: Story = {
             </div>
             <DialogFooter style={{ justifyContent: 'center' }}>
               <DialogClose asChild>
-                <Button variant="ghost">Quay lại</Button>
+                <Button variant="ghost">Go back</Button>
               </DialogClose>
-              <Button variant="primary">Tôi đồng ý</Button>
+              <Button variant="primary">I agree</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -168,5 +165,3 @@ export const CustomContent: Story = {
     </div>
   ),
 };
-
-

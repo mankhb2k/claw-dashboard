@@ -32,19 +32,19 @@ const meta: Meta<ToastStoryArgs> = {
     variant: {
       control: 'radio',
       options: ['success', 'error'],
-      description: 'Loại toast (thành công / lỗi)',
+      description: 'Toast type (success / error)',
     },
     title: {
       control: 'text',
-      description: 'Tiêu đề hiển thị trên toast',
+      description: 'Toast title',
     },
     description: {
       control: 'text',
-      description: 'Mô tả phụ (để trống nếu không cần)',
+      description: 'Optional description (leave empty to omit)',
     },
     duration: {
       control: { type: 'number', min: 1000, max: 10000, step: 500 },
-      description: 'Thời gian tự ẩn (ms)',
+      description: 'Auto-dismiss duration (ms)',
     },
   },
 };
@@ -99,7 +99,7 @@ function ToastPlayground({ variant, title, description, duration }: ToastStoryAr
   return (
     <DemoBox>
       <Button variant={variant === 'error' ? 'danger' : 'primary'} onClick={handleShow}>
-        Hiện toast
+        Show toast
       </Button>
     </DemoBox>
   );
@@ -108,8 +108,8 @@ function ToastPlayground({ variant, title, description, duration }: ToastStoryAr
 export const Default: Story = {
   args: {
     variant: 'success',
-    title: 'Lưu thành công',
-    description: 'Cấu hình Agent đã được cập nhật.',
+    title: 'Saved successfully',
+    description: 'Agent configuration has been updated.',
     duration: 3000,
   },
   render: (args) => <ToastPlayground {...args} />,
@@ -118,8 +118,8 @@ export const Default: Story = {
 export const Success: Story = {
   args: {
     variant: 'success',
-    title: 'Đã lưu',
-    description: 'Thay đổi của bạn đã được lưu lại.',
+    title: 'Saved',
+    description: 'Your changes have been saved.',
     duration: 3000,
   },
   render: (args) => <ToastPlayground {...args} />,
@@ -128,8 +128,8 @@ export const Success: Story = {
 export const Error: Story = {
   args: {
     variant: 'error',
-    title: 'Lưu thất bại',
-    description: 'Không thể kết nối tới worker. Thử lại sau.',
+    title: 'Save failed',
+    description: 'Could not connect to the worker. Try again later.',
     duration: 3000,
   },
   render: (args) => <ToastPlayground {...args} />,
@@ -138,7 +138,7 @@ export const Error: Story = {
 export const TitleOnly: Story = {
   args: {
     variant: 'success',
-    title: 'Hoàn tất',
+    title: 'Complete',
     description: '',
     duration: 3000,
   },
@@ -151,7 +151,7 @@ function ToastDemoImperative() {
       <Button
         variant="outline"
         onClick={() =>
-          toast.success('Đã sao chép', 'API key đã được copy vào clipboard.')
+          toast.success('Copied', 'API key copied to clipboard.')
         }
       >
         toast.success()
@@ -159,7 +159,7 @@ function ToastDemoImperative() {
       <Button
         variant="outline"
         onClick={() =>
-          toast.error('Không hợp lệ', 'Tên Agent không được để trống.')
+          toast.error('Invalid', 'Agent name cannot be empty.')
         }
       >
         toast.error()
@@ -171,7 +171,7 @@ function ToastDemoImperative() {
 export const ImperativeApi: Story = {
   render: () => (
     <div>
-      <DemoLabel>toast — gọi trực tiếp (cần ToastProvider)</DemoLabel>
+      <DemoLabel>toast — imperative API (requires ToastProvider)</DemoLabel>
       <ToastDemoImperative />
     </div>
   ),
@@ -180,23 +180,23 @@ export const ImperativeApi: Story = {
 export const States: Story = {
   render: () => (
     <div>
-      <DemoLabel>Nhiều toast liên tiếp</DemoLabel>
+      <DemoLabel>Multiple toasts in sequence</DemoLabel>
       <DemoBox>
         <Button
           variant="secondary"
           onClick={() => {
-            toast.success('Bước 1', 'Đã xác thực phiên đăng nhập.');
+            toast.success('Step 1', 'Login session verified.');
             setTimeout(
-              () => toast.success('Bước 2', 'Đã đồng bộ cấu hình.'),
+              () => toast.success('Step 2', 'Configuration synced.'),
               400,
             );
             setTimeout(
-              () => toast.error('Bước 3', 'Worker timeout sau 30 giây.'),
+              () => toast.error('Step 3', 'Worker timed out after 30 seconds.'),
               800,
             );
           }}
         >
-          Kích hoạt chuỗi toast
+          Trigger toast chain
         </Button>
       </DemoBox>
     </div>

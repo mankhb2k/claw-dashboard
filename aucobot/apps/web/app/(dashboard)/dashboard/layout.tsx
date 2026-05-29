@@ -96,14 +96,14 @@ export default function DashboardLayout({
   const subSegment = pathMatch?.[1] ?? "overview";
 
   const titleMap: Record<string, string> = {
-    overview: "Tổng quan",
+    overview: "Overview",
     "ai-model": "Model & API keys",
     agent: "Bot Agent",
     channel: "Channels",
     chat: "Chat",
     connect: "Connect",
     skill: "Skill Directory",
-    setting: "Cài đặt",
+    setting: "Settings",
   };
 
   const title = titleMap[subSegment] || "Dashboard";
@@ -164,7 +164,7 @@ export default function DashboardLayout({
     return (
       <div className={styles.shell} data-dashboard-shell>
         <div className={styles.gate}>
-          <p>Đang kiểm tra workspace…</p>
+          <p>Checking workspace…</p>
         </div>
       </div>
     );

@@ -1,4 +1,4 @@
-/* Shell dashboard project — cố định viewport, không scroll toàn trang */
+/* Dashboard shell — fixed viewport, no full-page scroll */
 .shell {
   height: 100dvh;
   max-height: 100dvh;
@@ -19,7 +19,7 @@
   background: var(--color-background);
 }
 
-/* Slot trang — mặc định scroll nội dung (overview, list, settings…) */
+/* Page slot — default scrollable content (overview, list, settings…) */
 .contentScroll {
   flex: 1;
   min-height: 0;

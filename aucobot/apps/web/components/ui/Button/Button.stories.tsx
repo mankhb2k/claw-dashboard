@@ -30,7 +30,7 @@ const meta: Meta<typeof Button> = {
 export default meta;
 type Story = StoryObj<typeof Button>;
 
-// Label helper cho demo
+// Label helper for demos
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   <p style={{ 
     fontSize: '11px', 
@@ -44,7 +44,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-// Container helper cho demo
+// Container helper for demos
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
   <div style={{ 
     display: 'flex', 
@@ -71,7 +71,7 @@ export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <DemoLabel>Các biến thể màu sắc (Variants)</DemoLabel>
+        <DemoLabel>Color variants</DemoLabel>
         <DemoBox>
           <Button variant="primary">Primary</Button>
           <Button variant="secondary">Secondary</Button>
@@ -89,7 +89,7 @@ export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <DemoLabel>Các kích thước (Sizes)</DemoLabel>
+        <DemoLabel>Sizes</DemoLabel>
         <DemoBox>
           <Button size="xs">Extra Small</Button>
           <Button size="sm">Small</Button>
@@ -105,7 +105,7 @@ export const States: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <DemoLabel>Trạng thái (States)</DemoLabel>
+        <DemoLabel>States</DemoLabel>
         <DemoBox>
           <Button loading>Loading</Button>
           <Button disabled>Disabled</Button>
@@ -120,7 +120,7 @@ export const Icons: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <DemoLabel>Nút chứa Icon (Icon Buttons)</DemoLabel>
+        <DemoLabel>Icon buttons</DemoLabel>
         <DemoBox>
           <Button size="icon_xs">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>

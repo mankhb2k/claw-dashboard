@@ -14,7 +14,7 @@ const meta: Meta<typeof Card> = {
 export default meta;
 type Story = StoryObj<typeof Card>;
 
-// Label helper cho demo
+// Label helper for demos
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   <p style={{ 
     fontSize: '11px', 
@@ -28,7 +28,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-// Container helper cho demo
+// Container helper for demos
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
   <div style={{ 
     display: 'flex', 
@@ -46,9 +46,9 @@ export const Default: Story = {
   args: {
     children: (
       <div style={{ width: '300px' }}>
-        <h3 style={{ marginBottom: '8px', fontWeight: 600 }}>Tiêu đề Card</h3>
+        <h3 style={{ marginBottom: '8px', fontWeight: 600 }}>Card title</h3>
         <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>
-          Đây là nội dung mẫu bên trong Card. Card này đã được áp dụng bo góc radius-lg (14px) và có hiệu ứng hover shadow.
+          Sample content inside the card. Uses radius-lg (14px) corners and a hover shadow effect.
         </p>
       </div>
     ),
@@ -58,7 +58,7 @@ export const Default: Story = {
 export const Interactive: Story = {
   render: () => (
     <div>
-      <DemoLabel>Hover vào để xem hiệu ứng Shadow</DemoLabel>
+      <DemoLabel>Hover to see shadow effect</DemoLabel>
       <DemoBox>
         <Card style={{ width: '240px', cursor: 'pointer' }}>
           <div style={{ textAlign: 'center' }}>
@@ -75,8 +75,8 @@ export const Interactive: Story = {
             }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
             </div>
-            <h4 style={{ fontWeight: 600, marginBottom: '4px' }}>Dự án mới</h4>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-subtle)' }}>Tạo project ngay lập tức</p>
+            <h4 style={{ fontWeight: 600, marginBottom: '4px' }}>New project</h4>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-subtle)' }}>Create a project instantly</p>
           </div>
         </Card>
       </DemoBox>

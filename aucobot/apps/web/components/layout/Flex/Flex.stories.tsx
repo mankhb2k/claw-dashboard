@@ -24,7 +24,7 @@ export default meta
 type Story = StoryObj<typeof Flex>
 
 /* =============================================================================
-   HELPER — Sử dụng Box làm Item để test tính lắp ghép (Composition)
+   HELPER — Use Box as items to test composition
    ============================================================================= */
 const TestBox = ({ color = 'primary', children = 'Box', ...props }: BoxProps) => (
   <Box 

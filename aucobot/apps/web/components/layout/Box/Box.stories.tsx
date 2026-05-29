@@ -33,21 +33,21 @@ type Story = StoryObj<typeof Box>
 export const Default: Story = {
   args: {
     p: 4,
-    children: 'Một Box đơn giản.',
+    children: 'A simple box.',
   },
 }
 
 export const BackgroundColors: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '500px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600 }}>DIM COLORS (NHẠT)</p>
+      <p style={{ fontSize: '12px', fontWeight: 600 }}>DIM COLORS</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Box color="primary-dim" p={3}>Primary Dim</Box>
         <Box color="danger-dim" p={3}>Danger Dim</Box>
         <Box color="success-dim" p={3}>Success Dim</Box>
       </div>
 
-      <p style={{ fontSize: '12px', fontWeight: 600, marginTop: '16px' }}>SOLID COLORS (ĐẬM)</p>
+      <p style={{ fontSize: '12px', fontWeight: 600, marginTop: '16px' }}>SOLID COLORS</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Box color="primary" p={3} width="100px" style={{ textAlign: 'center' }}>Primary</Box>
         <Box color="success" p={3} width="100px" style={{ textAlign: 'center' }}>Success</Box>
@@ -55,7 +55,7 @@ export const BackgroundColors: Story = {
         <Box color="danger" p={3} width="100px" style={{ textAlign: 'center' }}>Danger</Box>
       </div>
 
-      <p style={{ fontSize: '12px', fontWeight: 600, marginTop: '16px' }}>CUSTOM COLORS (TỰ CHỌN)</p>
+      <p style={{ fontSize: '12px', fontWeight: 600, marginTop: '16px' }}>CUSTOM COLORS</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Box color="#6366f1" p={3} radius="md">Indigo (#6366f1)</Box>
         <Box color="hotpink" p={3} radius="md">Hot Pink</Box>
@@ -78,14 +78,14 @@ export const Combined: Story = {
 export const ArbitrarySpacing: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '500px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600 }}>SỬ DỤNG GIÁ TRỊ PX (SỐ)</p>
+      <p style={{ fontSize: '12px', fontWeight: 600 }}>PIXEL VALUES (NUMBERS)</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
         <Box color="surface" p={10} border>Padding 10 (10px)</Box>
         <Box color="surface" p={32} border>Padding 32 (32px)</Box>
         <Box color="surface" px={30} py={5} border>PX 30, PY 5</Box>
       </div>
 
-      <p style={{ fontSize: '12px', fontWeight: 600, marginTop: '16px' }}>KẾT HỢP CÁC HƯỚNG</p>
+      <p style={{ fontSize: '12px', fontWeight: 600, marginTop: '16px' }}>PER-SIDE SPACING</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
         <Box color="surface" p={20} pt={2} border>P=20, PT=2</Box>
         <Box color="surface" py={30} px={10} border>PY=30, PX={10}</Box>

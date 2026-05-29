@@ -15,10 +15,6 @@ const meta: Meta<typeof Select> = {
 export default meta;
 type Story = StoryObj<typeof Select>;
 
-/* =============================================================================
-   HELPER COMPONENTS (Self-contained for Demo)
-   ============================================================================= */
-
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   <p
     style={{
@@ -51,15 +47,11 @@ const DemoBox = ({ children, width = '450px' }: { children: React.ReactNode; wid
   </div>
 );
 
-/* =============================================================================
-   STORIES
-   ============================================================================= */
-
 export const Default: Story = {
   args: {
     id: 'select-default',
-    label: 'Chọn mô hình AI',
-    placeholder: 'Chọn một mô hình...',
+    label: 'Choose AI model',
+    placeholder: 'Select a model...',
     options: [
       { value: 'gpt-4o', label: 'GPT-4o (OpenAI)' },
       { value: 'claude-3-5', label: 'Claude 3.5 Sonnet (Anthropic)' },
@@ -73,12 +65,12 @@ export const States: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <section>
-        <DemoLabel>Trạng thái bình thường & Placeholder</DemoLabel>
+        <DemoLabel>Default & placeholder</DemoLabel>
         <DemoBox>
           <Select
             id="select-normal"
-            label="Khu vực triển khai"
-            placeholder="Chọn server..."
+            label="Deployment region"
+            placeholder="Select server..."
             options={[
               { value: 'sg', label: 'Singapore (Asia Southeast)' },
               { value: 'us', label: 'United States (North America)' },
@@ -89,27 +81,27 @@ export const States: Story = {
       </section>
 
       <section>
-        <DemoLabel>Trạng thái có lỗi (Validation Error)</DemoLabel>
+        <DemoLabel>Validation error</DemoLabel>
         <DemoBox>
           <Select
             id="select-error"
-            label="Gói thành viên"
-            error="Vui lòng chọn gói dịch vụ để tiếp tục"
+            label="Membership plan"
+            error="Please select a plan to continue"
             options={[
-              { value: 'free', label: 'Miễn phí' },
-              { value: 'pro', label: 'Chuyên nghiệp' },
-              { value: 'ent', label: 'Doanh nghiệp' },
+              { value: 'free', label: 'Free' },
+              { value: 'pro', label: 'Pro' },
+              { value: 'ent', label: 'Enterprise' },
             ]}
           />
         </DemoBox>
       </section>
 
       <section>
-        <DemoLabel>Trạng thái vô hiệu hóa (Disabled)</DemoLabel>
+        <DemoLabel>Disabled</DemoLabel>
         <DemoBox>
           <Select
             id="select-disabled"
-            label="Cổng thanh toán (Đang bảo trì)"
+            label="Payment gateway (maintenance)"
             defaultValue="stripe"
             disabled
             options={[
@@ -127,19 +119,19 @@ export const States: Story = {
 export const InCard: Story = {
   render: () => (
     <div style={{ padding: '40px' }}>
-      <DemoLabel>Sử dụng trong Card (Thực tế)</DemoLabel>
+      <DemoLabel>Inside a card (real-world)</DemoLabel>
       <Card style={{ width: '400px', padding: '24px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '8px' }}>
-            <h3 style={{ fontWeight: 600, fontSize: '16px' }}>Cấu hình dự án</h3>
+            <h3 style={{ fontWeight: 600, fontSize: '16px' }}>Project settings</h3>
             <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-              Thiết lập các thông số cơ bản cho project của bạn.
+              Configure basic parameters for your project.
             </p>
           </div>
-          
+
           <Select
             id="project-type"
-            label="Loại dự án"
+            label="Project type"
             defaultValue="nextjs"
             options={[
               { value: 'nextjs', label: 'Next.js Web Application' },
@@ -147,28 +139,28 @@ export const InCard: Story = {
               { value: 'python', label: 'Python Automation' },
             ]}
           />
-          
+
           <Select
             id="project-visibility"
-            label="Chế độ hiển thị"
+            label="Visibility"
             defaultValue="private"
             options={[
-              { value: 'private', label: 'Riêng tư (Private)' },
-              { value: 'public', label: 'Công khai (Public)' },
+              { value: 'private', label: 'Private' },
+              { value: 'public', label: 'Public' },
             ]}
           />
 
           <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
-            <button style={{ 
-              padding: '8px 16px', 
-              background: 'var(--color-primary)', 
-              color: 'white', 
-              border: 'none', 
+            <button style={{
+              padding: '8px 16px',
+              background: 'var(--color-primary)',
+              color: 'white',
+              border: 'none',
               borderRadius: 'var(--radius-md)',
               fontWeight: 500,
-              fontSize: '14px'
+              fontSize: '14px',
             }}>
-              Lưu thay đổi
+              Save changes
             </button>
           </div>
         </div>

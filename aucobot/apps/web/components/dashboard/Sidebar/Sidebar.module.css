@@ -123,7 +123,7 @@
   align-items: center;
   height: 40px;
   padding: 0 10px;
-  color: var(--color-muted-foreground, #a0aec0);
+  color: var(--color-sidebar-primary, rgb(120, 120, 120));
   text-decoration: none;
   border-radius: 6px;
   transition:
@@ -135,7 +135,7 @@
 }
 
 .navItem:hover:not(.navItemActive) {
-  background: var(--color-sidebar-accent, #2c2d30);
+  background: var(--color-sidebar-accent, rgba(255, 95, 0, 0.06));
   color: var(--color-sidebar-foreground, #ffffff);
 }
 
@@ -202,7 +202,6 @@
     transform: translateX(-10px);
     pointer-events: none;
   }
-
 }
 
 /* when viewport <= 768px: hide completely */

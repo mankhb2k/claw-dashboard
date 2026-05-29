@@ -44,7 +44,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
 
 export const Default: Story = {
   args: {
-    label: 'Bật thông báo email',
+    label: 'Enable email notifications',
     id: 'notifications',
   },
 };
@@ -52,18 +52,18 @@ export const Default: Story = {
 export const States: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các trạng thái của Switch</DemoLabel>
+      <DemoLabel>Switch states</DemoLabel>
       <DemoBox>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Chế độ tối</span>
+          <span>Dark mode</span>
           <Switch id="dark-mode" />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Tự động cập nhật</span>
+          <span>Auto-update</span>
           <Switch id="auto-update" defaultChecked />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.5 }}>
-          <span>Cài đặt nâng cao (Disabled)</span>
+          <span>Advanced settings (disabled)</span>
           <Switch id="advanced" disabled />
         </div>
       </DemoBox>

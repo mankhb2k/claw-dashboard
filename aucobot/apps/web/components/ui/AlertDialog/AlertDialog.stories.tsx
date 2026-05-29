@@ -24,31 +24,29 @@ const meta: Meta<typeof AlertDialog> = {
 
 export default meta;
 
-// Label helper cho demo
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-text-subtle)', 
+  <p style={{
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--color-text-subtle)',
     fontWeight: 600,
-    marginBottom: '12px'
+    marginBottom: '12px',
   }}>
     {children}
   </p>
 );
 
-// Container helper cho demo
-const DemoBox = ({ children, style }: { children: React.ReactNode, style?: React.CSSProperties }) => (
-  <div style={{ 
-    display: 'flex', 
+const DemoBox = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{
+    display: 'flex',
     flexDirection: 'column',
-    gap: '16px', 
-    padding: '32px', 
-    border: '1px dashed var(--color-border)', 
+    gap: '16px',
+    padding: '32px',
+    border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
     background: 'var(--color-white)',
-    ...style
+    ...style,
   }}>
     {children}
   </div>
@@ -57,22 +55,22 @@ const DemoBox = ({ children, style }: { children: React.ReactNode, style?: React
 export const Default: StoryObj = {
   render: () => (
     <div>
-      <DemoLabel>Bấm vào nút bên dưới để xem hộp thoại:</DemoLabel>
+      <DemoLabel>Click the button below to open the dialog:</DemoLabel>
       <DemoBox>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="primary">Mở Alert Dialog</Button>
+            <Button variant="primary">Open alert dialog</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Bạn có chắc chắn không?</AlertDialogTitle>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                Hành động này không thể hoàn tác. Dữ liệu của bạn sẽ bị xóa vĩnh viễn khỏi máy chủ.
+                This action cannot be undone. Your data will be permanently deleted from the server.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
-              <AlertDialogAction>Tiếp tục</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction>Continue</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -84,23 +82,23 @@ export const Default: StoryObj = {
 export const Danger: StoryObj = {
   render: () => (
     <div>
-      <DemoLabel>Trường hợp hành động nguy hiểm:</DemoLabel>
+      <DemoLabel>Dangerous action:</DemoLabel>
       <DemoBox style={{ borderColor: 'var(--color-danger-dim)' }}>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="danger">Xóa tài khoản</Button>
+            <Button variant="danger">Delete account</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xóa tài khoản vĩnh viễn?</AlertDialogTitle>
+              <AlertDialogTitle>Delete account permanently?</AlertDialogTitle>
               <AlertDialogDescription>
-                Tất cả các project và dữ liệu liên quan sẽ bị xóa ngay lập tức. Hãy chắc chắn rằng bạn đã sao lưu dữ liệu quan trọng.
+                All projects and related data will be deleted immediately. Make sure you have backed up anything important.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Để tôi suy nghĩ lại</AlertDialogCancel>
+              <AlertDialogCancel>Let me think</AlertDialogCancel>
               <AlertDialogAction variant="danger">
-                Tôi hiểu, hãy xóa đi
+                I understand, delete it
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

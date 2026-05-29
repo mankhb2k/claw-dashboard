@@ -45,16 +45,16 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
 export const Default: Story = {
   render: () => (
     <div>
-      <DemoLabel>Nút nhóm lại với nhau</DemoLabel>
+      <DemoLabel>Grouped buttons</DemoLabel>
       <DemoBox>
         <ButtonGroup>
-          <Button variant="outline">Tháng</Button>
-          <Button variant="outline">Quý</Button>
-          <Button variant="outline">Năm</Button>
+          <Button variant="outline">Month</Button>
+          <Button variant="outline">Quarter</Button>
+          <Button variant="outline">Year</Button>
         </ButtonGroup>
 
         <ButtonGroup>
-          <Button variant="primary">Lưu lại</Button>
+          <Button variant="primary">Save</Button>
           <Button variant="primary" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           </Button>

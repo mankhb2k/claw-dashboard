@@ -12,8 +12,8 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Card component - Một wrapper cơ bản có border và hiệu ứng hover shadow.
- * Tuân thủ quy tắc Design System trong .agent/rule.md
+ * Card — bordered wrapper with hover shadow.
+ * Follows the design system in .agent/rule.md
  */
 export const Card: React.FC<CardProps> = ({ 
   children, 

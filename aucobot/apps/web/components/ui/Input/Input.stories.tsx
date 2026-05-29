@@ -53,12 +53,12 @@ export const Default: Story = {
 export const States: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các trạng thái của Input</DemoLabel>
+      <DemoLabel>Input states</DemoLabel>
       <DemoBox>
-        <Input label="Bình thường" placeholder="Nhập văn bản..." />
-        <Input label="Mật khẩu" type="password" defaultValue="123456" />
-        <Input label="Bị lỗi" error="Vui lòng nhập đúng định dạng email" defaultValue="invalid-email" />
-        <Input label="Bị vô hiệu hóa" disabled defaultValue="Dữ liệu không thể sửa" />
+        <Input label="Default" placeholder="Enter text..." />
+        <Input label="Password" type="password" defaultValue="123456" />
+        <Input label="Error" error="Please enter a valid email address" defaultValue="invalid-email" />
+        <Input label="Disabled" disabled defaultValue="Read-only data" />
       </DemoBox>
     </div>
   ),

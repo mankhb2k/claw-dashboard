@@ -3,9 +3,6 @@ import React from 'react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/ToggleGroup/ToggleGroup'
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, FileText } from 'lucide-react'
 
-/* =============================================================================
-   META — Cấu hình chính của Story
-   ============================================================================= */
 const meta: Meta<typeof ToggleGroup> = {
   title: 'UI/ToggleGroup',
   component: ToggleGroup,
@@ -17,21 +14,21 @@ const meta: Meta<typeof ToggleGroup> = {
     type: {
       control: 'radio',
       options: ['single', 'multiple'],
-      description: 'Chế độ chọn một hay nhiều item',
+      description: 'Single or multiple selection mode',
     },
     disabled: {
       control: 'boolean',
-      description: 'Trạng thái vô hiệu hóa toàn bộ nhóm',
+      description: 'Disable the entire group',
     },
     orientation: {
       control: 'radio',
       options: ['horizontal', 'vertical'],
-      description: 'Hướng hiển thị của nhóm',
+      description: 'Group layout direction',
     },
     size: {
       control: 'select',
       options: ['sm', 'md', 'lg'],
-      description: 'Kích thước của nhóm nút',
+      description: 'Button group size',
     },
   },
 }
@@ -39,40 +36,33 @@ const meta: Meta<typeof ToggleGroup> = {
 export default meta
 type Story = StoryObj<typeof ToggleGroup>
 
-/* =============================================================================
-   HELPER COMPONENTS — Chỉ dùng trong Storybook để demo
-   ============================================================================= */
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-text-subtle)', 
+  <p style={{
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--color-text-subtle)',
     fontWeight: 600,
-    marginBottom: '12px'
+    marginBottom: '12px',
   }}>
     {children}
   </p>
 )
 
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ 
-    display: 'flex', 
-    alignItems: 'center', 
-    gap: '16px', 
-    padding: '24px', 
-    border: '1px dashed var(--color-border)', 
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '24px',
+    border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
     background: 'var(--color-white)',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
   }}>
     {children}
   </div>
 )
-
-/* =============================================================================
-   STORIES — Các biến thể demo
-   ============================================================================= */
 
 export const Default: Story = {
   args: {
@@ -98,7 +88,7 @@ export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <DemoLabel>Định dạng văn bản (Single Select)</DemoLabel>
+        <DemoLabel>Text formatting (single select)</DemoLabel>
         <DemoBox>
           <ToggleGroup type="single" defaultValue="bold">
             <ToggleGroupItem value="bold" aria-label="Bold">
@@ -115,7 +105,7 @@ export const Variants: Story = {
       </div>
 
       <div>
-        <DemoLabel>Căn lề (Single Select)</DemoLabel>
+        <DemoLabel>Alignment (single select)</DemoLabel>
         <DemoBox>
           <ToggleGroup type="single" defaultValue="left">
             <ToggleGroupItem value="left" aria-label="Align Left">
@@ -132,7 +122,7 @@ export const Variants: Story = {
       </div>
 
       <div>
-        <DemoLabel>Chọn nhiều (Multiple Select)</DemoLabel>
+        <DemoLabel>Multiple select</DemoLabel>
         <DemoBox>
           <ToggleGroup type="multiple" defaultValue={['bold', 'italic']}>
             <ToggleGroupItem value="bold" aria-label="Bold">
@@ -155,7 +145,7 @@ export const Orientations: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: '48px' }}>
       <div>
-        <DemoLabel>Horizontal (Mặc định)</DemoLabel>
+        <DemoLabel>Horizontal (default)</DemoLabel>
         <DemoBox>
           <ToggleGroup type="single" orientation="horizontal" defaultValue="left">
             <ToggleGroupItem value="left"><AlignLeft size={16} /></ToggleGroupItem>
@@ -183,7 +173,7 @@ export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div>
-        <DemoLabel>Small (28px) — Dùng cho header, thanh công cụ nhỏ</DemoLabel>
+        <DemoLabel>Small (28px) — headers, compact toolbars</DemoLabel>
         <DemoBox>
           <ToggleGroup type="single" size="sm" defaultValue="editor">
             <ToggleGroupItem value="editor" style={{ gap: '4px' }}>
@@ -199,7 +189,7 @@ export const Sizes: Story = {
       </div>
 
       <div>
-        <DemoLabel>Medium (32px) — Mặc định</DemoLabel>
+        <DemoLabel>Medium (32px) — default</DemoLabel>
         <DemoBox>
           <ToggleGroup type="single" size="md" defaultValue="bold">
             <ToggleGroupItem value="bold"><Bold size={16} /></ToggleGroupItem>
@@ -210,7 +200,7 @@ export const Sizes: Story = {
       </div>
 
       <div>
-        <DemoLabel>Large (40px) — Dùng cho các khu vực chính, rộng rãi</DemoLabel>
+        <DemoLabel>Large (40px) — spacious primary areas</DemoLabel>
         <DemoBox>
           <ToggleGroup type="single" size="lg" defaultValue="left">
             <ToggleGroupItem value="left" style={{ gap: '8px' }}>
@@ -235,7 +225,7 @@ export const Sizes: Story = {
 export const States: Story = {
   render: () => (
     <div>
-      <DemoLabel>Vô hiệu hóa (Disabled)</DemoLabel>
+      <DemoLabel>Disabled</DemoLabel>
       <DemoBox>
         <ToggleGroup type="single" disabled defaultValue="bold">
           <ToggleGroupItem value="bold"><Bold size={16} /></ToggleGroupItem>

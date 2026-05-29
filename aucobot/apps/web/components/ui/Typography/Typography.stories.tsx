@@ -24,7 +24,7 @@ const meta: Meta<typeof Typography> = {
     },
     italic: {
       control: 'boolean',
-      description: 'Bật chữ nghiêng (font-style: italic)',
+      description: 'Enable italic (font-style: italic)',
     },
   },
 }
@@ -33,28 +33,28 @@ export default meta
 type Story = StoryObj<typeof Typography>
 
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-text-subtle)', 
+  <p style={{
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--color-text-subtle)',
     fontWeight: 600,
-    marginBottom: '12px'
+    marginBottom: '12px',
   }}>
     {children}
   </p>
 )
 
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ 
-    display: 'flex', 
+  <div style={{
+    display: 'flex',
     flexDirection: 'column',
-    gap: '16px', 
-    padding: '24px', 
+    gap: '16px',
+    padding: '24px',
     minWidth: '400px',
-    border: '1px dashed var(--color-border)', 
+    border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
-    background: 'var(--color-white)'
+    background: 'var(--color-white)',
   }}>
     {children}
   </div>
@@ -70,7 +70,7 @@ export const Default: Story = {
 export const Headings: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các cấp tiêu đề (Headings)</DemoLabel>
+      <DemoLabel>Headings</DemoLabel>
       <DemoBox>
         <Typography variant="h1">Heading 1 - 32px Bold</Typography>
         <Typography variant="h2">Heading 2 - 24px Semibold</Typography>
@@ -84,16 +84,16 @@ export const Headings: Story = {
 export const Body: Story = {
   render: () => (
     <div>
-      <DemoLabel>Văn bản nội dung (Body)</DemoLabel>
+      <DemoLabel>Body text</DemoLabel>
       <DemoBox>
         <Typography variant="p">
-          Body Text (Default) - 15px. Đây là văn bản mặc định được sử dụng cho phần lớn nội dung trong ứng dụng.
+          Body Text (Default) - 15px. Default text used for most application content.
         </Typography>
         <Typography variant="small">
-          Small Text - 13px. Thường dùng cho các ghi chú hoặc thông tin phụ.
+          Small Text - 13px. Often used for notes or secondary information.
         </Typography>
         <Typography variant="xs">
-          Extra Small Text - 11px. Dùng cho caption, nhãn nhỏ hoặc meta data.
+          Extra Small Text - 11px. Used for captions, small labels, or metadata.
         </Typography>
       </DemoBox>
     </div>
@@ -103,7 +103,7 @@ export const Body: Story = {
 export const Colors: Story = {
   render: () => (
     <div>
-      <DemoLabel>Màu sắc (Colors)</DemoLabel>
+      <DemoLabel>Colors</DemoLabel>
       <DemoBox>
         <Typography color="default">Default Text Color</Typography>
         <Typography color="muted">Muted Text Color (var--color-text-muted)</Typography>
@@ -117,14 +117,14 @@ export const Colors: Story = {
 export const Italic: Story = {
   render: () => (
     <div>
-      <DemoLabel>Chữ nghiêng (italic)</DemoLabel>
+      <DemoLabel>Italic</DemoLabel>
       <DemoBox>
-        <Typography variant="p">Văn bản thường</Typography>
+        <Typography variant="p">Regular text</Typography>
         <Typography variant="p" italic>
-          Văn bản nghiêng — italic
+          Italic text
         </Typography>
         <Typography variant="small" color="muted" italic>
-          Ghi chú phụ nghiêng
+          Muted italic note
         </Typography>
       </DemoBox>
     </div>
@@ -134,7 +134,7 @@ export const Italic: Story = {
 export const Weights: Story = {
   render: () => (
     <div>
-      <DemoLabel>Trọng số chữ (Weights)</DemoLabel>
+      <DemoLabel>Font weights</DemoLabel>
       <DemoBox>
         <Typography weight="extralight">Extralight (200)</Typography>
         <Typography weight="light">Light (300)</Typography>

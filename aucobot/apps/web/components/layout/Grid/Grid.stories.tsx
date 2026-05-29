@@ -118,7 +118,7 @@ const DummyItem = ({ children }: { children: React.ReactNode }) => (
 export const FixedColumns: Story = {
   render: () => (
     <div>
-      <DemoLabel>Sử dụng số để chia cột đều (columns={4}, gap=&quot;1rem&quot;)</DemoLabel>
+      <DemoLabel>Equal columns with a number (columns={4}, gap=&quot;1rem&quot;)</DemoLabel>
       <Grid columns={4} gap="1rem">
         <DummyItem>Item 1</DummyItem>
         <DummyItem>Item 2</DummyItem>
@@ -133,10 +133,10 @@ export const ResponsiveAutoFill: Story = {
   render: () => (
     <div>
       <DemoLabel>
-        Sử dụng chuỗi cho Responsive (columns=&quot;repeat(auto-fill, minmax(200px, 1fr))&quot;)
+        Responsive string (columns=&quot;repeat(auto-fill, minmax(200px, 1fr))&quot;)
       </DemoLabel>
       <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
-        Hãy thử kéo dãn cửa sổ trình duyệt để thấy các item tự động nhảy hàng.
+        Resize the browser window to see items wrap automatically.
       </p>
       <Grid columns="repeat(auto-fill, minmax(200px, 1fr))" gap="1rem">
         <DummyItem>Item 1</DummyItem>
@@ -154,7 +154,7 @@ export const CustomGap: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div>
-        <DemoLabel>Gap bằng số (gap={'{32}'} → 32px)</DemoLabel>
+        <DemoLabel>Numeric gap (gap={'{32}'} → 32px)</DemoLabel>
         <Grid columns={3} gap={32}>
           <DummyItem>Item 1</DummyItem>
           <DummyItem>Item 2</DummyItem>
@@ -162,7 +162,7 @@ export const CustomGap: Story = {
         </Grid>
       </div>
       <div>
-        <DemoLabel>Gap bằng chuỗi (gap=&quot;2rem&quot;)</DemoLabel>
+        <DemoLabel>String gap (gap=&quot;2rem&quot;)</DemoLabel>
         <Grid columns={3} gap="2rem">
           <DummyItem>Item 1</DummyItem>
           <DummyItem>Item 2</DummyItem>

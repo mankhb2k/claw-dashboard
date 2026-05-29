@@ -44,7 +44,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
 
 export const Default: Story = {
   args: {
-    label: 'Âm lượng',
+    label: 'Volume',
     defaultValue: [50],
     max: 100,
     step: 1,
@@ -54,11 +54,11 @@ export const Default: Story = {
 export const States: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các ví dụ về Slider</DemoLabel>
+      <DemoLabel>Slider examples</DemoLabel>
       <DemoBox>
-        <Slider label="Mặc định (0-100)" defaultValue={[30]} />
-        <Slider label="Bước nhảy (Step: 10)" defaultValue={[50]} step={10} min={0} max={100} />
-        <Slider label="Bị vô hiệu hóa" defaultValue={[70]} disabled />
+        <Slider label="Default (0-100)" defaultValue={[30]} />
+        <Slider label="Step: 10" defaultValue={[50]} step={10} min={0} max={100} />
+        <Slider label="Disabled" defaultValue={[70]} disabled />
       </DemoBox>
     </div>
   ),

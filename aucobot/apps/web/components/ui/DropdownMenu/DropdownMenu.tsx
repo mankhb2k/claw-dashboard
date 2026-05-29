@@ -1,7 +1,15 @@
+'use client'
+
 import * as React from 'react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
-import { ChevronRight } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import styles from './DropdownMenu.module.css'
+
+const DropdownMenuSubSelectContext = React.createContext(false)
+
+function useDropdownMenuSubSelect() {
+  return React.useContext(DropdownMenuSubSelectContext)
+}
 
 export const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -24,7 +32,7 @@ DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName
 
 export type DropdownMenuContentProps =
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
-    /** Độ rộng tối thiểu của menu (số = px, chuỗi = CSS length). */
+    /** Minimum menu width (number = px, string = CSS length). */
     width?: number | string
   }
 
@@ -51,16 +59,43 @@ export const DropdownMenuContent = React.forwardRef<
 })
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
-export const DropdownMenuItem = React.forwardRef<
-  HTMLDivElement,
-  DropdownMenuPrimitive.DropdownMenuItemProps & { variant?: 'default' | 'danger' }
->(({ className, variant = 'default', ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    className={`${styles.item} ${variant === 'danger' ? styles.danger : ''} ${className || ''}`}
-    {...props}
-  />
-))
+export type DropdownMenuItemProps = React.ComponentPropsWithoutRef<
+  typeof DropdownMenuPrimitive.Item
+> & {
+  variant?: 'default' | 'danger'
+  /** Show checkmark when selected (use inside `DropdownMenuSub select`). */
+  selected?: boolean
+}
+
+export const DropdownMenuItem = React.forwardRef<HTMLDivElement, DropdownMenuItemProps>(
+  ({ className, variant = 'default', selected, asChild, children, ...props }, ref) => {
+    const subSelect = useDropdownMenuSubSelect()
+    const isSelectable = subSelect && selected !== undefined && !asChild
+
+    return (
+      <DropdownMenuPrimitive.Item
+        ref={ref}
+        asChild={asChild}
+        className={`${styles.item} ${isSelectable ? styles.itemSelectable : ''} ${variant === 'danger' ? styles.danger : ''} ${className || ''}`}
+        aria-checked={isSelectable ? selected : undefined}
+        {...props}
+      >
+        {asChild ? (
+          children
+        ) : (
+          <>
+            {children}
+            {isSelectable && selected ? (
+              <span className={styles.itemIndicator} aria-hidden>
+                <Check size={14} />
+              </span>
+            ) : null}
+          </>
+        )}
+      </DropdownMenuPrimitive.Item>
+    )
+  },
+)
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 export const DropdownMenuLabel = React.forwardRef<
@@ -87,7 +122,20 @@ export const DropdownMenuSeparator = React.forwardRef<
 ))
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
 
-export const DropdownMenuSub = DropdownMenuPrimitive.Sub
+export type DropdownMenuSubProps = React.ComponentPropsWithoutRef<
+  typeof DropdownMenuPrimitive.Sub
+> & {
+  /** Single-select submenu — child items use `selected` for checkmark. Default: false. */
+  select?: boolean
+}
+
+export function DropdownMenuSub({ select = false, children, ...props }: DropdownMenuSubProps) {
+  return (
+    <DropdownMenuSubSelectContext.Provider value={select}>
+      <DropdownMenuPrimitive.Sub {...props}>{children}</DropdownMenuPrimitive.Sub>
+    </DropdownMenuSubSelectContext.Provider>
+  )
+}
 
 export type DropdownMenuSubContentProps =
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent> & {
@@ -115,16 +163,16 @@ export const DropdownMenuSubContent = React.forwardRef<
 })
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName
 
-export type DropdownMenuItemExtendProps = React.ComponentPropsWithoutRef<
+export type DropdownMenuSubItemProps = React.ComponentPropsWithoutRef<
   typeof DropdownMenuPrimitive.SubTrigger
 > & {
-  /** Giá trị phụ hiển thị trước icon mở rộng (vd. "Light"). */
+  /** Secondary label before chevron (e.g. "Light"). */
   detail?: React.ReactNode
 }
 
-export const DropdownMenuItemExtend = React.forwardRef<
+export const DropdownMenuSubItem = React.forwardRef<
   HTMLDivElement,
-  DropdownMenuItemExtendProps
+  DropdownMenuSubItemProps
 >(({ className, children, detail, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
@@ -138,4 +186,4 @@ export const DropdownMenuItemExtend = React.forwardRef<
     <ChevronRight size={14} className={styles.itemExtendChevron} aria-hidden />
   </DropdownMenuPrimitive.SubTrigger>
 ))
-DropdownMenuItemExtend.displayName = 'DropdownMenuItemExtend'
+DropdownMenuSubItem.displayName = 'DropdownMenuSubItem'

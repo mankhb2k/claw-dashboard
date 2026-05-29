@@ -26,8 +26,8 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
       ...style,
     };
 
-    // Nếu align là center và không phải flex, ta dùng margin: auto (mặc định trong CSS của container)
-    // Nhưng nếu muốn căn trái/phải cho toàn bộ container:
+    // When align is center and not flex, margin: auto applies (default in container CSS).
+    // For left/right alignment of the whole container:
     if (align === 'left') {
       combinedStyle.marginLeft = '0';
       combinedStyle.marginRight = 'auto';

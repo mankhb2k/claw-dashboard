@@ -44,7 +44,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
 
 export const Default: Story = {
   args: {
-    label: 'Chấp nhận điều khoản sử dụng',
+    label: 'Accept terms of service',
     id: 'terms',
   },
 };
@@ -52,12 +52,12 @@ export const Default: Story = {
 export const States: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các trạng thái của Checkbox</DemoLabel>
+      <DemoLabel>Checkbox states</DemoLabel>
       <DemoBox>
-        <Checkbox id="unselected" label="Chưa chọn" />
-        <Checkbox id="selected" label="Đã chọn" defaultChecked />
-        <Checkbox id="disabled" label="Bị vô hiệu hóa" disabled />
-        <Checkbox id="disabled-checked" label="Bị vô hiệu hóa (đã chọn)" disabled defaultChecked />
+        <Checkbox id="unselected" label="Unchecked" />
+        <Checkbox id="selected" label="Checked" defaultChecked />
+        <Checkbox id="disabled" label="Disabled" disabled />
+        <Checkbox id="disabled-checked" label="Disabled (checked)" disabled defaultChecked />
       </DemoBox>
     </div>
   ),

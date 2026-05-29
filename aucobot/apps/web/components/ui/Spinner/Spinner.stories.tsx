@@ -12,11 +12,11 @@ const meta: Meta<typeof Spinner> = {
     size: {
       control: "select",
       options: ["sm", "md", "lg"],
-      description: "Kích thước của spinner",
+      description: "Spinner size",
     },
     loading: {
       control: "boolean",
-      description: "Trạng thái hiển thị",
+      description: "Loading visibility",
     },
   },
 };
@@ -71,7 +71,7 @@ export const LoadingState: Story = {
           <Flex align="center" gap={2}>
             <Spinner loading={loading} />
             <Typography variant="p">
-              {loading ? "Đang tải dữ liệu..." : "Dữ liệu đã tải xong!"}
+              {loading ? "Loading data..." : "Data loaded!"}
             </Typography>
           </Flex>
         </Flex>
@@ -92,7 +92,7 @@ export const InsideButton: Story = {
       return (
         <Button onClick={handleClick} disabled={loading} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {loading && <Spinner size="sm" />}
-          {loading ? "Đang xử lý..." : "Bấm vào đây"}
+          {loading ? "Processing..." : "Click here"}
         </Button>
       );
     };
@@ -141,7 +141,7 @@ export const BookmarkAction: Story = {
             )}
           </button>
           <Typography variant="small" color="muted">
-            {loading ? "Đang lưu..." : isBookmarked ? "Đã lưu vào Bookmark" : "Lưu vào Bookmark"}
+            {loading ? "Saving..." : isBookmarked ? "Saved to bookmarks" : "Save to bookmarks"}
           </Typography>
         </Flex>
       );

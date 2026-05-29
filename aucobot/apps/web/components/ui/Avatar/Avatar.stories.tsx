@@ -24,7 +24,7 @@ const meta: Meta<typeof Avatar> = {
 export default meta;
 type Story = StoryObj<typeof Avatar>;
 
-// Label helper cho demo
+// Label helper for demos
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   <p style={{ 
     fontSize: '11px', 
@@ -38,7 +38,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-// Container helper cho demo
+// Container helper for demos
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
   <div style={{ 
     display: 'flex', 
@@ -73,7 +73,7 @@ export const Fallback: Story = {
 export const Sizes: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các kích thước hiển thị</DemoLabel>
+      <DemoLabel>Display sizes</DemoLabel>
       <DemoBox>
         <Avatar size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128" fallback="S" />
         <Avatar size="md" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256" fallback="M" />
@@ -87,7 +87,7 @@ export const Sizes: Story = {
 export const Variants: Story = {
   render: () => (
     <div>
-      <DemoLabel>Các kiểu dáng (Variants)</DemoLabel>
+      <DemoLabel>Variants</DemoLabel>
       <DemoBox>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <Avatar variant="circle" size="lg" src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=256" />

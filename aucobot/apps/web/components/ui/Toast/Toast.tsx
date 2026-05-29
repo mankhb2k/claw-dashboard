@@ -35,11 +35,11 @@ function registerToastDispatcher(value: ToastContextValue | null) {
   toastDispatcher = value
 }
 
-/** Gọi toast ngoài component — cần bọc app bằng ToastProvider */
+/** Call toast outside components — wrap app with ToastProvider */
 export const toast: ToastContextValue = {
   toast: (options) => {
     if (!toastDispatcher) {
-      console.warn('[Toast] ToastProvider chưa được mount.')
+      console.warn('[Toast] ToastProvider is not mounted.')
       return ''
     }
     return toastDispatcher.toast(options)
@@ -51,7 +51,7 @@ export const toast: ToastContextValue = {
 export function useToast(): ToastContextValue {
   const context = React.useContext(ToastContext)
   if (!context) {
-    throw new Error('useToast phải dùng bên trong ToastProvider.')
+    throw new Error('useToast must be used within ToastProvider.')
   }
   return context
 }

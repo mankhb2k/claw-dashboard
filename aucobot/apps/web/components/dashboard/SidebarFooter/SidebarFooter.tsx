@@ -9,10 +9,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSubItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
   DropdownMenuTrigger,
-  ToggleGroup,
-  ToggleGroupItem,
 } from "@/components/ui";
 import type { ThemePreference } from "@/schemas/theme.schema";
 import { useAuthStore } from "@/stores/auth.store";
@@ -20,6 +21,12 @@ import { useThemeStore } from "@/stores/theme.store";
 import styles from "./SidebarFooter.module.css";
 
 const ICON_STROKE = 1.25;
+
+const THEME_DETAIL: Record<ThemePreference, string> = {
+  system: "System",
+  light: "Light",
+  dark: "Dark",
+};
 
 interface SidebarFooterProps {
   collapsed: boolean;
@@ -31,58 +38,46 @@ function FooterDropdownMenuContent({ onLogout }: { onLogout: () => void }) {
 
   return (
     <>
-      <div
-        className={styles.themeToggleWrap}
-        onPointerDown={(e) => e.preventDefault()}
-      >
-        <span className={styles.themeToggleLabel}>
+      <DropdownMenuSub select>
+        <DropdownMenuSubItem detail={THEME_DETAIL[theme]}>
           <Palette size={14} aria-hidden />
-          Theme
-        </span>
-        <ToggleGroup
-          type="single"
-          size="sm"
-          className={styles.themeToggle}
-          value={theme}
-          onValueChange={(value) => {
-            if (value) setTheme(value as ThemePreference);
-          }}
-        >
-          <ToggleGroupItem
-            value="system"
-            className={styles.themeToggleItem}
-            aria-label="Hệ thống"
+          Appearance
+        </DropdownMenuSubItem>
+        <DropdownMenuSubContent width={180}>
+          <DropdownMenuItem
+            selected={theme === "system"}
+            onSelect={() => setTheme("system")}
           >
-            <Monitor size={13} aria-hidden />
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            value="light"
-            className={styles.themeToggleItem}
-            aria-label="Chế độ sáng"
+            <Monitor size={14} aria-hidden />
+            System
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            selected={theme === "light"}
+            onSelect={() => setTheme("light")}
           >
-            <Sun size={13} aria-hidden />
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            value="dark"
-            className={styles.themeToggleItem}
-            aria-label="Chế độ tối"
+            <Sun size={14} aria-hidden />
+            Light
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            selected={theme === "dark"}
+            onSelect={() => setTheme("dark")}
           >
-            <Moon size={13} aria-hidden />
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-      <DropdownMenuSeparator />
+            <Moon size={14} aria-hidden />
+            Dark
+          </DropdownMenuItem>
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
       <DropdownMenuItem asChild>
         <Link href="/dashboard/setting">
           <Settings size={14} aria-hidden />
-          Cài đặt
+          Settings
         </Link>
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />
       <DropdownMenuItem variant="danger" onClick={onLogout}>
         <LogOut size={14} aria-hidden />
-        Đăng xuất
+        Log out
       </DropdownMenuItem>
     </>
   );
@@ -123,7 +118,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
           <button
             type="button"
             className={styles.footerAvatarTrigger}
-            aria-label="Mở cài đặt nhanh"
+            aria-label="Open quick settings"
             aria-expanded={openCollapsedMenu}
             disabled={!collapsed}
           >
@@ -138,7 +133,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
 
         {collapsed && (
           <DropdownMenuContent
-            width={180}
+            width={220}
             side="top"
             align="start"
             sideOffset={8}
@@ -161,14 +156,14 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
               <button
                 type="button"
                 className={styles.footerSettingsBtn}
-                aria-label="Mở cài đặt nhanh"
+                aria-label="Open quick settings"
                 aria-expanded={openExpandedMenu}
               >
                 <Settings size={18} strokeWidth={ICON_STROKE} aria-hidden />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              width={180}
+              width={220}
               side="top"
               align="start"
               sideOffset={8}
