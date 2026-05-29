@@ -7,14 +7,6 @@ import { SETUP_PATH } from "@/lib/entry-route";
 const PUBLIC_ROUTES = ["/login", "/register"];
 const MOCK_AUTH_BYPASS = process.env.NEXT_PUBLIC_MOCK_API === "true";
 
-function applySetCookies(response: NextResponse, setCookies?: string[]): NextResponse {
-  if (!setCookies?.length) return response;
-  for (const cookie of setCookies) {
-    response.headers.append("Set-Cookie", cookie);
-  }
-  return response;
-}
-
 const PUBLIC_STATIC_EXT = /\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$/i;
 
 export async function proxy(request: NextRequest) {
@@ -56,22 +48,16 @@ export async function proxy(request: NextRequest) {
           o && o.success === true && Array.isArray(o.data) ? o.data : Array.isArray(json) ? json : [];
         const first = payload[0] as { status?: string } | undefined;
         if (first?.status?.toLowerCase() === "running") {
-          return applySetCookies(
-            NextResponse.redirect(new URL(DASHBOARD_BASE_PATH, request.url)),
-            session.setCookies,
-          );
+          return NextResponse.redirect(new URL(DASHBOARD_BASE_PATH, request.url));
         }
       }
     } catch {
       // fall through to setup
     }
-    return applySetCookies(
-      NextResponse.redirect(new URL(SETUP_PATH, request.url)),
-      session.setCookies,
-    );
+    return NextResponse.redirect(new URL(SETUP_PATH, request.url));
   }
 
-  return applySetCookies(NextResponse.next(), session.setCookies);
+  return NextResponse.next();
 }
 
 export const config = {

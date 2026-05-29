@@ -1,9 +1,3 @@
-/* Nút quay lại danh sách */
-.back {
-  align-self: flex-start;
-  margin-bottom: var(--space-4);
-}
-
 /* Hàng header provider */
 .row {
   margin-bottom: 1rem;

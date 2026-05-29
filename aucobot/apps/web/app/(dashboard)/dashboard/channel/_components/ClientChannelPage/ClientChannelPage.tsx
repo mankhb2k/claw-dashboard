@@ -9,7 +9,7 @@ import { CardChannel } from "../CardChannel/CardChannel";
 import styles from "./ClientChannelPage.module.css";
 import { Flex, Grid } from "@/components/layout";
 import { Button, Spinner, Typography } from "@/components/ui";
-import { SearchItem } from "@/components/dashboard";
+import { BackButton, SearchItem } from "@/components/dashboard";
 
 interface ClientChannelPageProps {
   projectId: string;
@@ -109,10 +109,8 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
 
   if (projectsFetched && !project) {
     return (
-      <div style={{ paddingTop: "var(--space-4)" }}>
-        <Link className={styles.back} href="/dashboard">
-          Về tổng quan
-        </Link>
+      <div className={styles.errorWrap}>
+        <BackButton href="/dashboard">Về tổng quan</BackButton>
         <p className={styles.error}>Không tìm thấy dự án.</p>
       </div>
     );

@@ -37,6 +37,7 @@ export {
 } from './auth/jwt-tokens.js';
 export {
   extractAccessTokenFromRequest,
+  extractRefreshTokenFromRequest,
   verifyAccessTokenFromRequest,
   type VerifiedJwtUser,
 } from './auth/jwt-verify.util.js';
@@ -45,6 +46,7 @@ export {
   generateRefreshTokenRaw,
 } from './auth/refresh-token.util.js';
 export {
+  AUTH_COOKIE_CLEAR_PATHS,
   buildAuthCookieSpecs,
   buildClearAuthCookieSpecs,
   type AuthCookieOptions,

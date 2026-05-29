@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { useProjectStore } from "@/stores/project.store";
 import { projectApi } from "@/lib/api/project";
 import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
@@ -11,8 +10,9 @@ import {
   type PermissionGroupData,
 } from "../../../projectConnectData";
 import { findServiceBySlug } from "../../../connect-display";
-import { Button, Typography, Spinner } from "@/components/ui";
+import { Typography, Spinner } from "@/components/ui";
 import { Container, Flex } from "@/components/layout";
+import { BackButton } from "@/components/dashboard";
 import { NoConnection } from "../NoConnection/NoConnection";
 import { ActiveConnection } from "../ActiveConnection/ActiveConnection";
 import styles from "./client-connector.module.css";
@@ -148,9 +148,9 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
                   : "Dịch vụ kết nối này không khả dụng hoặc chưa được hỗ trợ trên backend."}
               </Typography>
             </Flex>
-            <Button variant="outline" size="lg" onClick={() => router.back()}>
-              <ChevronLeft size={18} /> Quay lại danh sách kết nối
-            </Button>
+            <BackButton href="/dashboard/connect">
+              Quay lại danh sách kết nối
+            </BackButton>
           </Flex>
         </Container>
       </div>

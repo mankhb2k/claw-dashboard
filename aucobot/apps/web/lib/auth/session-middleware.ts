@@ -4,8 +4,6 @@ import { getServerApiBaseUrl } from '@/lib/api-base-url'
 
 export type SessionResolveResult = {
   valid: boolean
-  /** Set-Cookie headers from a successful /api/auth/refresh — forward to the browser. */
-  setCookies?: string[]
 }
 
 function parseSessionUser(json: unknown): boolean {
@@ -33,30 +31,11 @@ async function fetchSessionOk(cookieHeader: string): Promise<boolean> {
   }
 }
 
-async function refreshTokens(
-  cookieHeader: string,
-): Promise<{ ok: true; setCookies: string[] } | { ok: false }> {
-  try {
-    const res = await fetch(`${getServerApiBaseUrl()}/api/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        cookie: cookieHeader,
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: '{}',
-      cache: 'no-store',
-    })
-    if (!res.ok) return { ok: false }
-    const setCookies =
-      typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : []
-    return { ok: true, setCookies }
-  } catch {
-    return { ok: false }
-  }
-}
-
-/** Validate session; if access expired, attempt refresh when oc_refresh is present. */
+/**
+ * Gate protected routes. Do not call /api/auth/refresh here — rotation would
+ * invalidate oc_refresh before the browser receives Set-Cookie (axios refresh on
+ * the client handles token rotation once per expiry).
+ */
 export async function resolveSession(request: NextRequest): Promise<SessionResolveResult> {
   const cookieHeader = request.headers.get('cookie') ?? ''
   const hasRefresh = Boolean(request.cookies.get(AUTH_COOKIES.REFRESH)?.value)
@@ -64,18 +43,11 @@ export async function resolveSession(request: NextRequest): Promise<SessionResol
   if (cookieHeader) {
     const valid = await fetchSessionOk(cookieHeader)
     if (valid) return { valid: true }
-  } else if (!hasRefresh) {
-    return { valid: false }
   }
 
-  if (!hasRefresh) {
-    return { valid: false }
-  }
+  if (hasRefresh) return { valid: true }
 
-  const refreshed = await refreshTokens(cookieHeader)
-  if (!refreshed.ok) return { valid: false }
-
-  return { valid: true, setCookies: refreshed.setCookies }
+  return { valid: false }
 }
 
 export function hasAccessCookie(request: NextRequest): boolean {

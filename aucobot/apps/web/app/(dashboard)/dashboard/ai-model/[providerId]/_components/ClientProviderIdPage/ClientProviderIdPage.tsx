@@ -1,17 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { CircleAlert, Info } from "lucide-react";
 import { Button, Card, Typography, toast } from "@/components/ui";
 import { Box, Flex } from "@/components/layout";
+import { BackButton } from "@/components/dashboard";
 import { projectApi } from "@/lib/api/project";
 import { PROVIDER_TEST_TIMEOUT_MS } from "@/lib/provider-test";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectEnvMaskedRow } from "@/schemas/project.schema";
 import { GEMINI_DEFAULT_OPENCLAW_MODEL } from "@/lib/ai-models/gemini-models";
 import { OPENAI_DEFAULT_OPENCLAW_MODEL } from "@/lib/ai-models/openai-models";
-import { getCatalogSource, APIKEY_PROVIDERS, type ModelDef } from "../../../providersData";
+import {
+  getCatalogSource,
+  APIKEY_PROVIDERS,
+  type ModelDef,
+} from "../../../providersData";
 import { CardApiKey } from "../CardApiKey/CardApiKey";
 import { CardChip } from "../CardChip/CardChip";
 import { ModalAddConnection } from "../ModalAddConnection/ModalAddConnection";
@@ -319,12 +323,16 @@ export function ClientProviderIdPage({
   if (!providerData) {
     return (
       <Flex direction="column" gap={24} className={styles.shell}>
-        <Flex direction="column" center gap={12} py={40} className={styles.state}>
+        <Flex
+          direction="column"
+          center
+          gap={12}
+          py={40}
+          className={styles.state}
+        >
           <CircleAlert size={40} className={styles.errorIcon} />
           <Typography color="muted">Provider not found</Typography>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/ai-model">← Back to list</Link>
-          </Button>
+          <BackButton href="/dashboard/ai-model">Back to Providers</BackButton>
         </Flex>
       </Flex>
     );
@@ -338,6 +346,7 @@ export function ClientProviderIdPage({
 
   return (
     <Flex direction="column" gap={24} className={styles.shell}>
+      <BackButton href="/dashboard/ai-model">Back to Providers</BackButton>
       <ProviderHeader
         name={providerData.name}
         iconSrc={providerData.iconSrc}

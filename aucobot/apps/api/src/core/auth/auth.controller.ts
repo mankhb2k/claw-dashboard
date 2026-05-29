@@ -8,7 +8,7 @@ import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser, JwtPayloadUser } from '../common/decorators/current-user.decorator';
 import { setAuthCookies, clearAuthCookies } from './auth-cookies.util';
-import { AUTH_COOKIES } from '@aucobot/control-plane-core';
+import { extractRefreshTokenFromRequest } from '@aucobot/control-plane-core';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,8 +39,7 @@ export class AuthController {
     @Res({ passthrough: true }) reply: FastifyReply,
   ) {
     const raw =
-      dto.refreshToken?.trim() ||
-      (req.cookies as Record<string, string | undefined> | undefined)?.[AUTH_COOKIES.REFRESH];
+      dto.refreshToken?.trim() || extractRefreshTokenFromRequest(req);
     const tokens = await this.auth.refresh(raw);
     setAuthCookies(reply, tokens);
     return { user: tokens.user };
@@ -48,9 +47,7 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Req() req: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
-    const raw = (req.cookies as Record<string, string | undefined> | undefined)?.[
-      AUTH_COOKIES.REFRESH
-    ];
+    const raw = extractRefreshTokenFromRequest(req);
     await this.auth.logout(raw);
     clearAuthCookies(reply);
     return { ok: true };

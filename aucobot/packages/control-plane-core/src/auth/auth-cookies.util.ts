@@ -1,5 +1,8 @@
 import { AUTH_COOKIES, accessMaxAgeSec, refreshMaxAgeSec } from './auth.constants.js';
 
+/** Legacy paths that may still hold stale auth cookies in browsers. */
+export const AUTH_COOKIE_CLEAR_PATHS = ['/', '/api', '/api/auth'] as const;
+
 export type AuthCookieOptions = {
   httpOnly: true;
   sameSite: 'lax';
@@ -43,16 +46,15 @@ export function buildAuthCookieSpecs(tokens: {
 
 export function buildClearAuthCookieSpecs(): AuthCookieSpec[] {
   const base = baseCookieOptions();
-  return [
-    {
-      name: AUTH_COOKIES.ACCESS,
-      value: '',
-      options: { ...base, path: '/', maxAge: 0 },
-    },
-    {
-      name: AUTH_COOKIES.REFRESH,
-      value: '',
-      options: { ...base, path: '/', maxAge: 0 },
-    },
-  ];
+  const specs: AuthCookieSpec[] = [];
+  for (const path of AUTH_COOKIE_CLEAR_PATHS) {
+    for (const name of [AUTH_COOKIES.ACCESS, AUTH_COOKIES.REFRESH] as const) {
+      specs.push({
+        name,
+        value: '',
+        options: { ...base, path, maxAge: 0 },
+      });
+    }
+  }
+  return specs;
 }

@@ -8,6 +8,7 @@ export function setAuthCookies(
   reply: FastifyReply,
   tokens: { accessToken: string; refreshToken: string },
 ): void {
+  clearAuthCookies(reply);
   for (const spec of buildAuthCookieSpecs(tokens)) {
     reply.setCookie(spec.name, spec.value, spec.options);
   }

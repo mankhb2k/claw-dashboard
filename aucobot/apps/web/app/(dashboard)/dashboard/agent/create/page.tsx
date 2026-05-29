@@ -1,6 +1,6 @@
 import React from "react";
 import { Flex, Container } from "@/components/layout";
-import { ClientCreateAgentPage } from "./_components/ClientCreateAgentPage";
+import { ClientCreateAgentPage } from "./_components/ClientCreateAgentPage/ClientCreateAgentPage";
 import styles from "../[agentId]/agentId.module.css";
 
 export default function CreateAgentPage() {

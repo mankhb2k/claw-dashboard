@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { Button, Typography } from "@/components/ui";
 import { Container, Flex, Box } from "@/components/layout";
+import { BackButton } from "@/components/dashboard";
 import styles from "./no-connection.module.css";
 
 interface Props {
@@ -19,14 +18,7 @@ export function NoConnection({ service, isConnecting, onConnect }: Props) {
         <Box py={48}>
           <Flex direction="column" gap={32}>
             {/* --- ĐIỀU HƯỚNG --- */}
-            <nav>
-              <Link
-                href={`/dashboard/connect`}
-                className={styles.backBtn}
-              >
-                <ChevronLeft size={16} /> Quay lại tất cả kết nối
-              </Link>
-            </nav>
+            <BackButton href="/dashboard/connect">{service.name}</BackButton>
 
             {/* --- HERO SECTION: GIỚI THIỆU & NÚT KẾT NỐI --- */}
             <Flex
@@ -57,9 +49,6 @@ export function NoConnection({ service, isConnecting, onConnect }: Props) {
                 className={styles.serviceIntro}
               >
 
-                <Typography variant="h2" weight="bold">
-                  {service.name}
-                </Typography>
                 <Typography color="muted">{service.description}</Typography>
               </Flex>
 

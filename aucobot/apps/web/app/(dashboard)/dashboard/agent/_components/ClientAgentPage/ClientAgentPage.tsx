@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Flex } from "@/components/layout";
+import { Flex, Grid } from "@/components/layout";
 import {
   Button,
   AlertDialog,
@@ -66,7 +66,7 @@ export default function ClientAgentPage() {
       .then((rows) => setAgents(rows.map(toAgentItem)))
       .catch((err) => {
         setAgents([]);
-        setError(err instanceof Error ? err.message : "Không tải được danh sách agent");
+        setError(err instanceof Error ? err.message : "Cannot load agent list");
       })
       .finally(() => setLoading(false));
   }, [projectId]);
@@ -94,7 +94,7 @@ export default function ClientAgentPage() {
       .then(() => projectApi.listAgents(projectId))
       .then((rows) => setAgents(rows.map(toAgentItem)))
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Nhân bản agent thất bại");
+        setError(err instanceof Error ? err.message : "Duplicate agent failed");
       });
   };
 
@@ -112,7 +112,7 @@ export default function ClientAgentPage() {
         setDeleteAgentId(null);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Xóa agent thất bại");
+        setError(err instanceof Error ? err.message : "Delete agent failed");
       });
   };
 
@@ -125,29 +125,33 @@ export default function ClientAgentPage() {
   }
 
   return (
-    <div className={styles.root}>
+    <Flex direction="column" className={styles.root}>
       {error && (
         <Typography variant="small" color="muted">
           {error}
         </Typography>
       )}
 
-      <div className={styles.toolbar}>
+      <Flex justify="between" align="center" className={styles.toolbar}>
         <SearchItem
           id="agent-search"
-          placeholder="Tìm kiếm agent..."
+          placeholder="Search agent..."
           value={searchQuery}
           onChange={setSearchQuery}
         />
 
         <Button onClick={handleCreateNew} disabled={!projectId}>
           <Plus size={18} />
-          Tạo Agent mới
+          Create New Agent
         </Button>
-      </div>
+      </Flex>
 
       {filteredAgents.length > 0 ? (
-        <div className={styles.grid}>
+        <Grid
+          columns="repeat(auto-fill, minmax(320px, 1fr))"
+          gap="var(--space-5)"
+          className={styles.grid}
+        >
           {filteredAgents.map((agent) => (
             <CardAgent
               key={agent.id}
@@ -158,19 +162,31 @@ export default function ClientAgentPage() {
               onDelete={() => handleDelete(agent.id)}
             />
           ))}
-        </div>
+        </Grid>
       ) : (
-        <div className={styles.emptyState}>
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          className={styles.emptyState}
+        >
           <Bot size={48} className={styles.emptyIcon} />
-          <h3 className={styles.emptyTitle}>Không tìm thấy Agent</h3>
-          <p className={styles.emptyDesc}>
-            Không tìm thấy trợ lý AI nào khớp với từ khóa tìm kiếm của bạn. Hãy thử thay đổi từ khóa hoặc khởi tạo một Agent hoàn toàn mới.
-          </p>
+          <Typography variant="h3" className={styles.emptyTitle}>
+            No Agent found
+          </Typography>
+          <Typography
+            variant="small"
+            color="muted"
+            className={styles.emptyDesc}
+          >
+            No AI agent found matching your search query. Try changing the query
+            or creating a new agent from scratch.
+          </Typography>
           <Button onClick={handleCreateNew} disabled={!projectId}>
             <Plus size={18} />
-            Tạo Agent đầu tiên
+            Create First Agent
           </Button>
-        </div>
+        </Flex>
       )}
 
       <AlertDialog
@@ -183,7 +199,8 @@ export default function ClientAgentPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa Agent vĩnh viễn?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Trợ lý AI và tất cả cấu hình liên quan sẽ bị xóa sạch khỏi hệ thống.
+              Hành động này không thể hoàn tác. Trợ lý AI và tất cả cấu hình
+              liên quan sẽ bị xóa sạch khỏi hệ thống.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -200,6 +217,6 @@ export default function ClientAgentPage() {
         onClose={() => setIsModalTemplateOpen(false)}
         projectId={projectId}
       />
-    </div>
+    </Flex>
   );
 }

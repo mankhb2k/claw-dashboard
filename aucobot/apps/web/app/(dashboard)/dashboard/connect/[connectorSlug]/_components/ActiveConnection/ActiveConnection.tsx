@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronDown, ChevronLeft, ExternalLink } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import {
   Button,
   Typography,
@@ -19,6 +18,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui";
 import { Container, Flex, Box } from "@/components/layout";
+import { BackButton } from "@/components/dashboard";
 import {
   MOCK_PERMISSION_GROUPS,
   type PermissionGroupData,
@@ -53,14 +53,7 @@ export function ActiveConnection({
         <Box py={48}>
           <Flex direction="column" gap={32}>
             {/* --- ĐIỀU HƯỚNG --- */}
-            <nav>
-              <Link
-                href={`/dashboard/connect`}
-                className={styles.backBtn}
-              >
-                <ChevronLeft size={16} /> Quay lại tất cả kết nối
-              </Link>
-            </nav>
+            <BackButton href="/dashboard/connect">{service.name}</BackButton>
 
             {/* --- HEADER: THÔNG TIN DỊCH VỤ & THAO TÁC CHÍNH --- */}
             <header>
@@ -77,9 +70,6 @@ export function ActiveConnection({
                     )}
                   </div>
                   <Flex direction="column">
-                    <Typography variant="h2" weight="bold">
-                      {service.name}
-                    </Typography>
                     <Typography variant="small" color="muted">
                       {service.author} • {service.type}
                     </Typography>

@@ -20,7 +20,6 @@ import {
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import {
-  ArrowLeft,
   PanelRightClose,
   PanelRightOpen,
   Save,
@@ -32,6 +31,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BackButton } from "@/components/dashboard";
 import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
 import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
@@ -64,7 +64,7 @@ const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
   { id: "integrations", label: "Integrations", icon: Rocket },
 ];
 
-/** Panel trái: form chỉnh sửa / tạo Agent (header + tabs + nội dung card). */
+/** Left panel: edit / create agent form (header + tabs + card content). */
 export function EditPanel({
   agentId,
   isEditing,
@@ -103,7 +103,7 @@ export function EditPanel({
         })
         .catch((err) => {
           setLoadError(
-            err instanceof Error ? err.message : "Không tải được agent",
+            err instanceof Error ? err.message : "Cannot load agent",
           );
         })
         .finally(() => setFormReady(true));
@@ -121,7 +121,7 @@ export function EditPanel({
         .catch((err) => {
           reset(buildAgentFormDefaults());
           setLoadError(
-            err instanceof Error ? err.message : "Không tải template",
+            err instanceof Error ? err.message : "Cannot load template",
           );
         })
         .finally(() => setFormReady(true));
@@ -132,7 +132,7 @@ export function EditPanel({
     setFormReady(true);
   }, [projectId, isEditing, agentId, templateId, reset]);
 
-  /* ── Tab đang chọn (Identity / Instructions / …) ─────────────────────── */
+  /* ── Selected tab (Identity / Instructions / …) ─────────────────────── */
   const [activeTab, setActiveTab] = useState<EditTab>("identity");
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabButtonRefs = useRef<Partial<Record<EditTab, HTMLButtonElement>>>({});
@@ -173,7 +173,7 @@ export function EditPanel({
     null,
   );
 
-  /* ── Handlers: thêm / xóa lệnh trong allowlist sandbox ──────────────── */
+  /* ── Handlers: add / remove command in allowlist sandbox ──────────────── */
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
@@ -203,7 +203,7 @@ export function EditPanel({
 
   const onSubmit = async (data: AgentFormInput) => {
     if (!projectId) {
-      setLoadError("Chưa có project — hãy tạo project trước.");
+      setLoadError("No project — create a project first.");
       return;
     }
 
@@ -232,14 +232,10 @@ export function EditPanel({
         savedHideTimeoutRef.current = null;
       }, 3000);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Lưu agent thất bại");
+      setLoadError(err instanceof Error ? err.message : "Save agent failed");
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleBack = () => {
-    router.push(`/dashboard/agent`);
   };
 
   const tabContent = (
@@ -298,14 +294,7 @@ export function EditPanel({
         </Typography>
       )}
       <div className={styles.header}>
-        <Flex align="center" gap={3}>
-          <Button variant="ghost" size="icon" onClick={handleBack}>
-            <ArrowLeft size={18} />
-          </Button>
-          <Typography variant="p" weight="bold">
-            {isEditing ? "Chỉnh sửa Agent" : "Tạo Agent mới"}
-          </Typography>
-        </Flex>
+        <BackButton href="/dashboard/agent">Back to Agents</BackButton>
         <Flex align="center" gap={8}>
           {showSaved && (
             <Typography
@@ -325,7 +314,7 @@ export function EditPanel({
             disabled={isSaving || !projectId}
           >
             <Save size={16} />
-            {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+            {isSaving ? "Saving..." : "Save changes"}
           </Button>
         </Flex>
       </div>
@@ -371,9 +360,9 @@ export function EditPanel({
               size="icon"
               className={styles.previewToggle}
               onClick={onTogglePreview}
-              aria-label={previewOpen ? "Ẩn preview" : "Hiện preview"}
+              aria-label={previewOpen ? "Hide preview" : "Show preview"}
               aria-pressed={previewOpen}
-              title={previewOpen ? "Ẩn preview" : "Hiện preview"}
+              title={previewOpen ? "Hide preview" : "Show preview"}
             >
               {previewOpen ? (
                 <PanelRightClose size={18} />
@@ -399,7 +388,11 @@ export function EditPanel({
         className={`${styles.root} ${!previewOpen ? styles.rootExpanded : ""}`}
       >
         {!previewOpen ? (
-          <Container size="md" display="flex" className={styles.constrainedShell}>
+          <Container
+            size="md"
+            display="flex"
+            className={styles.constrainedShell}
+          >
             {panelMain}
           </Container>
         ) : (

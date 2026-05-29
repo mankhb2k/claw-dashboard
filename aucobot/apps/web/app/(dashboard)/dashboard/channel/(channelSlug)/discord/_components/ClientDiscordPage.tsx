@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Flex } from "@/components/layout";
-import { Input } from "@/components/ui/Input/Input";
-import { Button } from "@/components/ui/Button/Button";
-import { Select } from "@/components/ui/Select/Select";
+import { Input, Button, Select } from "@/components/ui";
+import { BackButton } from "@/components/dashboard";
 import { projectApi } from "@/lib/api/project";
 import type { ProjectChannel } from "@/schemas/project.schema";
 import {
@@ -171,14 +169,8 @@ export function ClientDiscordPage({ projectId }: Props) {
 
   return (
     <>
-      <div style={{ marginBottom: "var(--space-4)" }}>
-        <Link href="/dashboard/channel" className={styles.backLink}>
-          ← Quay lại danh sách kênh
-        </Link>
-      </div>
-
-      <div style={{ marginBottom: "var(--space-6)" }}>
-        <h1 className={styles.headerTitle}>Thiết lập kênh Discord</h1>
+      <div className={styles.pageHeader}>
+        <BackButton href="/dashboard/channel">Thiết lập kênh Discord</BackButton>
         <p className={styles.headerDesc}>
           Kết nối bot và cấu hình ai được chat DM với bot (dmPolicy / allowFrom).
         </p>

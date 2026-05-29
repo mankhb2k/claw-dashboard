@@ -26,6 +26,25 @@ export function extractAccessTokenFromRequest(req: {
   return undefined;
 }
 
+/** Last `oc_refresh` wins when the browser sends duplicate cookies (stale + current). */
+export function extractRefreshTokenFromRequest(req: {
+  headers?: { cookie?: string };
+  cookies?: Record<string, string | undefined>;
+}): string | undefined {
+  const rawCookie = req.headers?.cookie;
+  if (rawCookie) {
+    const pattern = new RegExp(`${AUTH_COOKIES.REFRESH}=([^;]+)`, 'g');
+    let last: string | undefined;
+    for (const match of rawCookie.matchAll(pattern)) {
+      const value = match[1]?.trim();
+      if (value) last = decodeURIComponent(value);
+    }
+    if (last) return last;
+  }
+  const fromRecord = req.cookies?.[AUTH_COOKIES.REFRESH]?.trim();
+  return fromRecord || undefined;
+}
+
 export function verifyAccessTokenFromRequest(
   req: Parameters<typeof extractAccessTokenFromRequest>[0],
 ): JwtAccessPayload | null {

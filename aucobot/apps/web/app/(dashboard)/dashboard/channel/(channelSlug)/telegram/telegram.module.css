@@ -21,25 +21,14 @@
    2. CHI TIẾT GIAO DIỆN (COMPONENT LEVEL)
    ============================================================================= */
 
-.backLink {
-  text-decoration: none;
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.headerTitle {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: var(--space-1);
+.pageHeader {
+  margin-bottom: var(--space-6);
 }
 
 .headerDesc {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+  margin-top: var(--space-2);
 }
 
 .card {

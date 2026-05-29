@@ -1,0 +1,45 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "dev-gateway-token-change-me"
+    },
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  },
+  "plugins": {
+    "entries": {
+      "google": {
+        "enabled": false
+      },
+      "openai": {
+        "enabled": false
+      }
+    }
+  },
+  "env": {},
+  "agents": {
+    "defaults": {
+      "workspace": "/home/node/.openclaw/workspace"
+    },
+    "list": [
+      {
+        "id": "main",
+        "name": "Main",
+        "workspace": "/home/node/.openclaw/workspace"
+      },
+      {
+        "id": "agent-tu-thiet-ke-lfeq",
+        "name": "Agent Tự Thiết Kế",
+        "workspace": "/home/node/.openclaw/workspace-agent-tu-thiet-ke-lfeq",
+        "model": {
+          "primary": "anthropic/claude-3-5-sonnet"
+        }
+      }
+    ]
+  }
+}

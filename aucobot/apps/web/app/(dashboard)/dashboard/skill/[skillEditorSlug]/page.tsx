@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Typography, Spinner, toast } from "@/components/ui";
 import { Container, Flex } from "@/components/layout";
+import { BackButton } from "@/components/dashboard";
 import { buildSkillMarkdown } from "@/lib/skill-markdown";
 import { projectApi } from "@/lib/api/project";
 import type { ProjectSkillDetail } from "@/schemas/project.schema";
@@ -27,9 +27,9 @@ export default function ProjectSkillEditorPage() {
   const [skill, setSkill] = useState<ProjectSkillDetail | null>(null);
   const [bodyMarkdown, setBodyMarkdown] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle",
-  );
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const bodyRef = useRef(bodyMarkdown);
@@ -59,34 +59,37 @@ export default function ProjectSkillEditorPage() {
       .finally(() => setSkillLoading(false));
   }, [projectId, skillSlug]);
 
-  const persistBody = useCallback(async (markdown: string) => {
-    const current = skillRef.current;
-    if (!projectId || !current) return;
-    setSaveStatus("saving");
-    setSaveError(null);
-    try {
-      const updated = await projectApi.updateSkill(projectId, current.slug, {
-        bodyMarkdown: markdown,
-      });
-      setSkill(updated);
-      setSaveStatus("saved");
-      if (updated.lastSyncError && updated.enabled) {
-        setSaveError(updated.lastSyncError);
+  const persistBody = useCallback(
+    async (markdown: string) => {
+      const current = skillRef.current;
+      if (!projectId || !current) return;
+      setSaveStatus("saving");
+      setSaveError(null);
+      try {
+        const updated = await projectApi.updateSkill(projectId, current.slug, {
+          bodyMarkdown: markdown,
+        });
+        setSkill(updated);
+        setSaveStatus("saved");
+        if (updated.lastSyncError && updated.enabled) {
+          setSaveError(updated.lastSyncError);
+        }
+      } catch (err) {
+        setSaveStatus("error");
+        setSaveError(err instanceof Error ? err.message : "Lưu thất bại");
+        toast.error(
+          "Lưu skill thất bại",
+          err instanceof Error ? err.message : undefined,
+        );
       }
-    } catch (err) {
-      setSaveStatus("error");
-      setSaveError(err instanceof Error ? err.message : "Lưu thất bại");
-      toast.error("Lưu skill thất bại", err instanceof Error ? err.message : undefined);
-    }
-  }, [projectId]);
-
-  const handleBodyChange = useCallback(
-    (markdown: string) => {
-      setBodyMarkdown(markdown);
-      setSaveStatus("idle");
     },
-    [],
+    [projectId],
   );
+
+  const handleBodyChange = useCallback((markdown: string) => {
+    setBodyMarkdown(markdown);
+    setSaveStatus("idle");
+  }, []);
 
   const handleDebouncedSave = useCallback(
     (markdown: string) => {
@@ -107,14 +110,11 @@ export default function ProjectSkillEditorPage() {
     );
   }, [skill, bodyMarkdown]);
 
-  const handleApplyAiMarkdown = useCallback(
-    async (markdown: string) => {
-      await editorRef.current?.applyMarkdown(markdown);
-      setBodyMarkdown(markdown);
-      toast.success("AI đã cập nhật editor", "Đang lưu vào skill…");
-    },
-    [],
-  );
+  const handleApplyAiMarkdown = useCallback(async (markdown: string) => {
+    await editorRef.current?.applyMarkdown(markdown);
+    setBodyMarkdown(markdown);
+    toast.success("AI đã cập nhật editor", "Đang lưu vào skill…");
+  }, []);
 
   const handleCopy = useCallback(async () => {
     if (!builderPreview?.trim()) return;
@@ -130,7 +130,13 @@ export default function ProjectSkillEditorPage() {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
         <Container size="md" display="flex" className={styles.shell}>
-          <Flex direction="column" align="center" justify="center" gap={2} className={styles.state}>
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            gap={2}
+            className={styles.state}
+          >
             <Spinner size="md" />
             <Typography variant="p">Đang tải dữ liệu...</Typography>
           </Flex>
@@ -155,12 +161,7 @@ export default function ProjectSkillEditorPage() {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
         <Container size="md" display="flex" className={styles.shell}>
-          <Link href="/dashboard/skill" className={styles.back}>
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-              arrow_back
-            </span>
-            Quay lại danh sách
-          </Link>
+          <BackButton href="/dashboard/skill">Quay lại danh sách</BackButton>
           <Typography variant="p" className={styles.error}>
             {loadError ?? "Không tìm thấy skill."}
           </Typography>
@@ -173,7 +174,13 @@ export default function ProjectSkillEditorPage() {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
         <Container size="md" display="flex" className={styles.shell}>
-          <Flex direction="column" align="center" justify="center" gap={2} className={styles.state}>
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            gap={2}
+            className={styles.state}
+          >
             <Spinner size="md" />
             <Typography variant="p">Đang tải skill...</Typography>
           </Flex>
@@ -186,12 +193,7 @@ export default function ProjectSkillEditorPage() {
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="lg" display="flex" className={styles.shell}>
         <Flex justify="between" align="center" className={styles.topBar}>
-          <Link href="/dashboard/skill" className={styles.back}>
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-              arrow_back
-            </span>
-            Quay lại danh sách
-          </Link>
+          <BackButton href="/dashboard/skill">Back to Skills</BackButton>
           <Flex align="center" gap={12}>
             {saveStatus === "saving" ? (
               <Typography variant="small" color="muted">

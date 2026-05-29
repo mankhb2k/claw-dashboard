@@ -9,20 +9,12 @@
 
 /* Thanh công cụ tìm kiếm và hành động */
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
 
-
-
-/* Layout dạng lưới của danh sách Agent */
+/* Lưới danh sách Agent */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-5);
   margin-bottom: var(--space-6);
 }
 
@@ -50,15 +42,11 @@
 
 /* Tiêu đề trống */
 .emptyTitle {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
   margin-bottom: var(--space-2);
 }
 
 /* Mô tả trống */
 .emptyDesc {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted-foreground);
   max-width: 420px;
   margin-bottom: var(--space-6);
   line-height: 1.6;

@@ -51,21 +51,7 @@
   }
 }
 
-/* --- 2. THÀNH PHẦN ĐIỀU HƯỚNG & TRẠNG THÁI --- */
-.back {
-  display: inline-flex;
-  align-items: center;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-  margin-bottom: var(--space-4);
-  transition: color var(--transition-fast) ease;
-}
-
-.back:hover {
-  color: var(--color-primary);
-}
-
+/* --- 2. THÀNH PHẦN TRẠNG THÁI --- */
 .state {
   flex: 1;
 }
