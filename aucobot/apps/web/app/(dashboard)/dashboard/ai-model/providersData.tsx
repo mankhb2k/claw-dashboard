@@ -132,6 +132,8 @@ export function getProviderById(providerId: string): ProviderData | undefined {
   return APIKEY_PROVIDERS.find((p) => p.id === providerId);
 }
 
-export function getCatalogSource(providerId: string): CatalogSource | undefined {
+export function getCatalogSource(
+  providerId: string,
+): CatalogSource | undefined {
   return getProviderById(providerId)?.catalogSource;
 }

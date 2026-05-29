@@ -17,3 +17,11 @@
 .subtitle {
   row-gap: var(--space-1);
 }
+
+/* Link lấy API key: nhãn + icon cùng một hàng */
+.apiKeyLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}

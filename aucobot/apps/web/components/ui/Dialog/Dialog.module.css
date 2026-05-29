@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. OVERLAY — Lớp nền mờ
-   ============================================================================= */
+/* 1. OVERLAY — Background blur */
 .overlay {
   position: fixed;
   inset: 0;
@@ -10,9 +8,7 @@
   animation: fadeIn 0.2s ease-out;
 }
 
-/* =============================================================================
-   2. CONTAINER — Căn giữa content
-   ============================================================================= */
+/* 2. CONTAINER — Center content */
 .container {
   position: fixed;
   inset: 0;
@@ -24,13 +20,11 @@
   padding: var(--space-4);
 }
 
-/* =============================================================================
-   3. CONTENT — Hộp thoại chính
-   ============================================================================= */
+/* 3. CONTENT — Main dialog */
 .content {
   position: relative;
   pointer-events: auto;
-  background-color: var(--color-card);
+  background-color: var(--color-background);
   width: min(560px, 100%);
   padding: var(--space-6);
   border-radius: var(--radius-lg);
@@ -43,9 +37,7 @@
   outline: none;
 }
 
-/* =============================================================================
-   4. HEADER, FOOTER, TITLE, DESCRIPTION
-   ============================================================================= */
+/* 4. HEADER, FOOTER, TITLE, DESCRIPTION */
 .header {
   display: flex;
   flex-direction: column;
@@ -73,21 +65,21 @@
   margin-top: var(--space-6);
 }
 
-/* =============================================================================
-   5. CLOSE BUTTON — Nút đóng tuyệt đối
-   ============================================================================= */
+/* 5. CLOSE BUTTON — Absolute close button */
 .closeBtn {
   position: absolute;
   top: var(--space-4);
   right: var(--space-4);
 }
 
-/* =============================================================================
-   6. ANIMATIONS
-   ============================================================================= */
+/* 6. ANIMATIONS */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes contentShow {

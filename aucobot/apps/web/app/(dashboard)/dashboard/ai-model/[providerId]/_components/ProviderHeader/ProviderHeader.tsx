@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ArrowUpRight, ChevronLeft } from "lucide-react";
 import { type CSSProperties } from "react";
 import { Button, IconProvider, Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
@@ -62,13 +62,15 @@ export function ProviderHeader({
                 <Typography variant="small" color="muted" as="span">
                   ·
                 </Typography>
-                <Button variant="link" size="sm" asChild>
-                  <a
-                    href={apiKeyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                <Button
+                  variant="link"
+                  size="sm"
+                  asChild
+                  className={styles.apiKeyLink}
+                >
+                  <a href={apiKeyUrl} target="_blank" rel="noopener noreferrer">
                     {apiKeyLabel}
+                    <ArrowUpRight size={10} aria-hidden />
                   </a>
                 </Button>
               </>

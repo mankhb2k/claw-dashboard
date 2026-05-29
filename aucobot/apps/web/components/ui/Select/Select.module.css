@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. VỎ FIELD — label + error
-   ============================================================================= */
+/* 1. FIELD — Wrapper */
 .field {
   display: flex;
   flex-direction: column;
@@ -13,9 +11,7 @@
   color: var(--color-muted-foreground);
 }
 
-/* =============================================================================
-   2. TRIGGER SELECT — vùng hiển thị giá trị hiện tại
-   ============================================================================= */
+/* 2. TRIGGER SELECT — Display current value */
 .trigger {
   display: inline-flex;
   align-items: center;
@@ -37,7 +33,7 @@
     background var(--transition-fast) ease;
 }
 
-/* --- Trạng thái hover/focus/error/disabled --- */
+/* 3. TRIGGER STATE — Hover/focus/error/disabled */
 .trigger:hover:not(:disabled) {
   border-color: var(--color-ring);
 }
@@ -58,7 +54,7 @@
   color: var(--color-muted-foreground);
 }
 
-/* --- Thành phần con trong Trigger (value + icon) --- */
+/* 4. TRIGGER COMPONENT — Value + icon */
 .icon {
   display: flex;
   align-items: center;
@@ -76,14 +72,12 @@
   white-space: nowrap;
 }
 
-/* =============================================================================
-   3. DROPDOWN CONTENT — danh sách option
-   ============================================================================= */
+/* 5. DROPDOWN CONTENT — List of options */
 .content {
   z-index: 50;
   min-width: var(--radix-select-trigger-width);
-  background: var(--color-popover);
-  border: 1px solid var(--color-border);
+  background: var(--color-dropdown-background);
+  border: 1px solid var(--color-dropdown-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   overflow: hidden;
@@ -93,7 +87,7 @@
   padding: var(--space-1);
 }
 
-/* --- Item option --- */
+/* 6. ITEM OPTION — Option item */
 .item {
   position: relative;
   display: flex;
@@ -102,7 +96,7 @@
   padding: 0 var(--space-8) 0 var(--space-2);
   border-radius: var(--radius-sm);
   font-size: 14px;
-  color: var(--color-popover-foreground);
+  color: var(--color-dropdown-foreground);
   cursor: pointer;
   user-select: none;
 }
@@ -113,7 +107,6 @@
   outline: none;
 }
 
-/* --- Dấu check option đang chọn --- */
 .itemIndicator {
   position: absolute;
   right: var(--space-2);
@@ -122,9 +115,7 @@
   color: currentColor;
 }
 
-/* =============================================================================
-   4. THÔNG BÁO LỖI
-   ============================================================================= */
+/* 7. ERROR STATE — Error state */
 .error {
   font-size: 12px;
   color: var(--color-danger);

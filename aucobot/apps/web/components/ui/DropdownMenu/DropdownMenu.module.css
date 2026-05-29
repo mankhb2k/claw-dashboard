@@ -1,9 +1,7 @@
-/* =============================================================================
-   1. MENU CONTAINER (CONTENT)
-   ============================================================================= */
+/* 1. MENU CONTAINER (CONTENT) */
 .content {
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
+  background: var(--color-dropdown-background);
+  border: 1px solid var(--color-dropdown-border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   padding: var(--space-1);
@@ -13,9 +11,7 @@
   outline: none;
 }
 
-/* =============================================================================
-   2. MENU ITEM
-   ============================================================================= */
+/* 2. MENU ITEM */
 .item {
   display: flex;
   align-items: center;
@@ -23,7 +19,7 @@
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  color: var(--color-popover-foreground);
+  color: var(--color-dropdown-foreground);
   cursor: pointer;
   outline: none;
   transition: background var(--transition-fast) ease;
@@ -82,9 +78,7 @@
   color: var(--color-muted-foreground);
 }
 
-/* =============================================================================
-   3. LABEL & SEPARATOR
-   ============================================================================= */
+/* 3. LABEL & SEPARATOR */
 .label {
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-xs);
@@ -100,9 +94,7 @@
   margin: var(--space-1) 0;
 }
 
-/* =============================================================================
-   4. ANIMATIONS
-   ============================================================================= */
+/* 4. ANIMATIONS */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -115,9 +107,7 @@
   }
 }
 
-/* =============================================================================
-   5. TRIGGER (Kebab Button)
-   ============================================================================= */
+/* 5. TRIGGER (Kebab Button) */
 .kebabTrigger {
   display: flex;
   align-items: center;
@@ -149,9 +139,7 @@
   box-shadow: var(--focus-ring);
 }
 
-/* =============================================================================
-   6. DEFAULT TRIGGER
-   ============================================================================= */
+/* 6. DEFAULT TRIGGER */
 .defaultTrigger {
   display: inline-flex;
   align-items: center;
@@ -171,7 +159,7 @@
 }
 
 .defaultTrigger:hover {
-  background: var(--color-background-hover);
+  background: var(--color-dropdown-hover);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }

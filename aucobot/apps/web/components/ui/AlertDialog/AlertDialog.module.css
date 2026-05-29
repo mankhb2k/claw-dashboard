@@ -28,7 +28,7 @@
    ============================================================================= */
 .content {
   pointer-events: auto;
-  background-color: var(--color-card);
+  background-color: var(--color-background);
   width: 90vw;
   max-width: 440px;
   padding: var(--space-6);

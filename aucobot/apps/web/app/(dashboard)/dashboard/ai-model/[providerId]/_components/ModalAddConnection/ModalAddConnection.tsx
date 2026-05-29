@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui";
+import {
+  Input,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui";
 import styles from "./ModalAddConnection.module.css";
 
 interface ModalAddConnectionProps {
@@ -47,15 +55,16 @@ export function ModalAddConnection({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? `Sửa key ${provider.name}` : `Thêm key ${provider.name}`}
+            {isEdit
+              ? `Update key ${provider.name}`
+              : `Add key ${provider.name}`}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-
           <Input
-            label="Tên Key"
-            placeholder="Ví dụ: Default Connection"
+            label="Key Name"
+            placeholder="Example: Default Connection"
             value={keyName}
             onChange={(e) => setKeyName(e.target.value)}
             required
@@ -68,13 +77,13 @@ export function ModalAddConnection({
             onChange={(e) => setApiKey(e.target.value)}
             required
           />
-          
+
           <DialogFooter>
             <Button variant="ghost" size="sm" onClick={onClose} type="button">
               Hủy
             </Button>
             <Button variant="primary" size="sm" type="submit">
-              {isEdit ? "Cập nhật" : "Thêm key"}
+              {isEdit ? "Update" : "Add key"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,9 +1,7 @@
-/* =============================================================================
-   1. CARD COMPONENT — Standard wrapper for content
-   ============================================================================= */
+/* 1. CARD COMPONENT — Standard wrapper for content */
 .card {
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
+  background: var(--color-card-background);
+  border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--space-5);
@@ -30,9 +28,9 @@
   border-radius: var(--radius-xl);
 }
 
-/* --- TRẠNG THÁI HOVER --- */
+/* --- HOVER STATE --- */
 .card:not([data-disable-hover="true"]):hover {
-  border-color: var(--color-hover);
+  border-color: var(--color-card-boder-hover);
 }
 
 /* Keyboard focus on parent link should behave like hover */
@@ -77,7 +75,7 @@
   box-shadow: var(--shadow-xl);
 }
 
-/* --- TRẠNG THÁI FOCUS --- */
+/* --- FOCUS STATE --- */
 .card:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring), var(--shadow-md);
