@@ -37,7 +37,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
     fontSize: '11px',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: 'var(--color-text-subtle)',
+    color: 'var(--color-muted-foreground)',
     fontWeight: 600,
     marginBottom: '12px',
   }}>
@@ -54,7 +54,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
     minWidth: '400px',
     border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
-    background: 'var(--color-white)',
+    background: 'var(--color-background)',
   }}>
     {children}
   </div>
@@ -106,9 +106,9 @@ export const Colors: Story = {
       <DemoLabel>Colors</DemoLabel>
       <DemoBox>
         <Typography color="default">Default Text Color</Typography>
-        <Typography color="muted">Muted Text Color (var--color-text-muted)</Typography>
-        <Typography color="subtle">Subtle Text Color (var--color-text-subtle)</Typography>
-        <Typography color="primary">Primary Accent Color (var--color-primary)</Typography>
+        <Typography color="muted">Muted Text Color (var(--color-muted-foreground))</Typography>
+        <Typography color="subtle">Subtle Text Color (var(--color-muted-foreground))</Typography>
+        <Typography color="primary">Primary Accent Color (var(--color-primary))</Typography>
       </DemoBox>
     </div>
   ),

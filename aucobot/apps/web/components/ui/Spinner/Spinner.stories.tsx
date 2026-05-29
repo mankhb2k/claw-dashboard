@@ -60,7 +60,7 @@ export const LoadingState: Story = {
             onClick={() => setLoading(!loading)}
             style={{
               padding: "var(--space-2) var(--space-3)",
-              background: "var(--color-bg-subtle)",
+              background: "var(--color-muted)",
               border: "1px solid var(--color-border)",
               borderRadius: "var(--radius-md)",
               cursor: "pointer",
@@ -128,7 +128,7 @@ export const BookmarkAction: Story = {
               justifyContent: "center",
               padding: "var(--space-2)",
               borderRadius: "50%",
-              color: isBookmarked ? "var(--color-primary)" : "var(--color-text-muted)",
+              color: isBookmarked ? "var(--color-primary)" : "var(--color-muted-foreground)",
               transition: "background var(--transition-fast) ease",
             }}
           >

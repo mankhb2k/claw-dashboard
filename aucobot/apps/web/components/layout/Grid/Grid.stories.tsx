@@ -91,7 +91,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
       fontSize: '11px',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
-      color: 'var(--color-text-subtle)',
+      color: 'var(--color-muted-foreground)',
       fontWeight: 600,
       marginBottom: '12px',
     }}
@@ -104,7 +104,7 @@ const DummyItem = ({ children }: { children: React.ReactNode }) => (
   <div
     style={{
       padding: '16px',
-      background: 'var(--color-white)',
+      background: 'var(--color-background)',
       border: '1px solid var(--color-border)',
       borderRadius: 'var(--radius-md)',
       textAlign: 'center',
@@ -135,7 +135,7 @@ export const ResponsiveAutoFill: Story = {
       <DemoLabel>
         Responsive string (columns=&quot;repeat(auto-fill, minmax(200px, 1fr))&quot;)
       </DemoLabel>
-      <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
+      <p style={{ fontSize: '13px', color: 'var(--color-muted-foreground)', marginBottom: '16px' }}>
         Resize the browser window to see items wrap automatically.
       </p>
       <Grid columns="repeat(auto-fill, minmax(200px, 1fr))" gap="1rem">

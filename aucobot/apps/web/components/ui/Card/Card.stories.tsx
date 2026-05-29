@@ -21,7 +21,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
       fontSize: "11px",
       textTransform: "uppercase",
       letterSpacing: "0.05em",
-      color: "var(--color-text-subtle)",
+      color: "var(--color-muted-foreground)",
       fontWeight: 600,
       marginBottom: "12px",
     }}
@@ -38,7 +38,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
       alignItems: "center",
       gap: "16px",
       padding: "40px",
-      background: "var(--color-bg)",
+      background: "var(--color-background)",
       borderRadius: "var(--radius-md)",
     }}
   >
@@ -97,7 +97,7 @@ export const Interactive: Story = {
             <h4 style={{ fontWeight: 600, marginBottom: "4px" }}>
               New project
             </h4>
-            <p style={{ fontSize: "12px", color: "var(--color-text-subtle)" }}>
+            <p style={{ fontSize: "12px", color: "var(--color-muted-foreground)" }}>
               Create a project instantly
             </p>
           </div>

@@ -114,7 +114,7 @@ export const JustifyBetween: Story = {
 export const NestedLayout: Story = {
   render: () => (
     <Flex direction="column" gap={6} p={4} border radius="lg" style={{ width: '100%' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>NESTED COMPOSITION TEST</p>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-muted-foreground)' }}>NESTED COMPOSITION TEST</p>
       
       <Flex justify="between" align="center" fullWidth>
         <Box color="white" border p={2} radius="md">Left Content</Box>

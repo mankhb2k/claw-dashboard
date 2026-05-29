@@ -76,7 +76,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
       padding: '24px',
       border: '1px dashed var(--color-border)',
       borderRadius: 'var(--radius-md)',
-      background: 'var(--color-card)',
+      background: 'var(--color-card-background)',
       flexWrap: 'wrap',
     }}
   >

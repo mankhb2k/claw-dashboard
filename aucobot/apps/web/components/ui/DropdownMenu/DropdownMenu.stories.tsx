@@ -74,7 +74,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
     fontSize: '11px',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: 'var(--color-text-subtle)',
+    color: 'var(--color-muted-foreground)',
     fontWeight: 600,
     marginBottom: '12px',
   }}>
@@ -91,7 +91,7 @@ const DemoBox = ({ children }: { children: React.ReactNode }) => (
     minWidth: '300px',
     border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
-    background: 'var(--color-white)',
+    background: 'var(--color-background)',
     alignItems: 'center',
   }}>
     {children}

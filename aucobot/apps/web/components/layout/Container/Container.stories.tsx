@@ -32,7 +32,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
     fontSize: '11px',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: 'var(--color-text-subtle)',
+    color: 'var(--color-muted-foreground)',
     fontWeight: 600,
     marginBottom: '12px',
     padding: '0 24px',
@@ -128,13 +128,13 @@ export const FlexLayout: Story = {
     <div>
       <DemoLabel>Container as flexbox</DemoLabel>
       <Container size="md" display="flex" align="center" style={{ gap: '16px', justifyContent: 'space-between' }}>
-        <div style={{ padding: '16px', background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', flex: 1 }}>
+        <div style={{ padding: '16px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', flex: 1 }}>
           Column 1
         </div>
-        <div style={{ padding: '16px', background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', flex: 1 }}>
+        <div style={{ padding: '16px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', flex: 1 }}>
           Column 2
         </div>
-        <div style={{ padding: '16px', background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', flex: 1 }}>
+        <div style={{ padding: '16px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', flex: 1 }}>
           Column 3
         </div>
       </Container>

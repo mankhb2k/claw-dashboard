@@ -21,7 +21,7 @@ const DemoLabel = ({ children }: { children: React.ReactNode }) => (
       fontSize: '11px',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
-      color: 'var(--color-text-subtle)',
+      color: 'var(--color-muted-foreground)',
       fontWeight: 600,
       marginBottom: '12px',
     }}
@@ -39,7 +39,7 @@ const DemoBox = ({ children, width = '450px' }: { children: React.ReactNode; wid
       padding: '40px',
       width: width,
       borderRadius: 'var(--radius-lg)',
-      background: 'var(--color-bg)',
+      background: 'var(--color-background)',
       border: '1px solid var(--color-border)',
     }}
   >
@@ -124,7 +124,7 @@ export const InCard: Story = {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '8px' }}>
             <h3 style={{ fontWeight: 600, fontSize: '16px' }}>Project settings</h3>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-muted-foreground)' }}>
               Configure basic parameters for your project.
             </p>
           </div>

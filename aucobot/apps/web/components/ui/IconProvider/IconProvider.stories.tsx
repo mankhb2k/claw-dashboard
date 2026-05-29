@@ -87,7 +87,7 @@ function DemoGrid({ withBackground = true }: { withBackground?: boolean }) {
           style={{
             border: "1px solid var(--color-border)",
             borderRadius: "var(--radius-md)",
-            background: "var(--color-white)",
+            background: "var(--color-background)",
             padding: "10px",
             display: "flex",
             alignItems: "center",
@@ -102,7 +102,7 @@ function DemoGrid({ withBackground = true }: { withBackground?: boolean }) {
           <span
             style={{
               fontSize: "var(--font-size-sm)",
-              color: "var(--color-text-muted)",
+              color: "var(--color-muted-foreground)",
             }}
           >
             {icon.name}
@@ -147,7 +147,7 @@ export const ExternalImageLinks: Story = {
           style={{
             border: "1px solid var(--color-border)",
             borderRadius: "var(--radius-md)",
-            background: "var(--color-white)",
+            background: "var(--color-background)",
             padding: "10px",
             display: "flex",
             alignItems: "center",
@@ -158,7 +158,7 @@ export const ExternalImageLinks: Story = {
           <span
             style={{
               fontSize: "var(--font-size-sm)",
-              color: "var(--color-text-muted)",
+              color: "var(--color-muted-foreground)",
             }}
           >
             {icon.name}

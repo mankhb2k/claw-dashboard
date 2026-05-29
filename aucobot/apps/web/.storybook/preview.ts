@@ -57,12 +57,12 @@ const preview: Preview = {
           .sb-show-main, 
           .sbdocs-content,
           .sbdocs-preview {
-            background-color: var(--color-bg) !important;
-            color: var(--color-text) !important;
+            background-color: var(--color-background) !important;
+            color: var(--color-foreground) !important;
           }
           /* Fix cho bảng thuộc tính (ArgsTable) */
           .docblock-argstable {
-            background-color: var(--color-surface) !important;
+            background-color: var(--color-card-background) !important;
           }
         `;
       }, [theme]);
