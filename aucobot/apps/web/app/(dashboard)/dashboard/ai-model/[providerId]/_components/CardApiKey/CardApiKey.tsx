@@ -44,7 +44,7 @@ export function CardApiKey({
 
   const toggleKeyVisibility = (id: string) => {
     setVisibleKeyIds((prev) =>
-      prev.includes(id) ? prev.filter((keyId) => keyId !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((keyId) => keyId !== id) : [...prev, id],
     );
   };
 
@@ -52,27 +52,49 @@ export function CardApiKey({
     <div className={styles.connectionsWrapper}>
       {!isLoaded ? (
         <Typography variant="p" color="muted" as="span">
-          Đang tải...
+          Loading...
         </Typography>
       ) : (
         <div className={styles.connectionsGrid}>
           {connections.map((conn) => {
             const isVisible = visibleKeyIds.includes(conn.id);
-            const displayedKey = isVisible ? conn.key : "•••••••••••••••••••••••••••••••••••••••••";
+            const displayedKey = isVisible
+              ? conn.key
+              : "•••••••••••••••••••••••••••••••••••••••••";
             const isTesting = conn.pending || testingConnId === conn.id;
             return (
-              <Card key={conn.id} className={`${styles.connectionCard} ${conn.disabled || conn.pending ? styles.connectionCardDisabled : ""}`} disableHover>
+              <Card
+                key={conn.id}
+                className={`${styles.connectionCard} ${conn.disabled || conn.pending ? styles.connectionCardDisabled : ""}`}
+                disableHover
+              >
                 <Flex justify="between" align="center">
                   <Flex align="center" gap={12}>
-                    <div className={conn.disabled ? styles.iconWrapper : styles.iconWrapperSuccess}>
-                      <span className={`material-symbols-outlined ${conn.disabled ? styles.iconLock : styles.iconKey}`}>
+                    <div
+                      className={
+                        conn.disabled
+                          ? styles.iconWrapper
+                          : styles.iconWrapperSuccess
+                      }
+                    >
+                      <span
+                        className={`material-symbols-outlined ${conn.disabled ? styles.iconLock : styles.iconKey}`}
+                      >
                         {conn.disabled ? "link_off" : "key"}
                       </span>
                     </div>
                     <div>
-                      <Typography variant="p" weight="medium" as="span">{conn.name}</Typography>
+                      <Typography variant="p" weight="medium" as="span">
+                        {conn.name}
+                      </Typography>
                       <Flex align="center" gap={4}>
-                        <Typography variant="p" color="muted" className={styles.maskedKey}>{displayedKey}</Typography>
+                        <Typography
+                          variant="p"
+                          color="muted"
+                          className={styles.maskedKey}
+                        >
+                          {displayedKey}
+                        </Typography>
                         <button
                           className={styles.eyeBtn}
                           onClick={() => toggleKeyVisibility(conn.id)}
@@ -84,7 +106,7 @@ export function CardApiKey({
                     </div>
                   </Flex>
 
-                  {/* Toggle + Dropdown menu 3 chấm */}
+                  {/* Toggle + Dropdown menu (ellipsis)*/}
                   <Flex align="center" gap={8}>
                     <Switch
                       checked={!conn.disabled && !conn.pending}
@@ -98,14 +120,19 @@ export function CardApiKey({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={() => onEdit(conn)}>
-                          Sửa
+                          Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onToggleDisabled(conn.id)}>
+                        <DropdownMenuItem
+                          onSelect={() => onToggleDisabled(conn.id)}
+                        >
                           {conn.disabled ? "Kết nối" : "Tắt kết nối"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="danger" onSelect={() => onDelete(conn.id)}>
-                          Xóa
+                        <DropdownMenuItem
+                          variant="danger"
+                          onSelect={() => onDelete(conn.id)}
+                        >
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

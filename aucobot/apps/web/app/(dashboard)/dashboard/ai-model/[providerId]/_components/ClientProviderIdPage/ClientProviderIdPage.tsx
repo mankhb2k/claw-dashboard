@@ -1,16 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Typography, toast } from "@/components/ui";
+import Link from "next/link";
+import { CircleAlert, Info } from "lucide-react";
+import { Button, Card, Typography, toast } from "@/components/ui";
+import { Box, Flex } from "@/components/layout";
 import { projectApi } from "@/lib/api/project";
 import { PROVIDER_TEST_TIMEOUT_MS } from "@/lib/provider-test";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectEnvMaskedRow } from "@/schemas/project.schema";
-import { CardApiKey } from "./CardApiKey/CardApiKey";
-import { ModalAddConnection } from "./ModalAddConnection/ModalAddConnection";
-import { NoApiKey } from "./NoApiKey/NoApiKey";
+import { GEMINI_DEFAULT_OPENCLAW_MODEL } from "@/lib/ai-models/gemini-models";
+import { OPENAI_DEFAULT_OPENCLAW_MODEL } from "@/lib/ai-models/openai-models";
+import { getCatalogSource, APIKEY_PROVIDERS, type ModelDef } from "../../../providersData";
+import { CardApiKey } from "../CardApiKey/CardApiKey";
+import { CardChip } from "../CardChip/CardChip";
+import { ModalAddConnection } from "../ModalAddConnection/ModalAddConnection";
+import { NoApiKey } from "../NoApiKey/NoApiKey";
+import { ProviderHeader } from "../ProviderHeader/ProviderHeader";
+import styles from "./ClientProviderIdPage.module.css";
 
-export type ProviderConnection = {
+const TIER_ORDER = ["stable", "preview", "deprecated"] as const;
+const TIER_TITLE: Record<(typeof TIER_ORDER)[number], string> = {
+  stable: "Stable — production use",
+  preview: "Preview — may change / deprecate",
+  deprecated: "Deprecated — migrate when possible",
+};
+
+type ProviderConnection = {
   id: string;
   name: string;
   masked: string;
@@ -19,9 +35,22 @@ export type ProviderConnection = {
   lastError?: string | null;
 };
 
-interface ClientPageProps {
+interface ClientProviderIdPageProps {
   providerId: string;
-  providerData: { name: string; envKey?: string; defaultModel?: string };
+}
+
+function groupModelsByTier(models: ModelDef[]) {
+  const groups = new Map<string, ModelDef[]>();
+  for (const tier of TIER_ORDER) {
+    const list = models.filter((m) => (m.tier ?? "stable") === tier);
+    if (list.length) groups.set(tier, list);
+  }
+  const other = models.filter(
+    (m) =>
+      m.tier && !TIER_ORDER.includes(m.tier as (typeof TIER_ORDER)[number]),
+  );
+  if (other.length) groups.set("other", other);
+  return groups;
 }
 
 function maskApiKeyPreview(apiKey: string): string {
@@ -45,15 +74,35 @@ function showError(title: string, description?: string) {
   toast.error(title, description);
 }
 
-export function ClientPage({ providerId, providerData }: ClientPageProps) {
+function resolveDefaultModel(
+  providerId: string,
+  providerData: NonNullable<(typeof APIKEY_PROVIDERS)[number]>,
+) {
+  if (providerId === "gemini") return GEMINI_DEFAULT_OPENCLAW_MODEL;
+  if (providerId === "openai") return OPENAI_DEFAULT_OPENCLAW_MODEL;
+  return (
+    providerData.models?.find((m) => m.recommended)?.openclawId ??
+    providerData.models?.[0]?.openclawId
+  );
+}
+
+export function ClientProviderIdPage({
+  providerId,
+}: ClientProviderIdPageProps) {
+  const providerData = APIKEY_PROVIDERS.find((p) => p.id === providerId);
+  const defaultModel = providerData
+    ? resolveDefaultModel(providerId, providerData)
+    : undefined;
+
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [connections, setConnections] = useState<ProviderConnection[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
   const [editingConnId, setEditingConnId] = useState<string | null>(null);
-  const [editingConn, setEditingConn] = useState<{ name: string; key: string } | null>(
-    null,
-  );
+  const [editingConn, setEditingConn] = useState<{
+    name: string;
+    key: string;
+  } | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [testingConnId, setTestingConnId] = useState<string | null>(null);
 
@@ -104,7 +153,7 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
   }, [loadConnections]);
 
   const handleSaveAdd = async (data: { keyName: string; apiKey: string }) => {
-    if (!projectId) return;
+    if (!projectId || !providerData) return;
 
     const tempId = crypto.randomUUID();
     const label = data.keyName.trim() || providerData.name;
@@ -123,7 +172,7 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
       const result = await projectApi.saveProviderKey(projectId, providerId, {
         apiKey: data.apiKey,
         label,
-        defaultModel: providerData.defaultModel,
+        defaultModel,
       });
 
       if (!result.ok) {
@@ -133,25 +182,26 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
           ),
         );
         showError(
-          "Test kết nối thất bại",
-          result.error ?? `Key không hoạt động (timeout ${PROVIDER_TEST_TIMEOUT_MS / 1000}s)`,
+          "Connection api key failed",
+          result.error ??
+            `Api key is not working (timeout ${PROVIDER_TEST_TIMEOUT_MS / 1000}s)`,
         );
         return;
       }
 
-      toast.success("Đã lưu và kết nối API key");
+      toast.success("Saved and connected API key");
       await loadConnections();
     } catch (err) {
       setConnections((prev) => prev.filter((c) => c.id !== tempId));
       showError(
-        "Lưu API key thất bại",
+        "Save API key failed",
         err instanceof Error ? err.message : undefined,
       );
     }
   };
 
   const handleSaveEdit = async (data: { keyName: string; apiKey: string }) => {
-    if (!projectId || !editingConnId) return;
+    if (!projectId || !editingConnId || !providerData) return;
 
     const label = data.keyName.trim() || providerData.name;
     setConnections((prev) =>
@@ -173,24 +223,26 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
       const result = await projectApi.saveProviderKey(projectId, providerId, {
         apiKey: data.apiKey,
         label,
-        defaultModel: providerData.defaultModel,
+        defaultModel,
       });
 
       if (!result.ok) {
         setConnections((prev) =>
           prev.map((c) =>
-            c.id === editingConnId ? { ...c, enabled: false, pending: false } : c,
+            c.id === editingConnId
+              ? { ...c, enabled: false, pending: false }
+              : c,
           ),
         );
-        showError("Test kết nối thất bại", result.error);
+        showError("Connection api key failed", result.error);
         return;
       }
 
-      toast.success("Đã cập nhật API key");
+      toast.success("Updated API key successfully");
       await loadConnections();
     } catch (err) {
       showError(
-        "Cập nhật API key thất bại",
+        "Update API key failed",
         err instanceof Error ? err.message : undefined,
       );
       await loadConnections();
@@ -225,19 +277,21 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
         setConnections((prev) =>
           prev.map((c) => (c.id === connId ? { ...c, enabled: false } : c)),
         );
-        showError("Không bật kết nối", result.error);
+        showError("Enable connection failed", result.error);
       } else if (nextEnabled) {
-        toast.success("Đã bật kết nối");
+        toast.success("Connected API key successfully");
         await loadConnections();
       } else {
         await loadConnections();
       }
     } catch (err) {
       setConnections((prev) =>
-        prev.map((c) => (c.id === connId ? { ...c, enabled: !nextEnabled } : c)),
+        prev.map((c) =>
+          c.id === connId ? { ...c, enabled: !nextEnabled } : c,
+        ),
       );
       showError(
-        "Không đổi trạng thái kết nối",
+        "Change connection status failed",
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -251,10 +305,10 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
     try {
       await projectApi.deleteProviderKey(projectId, providerId);
       setConnections((prev) => prev.filter((c) => c.id !== connId));
-      toast.success("Đã xóa API key");
+      toast.success("Deleted API key successfully");
     } catch (err) {
       showError(
-        "Xóa API key thất bại",
+        "Delete API key failed",
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -262,15 +316,41 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
     }
   };
 
+  if (!providerData) {
+    return (
+      <Flex direction="column" gap={24} className={styles.shell}>
+        <Flex direction="column" center gap={12} py={40} className={styles.state}>
+          <CircleAlert size={40} className={styles.errorIcon} />
+          <Typography color="muted">Provider not found</Typography>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/ai-model">← Back to list</Link>
+          </Button>
+        </Flex>
+      </Flex>
+    );
+  }
+
+  const models: ModelDef[] = providerData.models ?? [];
+  const openclawProviderId = providerData.openclawProviderId ?? providerData.id;
+  const catalogSource = getCatalogSource(providerId);
+  const modelGroups = groupModelsByTier(models);
   const hasKey = connections.length > 0;
 
   return (
-    <>
+    <Flex direction="column" gap={24} className={styles.shell}>
+      <ProviderHeader
+        name={providerData.name}
+        iconSrc={providerData.iconSrc}
+        color={providerData.color}
+        apiKeyUrl={providerData.apiKeyUrl}
+        apiKeyLabel={providerData.apiKeyLabel}
+      />
+
       {!isLoaded || !hasKey ? (
         <NoApiKey isLoading={!isLoaded} onAdd={openAddModal} />
       ) : (
-        <>
-          <Typography variant="h3" weight="bold" style={{ marginBottom: "0.25rem" }}>
+        <Flex direction="column" gap={4}>
+          <Typography variant="h3" weight="bold">
             API Key
           </Typography>
           <CardApiKey
@@ -294,17 +374,83 @@ export function ClientPage({ providerId, providerData }: ClientPageProps) {
               void handleToggleEnabled(id, !conn.enabled);
             }}
           />
-        </>
+        </Flex>
       )}
 
       <ModalAddConnection
         isOpen={showForm}
         onClose={closeModal}
-        provider={providerData}
+        provider={{ name: providerData.name }}
         mode={formMode}
         editingConn={editingConn}
         onSubmit={handleSave}
       />
-    </>
+
+      <Flex direction="column" gap={16} className={styles.modelsSection}>
+        <Typography variant="h3" weight="bold">
+          Available models
+        </Typography>
+        <Typography variant="small" color="muted">
+          {catalogSource ? (
+            <>
+              Reference list from{" "}
+              <a
+                href={catalogSource.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {catalogSource.label}
+              </a>
+              . {catalogSource.note}
+            </>
+          ) : (
+            <>Model catalog reference for this provider.</>
+          )}
+        </Typography>
+
+        <Card disableHover className={styles.modelsWrapper}>
+          {Array.from(modelGroups.entries()).map(([tier, tierModels]) => (
+            <Flex
+              as="section"
+              key={tier}
+              direction="column"
+              gap={12}
+              className={styles.modelTierSection}
+            >
+              <Typography
+                variant="small"
+                weight="bold"
+                className={styles.modelTierTitle}
+              >
+                {TIER_TITLE[tier as keyof typeof TIER_TITLE] ?? tier}
+              </Typography>
+              <Flex wrap="wrap" gap={10}>
+                {tierModels.map((model) => (
+                  <CardChip
+                    key={model.openclawId ?? model.id}
+                    model={model}
+                    openclawProviderId={openclawProviderId}
+                  />
+                ))}
+              </Flex>
+            </Flex>
+          ))}
+        </Card>
+      </Flex>
+
+      <Box radius="md" className={styles.noteBox}>
+        <Flex align="start" gap={6}>
+          <Info size={16} className={styles.noteIcon} />
+          <Typography variant="small" color="muted">
+            <strong>Model catalog</strong> lives on the frontend/API (static
+            metadata). <strong>API keys</strong> are stored in the DB and synced
+            to <code>openclaw.json</code>. When setting a project default model,
+            save <code>defaultModel</code> (e.g.{" "}
+            <code>google/gemini-2.5-flash</code>) — no separate table per
+            catalog model is required.
+          </Typography>
+        </Flex>
+      </Box>
+    </Flex>
   );
 }

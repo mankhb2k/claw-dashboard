@@ -82,8 +82,8 @@
 }
 
 .footerSettingsBtn:hover {
-  background: var(--color-sidebar-accent, #2c2d30);
-  color: var(--color-sidebar-foreground, #ffffff);
+  background: var(--color-sidebar-hover, #2c2d30);
+  color: var(--color-sidebar-active, #ffffff);
 }
 
 .footerSettingsBtn[data-state="open"] {

@@ -18,9 +18,9 @@
   --color-hover: rgb(212, 212, 212);
 
   /* Brand Colors */
-  --color-primary: #ff5f00;
+  --color-primary: #e6501b;
   --color-primary-foreground: rgb(250, 250, 250);
-  --color-primary-hover: rgba(255, 94, 0, 0.85);
+  --color-primary-hover: #f25912;
   --color-primary-dim: rgba(255, 95, 0, 0.12);
   --color-secondary: rgb(245, 245, 245);
   --color-secondary-foreground: rgb(23, 23, 23);
@@ -31,6 +31,15 @@
   --color-success: #22c55e;
   --color-success-dim: rgba(34, 197, 94, 0.1);
   --color-warning: #f59e0b;
+
+  /* Sidebar */
+  --color-sidebar-background: #f5f4f0;
+  --color-sidebar-active: #e6501b;
+  --color-sidebar-primary: rgb(120, 120, 120);
+  --color-sidebar-primary-active: rgba(255, 95, 0, 0.12);
+  --color-sidebar-hover: rgba(255, 95, 0, 0.06);
+  --color-sidebar-border: rgb(229, 231, 235);
+  --color-sidebar-ring: rgb(161, 161, 161);
 
   /* Toast */
   --color-toast-success-bg: #ecfdf5;
@@ -44,16 +53,6 @@
   --color-chart-3: rgb(89, 89, 89);
   --color-chart-4: rgb(74, 74, 74);
   --color-chart-5: rgb(38, 38, 38);
-
-  /* Sidebar */
-  --color-sidebar: #f5f4f0;
-  --color-sidebar-foreground: #ff5f00;
-  --color-sidebar-primary: rgb(120, 120, 120);
-  --color-sidebar-primary-foreground: rgb(250, 250, 250);
-  --color-sidebar-accent: rgba(255, 95, 0, 0.06);
-  --color-sidebar-accent-foreground: rgb(23, 23, 23);
-  --color-sidebar-border: rgb(229, 231, 235);
-  --color-sidebar-ring: rgb(161, 161, 161);
 
   /* Shadows */
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -134,9 +133,9 @@
   --color-hover: rgba(255, 255, 255, 0.22);
 
   /* Brand Colors */
-  --color-primary: #ff5f00;
+  --color-primary: #e6501b;
   --color-primary-foreground: rgb(250, 250, 250);
-  --color-primary-hover: rgba(255, 140, 0, 1);
+  --color-primary-hover: #f25912;
   --color-primary-dim: rgba(255, 95, 0, 0.14);
   --color-secondary: rgb(38, 38, 38);
   --color-secondary-foreground: rgb(250, 250, 250);
@@ -147,6 +146,15 @@
   --color-success: #22c55e;
   --color-success-dim: rgba(34, 197, 94, 0.12);
   --color-warning: #f59e0b;
+
+  /* Sidebar */
+  --color-sidebar-background: rgb(23, 23, 23);
+  --color-sidebar-active: #e6501b;
+  --color-sidebar-primary: rgb(158, 158, 158);
+  --color-sidebar-primary-active: rgba(255, 95, 0, 0.12);
+  --color-sidebar-hover: rgba(255, 95, 0, 0.08);
+  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+  --color-sidebar-ring: rgb(115, 115, 115);
 
   /* Toast */
   --color-toast-success-bg: #052e16;
@@ -160,16 +168,6 @@
   --color-chart-3: rgb(89, 89, 89);
   --color-chart-4: rgb(74, 74, 74);
   --color-chart-5: rgb(38, 38, 38);
-
-  /* Sidebar */
-  --color-sidebar: rgb(23, 23, 23);
-  --color-sidebar-foreground: #ff5f00;
-  --color-sidebar-primary: rgb(20, 71, 230);
-  --color-sidebar-primary-foreground: rgb(250, 250, 250);
-  --color-sidebar-accent: rgba(255, 95, 0, 0.08);
-  --color-sidebar-accent-foreground: rgb(250, 250, 250);
-  --color-sidebar-border: rgba(255, 255, 255, 0.1);
-  --color-sidebar-ring: rgb(115, 115, 115);
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);

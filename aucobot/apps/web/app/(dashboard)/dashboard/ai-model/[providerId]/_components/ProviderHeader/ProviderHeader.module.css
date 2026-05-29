@@ -1,0 +1,19 @@
+/* Nút quay lại danh sách */
+.back {
+  align-self: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+/* Hàng header provider */
+.row {
+  margin-bottom: 1rem;
+}
+
+.meta {
+  min-width: 0;
+}
+
+/* Dòng phụ: Manage API key · link lấy key */
+.subtitle {
+  row-gap: var(--space-1);
+}
