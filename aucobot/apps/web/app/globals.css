@@ -4,11 +4,12 @@
   /* Neutral Colors */
   --font-inter: "Inter", sans-serif;
   --color-background: #f7f7f4;
-  --color-foreground: #333333;
+  --color-foreground: #616161;
   --color-accent: rgb(245, 245, 245);
   --color-accent-foreground: rgb(23, 23, 23);
   --color-border: rgb(223, 223, 223);
-  --color-ring: rgb(163, 163, 163);
+  --color-border-focus: rgb(185, 185, 185);
+  --color-ring: rgb(141, 141, 141);
   --color-muted: rgb(245, 245, 245);
   --color-muted-foreground: rgb(170, 170, 170);
 
@@ -30,7 +31,7 @@
   --color-input-label: rgb(100, 100, 100);
   --color-input-background: var(--color-background);
   --color-input-border: var(--color-border);
-  --color-input-focus: rgb(185, 185, 185);
+  --color-input-focus: var(--color-border-focus);
 
   /* Dropdown */
   --color-dropdown-background: var(--color-background);

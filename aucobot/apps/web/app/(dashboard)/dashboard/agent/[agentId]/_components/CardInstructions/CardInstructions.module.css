@@ -1,20 +1,31 @@
-/* Khung card instructions */
+/* Card Instructions Layout */
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .header {
+  flex-shrink: 0;
   flex-wrap: wrap;
 }
 
-/* Nút AI (placeholder) */
+.cardTitle {
+  flex-shrink: 0;
+}
+
+.roleBlock {
+  flex-shrink: 0;
+}
+
+/* AI Button (placeholder) */
 .aiBtn {
   gap: var(--space-2);
 }
 
-/* Chuyển chế độ Đơn giản / Markdown */
+/* Switch mode to Editor / Markdown */
 .modeToggle {
   align-self: flex-start;
 }
@@ -23,40 +34,34 @@
   gap: var(--space-2);
 }
 
-.simpleFields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+/* Section switch — Rules / Constraints / … (ButtonGroup + outline Button).
+   Active: aria-pressed; chỉ đổi màu chữ primary, không đổi nền. */
+.sectionGroup {
+  flex-shrink: 0;
+  align-self: flex-start;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
+.sectionBtn {
   gap: var(--space-2);
 }
 
-.label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-foreground);
-}
-
-.textarea {
-  width: 100%;
-  min-height: 88px;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+.sectionGroup .sectionBtn[aria-pressed="true"] {
+  color: var(--color-primary);
   background: var(--color-background);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  color: var(--color-foreground);
-  resize: vertical;
-  outline: none;
+  border-color: var(--color-border);
 }
 
-.textarea:focus {
-  border-color: var(--color-border-focus);
+/* Override default hover of Button outline — keep background/text as regular state */
+.sectionGroup .sectionBtn:hover:not(:disabled) {
+  color: var(--color-foreground);
+  background: var(--color-background);
+  border-color: var(--color-border);
+}
+
+.sectionGroup .sectionBtn[aria-pressed="true"]:hover:not(:disabled) {
+  color: var(--color-primary);
 }
 
 .textareaTall {
@@ -64,13 +69,10 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-.fieldError {
-  font-size: var(--font-size-xs);
-  color: var(--color-danger);
-}
-
-.divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: var(--space-2) 0;
+/* Vùng form Editor — textarea fill chiếm phần còn lại trong card */
+.simpleFields,
+.markdownFields {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
 }

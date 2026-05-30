@@ -1,41 +1,35 @@
-/* =============================================================================
-   1. CONTAINER NHÓM NÚT
-   ============================================================================= */
+/* 1. CONTAINER BUTTON GROUP */
 .group {
   display: inline-flex;
   vertical-align: middle;
 }
 
-/* =============================================================================
-   2. XỬ LÝ CÁC PHẦN TỬ CON
-   ============================================================================= */
+/* 2. HANDLE CHILDREN */
 .group > * {
-  border-radius: 0 !important; /* Ghi đè pill radius mặc định của Button */
+  border-radius: 0 !important; /* Override default pill radius of Button */
   margin-left: -1px;
   position: relative;
 }
 
-/* Nút đầu tiên */
+/* First button */
 .group > *:first-child {
   margin-left: 0;
   border-top-left-radius: var(--radius-md) !important;
   border-bottom-left-radius: var(--radius-md) !important;
 }
 
-/* Nút cuối cùng */
+/* Last button */
 .group > *:last-child {
   border-top-right-radius: var(--radius-md) !important;
   border-bottom-right-radius: var(--radius-md) !important;
 }
 
-/* Nút duy nhất (vừa là đầu vừa là cuối) */
+/* Single button (both first and last) */
 .group > *:first-child:last-child {
   border-radius: var(--radius-md) !important;
 }
 
-/* =============================================================================
-   3. TRẠNG THÁI HOVER & FOCUS
-   ============================================================================= */
+/* 3. HOVER & FOCUS STATES */
 .group > *:hover {
   z-index: 1;
 }

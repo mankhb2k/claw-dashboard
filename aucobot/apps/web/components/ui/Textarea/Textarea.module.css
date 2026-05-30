@@ -1,0 +1,93 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-foreground);
+  resize: vertical;
+  outline: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  transition: border-color var(--transition-fast) ease;
+}
+
+.textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.textarea::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Fill remaining height in flex parent (use with fill prop) */
+.fieldFill {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.fieldFill .label,
+.fieldFill .hint,
+.fieldFill .error {
+  flex-shrink: 0;
+}
+
+.textareaFill {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  resize: none;
+}
+
+.textarea::placeholder {
+  color: var(--color-muted-foreground);
+  opacity: 0.5;
+}
+
+.textarea:focus {
+  border-color: var(--color-border-focus);
+}
+
+.textareaError {
+  border-color: var(--color-danger);
+}
+
+.textareaError:focus {
+  box-shadow: 0 0 0 3px var(--color-danger-dim);
+}
+
+.error {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+.hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+}

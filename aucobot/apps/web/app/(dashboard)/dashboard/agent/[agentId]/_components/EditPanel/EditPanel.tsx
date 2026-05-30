@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Container, Flex } from "@/components/layout";
@@ -134,31 +128,6 @@ export function EditPanel({
 
   /* ── Selected tab (Identity / Instructions / …) ─────────────────────── */
   const [activeTab, setActiveTab] = useState<EditTab>("identity");
-  const tabListRef = useRef<HTMLDivElement>(null);
-  const tabButtonRefs = useRef<Partial<Record<EditTab, HTMLButtonElement>>>({});
-  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 });
-
-  const updateTabIndicator = useCallback(() => {
-    const list = tabListRef.current;
-    const activeButton = tabButtonRefs.current[activeTab];
-    if (!list || !activeButton) return;
-
-    const listRect = list.getBoundingClientRect();
-    const buttonRect = activeButton.getBoundingClientRect();
-    setTabIndicator({
-      left: buttonRect.left - listRect.left,
-      width: buttonRect.width,
-    });
-  }, [activeTab]);
-
-  useLayoutEffect(() => {
-    updateTabIndicator();
-  }, [updateTabIndicator]);
-
-  useEffect(() => {
-    window.addEventListener("resize", updateTabIndicator);
-    return () => window.removeEventListener("resize", updateTabIndicator);
-  }, [updateTabIndicator]);
 
   const model = watch("model");
   const sandboxEnabled = watch("sandboxEnabled");
@@ -279,9 +248,15 @@ export function EditPanel({
         justify="center"
         className={`${styles.root} ${!previewOpen ? styles.rootExpanded : ""}`}
       >
-        <Typography variant="small" color="muted">
-          Đang tải…
-        </Typography>
+        <Container
+          size={previewOpen ? "full" : "md"}
+          display="flex"
+          className={styles.shell}
+        >
+          <Typography variant="small" color="muted">
+            Loading…
+          </Typography>
+        </Container>
       </Flex>
     );
   }
@@ -303,7 +278,7 @@ export function EditPanel({
               weight="regular"
               className={styles.saveStatus}
             >
-              Đã lưu ✓
+              Saved ✓
             </Typography>
           )}
           <Button
@@ -326,26 +301,15 @@ export function EditPanel({
         noValidate
       >
         <div className={styles.tabBar}>
-          <div className={styles.tabList} ref={tabListRef}>
-            <span
-              className={styles.tabIndicator}
-              style={{
-                transform: `translateX(${tabIndicator.left}px)`,
-                width: tabIndicator.width,
-              }}
-              aria-hidden
-            />
+          <div className={styles.tabList}>
             {TABS_LIST.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  ref={(node) => {
-                    tabButtonRefs.current[tab.id] = node ?? undefined;
-                  }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`${styles.tabButton} ${activeTab === tab.id ? styles.active : ""}`}
+                  className={`${styles.tabItem} ${activeTab === tab.id ? styles.active : ""}`}
                 >
                   <Icon size={16} aria-hidden />
                   {tab.label}
@@ -372,9 +336,8 @@ export function EditPanel({
             </Button>
           ) : null}
         </div>
-
         <div
-          className={`${styles.body} ${!previewOpen ? styles.bodyConstrained : ""}`}
+          className={`${styles.body} ${activeTab === "instructions" ? styles.bodyInstructions : ""}`}
         >
           <div className={styles.bodyInner}>{tabContent}</div>
         </div>
@@ -387,17 +350,13 @@ export function EditPanel({
       <div
         className={`${styles.root} ${!previewOpen ? styles.rootExpanded : ""}`}
       >
-        {!previewOpen ? (
-          <Container
-            size="md"
-            display="flex"
-            className={styles.constrainedShell}
-          >
-            {panelMain}
-          </Container>
-        ) : (
-          panelMain
-        )}
+        <Container
+          size={previewOpen ? "full" : "md"}
+          display="flex"
+          className={styles.shell}
+        >
+          {panelMain}
+        </Container>
       </div>
     </FormProvider>
   );

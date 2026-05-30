@@ -1,4 +1,4 @@
-/* Khung panel trái */
+/* Pannel layout */
 .root {
   flex: 0 0 55%;
   height: 100%;
@@ -11,15 +11,15 @@
   transition: flex-basis var(--transition-slow) var(--ease-out);
 }
 
-/* Khi đóng preview — form chiếm toàn bộ chiều ngang */
+/* When preview is closed, the form takes up the full width */
 .rootExpanded {
   flex: 1 1 auto;
   border-right: none;
   align-items: center;
 }
 
-/* Shell giới hạn chiều rộng khi đóng preview */
-.constrainedShell {
+/* Content shell — header, tabs, and card share Container padding */
+.shell {
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -28,43 +28,30 @@
 }
 
 .loadError {
-  padding: 0 var(--space-2);
+  padding: 0;
 }
 
-/* Header cố định */
+/* Fixed header */
 .header {
   flex-shrink: 0;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-4) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--color-background);
 }
 
-.constrainedShell .header {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.constrainedShell .tabBar {
-  padding-right: 0;
-}
-
-.constrainedShell .tabList {
-  padding-left: 0;
-}
-
-/* Thông báo đã lưu */
+/* Save status */
 .saveStatus {
   color: var(--color-success);
 }
 
-/* Nút lưu kèm icon */
+/* Save button with icon */
 .saveBtn {
   gap: var(--space-2);
 }
 
-/* Form bọc tabs + nội dung */
+/* Form wrapped tabs + content */
 .form {
   flex: 1;
   min-height: 0;
@@ -73,46 +60,45 @@
   overflow: hidden;
 }
 
-/* Vùng nội dung tab — chỉ phần này scroll */
+/* Tab content area — flex column; scroll khi tab dài, fill khi card dùng flex:1 */
 .body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--space-6);
+  padding: var(--space-6) 0;
   display: flex;
   flex-direction: column;
 }
 
 .bodyInner {
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
   width: 100%;
 }
 
-.bodyConstrained {
-  padding-left: 0;
-  padding-right: 0;
+/* Instructions tab: không scroll body, textarea tự scroll */
+.bodyInstructions {
+  overflow: hidden;
 }
 
-/* Hàng tab + nút preview (cố định phải) */
+/* Tab row + preview button (fixed right) */
 .tabBar {
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
   gap: var(--space-2);
-  padding-right: var(--space-6);
   border-bottom: 1px solid var(--color-border);
   background: var(--color-background);
 }
 
-/* Danh sách tab — scroll ngang khi hẹp */
+/* Tab list - scroll horizontally when narrow */
 .tabList {
-  position: relative;
   flex: 1;
   min-width: 0;
-  padding: 0 var(--space-6);
   display: flex;
   gap: var(--space-6);
   overflow-x: auto;
@@ -123,51 +109,35 @@
   display: none;
 }
 
-/* Nút đóng/mở preview — luôn bám phải */
+/* Preview toggle button - always sticks to the right */
 .previewToggle {
   flex-shrink: 0;
   align-self: center;
   margin-left: auto;
 }
 
-/* Gạch dưới trượt theo tab active */
-.tabIndicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--color-primary);
-  border-radius: var(--radius-sm);
-  pointer-events: none;
-  transition:
-    transform var(--transition-slow) var(--ease-out),
-    width var(--transition-slow) var(--ease-out);
-}
-
-.tabButton {
-  position: relative;
-  z-index: 1;
+.tabItem {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-4) 0;
   background: none;
   border: none;
-  color: var(--color-muted-foreground);
+  color: var(--color-foreground);
   font-weight: 500;
   cursor: pointer;
   transition: color var(--transition-base) ease;
 }
 
-.tabButton svg {
+.tabItem svg {
   flex-shrink: 0;
 }
 
-.tabButton:hover {
+.tabItem:hover {
   color: var(--color-primary);
 }
 
-.tabButton.active {
+.tabItem.active {
   color: var(--color-primary);
   font-weight: 500;
 }
