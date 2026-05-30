@@ -116,7 +116,7 @@ export function CardInstructions() {
                 key={id}
                 type="button"
                 variant="outline"
-                size="default"
+                size="sm"
                 className={styles.sectionBtn}
                 aria-pressed={section === id}
                 onClick={() => setSection(id)}
