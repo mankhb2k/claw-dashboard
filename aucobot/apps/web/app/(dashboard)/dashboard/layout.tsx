@@ -54,6 +54,14 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (gateDoneRef.current) return;
+
+    const cached = getPrimaryProject(useProjectStore.getState().projects);
+    if (cached && !shouldRedirectToSetup(cached)) {
+      gateDoneRef.current = true;
+      setWorkspaceChecked(true);
+      return;
+    }
+
     void fetchProjects()
       .then(() => {
         gateDoneRef.current = true;
@@ -65,12 +73,18 @@ export default function DashboardLayout({
         setWorkspaceChecked(true);
       })
       .catch(() => {
+        gateDoneRef.current = true;
+        const primary = getPrimaryProject(useProjectStore.getState().projects);
+        if (primary && !shouldRedirectToSetup(primary)) {
+          setWorkspaceChecked(true);
+          return;
+        }
         router.replace(SETUP_PATH);
       });
   }, [fetchProjects, router]);
 
   useEffect(() => {
-    if (!workspaceChecked) return;
+    if (!workspaceChecked || !gateDoneRef.current) return;
     const primary = getPrimaryProject(projects);
     if (shouldRedirectToSetup(primary)) {
       router.replace(SETUP_PATH);

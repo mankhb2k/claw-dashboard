@@ -5,10 +5,10 @@
 #
 # Không chạy song song với pnpm dev:db — cùng cổng 5432.
 #
-# Khớp apps/api/.env:
+# Khớp aucobot/.env:
 #   DATABASE_URL=postgresql://postgres:password@localhost:5432/openclaw
 #   OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
-#   OPENCLAW_GATEWAY_TOKEN=<same as deploy/.env.gateway và apps/api/.env>
+#   OPENCLAW_GATEWAY_TOKEN=<same as deploy/.env.gateway và aucobot/.env>
 #
 # Image local: deploy/.env.gateway → OPENCLAW_IMAGE=openclaw-worker:latest
 

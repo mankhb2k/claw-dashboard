@@ -1,14 +1,7 @@
-import { config } from 'dotenv';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { loadMonorepoEnv } from '../../../scripts/load-monorepo-env.mjs';
 
-const packageDir =
-  typeof __dirname !== 'undefined'
-    ? __dirname
-    : dirname(fileURLToPath(import.meta.url));
+loadMonorepoEnv();
 
-config({ path: resolve(packageDir, '../../apps/api/.env') });
-config({ path: resolve(packageDir, '../.env'), override: true });
 import { createPrismaClient } from '../src/create-prisma-client';
 import { AGENT_TEMPLATE_SEEDS } from './agent-templates.seed-data';
 

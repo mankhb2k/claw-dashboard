@@ -30,7 +30,6 @@ export function shouldRedirectToSetup(project: Project | null): boolean {
   if (!project) return true
 
   if (isOssRuntime()) {
-    if (isProjectBusy(project.status)) return false
     return !isProjectReady(project.status)
   }
 

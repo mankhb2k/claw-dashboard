@@ -9,7 +9,7 @@ Monorepo mới nằm **song song** với code legacy ở parent:
 | `../openclaw-worker/` | **pull image** `openclaw-worker:*` (không copy vào monorepo) |
 | `../skill-hub/` | `catalogs/skill-hub/` |
 
-**Upstream pull (không build trong repo):** `postgres:16-alpine`, `openclaw-worker:1.0.3` — cấu hình qua `deploy/docker-compose.yml` và `OPENCLAW_IMAGE`.
+**Upstream pull (không build trong repo):** `postgres:16-alpine`, `openclaw-worker:latest` — cấu hình qua `deploy/docker-compose.yml` và `OPENCLAW_IMAGE`.
 
 **Ưu tiên:** OSS self-host (gateway cố định `:18789`, không spawn Docker khi tạo project).  
 **Cloud:** `cloud/{api,web,packages,deploy}` — implement sau.
@@ -32,7 +32,7 @@ Monorepo mới nằm **song song** với code legacy ở parent:
 ```bash
 cd aucobot
 pnpm install
-# Env: apps/api/.env, apps/web/.env.local
+cp .env.example .env   # single env at repo root (API + Web)
 pnpm dev:deps     # Postgres nếu chưa có :5432
 
 docker compose -f deploy/docker-compose.gateway.dev.yml --env-file deploy/.env.gateway up -d

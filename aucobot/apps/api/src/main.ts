@@ -1,4 +1,7 @@
-import 'dotenv/config';
+import { loadMonorepoEnv } from '../../../scripts/load-monorepo-env.mjs';
+
+loadMonorepoEnv();
+
 import { NestFactory } from '@nestjs/core';
 import { Logger as NestLogger, ValidationPipe } from '@nestjs/common';
 import {

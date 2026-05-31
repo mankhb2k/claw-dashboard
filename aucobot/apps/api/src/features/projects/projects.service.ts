@@ -11,7 +11,10 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { toProjectDto, type ProjectDto } from './projects.mapper';
 import { CreateProjectDto } from './dto/create.dto';
 import { WorkspaceService } from './workspace/workspace.service';
-import { resolveGatewayEndpoint, resolveOssGatewayToken } from './runtime/gateway-endpoint';
+import {
+  resolveGatewayEndpoint,
+  resolveOssGatewayToken,
+} from './runtime/gateway-endpoint';
 import { gatewayTokenForNewProject } from '@aucobot/control-plane-core';
 import { StaticGatewayProvisioner } from '@aucobot/runtime-oss';
 import { isOssRuntime } from './runtime/runtime-mode';
@@ -111,7 +114,10 @@ export class ProjectsService {
   }
 
   async health(userId: string, projectId: string) {
-    const project = await this.requireOwned(userId, projectId);
+    let project = await this.requireOwned(userId, projectId);
+    if (isOssRuntime()) {
+      project = await this.syncOssProjectFromGateway(project);
+    }
     const dto = toProjectDto(project);
     return {
       status: dto.status,
@@ -122,6 +128,50 @@ export class ProjectsService {
       containerMissing: dto.containerMissing,
       errorMessage: dto.errorMessage,
     };
+  }
+
+  /** Reconcile DB status with shared gateway health (fixes stuck creating / stale running). */
+  private async syncOssProjectFromGateway(
+    project: Awaited<ReturnType<typeof this.requireOwned>>,
+  ) {
+    const live = await this.ossProvisioner.getStatus({
+      projectId: project.id,
+      mode: 'oss',
+      gatewayToken: resolveOssGatewayToken(project.gatewayToken),
+    });
+
+    const gatewayDownMsg =
+      'Shared gateway is not reachable on port 18789. Run `pnpm dev:runtime` and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.';
+
+    let nextStatus = project.status;
+    let errorMessage = project.errorMessage;
+
+    if (live === 'running') {
+      if (project.status !== ProjectStatus.RUNNING) {
+        nextStatus = ProjectStatus.RUNNING;
+        errorMessage = null;
+      }
+    } else if (
+      project.status === ProjectStatus.RUNNING ||
+      project.status === ProjectStatus.CREATING
+    ) {
+      nextStatus = ProjectStatus.ERROR;
+      errorMessage = errorMessage?.trim() || gatewayDownMsg;
+    }
+
+    if (nextStatus === project.status && errorMessage === project.errorMessage) {
+      return project;
+    }
+
+    return this.prisma.project.update({
+      where: { id: project.id },
+      data: {
+        status: nextStatus,
+        errorMessage,
+        lastActiveAt:
+          nextStatus === ProjectStatus.RUNNING ? new Date() : project.lastActiveAt,
+      },
+    });
   }
 
   async assertOwned(userId: string, projectId: string) {

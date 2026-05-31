@@ -7,7 +7,7 @@ Mục tiêu: **một lệnh** dựng 4 service + volume dùng chung (Supabase-st
 | `postgres` | 5432 | `postgres:16-alpine` |
 | `api` | 3001 | build `Dockerfile.api` |
 | `web` | 3000 | build `Dockerfile.web` |
-| `gateway` | 18789 | `openclaw-worker:1.0.3` (pull hoặc build local) |
+| `gateway` | 18789 | `openclaw-worker:latest` (pull hoặc build local) |
 
 Volume **`openclaw_data`**: API ghi `/data/projects/{projectId}/…`, gateway đọc cùng dữ liệu.
 

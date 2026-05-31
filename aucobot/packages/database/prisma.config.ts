@@ -1,16 +1,9 @@
-import { config } from 'dotenv';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadMonorepoEnv } from '../../scripts/load-monorepo-env.mjs';
 import { defineConfig } from 'prisma/config';
 
-// migrate/seed run with cwd = packages/database; dev DATABASE_URL lives in apps/api/.env
-const packageDir =
-  typeof __dirname !== 'undefined'
-    ? __dirname
-    : dirname(fileURLToPath(import.meta.url));
-
-config({ path: resolve(packageDir, '../../apps/api/.env') });
-config({ path: resolve(packageDir, '.env'), override: true });
+loadMonorepoEnv();
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

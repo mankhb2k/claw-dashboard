@@ -10,6 +10,7 @@ jest.mock('nanoid', () => ({
 }));
 
 const provisionMock = jest.fn();
+const getStatusMock = jest.fn().mockResolvedValue('running');
 
 jest.mock('./workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
@@ -26,6 +27,7 @@ jest.mock('@aucobot/control-plane-core', () => ({
 jest.mock('@aucobot/runtime-oss', () => ({
   StaticGatewayProvisioner: jest.fn().mockImplementation(() => ({
     provision: provisionMock,
+    getStatus: getStatusMock,
   })),
 }));
 
@@ -90,6 +92,7 @@ describe('ProjectsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    getStatusMock.mockResolvedValue('running');
     isOssRuntimeMock.mockReturnValue(true);
     gatewayTokenForNewProjectMock.mockReturnValue('gw-token-new');
     provisionMock.mockImplementation(
@@ -266,6 +269,7 @@ describe('ProjectsService', () => {
 
       const health = await service.health(USER_ID, PROJECT_ID);
 
+      expect(getStatusMock).toHaveBeenCalled();
       expect(health).toMatchObject({
         status: 'running',
         displayName: 'My workspace',
@@ -273,6 +277,41 @@ describe('ProjectsService', () => {
         containerMissing: false,
       });
       expect(health.publicUrl).toBe('http://127.0.0.1:18789');
+    });
+
+    it('syncs CREATING to RUNNING when shared gateway is healthy', async () => {
+      const { service, prisma } = createService();
+      const creating = buildProject({ status: ProjectStatus.CREATING });
+      const running = buildProject({ status: ProjectStatus.RUNNING });
+      prisma.project.findFirst.mockResolvedValue(creating);
+      prisma.project.update.mockResolvedValue(running);
+      getStatusMock.mockResolvedValue('running');
+
+      const health = await service.health(USER_ID, PROJECT_ID);
+
+      expect(prisma.project.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: ProjectStatus.RUNNING }),
+        }),
+      );
+      expect(health.status).toBe('running');
+    });
+
+    it('marks RUNNING as ERROR when gateway is down', async () => {
+      const { service, prisma } = createService();
+      const running = buildProject({ status: ProjectStatus.RUNNING });
+      const errored = buildProject({
+        status: ProjectStatus.ERROR,
+        errorMessage: 'Shared gateway is not reachable on port 18789. Run `pnpm dev:runtime` and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.',
+      });
+      prisma.project.findFirst.mockResolvedValue(running);
+      prisma.project.update.mockResolvedValue(errored);
+      getStatusMock.mockResolvedValue('error');
+
+      const health = await service.health(USER_ID, PROJECT_ID);
+
+      expect(prisma.project.update).toHaveBeenCalled();
+      expect(health.status).toBe('error');
     });
   });
 

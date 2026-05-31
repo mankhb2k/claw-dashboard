@@ -1,0 +1,31 @@
+/* Bước tiến trình — trạng thái chữ */
+.stepActive {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.stepDone {
+  color: var(--color-success);
+}
+
+.stepIdle {
+  color: var(--color-text-muted);
+}
+
+/* Chấm trạng thái */
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.dotActive {
+  background: var(--color-primary);
+}
+
+.dotDone {
+  background: var(--color-success);
+}

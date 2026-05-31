@@ -35,7 +35,7 @@ pnpm dev:deps                         # postgres only
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
-Env: `apps/api/.env`, `deploy/.env` (compose), `deploy/.env.gateway` (gateway dev).
+Env (local): `aucobot/.env` from `.env.example` (API + Web). Optional `aucobot/.env.local`. Docker: `deploy/.env`, `deploy/.env.gateway`.
 
 ## Extract package workflow (Phase 3)
 
