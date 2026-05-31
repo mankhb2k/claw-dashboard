@@ -132,7 +132,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     curl: `curl -X POST https://api.openclaw-saas.com/v1/chat/completions \\
   -H "Authorization: Bearer ${activeToken}" \\
   -H "Content-Type: application/json" \\
-  -d '{"model":"${agentId}","messages":[{"role":"user","content":"Xin chào!"}]}'`,
+  -d '{"model":"${agentId}","messages":[{"role":"user","content":"Hello!"}]}'`,
     node: `const res = await fetch("https://api.openclaw-saas.com/v1/chat/completions", {
   method: "POST",
   headers: {
@@ -141,7 +141,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
   },
   body: JSON.stringify({
     model: "${agentId}",
-    messages: [{ role: "user", content: "Xin chào!" }]
+    messages: [{ role: "user", content: "Hello!" }]
   })
 });
 const data = await res.json();
@@ -153,7 +153,7 @@ response = requests.post(
     headers={"Authorization": "Bearer ${activeToken}"},
     json={
         "model": "${agentId}",
-        "messages": [{"role": "user", "content": "Xin chào!"}]
+        "messages": [{"role": "user", "content": "Hello!"}]
     }
 )
 print(response.json()["choices"][0]["message"]["content"])`,
@@ -169,22 +169,22 @@ print(response.json()["choices"][0]["message"]["content"])`,
 
       {/* ── SECTION 1: API Keys ─────────────────────────────────────────── */}
       <div className={styles.section}>
-        <Typography variant="p" weight="bold">🔑 Quản Lý API Keys</Typography>
+        <Typography variant="p" weight="bold">🔑 API Keys</Typography>
         <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          Access token để ứng dụng bên ngoài xác thực và gọi Agent này qua REST API.
+          Access tokens for external apps to authenticate and call this agent via REST API.
         </Typography>
 
         <div className={styles.tableWrapper}>
           {apiKeys.length === 0 ? (
-            <div className={styles.emptyState}>Chưa có API Key nào.</div>
+            <div className={styles.emptyState}>No API keys yet.</div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Tên</th>
+                  <th>Name</th>
                   <th>Token</th>
-                  <th>Ngày tạo</th>
-                  <th style={{ width: 56, textAlign: "center" }}>Xóa</th>
+                  <th>Created</th>
+                  <th style={{ width: 56, textAlign: "center" }}>Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,31 +214,31 @@ print(response.json()["choices"][0]["message"]["content"])`,
 
         <Flex gap={3} align="center" style={{ marginTop: 14 }}>
           <Input
-            placeholder="Tên gợi nhớ (VD: CRM Integration...)"
+            placeholder="Label (e.g. CRM Integration...)"
             value={newKeyName}
             onChange={e => setNewKeyName(e.target.value)}
             style={{ maxWidth: 300 }}
           />
           <Button size="sm" className={styles.generateBtn} loading={isGenerating} onClick={handleGenerateKey}>
-            <Plus size={14} /> Tạo API Key
+            <Plus size={14} /> Create API Key
           </Button>
         </Flex>
       </div>
 
       {/* ── SECTION 2: Widget & Code Snippets ──────────────────────────── */}
       <div className={styles.section}>
-        <Typography variant="p" weight="bold">🚀 Nhúng Widget & REST API</Typography>
+        <Typography variant="p" weight="bold">🚀 Widget embed & REST API</Typography>
         <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          Nhúng bong bóng chat vào website hoặc gọi trực tiếp qua REST API chuẩn OpenAI.
+          Embed a chat bubble on your site or call the OpenAI-compatible REST API directly.
         </Typography>
 
         <div className={styles.widgetBox}>
           <Flex justify="between" align="center" style={{ marginBottom: 8 }}>
-            <Typography variant="small" weight="bold">🌐 Script nhúng Chat Widget</Typography>
+            <Typography variant="small" weight="bold">🌐 Chat widget embed script</Typography>
             <Button variant="ghost" size="sm" style={{ gap: 4, height: 26, fontSize: 12, padding: "0 8px" }}
               onClick={() => handleCopy(widgetScript, setIsCopiedWidget)}>
               {isCopiedWidget ? <Check size={12} color="#10b981" /> : <Copy size={12} />}
-              {isCopiedWidget ? "Đã copy!" : "Copy"}
+              {isCopiedWidget ? "Copied!" : "Copy"}
             </Button>
           </Flex>
           <pre className={styles.codeBlock}>{widgetScript}</pre>
@@ -261,7 +261,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
             <button className={styles.snippetCopyBtn}
               onClick={() => handleCopy(snippets[snippetTab], setCopiedSnippet)}>
               {copiedSnippet ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
-              {copiedSnippet ? "Đã copy!" : "Copy"}
+              {copiedSnippet ? "Copied!" : "Copy"}
             </button>
             <pre className={styles.codeBlock}>{snippets[snippetTab]}</pre>
           </div>
@@ -273,15 +273,15 @@ print(response.json()["choices"][0]["message"]["content"])`,
         <Flex justify="between" align="center" style={{ marginBottom: 4 }}>
           <Typography variant="p" weight="bold" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <MessageSquare size={16} />
-            Kênh Nhắn Tin
+            Messaging Channels
           </Typography>
           <Button variant="ghost" size="sm" style={{ gap: 5, fontSize: 12 }}
             onClick={() => router.push(`/dashboard/channel`)}>
-            <ArrowUpRight size={13} /> Quản lý tab Channel
+            <ArrowUpRight size={13} /> Manage in Channel tab
           </Button>
         </Flex>
         <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          Agent sẽ tự động lắng nghe và trả lời tin nhắn trên các kênh bạn bật. Kênh cần được cấu hình trước ở <strong>tab Channel</strong> của dự án.
+          The agent listens and replies on channels you enable. Configure channels first in the project <strong>Channel</strong> tab.
         </Typography>
 
         <div className={styles.providerList}>
@@ -300,10 +300,10 @@ print(response.json()["choices"][0]["message"]["content"])`,
                 <div className={styles.providerInfo}>
                   <span className={styles.providerName}>{channel.name}</span>
                   {isConnected
-                    ? <span className={styles.connectedTag}>Đã cấu hình</span>
+                    ? <span className={styles.connectedTag}>Configured</span>
                     : <button className={styles.goConnectBtn}
                         onClick={() => router.push(`/dashboard/channel`)}>
-                        Chưa kết nối → Cấu hình ngay
+                        Not connected → Configure
                       </button>
                   }
                 </div>
@@ -320,7 +320,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
           {ecommerceRows.length > 0 && (
             <>
               <div className={styles.subGroupLabel}>
-                <span>🛒 Nền tảng thương mại điện tử</span>
+                <span>🛒 E-commerce platforms</span>
                 <Button variant="ghost" size="sm" style={{ gap: 4, fontSize: 11 }}
                   onClick={() => router.push(`/dashboard/connect`)}>
                   <ArrowUpRight size={12} /> tab Connect
@@ -348,13 +348,13 @@ print(response.json()["choices"][0]["message"]["content"])`,
                                 <input type="checkbox" checked={chatOn}
                                   onChange={() => toggleConnectorChat(service.slug)}
                                   className={styles.chatToggleInput} />
-                                Chat {chatOn ? "bật" : "tắt"}
+                                Chat {chatOn ? "on" : "off"}
                               </label>
                             )}
                           </Flex>
                         : <button className={styles.goConnectBtn}
                             onClick={() => router.push(`/dashboard/connect`)}>
-                            Chưa kết nối → OAuth ngay
+                            Not connected → Connect OAuth
                           </button>
                       }
                     </div>
@@ -376,15 +376,15 @@ print(response.json()["choices"][0]["message"]["content"])`,
         <Flex justify="between" align="center" style={{ marginBottom: 4 }}>
           <Typography variant="p" weight="bold" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Database size={16} />
-            Nguồn Dữ Liệu & Công Cụ
+            Data sources & tools
           </Typography>
           <Button variant="ghost" size="sm" style={{ gap: 5, fontSize: 12 }}
             onClick={() => router.push(`/dashboard/connect`)}>
-            <ArrowUpRight size={13} /> Quản lý tab Connect
+            <ArrowUpRight size={13} /> Manage in Connect tab
           </Button>
         </Flex>
         <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          Agent có thể đọc/ghi dữ liệu từ các dịch vụ đã kết nối OAuth. Phân quyền có thể điều chỉnh từng connector.
+          The agent can read/write data from OAuth-connected services. Permissions can be set per connector.
         </Typography>
 
         <div className={styles.providerList}>
@@ -411,14 +411,14 @@ print(response.json()["choices"][0]["message"]["content"])`,
                           className={styles.permSelect}
                           value={perm}
                           onChange={e => setConnectorPermission(service.slug, e.target.value as ConnectorPermission)}>
-                          <option value="read">Chỉ đọc</option>
-                          <option value="write">Đọc + Ghi</option>
-                          <option value="full">Toàn quyền</option>
+                          <option value="read">Read only</option>
+                          <option value="write">Read + write</option>
+                          <option value="full">Full access</option>
                         </select>
                       )
                     : <button className={styles.goConnectBtn}
                         onClick={() => router.push(`/dashboard/connect/${service.slug}`)}>
-                        Chưa kết nối → Kết nối ngay
+                        Not connected → Connect now
                       </button>
                   }
                 </div>

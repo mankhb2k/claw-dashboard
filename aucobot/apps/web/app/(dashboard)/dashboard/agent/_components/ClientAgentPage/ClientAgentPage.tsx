@@ -197,16 +197,16 @@ export default function ClientAgentPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa Agent vĩnh viễn?</AlertDialogTitle>
+            <AlertDialogTitle>Delete agent permanently?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Trợ lý AI và tất cả cấu hình
-              liên quan sẽ bị xóa sạch khỏi hệ thống.
+              This action cannot be undone. The AI assistant and all related
+              configuration will be removed from the system.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Để tôi suy nghĩ lại</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant="danger" onClick={confirmDelete}>
-              Tôi hiểu, hãy xóa đi
+              Yes, delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

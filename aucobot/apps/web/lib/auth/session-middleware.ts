@@ -32,22 +32,17 @@ async function fetchSessionOk(cookieHeader: string): Promise<boolean> {
 }
 
 /**
- * Gate protected routes. Do not call /api/auth/refresh here — rotation would
- * invalidate oc_refresh before the browser receives Set-Cookie (axios refresh on
- * the client handles token rotation once per expiry).
+ * Gate protected routes. Trust only a successful `/api/auth/session` response.
+ * Do not call `/api/auth/refresh` here — rotation would invalidate oc_refresh
+ * before the browser receives Set-Cookie (axios refresh on the client handles
+ * token rotation once per expiry).
  */
 export async function resolveSession(request: NextRequest): Promise<SessionResolveResult> {
   const cookieHeader = request.headers.get('cookie') ?? ''
-  const hasRefresh = Boolean(request.cookies.get(AUTH_COOKIES.REFRESH)?.value)
+  if (!cookieHeader) return { valid: false }
 
-  if (cookieHeader) {
-    const valid = await fetchSessionOk(cookieHeader)
-    if (valid) return { valid: true }
-  }
-
-  if (hasRefresh) return { valid: true }
-
-  return { valid: false }
+  const valid = await fetchSessionOk(cookieHeader)
+  return { valid }
 }
 
 export function hasAccessCookie(request: NextRequest): boolean {

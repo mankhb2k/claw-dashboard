@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. VỎ BỌC (WRAPPER)
-   ============================================================================= */
+/* Wrapper */
 .wrapper {
   display: flex;
   align-items: center;
@@ -8,22 +6,39 @@
   cursor: pointer;
 }
 
-/* =============================================================================
-   2. NÚT CHECKBOX (ROOT)
-   ============================================================================= */
+/* Root - Checkbox */
 .root {
   all: unset;
   background-color: var(--color-background);
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1.5px solid var(--color-border);
-  transition: all var(--transition-fast) ease;
+  transition:
+    border-color var(--transition-fast) ease,
+    background-color var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* Size - Checkbox */
+.size_sm {
+  width: 14px;
+  height: 14px;
+}
+
+.size_md {
+  width: 18px;
+  height: 18px;
+}
+
+.size_lg {
+  width: 22px;
+  height: 22px;
 }
 
 .root:hover {
@@ -35,15 +50,13 @@
   border-color: var(--color-primary);
 }
 
-/* Trạng thái đã chọn */
+/* State - Checked */
 .root[data-state='checked'] {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
 }
 
-/* =============================================================================
-   3. CHỈ BÁO (INDICATOR) & ICON
-   ============================================================================= */
+/* Indicator & Icon */
 .indicator {
   display: flex;
   align-items: center;
@@ -57,13 +70,33 @@
   stroke-width: 3.5px;
 }
 
-/* =============================================================================
-   4. NHÃN (LABEL)
-   ============================================================================= */
+.size_sm .icon {
+  width: 10px;
+  height: 10px;
+}
+
+.size_lg .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Label */
 .label {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--color-foreground);
   user-select: none;
   cursor: pointer;
   line-height: 1;
+}
+
+.label_sm {
+  font-size: var(--font-size-sm);
+}
+
+.label_md {
+  font-size: var(--font-size-base);
+}
+
+.label_lg {
+  font-size: var(--font-size-lg);
 }

@@ -15,8 +15,14 @@ jest.mock('node:fs/promises', () => ({
   writeFile: jest.fn(),
 }));
 
-jest.mock('@aucobot/workspace-sync', () => ({
-  parseAgentFormData: (raw: unknown) => {
+jest.mock('@aucobot/workspace-sync', () => {
+  class AgentTeamValidationError extends Error {
+    name = 'AgentTeamValidationError';
+  }
+
+  const AGENT_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,62}$/;
+
+  function parseAgentFormData(raw: unknown) {
     if (!raw || typeof raw !== 'object') {
       throw new Error('Invalid agent formData');
     }
@@ -37,21 +43,131 @@ jest.mock('@aucobot/workspace-sync', () => ({
       model: String(o.model ?? 'google/gemini-2.5-flash'),
       sandboxEnabled: Boolean(o.sandboxEnabled),
       askPolicy: 'on-miss',
-      safeBins: [],
+      safeBins: [] as string[],
       timeoutSec: 60,
+      teamEnabled: Boolean(o.teamEnabled),
+      allowedAgentSlugs: Array.isArray(o.allowedAgentSlugs)
+        ? o.allowedAgentSlugs.map((s) => String(s).trim()).filter(Boolean)
+        : [],
     };
-  },
-  compileAgentBootstrap: jest.fn(() => ({
-    files: {
-      IDENTITY: '# identity',
-      SOUL: '# soul',
-      AGENTS: '# agents',
-      TOOLS: '# tools',
-      BOOTSTRAP: '# bootstrap',
-    },
-  })),
-}));
+  }
 
+  function normalizeAgentTeamSettings(input: {
+    teamEnabled: boolean;
+    allowedAgentSlugs: string[];
+  }) {
+    const seen = new Set<string>();
+    const allowedAgentSlugs: string[] = [];
+    for (const raw of input.allowedAgentSlugs) {
+      const slug = String(raw).trim().toLowerCase();
+      if (!slug || seen.has(slug)) continue;
+      seen.add(slug);
+      allowedAgentSlugs.push(slug);
+      if (allowedAgentSlugs.length >= 50) break;
+    }
+    return { teamEnabled: Boolean(input.teamEnabled), allowedAgentSlugs };
+  }
+
+  function validateAgentTeamSettings(params: {
+    form: { teamEnabled: boolean; allowedAgentSlugs: string[] };
+    currentAgentSlug?: string;
+    projectAgents: Array<{ slug: string; enabled: boolean }>;
+  }) {
+    const normalized = normalizeAgentTeamSettings(params.form);
+    if (!normalized.teamEnabled) return;
+    if (normalized.allowedAgentSlugs.length === 0) {
+      throw new AgentTeamValidationError(
+        'Select at least one agent when sub-agent calling is enabled',
+      );
+    }
+    const bySlug = new Map(params.projectAgents.map((a) => [a.slug, a]));
+    for (const slug of normalized.allowedAgentSlugs) {
+      if (!AGENT_SLUG_PATTERN.test(slug)) {
+        throw new AgentTeamValidationError(`Invalid agent slug: ${slug}`);
+      }
+      if (slug === 'main') {
+        throw new AgentTeamValidationError(
+          'Cannot add system agent "main" to the allow list',
+        );
+      }
+      if (params.currentAgentSlug && slug === params.currentAgentSlug) {
+        throw new AgentTeamValidationError('An agent cannot call itself');
+      }
+      const peer = bySlug.get(slug);
+      if (!peer) {
+        throw new AgentTeamValidationError(`Agent not found in project: ${slug}`);
+      }
+      if (!peer.enabled) {
+        throw new AgentTeamValidationError(
+          `Agent is disabled and cannot be allowed: ${slug}`,
+        );
+      }
+    }
+  }
+
+  function applyAgentTeamSettings(form: ReturnType<typeof parseAgentFormData>) {
+    return { ...form, ...normalizeAgentTeamSettings(form) };
+  }
+
+  function removeSlugFromTeamAllowList(formData: unknown, removedSlug: string) {
+    const form = parseAgentFormData(formData);
+    if (!form.allowedAgentSlugs.includes(removedSlug)) return null;
+    return {
+      ...form,
+      allowedAgentSlugs: form.allowedAgentSlugs.filter((slug) => slug !== removedSlug),
+    };
+  }
+
+  function buildAgentToAgentAllowList(
+    enabledAgents: Array<{
+      slug: string;
+      formData: { teamEnabled: boolean; allowedAgentSlugs: string[] };
+    }>,
+  ) {
+    const enabledSlugs = new Set(enabledAgents.map((row) => row.slug));
+    const allow = new Set<string>(['main']);
+    let anyTeamEnabled = false;
+
+    for (const row of enabledAgents) {
+      const team = normalizeAgentTeamSettings(row.formData);
+      if (!team.teamEnabled) continue;
+      anyTeamEnabled = true;
+      allow.add(row.slug);
+      for (const peerSlug of team.allowedAgentSlugs) {
+        if (enabledSlugs.has(peerSlug)) allow.add(peerSlug);
+      }
+    }
+
+    if (!anyTeamEnabled) {
+      return { enabled: false, allow: [] };
+    }
+
+    return {
+      enabled: true,
+      allow: [...allow].sort((a, b) => a.localeCompare(b)),
+    };
+  }
+
+  return {
+    parseAgentFormData,
+    normalizeAgentTeamSettings,
+    AgentTeamValidationError,
+    validateAgentTeamSettings,
+    applyAgentTeamSettings,
+    removeSlugFromTeamAllowList,
+    buildAgentToAgentAllowList,
+    compileAgentBootstrap: jest.fn(() => ({
+      files: {
+        'IDENTITY.md': '# identity',
+        'SOUL.md': '# soul',
+        'AGENTS.md': '# agents',
+        'TOOLS.md': '# tools',
+      },
+    })),
+  };
+});
+
+import { buildAgentToAgentAllowList } from '@aucobot/workspace-sync';
 import { AgentService } from './agent.service';
 
 const mkdirMock = mkdir as jest.MockedFunction<typeof mkdir>;
@@ -80,6 +196,8 @@ function validFormData(overrides: Record<string, unknown> = {}) {
     askPolicy: 'on-miss',
     safeBins: [] as string[],
     timeoutSec: 60,
+    teamEnabled: false,
+    allowedAgentSlugs: [] as string[],
     ...overrides,
   };
 }
@@ -259,6 +377,7 @@ describe('AgentService', () => {
 
     it('rejects duplicate slug', async () => {
       const { service, prisma } = createService();
+      prisma.projectAgent.findMany.mockResolvedValue([]);
       prisma.projectAgent.findUnique.mockResolvedValue(buildAgentRow());
 
       await expect(
@@ -273,6 +392,7 @@ describe('AgentService', () => {
     it('creates first agent as default and syncs to disk', async () => {
       const { service, prisma, workspace } = createService();
       const row = buildAgentRow();
+      prisma.projectAgent.findMany.mockResolvedValue([]);
       prisma.projectAgent.findUnique
         .mockResolvedValueOnce(null)
         .mockResolvedValue(row);
@@ -306,6 +426,7 @@ describe('AgentService', () => {
     it('skips disk sync when agent is created disabled', async () => {
       const { service, prisma, workspace } = createService();
       const row = buildAgentRow({ enabled: false, isDefault: false });
+      prisma.projectAgent.findMany.mockResolvedValue([]);
       prisma.projectAgent.findUnique
         .mockResolvedValueOnce(null)
         .mockResolvedValue(row);
@@ -328,6 +449,7 @@ describe('AgentService', () => {
     it('updates agent and syncs runtime', async () => {
       const { service, prisma, workspace } = createService();
       const row = buildAgentRow();
+      prisma.projectAgent.findMany.mockResolvedValue([row]);
       prisma.projectAgent.findUnique.mockResolvedValue(row);
       prisma.projectAgent.update.mockResolvedValue(row);
 
@@ -342,6 +464,104 @@ describe('AgentService', () => {
       );
       expect(workspace.syncProjectRuntime).toHaveBeenCalledWith(PROJECT_ID);
       expect(detail.name).toBe('Test Agent');
+    });
+  });
+
+  describe('team settings', () => {
+    it('rejects team enabled without allowed agents on create', async () => {
+      const { service, prisma } = createService();
+      prisma.projectAgent.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.create({
+          projectId: PROJECT_ID,
+          formData: validFormData({ teamEnabled: true, allowedAgentSlugs: [] }),
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects unknown allowed agent slug on update', async () => {
+      const { service, prisma } = createService();
+      const row = buildAgentRow();
+      prisma.projectAgent.findMany.mockResolvedValue([row]);
+      prisma.projectAgent.findUnique.mockResolvedValue(row);
+
+      await expect(
+        service.update(PROJECT_ID, AGENT_SLUG, {
+          formData: validFormData({
+            teamEnabled: true,
+            allowedAgentSlugs: ['missing-agent'],
+          }),
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects self in allowed agents on update', async () => {
+      const { service, prisma } = createService();
+      const row = buildAgentRow();
+      prisma.projectAgent.findMany.mockResolvedValue([row]);
+      prisma.projectAgent.findUnique.mockResolvedValue(row);
+
+      await expect(
+        service.update(PROJECT_ID, AGENT_SLUG, {
+          formData: validFormData({
+            teamEnabled: true,
+            allowedAgentSlugs: [AGENT_SLUG],
+          }),
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('deduplicates allowed slugs on save', async () => {
+      const { service, prisma } = createService();
+      const row = buildAgentRow();
+      const peer = buildAgentRow({ id: 'peer-1', slug: 'peer-agent', enabled: true });
+      prisma.projectAgent.findMany.mockResolvedValue([row, peer]);
+      prisma.projectAgent.findUnique.mockResolvedValue(row);
+      prisma.projectAgent.update.mockResolvedValue(row);
+
+      await service.update(PROJECT_ID, AGENT_SLUG, {
+        formData: validFormData({
+          teamEnabled: true,
+          allowedAgentSlugs: ['peer-agent', 'peer-agent'],
+        }),
+      });
+
+      expect(prisma.projectAgent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            formData: expect.objectContaining({
+              allowedAgentSlugs: ['peer-agent'],
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('removes deleted slug from peer allow lists', async () => {
+      const { service, prisma } = createService();
+      const row = buildAgentRow({ slug: 'removed-agent', isDefault: false });
+      const peer = buildAgentRow({
+        id: 'peer-1',
+        slug: 'caller-agent',
+        formData: validFormData({
+          teamEnabled: true,
+          allowedAgentSlugs: ['removed-agent', 'other-agent'],
+        }),
+      });
+      prisma.projectAgent.findUnique.mockResolvedValue(row);
+      prisma.projectAgent.findMany.mockResolvedValue([peer]);
+
+      await service.remove(PROJECT_ID, 'removed-agent');
+
+      expect(prisma.projectAgent.update).toHaveBeenCalledWith({
+        where: { id: peer.id },
+        data: {
+          formData: expect.objectContaining({
+            allowedAgentSlugs: ['other-agent'],
+          }),
+        },
+      });
     });
   });
 
@@ -398,6 +618,7 @@ describe('AgentService', () => {
         enabled: false,
         isDefault: false,
       });
+      prisma.projectAgent.findMany.mockResolvedValue([source]);
       prisma.projectAgent.findUnique
         .mockResolvedValueOnce(source)
         .mockResolvedValueOnce(null)
@@ -428,6 +649,7 @@ describe('AgentService', () => {
       const { service, prisma, workspace } = createService();
       const row = buildAgentRow({ isDefault: false });
       prisma.projectAgent.findUnique.mockResolvedValue(row);
+      prisma.projectAgent.findMany.mockResolvedValue([]);
 
       await service.remove(PROJECT_ID, AGENT_SLUG);
 
@@ -450,6 +672,7 @@ describe('AgentService', () => {
         isDefault: false,
       });
       prisma.projectAgent.findUnique.mockResolvedValue(row);
+      prisma.projectAgent.findMany.mockResolvedValue([]);
       prisma.projectAgent.findFirst.mockResolvedValue(next);
 
       await service.remove(PROJECT_ID, AGENT_SLUG);
@@ -476,6 +699,57 @@ describe('AgentService', () => {
 
       expect(result).toEqual({ synced: 1, failed: 1 });
       expect(workspace.syncProjectRuntime).toHaveBeenCalledWith(PROJECT_ID);
+    });
+  });
+
+  describe('buildAgentToAgentAllowList', () => {
+    it('returns disabled when no agent has team enabled', () => {
+      expect(
+        buildAgentToAgentAllowList([
+          { slug: 'agent-a', formData: { teamEnabled: false, allowedAgentSlugs: [] } },
+          { slug: 'agent-b', formData: { teamEnabled: false, allowedAgentSlugs: ['agent-a'] } },
+        ]),
+      ).toEqual({ enabled: false, allow: [] });
+    });
+
+    it('includes main, caller, and allowed enabled peers', () => {
+      expect(
+        buildAgentToAgentAllowList([
+          {
+            slug: 'agent-a',
+            formData: { teamEnabled: true, allowedAgentSlugs: ['agent-b'] },
+          },
+          { slug: 'agent-b', formData: { teamEnabled: false, allowedAgentSlugs: [] } },
+        ]),
+      ).toEqual({ enabled: true, allow: ['agent-a', 'agent-b', 'main'] });
+    });
+
+    it('ignores peers that are not in the enabled agent list', () => {
+      expect(
+        buildAgentToAgentAllowList([
+          {
+            slug: 'agent-a',
+            formData: { teamEnabled: true, allowedAgentSlugs: ['agent-b', 'agent-c'] },
+          },
+          { slug: 'agent-b', formData: { teamEnabled: false, allowedAgentSlugs: [] } },
+        ]),
+      ).toEqual({ enabled: true, allow: ['agent-a', 'agent-b', 'main'] });
+    });
+
+    it('unions allow lists from multiple team-enabled agents', () => {
+      expect(
+        buildAgentToAgentAllowList([
+          {
+            slug: 'agent-a',
+            formData: { teamEnabled: true, allowedAgentSlugs: ['agent-b'] },
+          },
+          {
+            slug: 'agent-b',
+            formData: { teamEnabled: true, allowedAgentSlugs: ['agent-c'] },
+          },
+          { slug: 'agent-c', formData: { teamEnabled: false, allowedAgentSlugs: [] } },
+        ]),
+      ).toEqual({ enabled: true, allow: ['agent-a', 'agent-b', 'agent-c', 'main'] });
     });
   });
 });

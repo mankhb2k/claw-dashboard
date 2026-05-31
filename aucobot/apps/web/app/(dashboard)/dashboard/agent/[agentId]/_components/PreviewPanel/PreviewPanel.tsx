@@ -1,207 +1,299 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Flex } from "@/components/layout";
-import { Typography, Input, Button, Avatar } from "@/components/ui";
-import { Send, RotateCcw, Settings, Globe, Loader2, Bot, Layout, Terminal, PlayCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Box, Flex } from "@/components/layout";
+import {
+  Typography,
+  Input,
+  Button,
+  Avatar,
+  Card,
+  Spinner,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui";
+import {
+  Send,
+  RotateCcw,
+  Settings,
+  Globe,
+  Bot,
+  Layout,
+  Terminal,
+  PlayCircle,
+  type LucideIcon,
+} from "lucide-react";
+import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble";
 import styles from "./PreviewPanel.module.css";
 
-export function PreviewPanel() {
-  const [activeTab, setActiveTab] = useState<"playground" | "canvas" | "diagnostics">("playground");
-  const [inputMessage, setInputMessage] = useState("");
-  const [messages, setMessages] = useState([
-    { id: 1, role: "assistant", content: "Xin chào! Tôi là Kế toán trưởng. Bạn cần tôi giúp gì về hóa đơn hay thuế VAT hôm nay?" }
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
+type PreviewTab = "playground" | "canvas" | "diagnostics";
 
-  // MOCKED LOGS STATE
-  const [logs, setLogs] = useState<Array<{ time: string; tag: string; isError?: boolean; text: string }>>([
-    { time: "16:20:01", tag: "[GATEWAY]", text: "Initializing session connection on port 18789..." },
-    { time: "16:20:02", tag: "[GATEWAY]", text: "Session handshakes successful. ID: sess_981249" },
-    { time: "16:20:03", tag: "[SANDBOX]", text: "Bootstrapping Docker execution container (execPolicy='on-miss')..." },
-    { time: "16:20:04", tag: "[SANDBOX]", text: "Allowlisted binary packages loaded: [python, node, git]" },
-    { time: "16:20:05", tag: "[AGENT]", text: "Standing orders compiled. Identity loaded (IDENTITY.md & SOUL.md)" }
-  ]);
+type ChatMessage = {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+};
+
+type LogEntry = {
+  time: string;
+  tag: string;
+  isError?: boolean;
+  text: string;
+};
+
+const INITIAL_ASSISTANT_MESSAGE =
+  "Hello! I'm the Chief Accountant. How can I help with invoices or VAT today?";
+
+const INITIAL_MESSAGES: ChatMessage[] = [
+  { id: 1, role: "assistant", content: INITIAL_ASSISTANT_MESSAGE },
+];
+
+const INITIAL_LOGS: LogEntry[] = [
+  { time: "16:20:01", tag: "[GATEWAY]", text: "Initializing session connection on port 18789..." },
+  { time: "16:20:02", tag: "[GATEWAY]", text: "Session handshakes successful. ID: sess_981249" },
+  { time: "16:20:03", tag: "[SANDBOX]", text: "Bootstrapping Docker execution container (execPolicy='on-miss')..." },
+  { time: "16:20:04", tag: "[SANDBOX]", text: "Allowlisted binary packages loaded: [python, node, git]" },
+  { time: "16:20:05", tag: "[AGENT]", text: "Standing orders compiled. Identity loaded (IDENTITY.md & SOUL.md)" },
+];
+
+function ThoughtLog({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <Box border color="subtle" radius="md" px={12} py={8} className={styles.thoughtLog}>
+      <Flex align="center" gap={8}>
+        <Icon size={14} aria-hidden />
+        <Typography variant="small" color="muted">
+          {text}
+        </Typography>
+      </Flex>
+    </Box>
+  );
+}
+
+export function PreviewPanel() {
+  const [activeTab, setActiveTab] = useState<PreviewTab>("playground");
+  const [inputMessage, setInputMessage] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [isTyping, setIsTyping] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>(INITIAL_LOGS);
 
   const handleSend = () => {
     if (!inputMessage.trim()) return;
 
     const timestamp = new Date().toLocaleTimeString();
-    const newMsg = { id: Date.now(), role: "user", content: inputMessage };
-    setMessages((prev) => [...prev, newMsg]);
-    
-    // Add transaction logs
+    const userText = inputMessage.trim();
+    setMessages((prev) => [...prev, { id: Date.now(), role: "user", content: userText }]);
     setLogs((prev) => [
       ...prev,
-      { time: timestamp, tag: "[INBOUND]", text: `User message received: "${inputMessage}"` },
-      { time: timestamp, tag: "[ROUTER]", text: "Steering message flow to active Pi Agent instance..." }
+      { time: timestamp, tag: "[INBOUND]", text: `User message received: "${userText}"` },
+      { time: timestamp, tag: "[ROUTER]", text: "Steering message flow to active Pi Agent instance..." },
     ]);
-    
+
     setInputMessage("");
     setIsTyping(true);
 
-    // Simulate AI response
     setTimeout(() => {
       const responseTime = new Date().toLocaleTimeString();
       setIsTyping(false);
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, role: "assistant", content: "Tôi đã kiểm tra dữ liệu và lập bảng tính doanh thu tạm thời kèm theo biểu đồ bên tab Canvas. Bạn có thể xem ngay nhé!" }
+        {
+          id: Date.now() + 1,
+          role: "assistant",
+          content:
+            "I've reviewed the data and built a provisional revenue sheet with a chart in the Canvas tab. Take a look!",
+        },
       ]);
-
-      // Add sandbox logs
       setLogs((prev) => [
         ...prev,
         { time: responseTime, tag: "[AGENT]", text: "Prompt builder merged active SKILL.md. Triggering ExecTool..." },
         { time: responseTime, tag: "[SANDBOX]", text: 'Running safe script: python -c "print(15000000 * 0.1)"' },
         { time: responseTime, tag: "[SANDBOX]", text: "Command completed. Output: 1500000.0 (Execution time: 42ms)" },
-        { time: responseTime, tag: "[CANVAS]", text: "Canvas UI payload sent: /__openclaw__/canvas/render_chart" }
+        { time: responseTime, tag: "[CANVAS]", text: "Canvas UI payload sent: /__openclaw__/canvas/render_chart" },
       ]);
     }, 1500);
   };
 
+  const resetChat = () => {
+    setMessages(INITIAL_MESSAGES);
+    setLogs(INITIAL_LOGS);
+    setIsTyping(false);
+  };
+
   return (
-    <div className={styles.root}>
-      <div className={styles.header}>
-        <Flex align="center" gap={2}>
-          <Typography variant="p" weight="bold">Preview Preview</Typography>
-          <div className={styles.tabList}>
-            <button
-              className={`${styles.tabButton} ${activeTab === "playground" ? styles.active : ""}`}
-              onClick={() => setActiveTab("playground")}
-            >
-              <PlayCircle size={14} /> Playground
-            </button>
-            <button
-              className={`${styles.tabButton} ${activeTab === "canvas" ? styles.active : ""}`}
-              onClick={() => setActiveTab("canvas")}
-            >
-              <Layout size={14} /> Canvas
-            </button>
-            <button
-              className={`${styles.tabButton} ${activeTab === "diagnostics" ? styles.active : ""}`}
-              onClick={() => setActiveTab("diagnostics")}
-            >
-              <Terminal size={14} /> Diagnostics
-            </button>
-          </div>
+    <Flex direction="column" fullWidth fullHeight className={styles.root}>
+      <Flex justify="between" align="center" className={styles.header}>
+        <Flex align="center" gap={12} className={styles.headerStart}>
+          <Typography variant="p" weight="bold">
+            Preview
+          </Typography>
+          <ToggleGroup
+            type="single"
+            value={activeTab}
+            onValueChange={(value) => {
+              if (value === "playground" || value === "canvas" || value === "diagnostics") {
+                setActiveTab(value);
+              }
+            }}
+            size="sm"
+            className={styles.tabToggle}
+          >
+            <ToggleGroupItem value="playground" className={styles.tabItem}>
+              <PlayCircle size={14} aria-hidden />
+              Playground
+            </ToggleGroupItem>
+            <ToggleGroupItem value="canvas" className={styles.tabItem}>
+              <Layout size={14} aria-hidden />
+              Canvas
+            </ToggleGroupItem>
+            <ToggleGroupItem value="diagnostics" className={styles.tabItem}>
+              <Terminal size={14} aria-hidden />
+              Diagnostics
+            </ToggleGroupItem>
+          </ToggleGroup>
         </Flex>
-        
-        <Flex align="center" gap={2}>
-          <div style={{ padding: "4px 8px", background: "var(--background-secondary)", borderRadius: 100 }}>
-            <Typography variant="small" color="muted" style={{ fontSize: 11 }}>Claude 3.5 Sonnet</Typography>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            title="Làm mới cuộc hội thoại" 
-            onClick={() => setMessages([{ id: 1, role: "assistant", content: "Xin chào! Tôi là Kế toán trưởng. Bạn cần tôi giúp gì về hóa đơn hay thuế VAT hôm nay?" }])}
+
+        <Flex align="center" gap={8}>
+          <Box color="primary-dim" px={12} py={4} radius="full">
+            <Typography variant="xs" color="muted">
+              Claude 3.5 Sonnet
+            </Typography>
+          </Box>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="Refresh conversation"
+            onClick={resetChat}
           >
             <RotateCcw size={16} />
           </Button>
-          <Button variant="ghost" size="icon" title="Cài đặt Playground">
+          <Button type="button" variant="ghost" size="icon" title="Playground settings">
             <Settings size={16} />
           </Button>
         </Flex>
-      </div>
+      </Flex>
 
-      <div className={styles.body}>
-        {/* =====================================================================
-            1. PLAYGROUND VIEW
-            ===================================================================== */}
+      <Flex direction="column" className={styles.body}>
         {activeTab === "playground" && (
           <>
-            <div className={styles.chatArea}>
-              {messages.map((msg) => (
-                <div key={msg.id} className={`${styles.message} ${msg.role === "user" ? styles.user : ""}`}>
-                  {msg.role === "assistant" && <Avatar fallback="💼" size="md" />}
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {msg.role === "assistant" && msg.id > 1 && (
-                      <div className={styles.thoughtLog}>
-                        <Globe size={14} />
-                        <span>Đang tìm kiếm Google cho "Thuế suất doanh nghiệp mới nhất"... [Xong]</span>
-                      </div>
+            <Flex direction="column" gap={16} className={styles.chatArea}>
+              {messages.map((msg) =>
+                msg.role === "user" ? (
+                  <ChatMessageBubble key={msg.id} role="user" text={msg.content} />
+                ) : (
+                  <Flex key={msg.id} direction="column" gap={8} className={styles.assistantBlock}>
+                    {msg.id > 1 && (
+                      <ThoughtLog
+                        icon={Globe}
+                        text='Searching Google for "Latest corporate tax rate"... [Done]'
+                      />
                     )}
-                    {msg.role === "assistant" && msg.id > 2 && (
-                      <div className={styles.thoughtLog}>
-                        <Bot size={14} />
-                        <span>Đang giao việc cho [Tech Support] đối soát hóa đơn... [Xong]</span>
-                      </div>
+                    {msg.id > 2 && (
+                      <ThoughtLog
+                        icon={Bot}
+                        text="Delegating to [Tech Support] for invoice reconciliation... [Done]"
+                      />
                     )}
-                    <div className={styles.messageBubble}>
-                      <Typography variant="p">{msg.content}</Typography>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                    <ChatMessageBubble role="assistant" text={msg.content} />
+                  </Flex>
+                ),
+              )}
 
               {isTyping && (
-                <div className={styles.message}>
+                <Flex align="start" gap={12} className={styles.typingRow}>
                   <Avatar fallback="💼" size="md" />
-                  <div className={styles.messageBubble} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Loader2 size={16} className="animate-spin" />
-                    <Typography variant="p" color="muted">Đang suy nghĩ...</Typography>
-                  </div>
-                </div>
+                  <Box border radius="lg" color="surface" p={12} className={styles.typingBubble}>
+                    <Flex align="center" gap={8}>
+                      <Spinner size="sm" />
+                      <Typography variant="small" color="muted">
+                        Thinking...
+                      </Typography>
+                    </Flex>
+                  </Box>
+                </Flex>
               )}
-            </div>
+            </Flex>
 
-            <div className={styles.chatInputArea}>
-              <Flex gap={2}>
-                <Input 
-                  placeholder="Nhắn tin cho Agent để thử nghiệm..." 
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  style={{ flex: 1 }}
-                />
-                <Button onClick={handleSend} disabled={!inputMessage.trim() || isTyping}>
+            <Flex direction="column" gap={8} className={styles.chatInputArea}>
+              <Flex align="center" gap={8} className={styles.inputRow}>
+                <div className={styles.inputWrap}>
+                  <Input
+                    placeholder="Message the agent to test..."
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSend();
+                    }}
+                    className={styles.messageInput}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={handleSend}
+                  disabled={!inputMessage.trim() || isTyping}
+                  aria-label="Send message"
+                >
                   <Send size={18} />
                 </Button>
               </Flex>
-              <Typography variant="small" color="muted" style={{ textAlign: "center", display: "block", marginTop: 8, fontSize: 11 }}>
-                Playground tự động reload khi bạn thay đổi cấu hình bên trái.
+              <Typography variant="xs" color="muted" className={styles.inputHint}>
+                Playground reloads automatically when you change settings on the left.
               </Typography>
-            </div>
+            </Flex>
           </>
         )}
 
-        {/* =====================================================================
-            2. CANVAS VIEW
-            ===================================================================== */}
         {activeTab === "canvas" && (
-          <div className={styles.canvasContainer}>
-            <div className={styles.canvasCard}>
-              <div>
-                <Typography variant="p" weight="bold" style={{ margin: 0 }}>📊 Tính toán Thuế VAT Doanh thu Q2</Typography>
-                <Typography variant="small" color="muted">Bản dựng thời gian thực tạo bởi Canvas Host</Typography>
-              </div>
+          <Flex center fullWidth fullHeight className={styles.canvasContainer}>
+            <Card disableHover className={styles.canvasCard}>
+              <Flex direction="column" gap={4}>
+                <Typography variant="p" weight="bold">
+                  📊 Q2 Revenue VAT Calculation
+                </Typography>
+                <Typography variant="small" color="muted">
+                  Real-time render by Canvas Host
+                </Typography>
+              </Flex>
 
-              <div className={styles.canvasChart}>
-                <div className={styles.chartBar} style={{ height: "45px" }}><span className={styles.chartBarLabel}>T4</span></div>
-                <div className={styles.chartBar} style={{ height: "85px" }}><span className={styles.chartBarLabel}>T5</span></div>
-                <div className={styles.chartBar} style={{ height: "60px" }}><span className={styles.chartBarLabel}>T6</span></div>
+              <div className={styles.canvasChart} aria-hidden>
+                <div className={`${styles.chartBar} ${styles.chartBarT4}`}>
+                  <span className={styles.chartBarLabel}>T4</span>
+                </div>
+                <div className={`${styles.chartBar} ${styles.chartBarT5}`}>
+                  <span className={styles.chartBarLabel}>T5</span>
+                </div>
+                <div className={`${styles.chartBar} ${styles.chartBarT6}`}>
+                  <span className={styles.chartBarLabel}>T6</span>
+                </div>
               </div>
 
               <Flex justify="between" align="center">
-                <div>
-                  <Typography variant="small" color="muted" style={{ display: "block" }}>Tổng doanh thu</Typography>
-                  <Typography variant="p" weight="bold" style={{ margin: 0 }}>15,000,000đ</Typography>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <Typography variant="small" color="muted" style={{ display: "block" }}>Thuế VAT (10%)</Typography>
-                  <Typography variant="p" weight="bold" color="primary" style={{ margin: 0 }}>1,500,000đ</Typography>
-                </div>
+                <Flex direction="column" gap={4}>
+                  <Typography variant="small" color="muted">
+                    Total revenue
+                  </Typography>
+                  <Typography variant="p" weight="bold">
+                    $15,000,000
+                  </Typography>
+                </Flex>
+                <Flex direction="column" gap={4} align="end">
+                  <Typography variant="small" color="muted">
+                    VAT (10%)
+                  </Typography>
+                  <Typography variant="p" weight="bold" color="primary">
+                    $1,500,000
+                  </Typography>
+                </Flex>
               </Flex>
 
-              <Button size="sm" style={{ width: "100%" }}>Xuất File PDF Báo Cáo</Button>
-            </div>
-          </div>
+              <Button type="button" size="sm" fullWidth>
+                Export PDF Report
+              </Button>
+            </Card>
+          </Flex>
         )}
 
-        {/* =====================================================================
-            3. DIAGNOSTICS VIEW
-            ===================================================================== */}
         {activeTab === "diagnostics" && (
           <div className={styles.terminal}>
             {logs.map((log, idx) => (
@@ -213,7 +305,7 @@ export function PreviewPanel() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
 }

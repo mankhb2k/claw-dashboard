@@ -2,6 +2,7 @@ import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AgentFormInput } from './agent-form.types.js';
 import { compileOpenClawAgentConfig } from './agent-workspace-compile.js';
+import { buildAgentToAgentAllowList } from './agent-team.js';
 import { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './provider-env-keys.js';
 import { CONTAINER_STATE_DIR, CONTAINER_WORKSPACE_DIR } from './openclaw-config.js';
 
@@ -107,6 +108,17 @@ export type ProjectAgentMergeRow = {
   isDefault: boolean;
 };
 
+/** Merge sub-agent calling policy into `tools.agentToAgent`. */
+export function mergeAgentTeamToolsIntoConfig(
+  config: Record<string, unknown>,
+  enabledAgents: ProjectAgentMergeRow[],
+): Record<string, unknown> {
+  const tools = (config.tools as Record<string, unknown> | undefined) ?? {};
+  tools.agentToAgent = buildAgentToAgentAllowList(enabledAgents);
+  config.tools = tools;
+  return config;
+}
+
 /** Merge user agents into `agents.list`; keep `env` and `agents.defaults.model` from provider step. */
 export function mergeAgentsIntoConfig(
   config: Record<string, unknown>,
@@ -148,6 +160,7 @@ export function mergeAgentsIntoConfig(
   agents.defaults = defaults;
   agents.list = list;
   config.agents = agents;
+  mergeAgentTeamToolsIntoConfig(config, enabledAgents);
   return config;
 }
 

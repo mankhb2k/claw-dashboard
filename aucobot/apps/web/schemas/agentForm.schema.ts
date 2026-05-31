@@ -8,16 +8,16 @@ export const agentInstructionsModeSchema = z.enum(['simple', 'advanced'])
 
 const instructionsFieldMax = 12_000
 
-/** Schema form Agent — view model cho UI; compile ra bootstrap OpenClaw khi save */
+/** Agent form schema — UI view model; compiled to OpenClaw bootstrap on save */
 export const agentFormSchema = z
   .object({
     name: z
       .string()
-      .min(1, 'Tên Agent không được để trống')
-      .max(120, 'Tên Agent tối đa 120 ký tự'),
-    description: z.string().max(500, 'Mô tả tối đa 500 ký tự'),
-    avatar: z.string().min(1, 'Avatar không được để trống'),
-    tags: z.array(z.string().min(1)).max(20, 'Tối đa 20 tag'),
+      .min(1, 'Agent name is required')
+      .max(120, 'Agent name must be at most 120 characters'),
+    description: z.string().max(500, 'Description must be at most 500 characters'),
+    avatar: z.string().min(1, 'Avatar is required'),
+    tags: z.array(z.string().min(1)).max(20, 'At most 20 tags'),
     vibe: agentVibeSchema,
 
     instructionsMode: agentInstructionsModeSchema,
@@ -33,21 +33,31 @@ export const agentFormSchema = z
     sandboxEnabled: z.boolean(),
     askPolicy: agentAskPolicySchema,
     safeBins: z.array(z.string()),
-    timeoutSec: z.number().min(5, 'Tối thiểu 5 giây').max(3600, 'Tối đa 3600 giây'),
+    timeoutSec: z.number().min(5, 'Minimum 5 seconds').max(3600, 'Maximum 3600 seconds'),
+
+    teamEnabled: z.boolean(),
+    allowedAgentSlugs: z.array(z.string().min(1)).max(50, 'At most 50 agents'),
   })
   .superRefine((data, ctx) => {
     if (data.instructionsMode === 'simple' && !data.instructionsRole.trim()) {
       ctx.addIssue({
         code: 'custom',
         path: ['instructionsRole'],
-        message: 'Mô tả vai trò không được để trống',
+        message: 'Role description is required',
       })
     }
     if (data.instructionsMode === 'advanced' && !data.instructionsAdvanced.trim()) {
       ctx.addIssue({
         code: 'custom',
         path: ['instructionsAdvanced'],
-        message: 'Nội dung AGENTS.md không được để trống',
+        message: 'AGENTS.md content is required',
+      })
+    }
+    if (data.teamEnabled && data.allowedAgentSlugs.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['allowedAgentSlugs'],
+        message: 'Select at least one agent when sub-agent calling is enabled',
       })
     }
   })
@@ -72,10 +82,10 @@ export interface AgentTemplateDefaults {
 }
 
 const DEFAULT_SIMPLE = {
-  instructionsRole: 'Bạn là một trợ lý AI hữu ích trong dự án này.',
-  instructionsRules: 'Hỗ trợ người dùng hoàn thành công việc một cách thân thiện và chính xác.',
-  instructionsConstraints: 'Không tiết lộ dữ liệu nhạy cảm. Không thực hiện hành động phá hoại.',
-  instructionsOutputFormat: 'Trả lời ngắn gọn, có cấu trúc khi cần.',
+  instructionsRole: 'You are a helpful AI assistant in this project.',
+  instructionsRules: 'Help users complete tasks in a friendly and accurate way.',
+  instructionsConstraints: 'Do not disclose sensitive data. Do not perform destructive actions.',
+  instructionsOutputFormat: 'Keep answers concise and structured when needed.',
 }
 
 export function buildAgentFormDefaults(
@@ -99,7 +109,7 @@ export function buildAgentFormDefaults(
   const templateSlug = template?.id
 
   return {
-    name: template?.name ?? 'Agent mới',
+    name: template?.name ?? 'New Agent',
     description: template?.description ?? '',
     avatar: template?.avatar ?? '🤖',
     tags: templateSlug ? [templateSlug] : [],
@@ -123,6 +133,9 @@ export function buildAgentFormDefaults(
         ? ['python', 'node', 'git', 'npm', 'gcc']
         : ['python', 'node', 'git'],
     timeoutSec: 60,
+
+    teamEnabled: false,
+    allowedAgentSlugs: [],
   }
 }
 

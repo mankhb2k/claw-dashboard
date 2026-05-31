@@ -121,7 +121,7 @@ export function CardInstructions() {
           className={styles.aiBtn}
         >
           <Zap size={14} />
-          Tối ưu bằng AI
+          Optimize with AI
         </Button>
       </Flex>
       <Typography variant="p" weight="bold" className={styles.cardTitle}>
@@ -173,7 +173,7 @@ export function CardInstructions() {
                 id="instructions-rules"
                 label="Rules (one line per rule)"
                 placeholder={
-                  "Luôn xác nhận trước khi xóa dữ liệu\nƯu tiên trả lời ngắn gọn"
+                  "Always confirm before deleting data\nPrefer concise answers"
                 }
                 {...register("instructionsRules")}
               />
@@ -184,7 +184,7 @@ export function CardInstructions() {
                 fill
                 id="instructions-constraints"
                 label="Constraints (one line per constraint)"
-                placeholder={"Không tiết lộ API key\nKhông chạy lệnh nguy hiểm"}
+                placeholder={"Do not expose API keys\nDo not run dangerous commands"}
                 {...register("instructionsConstraints")}
               />
             ) : null}
@@ -194,7 +194,7 @@ export function CardInstructions() {
                 fill
                 id="instructions-output"
                 label="Output format (optional)"
-                placeholder="VD: Trả lời bằng tiếng Việt, có bullet khi liệt kê."
+                placeholder="e.g. Reply in English, use bullets when listing."
                 {...register("instructionsOutputFormat")}
               />
             ) : null}
@@ -204,8 +204,8 @@ export function CardInstructions() {
                 fill
                 id="tools-notes"
                 label="Environment notes (optional)"
-                placeholder="VD: Tên camera, host SSH, giọng TTS ưa thích..."
-                hint="Ghi chú đặc thù setup — không thay thế cấu hình trong openclaw.json."
+                placeholder="e.g. Camera name, SSH host, preferred TTS voice..."
+                hint="Setup-specific notes — does not replace openclaw.json configuration."
                 {...register("toolsNotes")}
               />
           ) : null}
@@ -231,7 +231,7 @@ export function CardInstructions() {
             label="AGENTS.md (preview)"
             className={`${styles.textareaTall} ${styles.preview}`}
             value={agentsMdPreview}
-            hint="Xem trước — khi lưu, backend compile từ các trường Editor."
+            hint="Preview — on save, the backend compiles from Editor fields."
           />
         </Flex>
       )}

@@ -1,14 +1,97 @@
-.section {
+/* Khung card team */
+.card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
-  background: var(--surface-color, #ffffff);
+  gap: var(--space-4);
 }
 
-:global(.dark) .section {
-  border-color: var(--border-color, #334155);
-  background: var(--surface-color, #1e1e1e);
+/* Hàng tiêu đề + switch */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Ô tìm kiếm agent */
+.search {
+  width: 100%;
+  max-width: none;
+}
+
+/* Khung danh sách agent */
+.listPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  transition: opacity var(--transition-base) ease;
+}
+
+.listPanelDisabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.listTitle {
+  display: block;
+}
+
+/* Trạng thái loading / empty */
+.listState {
+  min-height: 72px;
+}
+
+/* Danh sách agent */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.listItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.agentInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.agentName {
+  min-width: 0;
+}
+
+/* Gợi ý khi chưa bật team */
+.hint {
+  display: block;
+}
+
+/* Lỗi validation team */
+.fieldError {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
 }

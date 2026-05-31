@@ -9,43 +9,100 @@ const meta: Meta<typeof Checkbox> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
+      description: 'Kích thước ô checkbox và nhãn đi kèm',
+    },
+    label: {
+      control: 'text',
+      description: 'Nhãn hiển thị bên cạnh checkbox',
+    },
+    disabled: {
+      control: 'boolean',
+      description: 'Vô hiệu hóa tương tác',
+    },
+    defaultChecked: {
+      control: 'boolean',
+      description: 'Trạng thái checked mặc định (uncontrolled)',
+    },
+    checked: {
+      control: 'boolean',
+      description: 'Trạng thái checked (controlled — dùng trong demo có state)',
+    },
+  },
+  args: {
+    id: 'checkbox-demo',
+    label: 'Accept terms of service',
+    size: 'md',
+    disabled: false,
+    defaultChecked: false,
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof Checkbox>;
 
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-muted-foreground)', 
-    fontWeight: 600,
-    marginBottom: '12px'
-  }}>
+  <p
+    style={{
+      fontSize: '11px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+      color: 'var(--color-muted-foreground)',
+      fontWeight: 600,
+      marginBottom: '12px',
+    }}
+  >
     {children}
   </p>
 );
 
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ 
-    display: 'flex', 
-    flexDirection: 'column',
-    gap: '12px', 
-    padding: '24px', 
-    minWidth: '200px',
-    border: '1px dashed var(--color-border)', 
-    borderRadius: 'var(--radius-md)',
-    background: 'var(--color-background)'
-  }}>
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      padding: '24px',
+      minWidth: '240px',
+      border: '1px dashed var(--color-border)',
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--color-background)',
+    }}
+  >
     {children}
   </div>
 );
 
-export const Default: Story = {
+export const Default: Story = {};
+
+export const Sizes: Story = {
+  render: (args) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div>
+        <DemoLabel>Small (sm)</DemoLabel>
+        <DemoBox>
+          <Checkbox {...args} id="checkbox-sm" size="sm" label="Small checkbox" />
+        </DemoBox>
+      </div>
+      <div>
+        <DemoLabel>Medium (md) — default</DemoLabel>
+        <DemoBox>
+          <Checkbox {...args} id="checkbox-md" size="md" label="Medium checkbox" />
+        </DemoBox>
+      </div>
+      <div>
+        <DemoLabel>Large (lg)</DemoLabel>
+        <DemoBox>
+          <Checkbox {...args} id="checkbox-lg" size="lg" label="Large checkbox" />
+        </DemoBox>
+      </div>
+    </div>
+  ),
   args: {
-    label: 'Accept terms of service',
-    id: 'terms',
+    defaultChecked: true,
   },
 };
 
@@ -61,4 +118,27 @@ export const States: Story = {
       </DemoBox>
     </div>
   ),
+};
+
+export const WithoutLabel: Story = {
+  args: {
+    label: undefined,
+    'aria-label': 'Toggle option',
+  },
+};
+
+export const Controlled: Story = {
+  render: function ControlledCheckbox() {
+    const [checked, setChecked] = React.useState(false);
+    return (
+      <DemoBox>
+        <Checkbox
+          id="controlled"
+          label={checked ? 'Enabled' : 'Disabled'}
+          checked={checked}
+          onCheckedChange={(value) => setChecked(value === true)}
+        />
+      </DemoBox>
+    );
+  },
 };

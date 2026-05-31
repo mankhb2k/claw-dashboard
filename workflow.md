@@ -1,6 +1,6 @@
 # AucoBot — Workflow & kiến trúc vận hành
 
-> **Cập nhật:** 2026-05-25  
+> **Cập nhật:** 2026-05-31  
 > **SSOT tính năng AucoBot** (control plane, API, sync, chat proxy, channels) — file này.  
 > **SSOT OpenClaw worker** (gateway, kênh upstream, RPC, skills load) — [`openclaw-architecture.md`](openclaw-architecture.md).  
 > **Tên sản phẩm / monorepo:** AucoBot (`aucobot/`, xem `aucobot/docs/monorepoplan.md`)  
@@ -15,7 +15,7 @@
 
 | Thuộc (`workflow.md`) | Không thuộc (→ file khác) |
 | ----- | ----------- |
-| Luồng vận hành **OSS / Cloud**, sync DB → volume, chat WS proxy, channels API | Chi tiết gateway RPC, channel plugin upstream (→ `openclaw-architecture.md`) |
+| Luồng vận hành **OSS / Cloud**, sync DB → volume, **merge openclaw.json**, chat WS proxy, channels API | Chi tiết gateway RPC, channel plugin upstream (→ `openclaw-architecture.md`) |
 | Phase 1 / 2 tích hợp control plane ↔ worker | Schema Prisma từng bảng (→ `packages/database/`) |
 | Sketch **Cloud SaaS** (cloud bạn bán) | Giá/credit hosted (→ `billing-plan.md`) |
 | Ranh OSS vs Cloud / proprietary | Danh sách sprint (→ `roadmap-plan.md`) |
@@ -302,7 +302,7 @@ sequenceDiagram
     Note over Disk,GW: Gateway watch → lượt chat sau
 ```
 
-- Agent compiler: `backend/src/plugins/projects/agents/agent-workspace-compile.ts` → sync runtime (provider keys, agents.list). Agent `main` implicit. Skill → `SKILL.md`.
+- Agent compiler: `packages/workspace-sync/src/agent-workspace-compile.ts` — bootstrap markdown (`AGENTS.md`, `SOUL.md`, …) per agent; runtime merge qua `syncProjectRuntime` (§5.6). Agent `main` implicit trong `agents.list`. Skill → `SKILL.md`.
 - **Cloud:** cùng sync; có thể thêm `config.patch` RPC (Phase 2 — §5.6).
 
 ### 5.4 Tóm tắt lưu lượng realtime
@@ -378,20 +378,109 @@ sequenceDiagram
 ```
 {OPENCLAW_DATA_ROOT}/{projectId}/
   openclaw.json
-  workspace/          # AGENTS.md, SOUL.md, …
+  workspace-{slug}/     # AGENTS.md, SOUL.md, IDENTITY.md, TOOLS.md (per agent)
+  workspace/            # shared / main
   skills/{slug}/SKILL.md
 ```
 
-**Thứ tự merge:** `env` (provider keys) → `agents.*` → `channels.*` → `plugins.entries` / `mcp.servers` → bootstrap workspace.
+**Package merge:** `@aucobot/workspace-sync` (`packages/workspace-sync/`). Orchestrator: `apps/api/.../workspace/workspace.service.ts`. Dev: `pnpm dev:runtime` (`aucobot/package.json`).
 
-| Nhánh `openclaw.json` | Nguồn DB |
-| --------------------- | -------- |
-| `env.*` | `ProjectProviderKey` |
-| `agents.*` | `ProjectAgent` |
-| `channels.*` | `ProjectChannel` + secrets |
-| `plugins.entries` / `mcp.servers` | Connectors |
+#### Khi nào gọi sync
 
-Code: `apps/api/.../workspace/workspace.service.ts`, `packages/workspace-sync/`. Dev: `pnpm dev:runtime` (`aucobot/package.json`).
+| Sự kiện | Service | Ghi disk |
+| ------- | ------- | -------- |
+| Lưu / bật / tắt / xóa agent | `AgentService` | `syncAgentToDisk` (bootstrap markdown) + `syncProjectRuntime` |
+| Đổi provider key / default model | `ProviderKeysService` | `syncProjectRuntime` |
+| Bật / sửa channel | `ChannelsService` | `syncProjectRuntime` |
+| Bật / sửa connector | `ProjectConnectorsService` | `syncProjectRuntime` |
+| CLI dev | `apps/api/scripts/sync-project-runtime.mjs` | `syncProjectRuntime` |
+
+Tin nhắn chat **không** trigger sync — chỉ thay đổi cấu hình (§3, §5.4).
+
+#### Pipeline merge `openclaw.json`
+
+```mermaid
+flowchart TD
+  DB[(PostgreSQL)] --> SVC["WorkspaceService.syncProjectRuntime"]
+  SVC --> R["readOpenClawConfigJson"]
+  R --> G["mergeGatewayBlockIfMissing"]
+  G --> P["mergeProviderKeysIntoConfig"]
+  P --> A["mergeAgentsIntoConfig"]
+  A --> T["mergeAgentTeamToolsIntoConfig\n(tools.agentToAgent)"]
+  A --> C["mergeConnectorsIntoConfig"]
+  C --> CH["mergeChannelsIntoConfig"]
+  CH --> CL["cleanupStaleMainAgentModels"]
+  CL --> W["writeOpenClawConfigJson"]
+  W --> GW["Gateway watch → reload"]
+```
+
+**Thứ tự thực thi** (trong `workspace.service.ts`):
+
+1. `mergeGatewayBlockIfMissing` — đảm bảo `gateway.auth` (OSS token).
+2. `mergeProviderKeysIntoConfig` — `env.*`, `agents.defaults.model.primary`, `plugins.entries` (google/openai).
+3. `mergeAgentsIntoConfig` — `agents.list`, `agents.defaults.workspace`; cuối hàm gọi `mergeAgentTeamToolsIntoConfig`.
+4. `mergeConnectorsIntoConfig` — `mcp.servers` (+ file credential Google trên disk nếu cần).
+5. `mergeChannelsIntoConfig` — `channels.*`, `plugins.entries` (telegram/discord).
+6. `cleanupStaleMainAgentModels` — dọn model legacy trên volume.
+7. `writeOpenClawConfigJson` + `removeLegacyDotEnv`.
+
+| Hàm merge | Nhánh `openclaw.json` | Nguồn DB | File |
+| --------- | ---------------------- | -------- | ---- |
+| `mergeProviderKeysIntoConfig` | `env.*`, `agents.defaults.model`, `plugins.entries` (provider) | `ProjectProviderKey` | `openclaw-config-merge.ts` |
+| `mergeAgentsIntoConfig` | `agents.list[]`, `agents.defaults.workspace` | `ProjectAgent` (enabled) | `openclaw-config-merge.ts` |
+| `mergeAgentTeamToolsIntoConfig` | `tools.agentToAgent` | `ProjectAgent.formData` (`teamEnabled`, `allowedAgentSlugs`) | `agent-team.ts` |
+| `mergeConnectorsIntoConfig` | `mcp.servers` | `ProjectConnector` + secrets | `merge-connectors-into-config.ts` |
+| `mergeChannelsIntoConfig` | `channels.*`, `plugins.entries` (channel) | `ProjectChannel` + secrets | `merge-channels-into-config.ts` |
+
+**Nguyên tắc merge:** đọc config hiện có → ghi đè **nhánh do AucoBot quản lý**; giữ key ngoài phạm vi (managed ids) nếu user/host đã có sẵn trên volume.
+
+#### Bootstrap agent (ngoài `openclaw.json`)
+
+Khi agent create/update/delete, `AgentService.syncAgentToDisk` ghi markdown bootstrap:
+
+| File | Compiler |
+| ---- | -------- |
+| `workspace-{slug}/AGENTS.md` | `compileAgentsMd` |
+| `workspace-{slug}/SOUL.md` | `compileSoulMd` |
+| `workspace-{slug}/IDENTITY.md` | `compileIdentityMd` |
+| `workspace-{slug}/TOOLS.md` | `compileToolsMd` |
+
+Patch runtime per agent trong `agents.list`: `compileOpenClawAgentConfig` (model, sandbox) — **không** ghi team policy vào từng entry; team nằm ở `tools.agentToAgent` (global).
+
+#### Team / sub-agent calling (`tools.agentToAgent`)
+
+**UI:** Card Team trên agent editor — `teamEnabled`, `allowedAgentSlugs` (lưu `ProjectAgent.formData`).
+
+**Validation (API):** `validateAgentTeamSettings` / `applyAgentTeamSettings` (`agent-team.ts`, gọi từ `AgentService`):
+
+- Bật team phải chọn ≥1 peer enabled (không tự gọi, không `main`, slug hợp lệ).
+- Xóa agent → gỡ slug khỏi `allowedAgentSlugs` của peer.
+
+**Merge runtime:** `buildAgentToAgentAllowList(enabledAgents)` → ghi `openclaw.json`:
+
+```json5
+{
+  tools: {
+    agentToAgent: {
+      enabled: true,
+      allow: ["agent-a", "agent-b", "main"]  // sorted union
+    }
+  }
+}
+```
+
+**Quy tắc build allow list (AucoBot):**
+
+| Điều kiện | Kết quả |
+| --------- | ------- |
+| Không agent nào `teamEnabled` | `{ enabled: false, allow: [] }` |
+| Có ≥1 agent `teamEnabled` | `enabled: true`; `allow` = union của `main`, slug caller bật team, và peer trong `allowedAgentSlugs` **chỉ khi peer đang enabled** trong project |
+
+**Global whitelist (OpenClaw):** `tools.agentToAgent.allow` là **một list chung** cho cả gateway — không phải đồ thị hướng từng agent. UI chọn peer theo từng agent chỉ quyết định **ai được đưa vào list**; OpenClaw coi các slug trong list có thể dùng tool agent-to-agent (`sessions_send`, `sessions_spawn`, …). Chi tiết worker: `openclaw-architecture.md` §25.8.
+
+> **Hạn chế hiện tại:** UI gợi ý “A chỉ gọi B”, runtime là **mesh** (B cũng nằm trong allow nếu A chọn B). Directed one-way cần lớp logic khác — OpenClaw config không hỗ trợ trực tiếp.
+
+**Khác `subagents.allowAgents`:** key per-agent trong `agents.list[]` — scope spawn sub-agent của agent đó; **khác** `tools.agentToAgent.allow` (global messaging). Xem `openclaw-architecture.md` §25.6 vs §25.8.
 
 ### 5.7 Hai luồng chat — Dashboard WS proxy vs kênh bot
 
@@ -585,7 +674,10 @@ sequenceDiagram
 | Chủ đề | File |
 | ------ | ---- |
 | Gateway upstream (RPC, channels, skills load) | `openclaw-architecture.md` |
-| Sync, chat proxy, channels API (AucoBot) | `workflow.md` (§5.5–5.7) |
+| Agent-to-agent tools (`sessions_send`, …) — worker | `openclaw-architecture.md` §25.8 |
+| Sync DB → disk, merge `openclaw.json`, team allow list (AucoBot) | `workflow.md` §5.6 |
+| Sync, chat proxy, channels API (AucoBot) | `workflow.md` §5.5–5.7 |
+| Merge implementation | `aucobot/packages/workspace-sync/` |
 | Monorepo AucoBot, **4 service OSS**, compose, Phase migrate | `monorepoplan.md` §2, §14 |
 | Giá, credit, quota (Cloud) | `billing-plan.md` |
 | Proxy / ingress an toàn | `proxy-guide.md` |

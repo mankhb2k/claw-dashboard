@@ -39,25 +39,25 @@ export interface AgentWorkspaceBundle {
 
 const VIBE_SOUL_LINES: Record<AgentVibe, string[]> = {
   professional: [
-    'Giao tiếp chuyên nghiệp, lịch sự và rõ ràng.',
-    'Trả lời súc tích, đi thẳng vào nội dung.',
-    'Tránh mở đầu sáo rỗng như "Great question!" hoặc "Absolutely."',
+    'Communicate professionally, politely, and clearly.',
+    'Answer concisely and get to the point.',
+    'Avoid hollow openers like "Great question!" or "Absolutely."',
   ],
   friendly: [
-    'Giọng điệu thân thiện, cởi mở và dễ gần.',
-    'Giải thích đơn giản, kiên nhẫn khi người dùng chưa rõ.',
-    'Có thể dùng emoji nhẹ nhàng khi phù hợp ngữ cảnh.',
+    'Use a friendly, open, approachable tone.',
+    'Explain simply and stay patient when the user is unclear.',
+    'Light emoji is fine when it fits the context.',
   ],
   strict: [
-    'Giọng điệu khắt khe, chính xác và logic.',
-    'Ưu tiên sự thật và quy trình hơn câu chữ hoa mỉ.',
-    'Chỉ ra sai sót sớm; không làm mềm thông tin quan trọng.',
+    'Be strict, precise, and logical.',
+    'Prioritize truth and process over flattering language.',
+    'Call out mistakes early; do not soften critical information.',
   ],
 };
 
-const TOOLS_EMPTY_STUB = `# TOOLS.md - Ghi chú công cụ
+const TOOLS_EMPTY_STUB = `# TOOLS.md - Tool notes
 
-Không có ghi chú tool đặc thù cho workspace này.
+No workspace-specific tool notes yet.
 `;
 
 function linesToBullets(text: string): string[] {
@@ -74,7 +74,7 @@ function trimToLimit(content: string, maxChars: number): { text: string; truncat
     return { text: trimmed, truncated: false };
   }
   return {
-    text: `${trimmed.slice(0, maxChars)}\n\n[...đã cắt bớt theo giới hạn ${maxChars} ký tự...]`,
+    text: `${trimmed.slice(0, maxChars)}\n\n[...truncated at ${maxChars} character limit...]`,
     truncated: true,
   };
 }
@@ -83,21 +83,21 @@ export function compileIdentityMd(
   input: Pick<AgentFormInput, 'name' | 'description' | 'avatar' | 'tags'>,
 ): string {
   const tagLine =
-    input.tags.length > 0 ? input.tags.map((t) => `\`${t}\``).join(', ') : '_(chưa có)_';
+    input.tags.length > 0 ? input.tags.map((t) => `\`${t}\``).join(', ') : '_(none)_';
 
   return [
     '# Identity',
     '',
     `- **Name:** ${input.name.trim()}`,
     `- **Emoji:** ${input.avatar.trim()}`,
-    `- **Summary:** ${input.description.trim() || '_(chưa có mô tả)_'}`,
+    `- **Summary:** ${input.description.trim() || '_(no description)_'}`,
     `- **Tags:** ${tagLine}`,
   ].join('\n');
 }
 
 export function compileSoulMd(input: Pick<AgentFormInput, 'vibe'>): string {
   const lines = VIBE_SOUL_LINES[input.vibe];
-  return ['# SOUL.md - Giọng điệu', '', '## Core', '', ...lines.map((l) => `- ${l}`), ''].join('\n');
+  return ['# SOUL.md - Tone', '', '## Core', '', ...lines.map((l) => `- ${l}`), ''].join('\n');
 }
 
 export function compileAgentsMd(
@@ -141,7 +141,7 @@ export function compileToolsMd(input: Pick<AgentFormInput, 'toolsNotes'>): strin
   if (!notes) {
     return TOOLS_EMPTY_STUB;
   }
-  return ['# TOOLS.md - Ghi chú công cụ', '', '## Ghi chú môi trường', '', notes].join('\n').trim();
+  return ['# TOOLS.md - Tool notes', '', '## Environment notes', '', notes].join('\n').trim();
 }
 
 function normalizeModelPrimary(model: string): string {
@@ -195,14 +195,14 @@ export function compileAgentBootstrap(input: AgentFormInput): AgentBootstrapBund
     files[name] = text;
     charCounts[name] = text.length;
     if (truncated) {
-      warnings.push(`${name} vượt ${BOOTSTRAP_MAX_CHARS_PER_FILE} ký tự và đã bị cắt bớt.`);
+      warnings.push(`${name} exceeded ${BOOTSTRAP_MAX_CHARS_PER_FILE} characters and was truncated.`);
     }
   }
 
   const totalChars = Object.values(charCounts).reduce((sum, n) => sum + n, 0);
   if (totalChars > BOOTSTRAP_MAX_CHARS_TOTAL) {
     warnings.push(
-      `Tổng bootstrap (${totalChars}) vượt ${BOOTSTRAP_MAX_CHARS_TOTAL} ký tự — OpenClaw có thể truncate khi inject.`,
+      `Total bootstrap (${totalChars}) exceeds ${BOOTSTRAP_MAX_CHARS_TOTAL} characters — OpenClaw may truncate on inject.`,
     );
   }
 

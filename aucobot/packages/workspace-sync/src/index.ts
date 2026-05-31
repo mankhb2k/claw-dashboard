@@ -7,6 +7,7 @@ export {
 
 export {
   mergeAgentsIntoConfig,
+  mergeAgentTeamToolsIntoConfig,
   mergeProviderKeysIntoConfig,
   readOpenClawConfigJson,
   removeLegacyDotEnv,
@@ -31,6 +32,18 @@ export {
   type ConnectorSecretMap,
   type McpConnectorDef,
 } from './connector-mcp.js';
+
+export {
+  applyAgentTeamSettings,
+  AgentTeamValidationError,
+  buildAgentToAgentAllowList,
+  normalizeAgentTeamSettings,
+  removeSlugFromTeamAllowList,
+  validateAgentTeamSettings,
+  type AgentTeamMergeRow,
+  type AgentToAgentToolsConfig,
+  type ProjectAgentPeer,
+} from './agent-team.js';
 
 export {
   parseAgentFormData,

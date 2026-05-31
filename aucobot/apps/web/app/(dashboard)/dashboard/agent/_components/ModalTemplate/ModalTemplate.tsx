@@ -46,7 +46,7 @@ export function ModalTemplate({
       .catch(() => {
         setTemplates([]);
         setLoadError(
-          "Không tải được danh sách template. Kiểm tra API đang chạy và đã seed database (pnpm db:seed).",
+          "Could not load templates. Check that the API is running and the database is seeded (pnpm db:seed).",
         );
       })
       .finally(() => setLoading(false));
@@ -94,7 +94,7 @@ export function ModalTemplate({
           </Typography>
         ) : templates.length === 0 ? (
           <Typography variant="small" color="muted">
-            Chưa có template nào trong hệ thống. Chạy seed database từ thư mục{" "}
+            No templates in the system. Run database seed from{" "}
             <code>packages/database</code>: <code>pnpm db:seed</code>
           </Typography>
         ) : (

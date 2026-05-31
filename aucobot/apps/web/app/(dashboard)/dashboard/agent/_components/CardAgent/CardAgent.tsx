@@ -64,7 +64,7 @@ export function CardAgent({
                 className={`${styles.statusIndicator} ${
                   !agent.isActive ? styles.inactive : ""
                 }`}
-                title={agent.isActive ? "Đang hoạt động" : "Đã tắt"}
+                title={agent.isActive ? "Active" : "Disabled"}
               />
             </Flex>
             <Typography variant="small" color="muted">
@@ -87,7 +87,7 @@ export function CardAgent({
             >
               <Flex align="center" gap={8}>
                 <Edit2 size={14} />
-                <span>Chỉnh sửa</span>
+                <span>Edit</span>
               </Flex>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -98,7 +98,7 @@ export function CardAgent({
             >
               <Flex align="center" gap={8}>
                 <Copy size={14} />
-                <span>Nhân bản</span>
+                <span>Duplicate</span>
               </Flex>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -110,7 +110,7 @@ export function CardAgent({
             >
               <Flex align="center" gap={8}>
                 <Trash2 size={14} />
-                <span>Xóa</span>
+                <span>Delete</span>
               </Flex>
             </DropdownMenuItem>
           </DropdownMenuContent>

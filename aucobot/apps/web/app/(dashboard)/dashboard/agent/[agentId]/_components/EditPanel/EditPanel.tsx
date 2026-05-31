@@ -234,7 +234,7 @@ export function EditPanel({
           handleRemoveTag={handleRemoveTag}
         />
       )}
-      {activeTab === "team" && <CardTeam />}
+      {activeTab === "team" && <CardTeam currentAgentSlug={agentId} />}
       {activeTab === "integrations" && (
         <CardIntegrations agentId={agentId ?? "new-agent"} />
       )}

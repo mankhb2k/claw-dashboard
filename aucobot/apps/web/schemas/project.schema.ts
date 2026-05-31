@@ -376,6 +376,8 @@ export const agentFormInputSchema = z.object({
   askPolicy: z.enum(['always', 'on-miss', 'off']),
   safeBins: z.array(z.string()),
   timeoutSec: z.number(),
+  teamEnabled: z.boolean(),
+  allowedAgentSlugs: z.array(z.string()),
 })
 
 export const projectAgentDetailSchema = projectAgentListRowSchema.extend({

@@ -9,9 +9,9 @@ import type { AgentFormInput, AgentVibe } from '@/schemas/agentForm.schema'
 import styles from './CardIdentity.module.css'
 
 const VIBE_OPTIONS: { value: AgentVibe; label: string }[] = [
-  { value: 'professional', label: 'Chuyên nghiệp & Lịch sự' },
-  { value: 'friendly', label: 'Thân thiện & Cởi mở' },
-  { value: 'strict', label: 'Khắt khe & Chính xác' },
+  { value: 'professional', label: 'Professional & Polite' },
+  { value: 'friendly', label: 'Friendly & Open' },
+  { value: 'strict', label: 'Strict & Precise' },
 ]
 
 function normalizeTag(raw: string) {
@@ -57,35 +57,35 @@ export function CardIdentity() {
   return (
     <Card className={styles.card} disableHover>
       <Typography variant="p" weight="bold">
-        Thông tin cơ bản
+        Basic information
       </Typography>
 
       <Flex align="center" gap={4} className={styles.avatarRow}>
         <Avatar src="" fallback={avatar} size="lg" />
         <Button type="button" variant="outline" size="sm">
-          Tải ảnh lên
+          Upload image
         </Button>
       </Flex>
 
       <Input
         id="agent-name"
-        label="Tên Agent"
-        placeholder="VD: Customer Support, Data Analyst..."
+        label="Agent name"
+        placeholder="e.g. Customer Support, Data Analyst..."
         error={errors.name?.message}
         {...register('name')}
       />
 
       <Input
         id="agent-description"
-        label="Mô tả ngắn"
-        placeholder="Nhiệm vụ chính của Agent này là gì?"
+        label="Short description"
+        placeholder="What is this agent's main job?"
         error={errors.description?.message}
         {...register('description')}
       />
 
       <div className={styles.inputGroup}>
         <Typography variant="small" weight="medium">
-          Nhãn phân loại (Tags)
+          Tags
         </Typography>
         <div className={styles.tagContainer}>
           {tags.map((tag) => (
@@ -95,7 +95,7 @@ export function CardIdentity() {
                 type="button"
                 className={styles.tagDeleteBtn}
                 onClick={() => handleRemoveTag(tag)}
-                aria-label={`Xóa tag ${tag}`}
+                aria-label={`Remove tag ${tag}`}
               >
                 <X size={13} className={styles.tagDeleteIcon} />
               </button>
@@ -106,8 +106,8 @@ export function CardIdentity() {
             className={styles.tagInput}
             placeholder={
               tags.length === 0
-                ? 'Nhập tag (VD: support, finance...) và nhấn Enter...'
-                : 'Thêm tag...'
+                ? 'Enter a tag (e.g. support, finance...) and press Enter...'
+                : 'Add tag...'
             }
             value={tagDraft}
             onChange={(e) => setTagDraft(e.target.value)}
@@ -119,7 +119,7 @@ export function CardIdentity() {
           <span className={styles.fieldError}>{tagsError}</span>
         ) : null}
         <Typography variant="small" color="muted">
-          Tag giúp nhóm và lọc nhanh các Agent khi có số lượng lớn trong dự án.
+          Tags help group and filter agents when you have many in a project.
         </Typography>
       </div>
 
@@ -129,7 +129,7 @@ export function CardIdentity() {
         render={({ field }) => (
           <Select
             id="agent-vibe"
-            label="Giọng điệu (Vibe/Tone)"
+            label="Tone (Vibe)"
             options={VIBE_OPTIONS}
             value={field.value}
             onValueChange={field.onChange}

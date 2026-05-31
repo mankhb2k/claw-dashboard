@@ -20,6 +20,8 @@ export type AgentFormInput = {
   askPolicy: AgentAskPolicy;
   safeBins: string[];
   timeoutSec: number;
+  teamEnabled: boolean;
+  allowedAgentSlugs: string[];
 };
 
 export function parseAgentFormData(raw: unknown): AgentFormInput {
@@ -51,5 +53,9 @@ export function parseAgentFormData(raw: unknown): AgentFormInput {
       ? o.safeBins.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
       : [],
     timeoutSec: typeof o.timeoutSec === 'number' ? o.timeoutSec : 60,
+    teamEnabled: Boolean(o.teamEnabled),
+    allowedAgentSlugs: Array.isArray(o.allowedAgentSlugs)
+      ? o.allowedAgentSlugs.map((s) => String(s).trim()).filter(Boolean)
+      : [],
   };
 }

@@ -40,17 +40,17 @@ export function CardCapabilities({
   return (
     <div className={styles.section}>
       <Typography variant="p" weight="bold">
-        Cấu hình runtime (openclaw.json)
+        Runtime configuration (openclaw.json)
       </Typography>
       <Typography variant="small" color="muted">
-        Model, sandbox và chính sách thực thi — không tạo file Markdown.
+        Model, sandbox, and execution policy — does not create Markdown files.
       </Typography>
       <Typography variant="p" weight="bold">
         AI Model
       </Typography>
       <Select
         options={[
-          { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet (Khuyên dùng)" },
+          { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet (Recommended)" },
           { value: "gpt-4o", label: "GPT-4o" },
           { value: "gemini-1-5-pro", label: "Gemini 1.5 Pro" },
         ]}
@@ -60,14 +60,14 @@ export function CardCapabilities({
       
       <hr style={{ border: "none", borderTop: "1px solid var(--border-color)", margin: "16px 0" }} />
       
-      <Typography variant="p" weight="bold" style={{ marginBottom: 8 }}>Công cụ hệ thống (Native Tools)</Typography>
+      <Typography variant="p" weight="bold" style={{ marginBottom: 8 }}>Native tools</Typography>
       
       <div className={styles.toolItem}>
         <Flex align="center" gap={3}>
           <Globe size={20} color="var(--primary-color)" />
           <div>
-            <Typography variant="p" weight="medium">Trình duyệt & Tìm kiếm Web</Typography>
-            <Typography variant="small" color="muted">Cho phép Agent lướt web và lấy thông tin realtime.</Typography>
+            <Typography variant="p" weight="medium">Browser & web search</Typography>
+            <Typography variant="small" color="muted">Lets the agent browse the web and fetch realtime information.</Typography>
           </div>
         </Flex>
         <Switch checked={true} onCheckedChange={() => {}} />
@@ -77,8 +77,8 @@ export function CardCapabilities({
         <Flex align="center" gap={3}>
           <FileText size={20} color="var(--primary-color)" />
           <div>
-            <Typography variant="p" weight="medium">Đọc/Ghi File Workspace</Typography>
-            <Typography variant="small" color="muted">Truy cập vào các file được upload trong dự án.</Typography>
+            <Typography variant="p" weight="medium">Read/write workspace files</Typography>
+            <Typography variant="small" color="muted">Access files uploaded in the project.</Typography>
           </div>
         </Flex>
         <Switch checked={true} onCheckedChange={() => {}} />
@@ -88,49 +88,46 @@ export function CardCapabilities({
         <Flex align="center" gap={3}>
           <Code size={20} color="var(--primary-color)" />
           <div>
-            <Typography variant="p" weight="medium">Thực thi Code (Sandbox)</Typography>
-            <Typography variant="small" color="muted">Chạy Python/JS để tính toán và xử lý dữ liệu.</Typography>
+            <Typography variant="p" weight="medium">Code execution (Sandbox)</Typography>
+            <Typography variant="small" color="muted">Run Python/JS for computation and data processing.</Typography>
           </div>
         </Flex>
         <Switch checked={sandboxEnabled} onCheckedChange={setSandboxEnabled} />
       </div>
 
-      {/* Advanced Sandbox Customization Panel */}
       {sandboxEnabled && (
         <div className={styles.advancedPanel}>
           <Typography variant="small" weight="bold" color="primary" style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-            ⚙️ Cấu hình Sandbox nâng cao (ExecToolConfig)
+            ⚙️ Advanced sandbox (ExecToolConfig)
           </Typography>
 
-          {/* 1. Ask Policy (Segmented Control) */}
           <div className={styles.inputGroup}>
-            <Typography variant="small" weight="medium">Chính sách phê duyệt (Ask Policy)</Typography>
+            <Typography variant="small" weight="medium">Approval policy (Ask Policy)</Typography>
             <div className={styles.segmentedControl}>
               {[
-                { value: "always", label: "Luôn hỏi" },
-                { value: "on-miss", label: "Tiêu chuẩn" },
-                { value: "off", label: "Tự động" },
+                { value: "always", label: "Always ask" },
+                { value: "on-miss", label: "Standard" },
+                { value: "off", label: "Automatic" },
               ].map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   className={`${styles.segmentedButton} ${askPolicy === opt.value ? styles.active : ""}`}
-                  onClick={() => setAskPolicy(opt.value as any)}
+                  onClick={() => setAskPolicy(opt.value as "always" | "on-miss" | "off")}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
             <Typography variant="small" color="muted" style={{ marginTop: 4 }}>
-              {askPolicy === "always" && "Agent luôn phải yêu cầu bạn phê duyệt trước khi thực thi bất kỳ lệnh nào."}
-              {askPolicy === "on-miss" && "Chỉ yêu cầu phê duyệt cho các lệnh nằm ngoài danh sách được miễn hỏi bên dưới."}
-              {askPolicy === "off" && "Agent được phép thực thi ngầm tự động mà không cần phê duyệt (Chỉ khuyên dùng khi chạy Docker Sandbox)."}
+              {askPolicy === "always" && "The agent must request your approval before running any command."}
+              {askPolicy === "on-miss" && "Only commands outside the allowlist below require approval."}
+              {askPolicy === "off" && "The agent may run commands automatically without approval (use only with Docker Sandbox)."}
             </Typography>
           </div>
 
-          {/* 3. Safe Binaries Tag Input */}
           <div className={styles.inputGroup}>
-            <Typography variant="small" weight="medium">Các câu lệnh được miễn hỏi (Allowlist)</Typography>
+            <Typography variant="small" weight="medium">Commands exempt from approval (Allowlist)</Typography>
             <div className={styles.tagContainer}>
               {safeBins.map((tag) => (
                 <span key={tag} className={styles.tag}>
@@ -147,20 +144,19 @@ export function CardCapabilities({
               <input
                 type="text"
                 className={styles.tagInput}
-                placeholder={safeBins.length === 0 ? "Nhập câu lệnh và nhấn Enter..." : "Thêm lệnh..."}
+                placeholder={safeBins.length === 0 ? "Enter a command and press Enter..." : "Add command..."}
                 value={newTagInput}
                 onChange={(e) => setNewTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
               />
             </div>
             <Typography variant="small" color="muted">
-              Nhập tên câu lệnh và nhấn Enter hoặc dấu phẩy (,) để đưa vào danh sách trắng chạy ngầm.
+              Enter a command name and press Enter or comma (,) to add it to the silent-run allowlist.
             </Typography>
           </div>
 
-          {/* 4. Timeout Limit */}
           <div className={styles.inputGroup}>
-            <Typography variant="small" weight="medium">Thời gian chạy tối đa (Timeout)</Typography>
+            <Typography variant="small" weight="medium">Maximum run time (Timeout)</Typography>
             <div className={styles.numberInputWrapper}>
               <Input
                 type="number"
@@ -169,7 +165,7 @@ export function CardCapabilities({
                 min={5}
                 max={3600}
               />
-              <span className={styles.numberInputSuffix}>giây</span>
+              <span className={styles.numberInputSuffix}>seconds</span>
             </div>
           </div>
         </div>
