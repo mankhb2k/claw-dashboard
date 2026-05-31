@@ -69,6 +69,13 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* Preview AGENTS.md — read-only */
+.preview {
+  color: var(--color-text-muted);
+  background: var(--color-muted);
+  cursor: default;
+}
+
 /* Vùng form Editor — textarea fill chiếm phần còn lại trong card */
 .simpleFields,
 .markdownFields {

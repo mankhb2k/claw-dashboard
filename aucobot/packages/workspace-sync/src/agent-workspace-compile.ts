@@ -116,21 +116,21 @@ export function compileAgentsMd(
   }
 
   const parts: string[] = [];
-  parts.push('# Vai trò', '', input.instructionsRole.trim(), '');
+  parts.push('# Role', '', input.instructionsRole.trim(), '');
 
   const rules = linesToBullets(input.instructionsRules);
   if (rules.length > 0) {
-    parts.push('# Quy tắc', '', ...rules, '');
+    parts.push('# Rules', '', ...rules, '');
   }
 
   const constraints = linesToBullets(input.instructionsConstraints);
   if (constraints.length > 0) {
-    parts.push('# Giới hạn', '', ...constraints, '');
+    parts.push('# Constraints', '', ...constraints, '');
   }
 
   const output = input.instructionsOutputFormat.trim();
   if (output) {
-    parts.push('# Định dạng đầu ra', '', output, '');
+    parts.push('# Output format', '', output, '');
   }
 
   return parts.join('\n').trim();

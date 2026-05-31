@@ -93,7 +93,9 @@ export function buildAgentFormDefaults(
         ? 'gpt-4o'
         : (template?.model ?? 'claude-3-5-sonnet')
 
-  const useAdvancedFromTemplate = Boolean(template?.bootstrapFiles?.agents?.trim())
+  const agentsBootstrap = template?.bootstrapFiles?.agents?.trim() ?? ''
+  const useAdvancedFromTemplate =
+    Boolean(agentsBootstrap) && template?.id !== 'empty'
   const templateSlug = template?.id
 
   return {
@@ -108,7 +110,8 @@ export function buildAgentFormDefaults(
     instructionsRules: DEFAULT_SIMPLE.instructionsRules,
     instructionsConstraints: DEFAULT_SIMPLE.instructionsConstraints,
     instructionsOutputFormat: DEFAULT_SIMPLE.instructionsOutputFormat,
-    instructionsAdvanced: template?.bootstrapFiles?.agents?.trim() ?? '',
+    instructionsAdvanced:
+      template?.id === 'empty' ? '' : agentsBootstrap,
 
     toolsNotes: '',
 

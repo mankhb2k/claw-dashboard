@@ -19,10 +19,12 @@ ENV NEXT_PUBLIC_MOCK_API=$NEXT_PUBLIC_MOCK_API
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
+COPY packages/workspace-sync/package.json packages/workspace-sync/
 RUN pnpm install --frozen-lockfile --filter @aucobot/web...
 
 COPY packages/shared packages/shared
-RUN pnpm --filter @aucobot/shared build
+COPY packages/workspace-sync packages/workspace-sync
+RUN pnpm --filter @aucobot/shared build && pnpm --filter @aucobot/workspace-sync build
 
 COPY apps/web apps/web
 WORKDIR /repo/apps/web
