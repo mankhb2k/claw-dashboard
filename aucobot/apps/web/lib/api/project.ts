@@ -51,6 +51,15 @@ import {
   type ProviderKeyTestResult,
   type ProjectEnvMaskedRow,
 } from '@/schemas/project.schema'
+import {
+  createCronJobInputSchema,
+  cronJobSchema,
+  cronListResponseSchema,
+  cronSummarySchema,
+  updateCronJobInputSchema,
+  type CreateCronJobInput,
+  type UpdateCronJobInput,
+} from '@/schemas/cron.schema'
 import { z } from 'zod'
 
 export const projectApi = {
@@ -415,5 +424,37 @@ export const projectApi = {
     const body = updateProjectCollaborationSchema.parse(input)
     const res = await api.put(`/api/projects/${id}/collaboration`, body)
     return projectCollaborationSchema.parse(res.data)
+  },
+
+  getCronSummary: async (id: string) => {
+    const res = await api.get(`/api/projects/${id}/cron/summary`)
+    return cronSummarySchema.parse(res.data)
+  },
+
+  listCronJobs: async (id: string, agentId?: string) => {
+    const res = await api.get(`/api/projects/${id}/cron`, {
+      params: agentId ? { agentId } : undefined,
+    })
+    return cronListResponseSchema.parse(res.data)
+  },
+
+  createCronJob: async (id: string, input: CreateCronJobInput) => {
+    const body = createCronJobInputSchema.parse(input)
+    const res = await api.post(`/api/projects/${id}/cron`, body)
+    return cronJobSchema.parse(res.data)
+  },
+
+  updateCronJob: async (id: string, jobId: string, input: UpdateCronJobInput) => {
+    const body = updateCronJobInputSchema.parse(input)
+    const res = await api.patch(`/api/projects/${id}/cron/${encodeURIComponent(jobId)}`, body)
+    return cronJobSchema.parse(res.data)
+  },
+
+  deleteCronJob: async (id: string, jobId: string): Promise<void> => {
+    await api.delete(`/api/projects/${id}/cron/${encodeURIComponent(jobId)}`)
+  },
+
+  runCronJob: async (id: string, jobId: string): Promise<void> => {
+    await api.post(`/api/projects/${id}/cron/${encodeURIComponent(jobId)}/run`)
   },
 }

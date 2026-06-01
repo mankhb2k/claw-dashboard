@@ -9,6 +9,7 @@ import { AuthModule } from './core/auth/auth.module';
 import { UsersModule } from './core/users/users.module';
 import { ProjectsModule } from './features/projects/projects.module';
 import { ChatModule } from './features/projects/chat/chat.module';
+import { CronModule } from './features/projects/cron/cron.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
 
 @Module({
@@ -26,6 +27,7 @@ import { DbHealthMiddleware } from './core/common/middleware/db-health.middlewar
     UsersModule,
     ProjectsModule,
     ChatModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [AppService, DbHealthMiddleware],

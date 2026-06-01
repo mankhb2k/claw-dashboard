@@ -163,112 +163,31 @@ export const MOCK_API_KEYS: ApiKeyItem[] = [
   }
 ];
 
-// ─── Agent ↔ Channel Assignment ────────────────────────────────────────────
-// Mapping: Agent này lắng nghe kênh nào (từ CHANNEL_PROVIDERS)
+// ─── Agent ↔ Channel (mock until API persists per agent) ───────────────────
+/** Agent lắng nghe / trả lời trên channelId nào (cấu hình kênh ở tab Channel). */
 
 export interface AgentChannelAssignment {
-  /** id tương ứng với ChannelData.id trong CHANNEL_PROVIDERS */
   channelId: string;
   isActive: boolean;
-  /** true = kênh này đã được user cấu hình ở tab Channel của Project */
-  isConnectedAtProject: boolean;
-  config?: {
-    replyMode: "all" | "mention-only" | "private-only";
-  };
 }
 
-export const MOCK_AGENT_CHANNELS: AgentChannelAssignment[] = [
-  {
-    channelId: "telegram",
-    isActive: true,
-    isConnectedAtProject: true,
-    config: { replyMode: "all" },
-  },
-  {
-    channelId: "facebook-messenger",
-    isActive: true,
-    isConnectedAtProject: true,
-    config: { replyMode: "all" },
-  },
-  {
-    channelId: "zalo",
-    isActive: false,
-    isConnectedAtProject: true,
-    config: { replyMode: "all" },
-  },
-  {
-    channelId: "whatsapp",
-    isActive: false,
-    isConnectedAtProject: false,
-  },
-  {
-    channelId: "discord",
-    isActive: false,
-    isConnectedAtProject: false,
-  },
-  {
-    channelId: "slack",
-    isActive: false,
-    isConnectedAtProject: false,
-  },
+export const MOCK_AGENT_CHANNEL_TOOLS: AgentChannelAssignment[] = [
+  { channelId: "telegram", isActive: true },
+  { channelId: "facebook-messenger", isActive: true },
 ];
 
-// ─── Agent ↔ Connector Assignment ──────────────────────────────────────────
-// Mapping: Agent này được dùng connector nào (từ CONNECT_SERVICES)
-// Bao gồm cả e-commerce platforms (Shopee, TikTok) với hasChat=true
+// ─── Agent ↔ Connector tools (mock until API persists per agent) ───────────
+/** Agent được phép gọi tool của connector slug nào (quyền chi tiết ở tab Connect). */
 
-export type ConnectorPermission = "read" | "write" | "full";
-
-export interface AgentConnectorAssignment {
-  /** slug tương ứng với ServiceConnectData.slug trong CONNECT_SERVICES */
+export interface AgentConnectorToolAssignment {
   connectorSlug: string;
   isActive: boolean;
-  /** true = connector này đã được user OAuth ở tab Connect của Project */
-  isConnectedAtProject: boolean;
-  permission: ConnectorPermission;
-  /** Nếu connector có hasChat=true, agent có dùng chat capability không */
-  chatEnabled?: boolean;
 }
 
-export const MOCK_AGENT_CONNECTORS: AgentConnectorAssignment[] = [
-  {
-    connectorSlug: "shopee",
-    isActive: true,
-    isConnectedAtProject: true,
-    permission: "full",
-    chatEnabled: true,
-  },
-  {
-    connectorSlug: "tiktok-shop",
-    isActive: false,
-    isConnectedAtProject: true,
-    permission: "read",
-    chatEnabled: false,
-  },
-  {
-    connectorSlug: "google-drive",
-    isActive: true,
-    isConnectedAtProject: true,
-    permission: "read",
-  },
-  {
-    connectorSlug: "notion",
-    isActive: false,
-    isConnectedAtProject: true,
-    permission: "read",
-  },
-  {
-    connectorSlug: "github",
-    isActive: false,
-    isConnectedAtProject: false,
-    permission: "read",
-  },
-  {
-    connectorSlug: "gmail",
-    isActive: false,
-    isConnectedAtProject: false,
-    permission: "read",
-  },
+export const MOCK_AGENT_CONNECTOR_TOOLS: AgentConnectorToolAssignment[] = [
+  { connectorSlug: "google-drive", isActive: true },
+  { connectorSlug: "notion", isActive: true },
+  { connectorSlug: "shopee", isActive: true },
 ];
 
 

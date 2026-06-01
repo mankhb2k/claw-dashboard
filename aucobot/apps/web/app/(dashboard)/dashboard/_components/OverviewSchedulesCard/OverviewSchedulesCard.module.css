@@ -1,0 +1,54 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.link {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.stats {
+  padding: var(--space-2) 0;
+}
+
+.loading {
+  padding: var(--space-4) 0;
+}
+
+.alertRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-dim);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 28%, transparent);
+}
+
+.alertText {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+.failureList {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.footerLinks {
+  margin-top: var(--space-1);
+}

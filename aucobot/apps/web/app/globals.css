@@ -126,6 +126,14 @@
   /* 1440px */
   --container-full: 100%;
 
+  /* Code block — always dark (theme-independent) */
+  --color-code-block-bg: #1d1818;
+  --color-code-block-header: #1d1818;
+  --color-code-block-chrome: #27272a;
+  --color-code-block-border: rgba(255, 255, 255, 0.1);
+  --color-code-block-foreground: #f4f4f5;
+  --color-code-block-muted: #a1a1aa;
+
   color-scheme: light;
 }
 

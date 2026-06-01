@@ -1,134 +1,350 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Flex } from "@/components/layout";
-import { Typography, Input, Button, Switch } from "@/components/ui";
+import { SearchItem } from "@/components/dashboard";
 import {
-  Key, Copy, Plus, Trash2, Check,
-  Code, Terminal, FileCode, ArrowUpRight,
-  MessageSquare, Database,
+  Typography,
+  Input,
+  Button,
+  Switch,
+  Card,
+  IconProvider,
+  CodeBlock,
+  Spinner,
+} from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useProjectStore } from "@/stores/project.store";
+import { toServiceConnectData } from "../../../../connect/connect-display";
+import type { ServiceConnectData } from "../../../../connect/projectConnectData";
+import { isProjectConnectorConnected } from "@/lib/connectors/project-connector-status";
+import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
+import {
+  Copy,
+  Plus,
+  Trash2,
+  Check,
+  Code,
+  Terminal,
+  FileCode,
+  ArrowUpRight,
+  Rocket,
 } from "lucide-react";
 import {
-  MOCK_API_KEYS, ApiKeyItem,
-  MOCK_AGENT_CHANNELS, AgentChannelAssignment,
-  MOCK_AGENT_CONNECTORS, AgentConnectorAssignment,
-  ConnectorPermission,
+  MOCK_API_KEYS,
+  type ApiKeyItem,
+  MOCK_AGENT_CHANNEL_TOOLS,
+  MOCK_AGENT_CONNECTOR_TOOLS,
 } from "../../../agentMockData";
 import {
-  CHANNEL_PROVIDERS, type ChannelData,
-} from "../../../../channel/providerChannelData";
-import {
-  CONNECT_SERVICES, type ServiceConnectData,
-} from "../../../../connect/projectConnectData";
+  mergeChannelCatalog,
+  type ChannelCatalogCard,
+} from "@/lib/channels/merge-channel-catalog";
+import { isChannelReadyForAgent } from "@/lib/channels/channel-agent-status";
 import styles from "./CardIntegrations.module.css";
 
 interface CardIntegrationsProps {
   agentId: string;
 }
 
+type SnippetTab = "curl" | "node" | "python";
+
+type ConnectorToolRow = {
+  connector: ProjectConnector;
+  service: ServiceConnectData;
+  isConnected: boolean;
+  isActive: boolean;
+};
+
+type ChannelAgentRow = ChannelCatalogCard & {
+  isReady: boolean;
+  agentEnabled: boolean;
+};
+
+function SectionHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <Flex justify="between" align="start" gap={4} className={styles.headerRow}>
+      <div className={styles.header}>
+        <Typography variant="p" weight="bold">
+          {title}
+        </Typography>
+        <Typography variant="small" color="muted">
+          {description}
+        </Typography>
+      </div>
+      {action}
+    </Flex>
+  );
+}
+
+function ProviderRow({
+  name,
+  iconSrc,
+  fallbackLabel,
+  connected,
+  active,
+  onActiveChange,
+  meta,
+  trailing,
+}: {
+  name: string;
+  iconSrc?: string;
+  fallbackLabel: string;
+  connected: boolean;
+  active: boolean;
+  onActiveChange: () => void;
+  meta: React.ReactNode;
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`${styles.providerRow} ${!connected ? styles.notConnected : ""}`}
+    >
+      <IconProvider
+        src={iconSrc}
+        alt={name}
+        label={fallbackLabel}
+        size="sm"
+        withBackground
+      />
+      <div className={styles.providerInfo}>
+        <Typography variant="p" weight="medium">
+          {name}
+        </Typography>
+        <div className={styles.providerMeta}>{meta}</div>
+      </div>
+      {trailing}
+      <Switch
+        checked={active && connected}
+        onCheckedChange={() => connected && onActiveChange()}
+        disabled={!connected}
+        aria-label={`Enable ${name}`}
+      />
+    </div>
+  );
+}
+
 export function CardIntegrations({ agentId }: CardIntegrationsProps) {
   const router = useRouter();
+  const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
 
-  // ── API Keys ────────────────────────────────────────────────────────────
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(MOCK_API_KEYS);
   const [newKeyName, setNewKeyName] = useState("");
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // ── Code snippet tabs ───────────────────────────────────────────────────
-  const [snippetTab, setSnippetTab] = useState<"curl" | "node" | "python">("curl");
-  const [copiedSnippet, setCopiedSnippet] = useState(false);
-  const [isCopiedWidget, setIsCopiedWidget] = useState(false);
+  const [snippetTab, setSnippetTab] = useState<SnippetTab>("curl");
 
-  // ── Channel assignments ─────────────────────────────────────────────────
-  const [channelAssignments, setChannelAssignments] = useState<AgentChannelAssignment[]>(MOCK_AGENT_CHANNELS);
+  const [channelCatalog, setChannelCatalog] = useState<ChannelCatalogCard[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
+  const [enabledChannels, setEnabledChannels] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(
+      MOCK_AGENT_CHANNEL_TOOLS.map((row) => [row.channelId, row.isActive]),
+    ),
+  );
 
-  // ── Connector assignments ───────────────────────────────────────────────
-  const [connectorAssignments, setConnectorAssignments] = useState<AgentConnectorAssignment[]>(MOCK_AGENT_CONNECTORS);
+  const [connectorSearch, setConnectorSearch] = useState("");
+  const [projectConnectors, setProjectConnectors] = useState<ProjectConnector[]>([]);
+  const [connectorDefinitions, setConnectorDefinitions] = useState<ConnectorDefinition[]>([]);
+  const [connectorsLoading, setConnectorsLoading] = useState(false);
+  const [connectorsError, setConnectorsError] = useState<string | null>(null);
+  const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(
+      MOCK_AGENT_CONNECTOR_TOOLS.map((row) => [row.connectorSlug, row.isActive]),
+    ),
+  );
 
-  // ── Helpers ─────────────────────────────────────────────────────────────
+  const loadProjectChannels = useCallback(async () => {
+    if (!projectId) {
+      setChannelCatalog([]);
+      return;
+    }
+    setChannelsError(null);
+    setChannelsLoading(true);
+    try {
+      const [definitions, rows] = await Promise.all([
+        projectApi.listChannelDefinitions(),
+        projectApi.listChannels(projectId),
+      ]);
+      setChannelCatalog(mergeChannelCatalog(definitions, rows));
+    } catch (err) {
+      setChannelsError(
+        err instanceof Error ? err.message : "Không tải được danh sách kênh",
+      );
+    } finally {
+      setChannelsLoading(false);
+    }
+  }, [projectId]);
+
+  const loadProjectConnectors = useCallback(async () => {
+    if (!projectId) {
+      setProjectConnectors([]);
+      return;
+    }
+    setConnectorsError(null);
+    setConnectorsLoading(true);
+    try {
+      const [definitions, connectors] = await Promise.all([
+        projectApi.listConnectorDefinitions(),
+        projectApi.listConnectors(projectId),
+      ]);
+      setConnectorDefinitions(definitions);
+      setProjectConnectors(connectors);
+    } catch (err) {
+      setConnectorsError(
+        err instanceof Error ? err.message : "Không tải được danh sách connector",
+      );
+    } finally {
+      setConnectorsLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    void loadProjectChannels();
+    void loadProjectConnectors();
+  }, [loadProjectChannels, loadProjectConnectors]);
+
+  useEffect(() => {
+    setEnabledChannels((prev) => {
+      const next = { ...prev };
+      for (const channel of channelCatalog) {
+        if (next[channel.channelId] !== undefined) {
+          continue;
+        }
+        const mock = MOCK_AGENT_CHANNEL_TOOLS.find(
+          (row) => row.channelId === channel.channelId,
+        );
+        next[channel.channelId] = mock?.isActive ?? false;
+      }
+      return next;
+    });
+  }, [channelCatalog]);
+
+  useEffect(() => {
+    setEnabledTools((prev) => {
+      const next = { ...prev };
+      for (const connector of projectConnectors) {
+        if (next[connector.connectorSlug] !== undefined) {
+          continue;
+        }
+        const mock = MOCK_AGENT_CONNECTOR_TOOLS.find(
+          (row) => row.connectorSlug === connector.connectorSlug,
+        );
+        next[connector.connectorSlug] = mock?.isActive ?? false;
+      }
+      return next;
+    });
+  }, [projectConnectors]);
+
   const handleGenerateKey = () => {
     setIsGenerating(true);
     setTimeout(() => {
       const name = newKeyName.trim() || `API Key #${apiKeys.length + 1}`;
-      const hex = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-      setApiKeys(prev => [...prev, {
-        id: `key-${Date.now()}`,
-        name,
-        token: `sk-claw-${hex}`,
-        createdAt: new Date().toISOString().split("T")[0],
-      }]);
+      const hex = Array.from({ length: 24 }, () =>
+        Math.floor(Math.random() * 16).toString(16),
+      ).join("");
+      setApiKeys((prev) => [
+        ...prev,
+        {
+          id: `key-${Date.now()}`,
+          name,
+          token: `sk-claw-${hex}`,
+          createdAt: new Date().toISOString().split("T")[0],
+        },
+      ]);
       setNewKeyName("");
       setIsGenerating(false);
     }, 800);
   };
 
-  const handleCopy = (text: string, cb: (v: boolean) => void) => {
-    navigator.clipboard.writeText(text);
-    cb(true);
-    setTimeout(() => cb(false), 2000);
-  };
-
   const handleCopyKey = (id: string, token: string) => {
-    navigator.clipboard.writeText(token);
+    void navigator.clipboard.writeText(token);
     setCopiedKeyId(id);
     setTimeout(() => setCopiedKeyId(null), 2000);
   };
 
   const toggleChannel = (channelId: string) => {
-    setChannelAssignments(prev => prev.map(a =>
-      a.channelId === channelId ? { ...a, isActive: !a.isActive } : a
-    ));
+    setEnabledChannels((prev) => ({
+      ...prev,
+      [channelId]: !prev[channelId],
+    }));
   };
 
-  const toggleConnector = (slug: string) => {
-    setConnectorAssignments(prev => prev.map(a =>
-      a.connectorSlug === slug ? { ...a, isActive: !a.isActive } : a
-    ));
+  const toggleConnectorTool = (slug: string) => {
+    setEnabledTools((prev) => ({
+      ...prev,
+      [slug]: !prev[slug],
+    }));
   };
 
-  const toggleConnectorChat = (slug: string) => {
-    setConnectorAssignments(prev => prev.map(a =>
-      a.connectorSlug === slug ? { ...a, chatEnabled: !a.chatEnabled } : a
-    ));
-  };
-
-  const setConnectorPermission = (slug: string, permission: ConnectorPermission) => {
-    setConnectorAssignments(prev => prev.map(a =>
-      a.connectorSlug === slug ? { ...a, permission } : a
-    ));
-  };
-
-  // ── Derived data ────────────────────────────────────────────────────────
   const activeToken = apiKeys[0]?.token ?? "sk-claw-your-api-token";
 
-  // Pure messaging channels
-  const channelRows: { channel: ChannelData; assignment: AgentChannelAssignment | undefined }[] =
-    CHANNEL_PROVIDERS.map((ch: ChannelData) => ({
-      channel: ch,
-      assignment: channelAssignments.find((a: AgentChannelAssignment) => a.channelId === ch.id),
+  const channelAgentRows = useMemo((): ChannelAgentRow[] => {
+    return channelCatalog.map((channel) => ({
+      ...channel,
+      isReady: channel.isActive && isChannelReadyForAgent(channel),
+      agentEnabled: enabledChannels[channel.channelId] ?? false,
     }));
+  }, [channelCatalog, enabledChannels]);
 
-  // E-commerce connectors with hasChat (shown in messaging section)
-  const ecommerceRows: { service: ServiceConnectData; assignment: AgentConnectorAssignment | undefined }[] =
-    CONNECT_SERVICES
-      .filter((s: ServiceConnectData) => s.hasChat)
-      .map((svc: ServiceConnectData) => ({
-        service: svc,
-        assignment: connectorAssignments.find((a: AgentConnectorAssignment) => a.connectorSlug === svc.slug),
-      }));
+  const definitionBySlug = useMemo(
+    () => new Map(connectorDefinitions.map((def) => [def.slug, def])),
+    [connectorDefinitions],
+  );
 
-  // Pure data/tool connectors (no hasChat)
-  const dataConnectorRows: { service: ServiceConnectData; assignment: AgentConnectorAssignment | undefined }[] =
-    CONNECT_SERVICES
-      .filter((s: ServiceConnectData) => !s.hasChat)
-      .map((svc: ServiceConnectData) => ({
-        service: svc,
-        assignment: connectorAssignments.find((a: AgentConnectorAssignment) => a.connectorSlug === svc.slug),
-      }));
+  const connectorToolRows = useMemo((): ConnectorToolRow[] => {
+    return projectConnectors.map((connector) => {
+      const def = definitionBySlug.get(connector.connectorSlug);
+      const service: ServiceConnectData = def
+        ? toServiceConnectData(def)
+        : {
+            id: connector.connectorSlug,
+            name: connector.displayName || connector.connectorName,
+            slug: connector.connectorSlug,
+            type: connector.connectorKind,
+            author: "Third party",
+            description: connector.definition?.description ?? "",
+          };
 
-  const snippets = {
+      return {
+        connector,
+        service,
+        isConnected: isProjectConnectorConnected(connector),
+        isActive: enabledTools[connector.connectorSlug] ?? false,
+      };
+    });
+  }, [projectConnectors, definitionBySlug, enabledTools]);
+
+  const filteredConnectorRows = useMemo(() => {
+    const query = connectorSearch.trim().toLowerCase();
+    if (!query) {
+      return connectorToolRows;
+    }
+    return connectorToolRows.filter((row) => {
+      const haystack = [
+        row.service.name,
+        row.service.slug,
+        row.service.type,
+        row.connector.displayName,
+        row.connector.connectorName,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [connectorToolRows, connectorSearch]);
+
+  const snippets: Record<SnippetTab, string> = {
     curl: `curl -X POST https://api.openclaw-saas.com/v1/chat/completions \\
   -H "Authorization: Bearer ${activeToken}" \\
   -H "Content-Type: application/json" \\
@@ -165,274 +381,275 @@ print(response.json()["choices"][0]["message"]["content"])`,
   defer></script>`;
 
   return (
-    <div className={styles.container}>
+    <div className={styles.stack}>
+      <Card className={styles.card} disableHover>
+        <SectionHeader
+          title="API keys"
+          description="Access tokens for external apps to call this agent via REST API."
+        />
 
-      {/* ── SECTION 1: API Keys ─────────────────────────────────────────── */}
-      <div className={styles.section}>
-        <Typography variant="p" weight="bold">🔑 API Keys</Typography>
-        <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          Access tokens for external apps to authenticate and call this agent via REST API.
-        </Typography>
-
-        <div className={styles.tableWrapper}>
-          {apiKeys.length === 0 ? (
-            <div className={styles.emptyState}>No API keys yet.</div>
-          ) : (
+        {apiKeys.length === 0 ? (
+          <Typography variant="small" color="muted" className={styles.emptyTable}>
+            No API keys yet.
+          </Typography>
+        ) : (
+          <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>Token</th>
                   <th>Created</th>
-                  <th style={{ width: 56, textAlign: "center" }}>Delete</th>
+                  <th className={styles.colActions}>Delete</th>
                 </tr>
               </thead>
               <tbody>
-                {apiKeys.map(key => (
+                {apiKeys.map((key) => (
                   <tr key={key.id}>
                     <td className={styles.keyName}>{key.name}</td>
                     <td>
-                      <div className={styles.tokenContainer}>
-                        <span className={styles.tokenText}>{key.token.substring(0, 18)}...</span>
-                        <button className={styles.copyBtn} onClick={() => handleCopyKey(key.id, key.token)}>
-                          {copiedKeyId === key.id ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
-                        </button>
+                      <div className={styles.tokenCell}>
+                        <span className={styles.tokenText}>
+                          {key.token.substring(0, 18)}…
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon_sm"
+                          onClick={() => handleCopyKey(key.id, key.token)}
+                          aria-label={`Copy token ${key.name}`}
+                        >
+                          {copiedKeyId === key.id ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </Button>
                       </div>
                     </td>
                     <td className={styles.keyDate}>{key.createdAt}</td>
-                    <td style={{ textAlign: "center" }}>
-                      <button className={styles.deleteBtn} onClick={() => setApiKeys(apiKeys.filter(k => k.id !== key.id))}>
+                    <td className={styles.colActions}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon_sm"
+                        onClick={() =>
+                          setApiKeys((prev) => prev.filter((k) => k.id !== key.id))
+                        }
+                        aria-label={`Delete ${key.name}`}
+                      >
                         <Trash2 size={14} />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+        )}
 
-        <Flex gap={3} align="center" style={{ marginTop: 14 }}>
+        <Flex align="end" gap={3} className={styles.createRow}>
           <Input
-            placeholder="Label (e.g. CRM Integration...)"
+            id="new-api-key-name"
+            label="New key label"
+            placeholder="e.g. CRM integration"
             value={newKeyName}
-            onChange={e => setNewKeyName(e.target.value)}
-            style={{ maxWidth: 300 }}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            className={styles.createInput}
           />
-          <Button size="sm" className={styles.generateBtn} loading={isGenerating} onClick={handleGenerateKey}>
-            <Plus size={14} /> Create API Key
+          <Button
+            type="button"
+            size="sm"
+            loading={isGenerating}
+            onClick={handleGenerateKey}
+          >
+            <Plus size={14} aria-hidden />
+            Create API key
           </Button>
         </Flex>
-      </div>
+      </Card>
 
-      {/* ── SECTION 2: Widget & Code Snippets ──────────────────────────── */}
-      <div className={styles.section}>
-        <Typography variant="p" weight="bold">🚀 Widget embed & REST API</Typography>
-        <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          Embed a chat bubble on your site or call the OpenAI-compatible REST API directly.
-        </Typography>
+      <Card className={styles.card} disableHover>
+        <SectionHeader
+          title="Widget embed & REST API"
+          description="Embed a chat bubble on your site or call the OpenAI-compatible REST API."
+        />
 
-        <div className={styles.widgetBox}>
-          <Flex justify="between" align="center" style={{ marginBottom: 8 }}>
-            <Typography variant="small" weight="bold">🌐 Chat widget embed script</Typography>
-            <Button variant="ghost" size="sm" style={{ gap: 4, height: 26, fontSize: 12, padding: "0 8px" }}
-              onClick={() => handleCopy(widgetScript, setIsCopiedWidget)}>
-              {isCopiedWidget ? <Check size={12} color="#10b981" /> : <Copy size={12} />}
-              {isCopiedWidget ? "Copied!" : "Copy"}
+        <CodeBlock
+          title="Chat widget script"
+          icon={<Rocket size={16} aria-hidden />}
+          code={widgetScript}
+        />
+
+        <CodeBlock
+          code={snippets[snippetTab]}
+          tabs={[
+            { value: "curl", label: "cURL", icon: <Terminal size={12} aria-hidden /> },
+            { value: "node", label: "Node.js", icon: <Code size={12} aria-hidden /> },
+            { value: "python", label: "Python", icon: <FileCode size={12} aria-hidden /> },
+          ]}
+          activeTab={snippetTab}
+          onTabChange={setSnippetTab}
+        />
+      </Card>
+
+      <Card className={styles.card} disableHover>
+        <SectionHeader
+          title="Messaging channels"
+          description="All project channels from the Channel tab. Enable each channel for this agent after it is connected."
+          action={
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/dashboard/channel")}
+            >
+              <ArrowUpRight size={14} aria-hidden />
+              Manage channels
             </Button>
-          </Flex>
-          <pre className={styles.codeBlock}>{widgetScript}</pre>
-        </div>
+          }
+        />
 
-        <div className={styles.snippetContainer}>
-          <div className={styles.snippetTabs}>
-            {([
-              { id: "curl", label: "cURL", icon: <Terminal size={12} /> },
-              { id: "node", label: "Node.js", icon: <Code size={12} /> },
-              { id: "python", label: "Python", icon: <FileCode size={12} /> },
-            ] as const).map(tab => (
-              <button key={tab.id} onClick={() => setSnippetTab(tab.id)}
-                className={`${styles.snippetTabBtn} ${snippetTab === tab.id ? styles.activeTab : ""}`}>
-                {tab.icon}{tab.label}
-              </button>
+        {channelsError ? (
+          <Typography variant="small" color="muted" className={styles.connectorsError}>
+            {channelsError}
+          </Typography>
+        ) : null}
+
+        {channelsLoading ? (
+          <Flex justify="center" align="center" className={styles.connectorsLoading}>
+            <Spinner size="md" />
+          </Flex>
+        ) : channelAgentRows.length === 0 ? (
+          <Typography variant="small" color="muted" className={styles.emptyConnectors}>
+            No channels available on this project.
+          </Typography>
+        ) : (
+          <div className={styles.providerList}>
+            {channelAgentRows.map((channel) => (
+              <ProviderRow
+                key={channel.channelId}
+                name={channel.name}
+                iconSrc={channel.iconSrc}
+                fallbackLabel={channel.iconLabel ?? channel.name}
+                connected={channel.isReady}
+                active={channel.agentEnabled}
+                onActiveChange={() => toggleChannel(channel.channelId)}
+                meta={
+                  !channel.isActive ? (
+                    <span className={styles.statusMuted}>Coming soon</span>
+                  ) : channel.isReady ? (
+                    <span className={styles.statusOk}>{channel.statusLabel}</span>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className={styles.connectLink}
+                      onClick={() =>
+                        router.push(`/dashboard/channel/${channel.channelId}`)
+                      }
+                    >
+                      Not connected — configure
+                    </Button>
+                  )
+                }
+              />
             ))}
           </div>
-          <div className={styles.snippetBody}>
-            <button className={styles.snippetCopyBtn}
-              onClick={() => handleCopy(snippets[snippetTab], setCopiedSnippet)}>
-              {copiedSnippet ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
-              {copiedSnippet ? "Copied!" : "Copy"}
-            </button>
-            <pre className={styles.codeBlock}>{snippets[snippetTab]}</pre>
+        )}
+      </Card>
+
+      <Card className={styles.card} disableHover>
+        <SectionHeader
+          title="Data sources & tools"
+          description="Choose which connectors added in Connect this agent may call as tools. Permissions are configured on each connector in Connect."
+          action={
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/dashboard/connect")}
+            >
+              <ArrowUpRight size={14} aria-hidden />
+              Manage connectors
+            </Button>
+          }
+        />
+
+        <SearchItem
+          id="connector-tool-search"
+          value={connectorSearch}
+          onChange={setConnectorSearch}
+          placeholder="Search connectors..."
+          className={styles.connectorSearch}
+          maxWidth="100%"
+        />
+
+        {connectorsError ? (
+          <Typography variant="small" color="muted" className={styles.connectorsError}>
+            {connectorsError}
+          </Typography>
+        ) : null}
+
+        {connectorsLoading ? (
+          <Flex justify="center" align="center" className={styles.connectorsLoading}>
+            <Spinner size="md" />
+          </Flex>
+        ) : projectConnectors.length === 0 ? (
+          <div className={styles.emptyConnectors}>
+            <Typography variant="small" color="muted">
+              No connectors added yet. Add connectors in Connect, then enable them for this agent.
+            </Typography>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/dashboard/connect")}
+            >
+              Go to Connect
+            </Button>
           </div>
-        </div>
-      </div>
-
-      {/* ── SECTION 3: Messaging Channels (pure chat + ecommerce hasChat) ─ */}
-      <div className={styles.section}>
-        <Flex justify="between" align="center" style={{ marginBottom: 4 }}>
-          <Typography variant="p" weight="bold" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <MessageSquare size={16} />
-            Messaging Channels
+        ) : filteredConnectorRows.length === 0 ? (
+          <Typography variant="small" color="muted" className={styles.emptyConnectors}>
+            No connectors match your search.
           </Typography>
-          <Button variant="ghost" size="sm" style={{ gap: 5, fontSize: 12 }}
-            onClick={() => router.push(`/dashboard/channel`)}>
-            <ArrowUpRight size={13} /> Manage in Channel tab
-          </Button>
-        </Flex>
-        <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          The agent listens and replies on channels you enable. Configure channels first in the project <strong>Channel</strong> tab.
-        </Typography>
-
-        <div className={styles.providerList}>
-          {/* Pure messaging channels */}
-          {channelRows.map(({ channel, assignment }) => {
-            const isConnected = assignment?.isConnectedAtProject ?? false;
-            const isActive = assignment?.isActive ?? false;
-            return (
-              <div key={channel.id} className={`${styles.providerRow} ${!isConnected ? styles.notConnected : ""}`}>
-                <div className={styles.providerIcon} style={{ background: `${channel.color}18`, border: `1px solid ${channel.color}33` }}>
-                  {channel.iconSrc
-                    ? <img src={channel.iconSrc} alt={channel.name} width={20} height={20} style={{ objectFit: "contain" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    : <MessageSquare size={16} color={channel.color} />
-                  }
-                </div>
-                <div className={styles.providerInfo}>
-                  <span className={styles.providerName}>{channel.name}</span>
-                  {isConnected
-                    ? <span className={styles.connectedTag}>Configured</span>
-                    : <button className={styles.goConnectBtn}
-                        onClick={() => router.push(`/dashboard/channel`)}>
-                        Not connected → Configure
-                      </button>
-                  }
-                </div>
-                <Switch
-                  checked={isActive && isConnected}
-                  onCheckedChange={() => isConnected && toggleChannel(channel.id)}
-                  disabled={!isConnected}
-                />
-              </div>
-            );
-          })}
-
-          {/* E-commerce platforms with hasChat (Shopee, TikTok Shop) */}
-          {ecommerceRows.length > 0 && (
-            <>
-              <div className={styles.subGroupLabel}>
-                <span>🛒 E-commerce platforms</span>
-                <Button variant="ghost" size="sm" style={{ gap: 4, fontSize: 11 }}
-                  onClick={() => router.push(`/dashboard/connect`)}>
-                  <ArrowUpRight size={12} /> tab Connect
-                </Button>
-              </div>
-              {ecommerceRows.map(({ service, assignment }) => {
-                const isConnected = assignment?.isConnectedAtProject ?? false;
-                const isActive = assignment?.isActive ?? false;
-                const chatOn = assignment?.chatEnabled ?? false;
-                return (
-                  <div key={service.id} className={`${styles.providerRow} ${styles.ecommerceRow} ${!isConnected ? styles.notConnected : ""}`}>
-                    <div className={styles.providerIcon} style={{ background: "#f97316" + "18", border: "1px solid #f9731633" }}>
-                      {service.iconSrc
-                        ? <img src={service.iconSrc} alt={service.name} width={20} height={20} style={{ objectFit: "contain" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                        : <MessageSquare size={16} color="#f97316" />
-                      }
-                    </div>
-                    <div className={styles.providerInfo}>
-                      <span className={styles.providerName}>{service.name}</span>
-                      {isConnected
-                        ? <Flex gap={6} align="center">
-                            <span className={styles.connectedTag}>OAuth ✓</span>
-                            {isActive && (
-                              <label className={styles.chatToggleLabel}>
-                                <input type="checkbox" checked={chatOn}
-                                  onChange={() => toggleConnectorChat(service.slug)}
-                                  className={styles.chatToggleInput} />
-                                Chat {chatOn ? "on" : "off"}
-                              </label>
-                            )}
-                          </Flex>
-                        : <button className={styles.goConnectBtn}
-                            onClick={() => router.push(`/dashboard/connect`)}>
-                            Not connected → Connect OAuth
-                          </button>
-                      }
-                    </div>
-                    <Switch
-                      checked={isActive && isConnected}
-                      onCheckedChange={() => isConnected && toggleConnector(service.slug)}
-                      disabled={!isConnected}
-                    />
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── SECTION 4: Data & Tool Connectors ──────────────────────────── */}
-      <div className={styles.section}>
-        <Flex justify="between" align="center" style={{ marginBottom: 4 }}>
-          <Typography variant="p" weight="bold" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Database size={16} />
-            Data sources & tools
-          </Typography>
-          <Button variant="ghost" size="sm" style={{ gap: 5, fontSize: 12 }}
-            onClick={() => router.push(`/dashboard/connect`)}>
-            <ArrowUpRight size={13} /> Manage in Connect tab
-          </Button>
-        </Flex>
-        <Typography variant="small" color="muted" style={{ marginBottom: 16 }}>
-          The agent can read/write data from OAuth-connected services. Permissions can be set per connector.
-        </Typography>
-
-        <div className={styles.providerList}>
-          {dataConnectorRows.map(({ service, assignment }) => {
-            const isConnected = assignment?.isConnectedAtProject ?? false;
-            const isActive = assignment?.isActive ?? false;
-            const perm = assignment?.permission ?? "read";
-            return (
-              <div key={service.id} className={`${styles.providerRow} ${!isConnected ? styles.notConnected : ""}`}>
-                <div className={styles.providerIcon}>
-                  {service.iconSrc
-                    ? <img src={service.iconSrc} alt={service.name} width={20} height={20} style={{ objectFit: "contain" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    : <Database size={16} color="var(--text-secondary)" />
-                  }
-                </div>
-                <div className={styles.providerInfo}>
-                  <Flex align="center" gap={6}>
-                    <span className={styles.providerName}>{service.name}</span>
+        ) : (
+          <div className={styles.providerList}>
+            {filteredConnectorRows.map(({ connector, service, isConnected, isActive }) => (
+              <ProviderRow
+                key={connector.id}
+                name={service.name}
+                iconSrc={service.iconSrc}
+                fallbackLabel={service.name}
+                connected={isConnected}
+                active={isActive}
+                onActiveChange={() => toggleConnectorTool(service.slug)}
+                meta={
+                  <>
                     <span className={styles.typeBadge}>{service.type}</span>
-                  </Flex>
-                  {isConnected
-                    ? isActive && (
-                        <select
-                          className={styles.permSelect}
-                          value={perm}
-                          onChange={e => setConnectorPermission(service.slug, e.target.value as ConnectorPermission)}>
-                          <option value="read">Read only</option>
-                          <option value="write">Read + write</option>
-                          <option value="full">Full access</option>
-                        </select>
-                      )
-                    : <button className={styles.goConnectBtn}
-                        onClick={() => router.push(`/dashboard/connect/${service.slug}`)}>
-                        Not connected → Connect now
-                      </button>
-                  }
-                </div>
-                <Switch
-                  checked={isActive && isConnected}
-                  onCheckedChange={() => isConnected && toggleConnector(service.slug)}
-                  disabled={!isConnected}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
+                    {isConnected ? (
+                      <span className={styles.statusOk}>Connected</span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className={styles.connectLink}
+                        onClick={() =>
+                          router.push(`/dashboard/connect/${service.slug}`)
+                        }
+                      >
+                        Not connected — connect now
+                      </Button>
+                    )}
+                  </>
+                }
+              />
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

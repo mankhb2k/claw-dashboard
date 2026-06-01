@@ -4,6 +4,7 @@ import { Flex, Grid, Container } from '@/components/layout'
 import { MetricCard } from './_components/MetricCard/MetricCard'
 import { OverviewChart } from './_components/OverviewChart/OverviewChart'
 import { UsageTable } from './_components/UsageTable/UsageTable'
+import { OverviewSchedulesCard } from './_components/OverviewSchedulesCard/OverviewSchedulesCard'
 import { TOKEN_DATA, LATENCY_DATA, RECENT_CALLS, METRIC_STATS } from './fakedatadashboard'
 
 export default function ProjectOverviewPage() {
@@ -17,6 +18,8 @@ export default function ProjectOverviewPage() {
             <MetricCard key={idx} {...stat} />
           ))}
         </Grid>
+
+        <OverviewSchedulesCard />
 
         {/* Charts Row */}
         <Grid columns={2} gap={24}>

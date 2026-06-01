@@ -1,6 +1,10 @@
 export { gatewayTokenForNewProject } from './gateway-token.js';
 export { decryptSecret, encryptSecret, maskSecret } from './crypto/secret-crypto.js';
-export { openGatewayUpstream } from './chat/gateway-upstream.js';
+export {
+  openGatewayUpstream,
+  callGatewayRpc,
+  GatewayRpcError,
+} from './chat/gateway-upstream.js';
 export { CHAT_RPC_WHITELIST, isAllowedChatRpc } from './chat/chat-rpc-whitelist.js';
 export { sessionKeyForAgent } from './chat/session-key.util.js';
 export {

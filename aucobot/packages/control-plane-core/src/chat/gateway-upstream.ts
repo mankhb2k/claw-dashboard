@@ -197,3 +197,51 @@ export async function openGatewayUpstream(
   }
   throw lastError ?? new Error('gateway connect failed');
 }
+
+const GATEWAY_RPC_TIMEOUT_MS =
+  Number(process.env.OPENCLAW_GATEWAY_RPC_TIMEOUT_MS ?? 30_000) || 30_000;
+
+export class GatewayRpcError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = 'GatewayRpcError';
+  }
+}
+
+/** One-shot WebSocket RPC (connect → req → res → close). */
+export async function callGatewayRpc<T = unknown>(
+  wsBaseUrl: string,
+  gatewayToken: string,
+  projectDataDir: string,
+  method: string,
+  params?: unknown,
+): Promise<T> {
+  const ws = await openGatewayUpstream(wsBaseUrl, gatewayToken, projectDataDir);
+  const id = randomUUID();
+  try {
+    const responsePromise = onceFrame(
+      ws,
+      (o) => o.type === 'res' && o.id === id,
+      GATEWAY_RPC_TIMEOUT_MS,
+    );
+    ws.send(
+      JSON.stringify({
+        type: 'req',
+        id,
+        method,
+        params: params ?? {},
+      }),
+    );
+    const res = await responsePromise;
+    if (!res.ok) {
+      const err = res.error as { message?: string; code?: string } | undefined;
+      throw new GatewayRpcError(err?.message ?? `${method} failed`, err?.code);
+    }
+    return res.payload as T;
+  } finally {
+    closeWs(ws);
+  }
+}

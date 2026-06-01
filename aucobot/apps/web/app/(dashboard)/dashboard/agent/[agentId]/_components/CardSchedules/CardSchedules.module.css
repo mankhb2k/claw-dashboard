@@ -1,0 +1,136 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.headerRow {
+  width: 100%;
+}
+
+.quota {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+}
+
+.jobList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.jobRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+}
+
+.jobMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.jobMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.scheduleBadge {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.statusOk {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-success);
+}
+
+.statusError {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-danger);
+}
+
+.jobActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.formFull {
+  grid-column: 1 / -1;
+}
+
+.createRow {
+  flex-wrap: wrap;
+}
+
+.emptyBox {
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-muted);
+  text-align: center;
+}
+
+.gatewayHint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-dim);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 28%, transparent);
+}
+
+.loadingBox {
+  padding: var(--space-8) 0;
+}
+
+.messagePreview {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

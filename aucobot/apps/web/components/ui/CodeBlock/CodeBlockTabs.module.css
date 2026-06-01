@@ -1,0 +1,100 @@
+/* Tab bar — baseline + underline trượt */
+.root {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.tabList {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 1px;
+}
+
+.tabList::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--color-code-block-border);
+  pointer-events: none;
+}
+
+.indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: 1px;
+  z-index: 1;
+  pointer-events: none;
+  transition:
+    transform var(--transition-base) var(--ease-out),
+    width var(--transition-base) var(--ease-out);
+}
+
+.tab {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  color: var(--color-code-block-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition-fast) ease;
+}
+
+.tab:hover:not(:disabled) {
+  color: var(--color-code-block-foreground);
+}
+
+.tab[data-active="true"] {
+  color: var(--color-primary);
+}
+
+.tab:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus-ring);
+}
+
+.tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trailing {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-code-block-muted);
+}

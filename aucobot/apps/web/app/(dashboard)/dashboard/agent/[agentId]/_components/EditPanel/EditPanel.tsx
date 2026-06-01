@@ -21,6 +21,7 @@ import {
   Brain,
   Wrench,
   Rocket,
+  CalendarClock,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -32,6 +33,7 @@ import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
 import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
 import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
+import { CardSchedules } from "../CardSchedules/CardSchedules";
 import { JoinCollaborationOnCreate } from "../JoinCollaborationOnCreate/JoinCollaborationOnCreate";
 import { addAgentToProjectCollaboration } from "@/lib/agent-collaboration";
 import styles from "./EditPanel.module.css";
@@ -48,15 +50,33 @@ type EditTab =
   | "identity"
   | "instructions"
   | "capabilities"
-  | "integrations";
+  | "integrations"
+  | "schedules";
 
 const AGENT_FORM_ID = "agent-edit-form";
+
+const EDIT_TABS = new Set<EditTab>([
+  "identity",
+  "instructions",
+  "capabilities",
+  "integrations",
+  "schedules",
+]);
+
+function tabFromSearchParams(params: URLSearchParams): EditTab {
+  const value = params.get("tab");
+  if (value && EDIT_TABS.has(value as EditTab)) {
+    return value as EditTab;
+  }
+  return "identity";
+}
 
 const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
   { id: "identity", label: "Identity", icon: UserRoundPen },
   { id: "instructions", label: "Instructions", icon: Brain },
   { id: "capabilities", label: "Capabilities", icon: Wrench },
   { id: "integrations", label: "Integrations", icon: Rocket },
+  { id: "schedules", label: "Schedules", icon: CalendarClock },
 ];
 
 /** Left panel: edit / create agent form (header + tabs + card content). */
@@ -128,7 +148,13 @@ export function EditPanel({
   }, [projectId, isEditing, agentId, templateId, reset]);
 
   /* ── Selected tab (Identity / Instructions / …) ─────────────────────── */
-  const [activeTab, setActiveTab] = useState<EditTab>("identity");
+  const [activeTab, setActiveTab] = useState<EditTab>(() =>
+    tabFromSearchParams(searchParams),
+  );
+
+  useEffect(() => {
+    setActiveTab(tabFromSearchParams(searchParams));
+  }, [searchParams]);
 
   const model = watch("model");
   const sandboxEnabled = watch("sandboxEnabled");
@@ -258,6 +284,9 @@ export function EditPanel({
       )}
       {activeTab === "integrations" && (
         <CardIntegrations agentId={agentId ?? "new-agent"} />
+      )}
+      {activeTab === "schedules" && (
+        <CardSchedules agentId={agentId ?? "new-agent"} isEditing={Boolean(isEditing)} />
       )}
     </>
   );
