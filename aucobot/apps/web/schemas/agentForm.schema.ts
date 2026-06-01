@@ -34,9 +34,6 @@ export const agentFormSchema = z
     askPolicy: agentAskPolicySchema,
     safeBins: z.array(z.string()),
     timeoutSec: z.number().min(5, 'Minimum 5 seconds').max(3600, 'Maximum 3600 seconds'),
-
-    teamEnabled: z.boolean(),
-    allowedAgentSlugs: z.array(z.string().min(1)).max(50, 'At most 50 agents'),
   })
   .superRefine((data, ctx) => {
     if (data.instructionsMode === 'simple' && !data.instructionsRole.trim()) {
@@ -51,13 +48,6 @@ export const agentFormSchema = z
         code: 'custom',
         path: ['instructionsAdvanced'],
         message: 'AGENTS.md content is required',
-      })
-    }
-    if (data.teamEnabled && data.allowedAgentSlugs.length === 0) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['allowedAgentSlugs'],
-        message: 'Select at least one agent when sub-agent calling is enabled',
       })
     }
   })
@@ -133,9 +123,6 @@ export function buildAgentFormDefaults(
         ? ['python', 'node', 'git', 'npm', 'gcc']
         : ['python', 'node', 'git'],
     timeoutSec: 60,
-
-    teamEnabled: false,
-    allowedAgentSlugs: [],
   }
 }
 

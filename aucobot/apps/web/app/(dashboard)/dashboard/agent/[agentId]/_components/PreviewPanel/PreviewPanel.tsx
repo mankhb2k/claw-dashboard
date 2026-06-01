@@ -24,7 +24,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble";
+import { PreviewCollaborationBanner } from "../PreviewCollaborationBanner/PreviewCollaborationBanner";
 import styles from "./PreviewPanel.module.css";
+
+interface PreviewPanelProps {
+  agentSlug?: string;
+}
 
 type PreviewTab = "playground" | "canvas" | "diagnostics";
 
@@ -69,7 +74,7 @@ function ThoughtLog({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   );
 }
 
-export function PreviewPanel() {
+export function PreviewPanel({ agentSlug }: PreviewPanelProps) {
   const [activeTab, setActiveTab] = useState<PreviewTab>("playground");
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
@@ -172,6 +177,8 @@ export function PreviewPanel() {
           </Button>
         </Flex>
       </Flex>
+
+      {agentSlug ? <PreviewCollaborationBanner agentSlug={agentSlug} /> : null}
 
       <Flex direction="column" className={styles.body}>
         {activeTab === "playground" && (

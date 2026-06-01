@@ -18,7 +18,11 @@ function normalizeTag(raw: string) {
   return raw.trim().toLowerCase().replace(/[\s#]/g, '-')
 }
 
-export function CardIdentity() {
+interface CardIdentityProps {
+  joinCollaborationSlot?: React.ReactNode;
+}
+
+export function CardIdentity({ joinCollaborationSlot }: CardIdentityProps) {
   const {
     register,
     control,
@@ -137,6 +141,8 @@ export function CardIdentity() {
           />
         )}
       />
+
+      {joinCollaborationSlot}
     </Card>
   )
 }

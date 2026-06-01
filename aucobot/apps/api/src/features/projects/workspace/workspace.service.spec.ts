@@ -245,7 +245,11 @@ describe('WorkspaceService', () => {
       const config: Record<string, unknown> = {};
 
       readOpenClawConfigJsonMock.mockResolvedValue(config);
-      prisma.project.findUnique.mockResolvedValue({ gatewayToken: 'db-token' });
+      prisma.project.findUnique.mockResolvedValue({
+        gatewayToken: 'db-token',
+        collaborationEnabled: false,
+        collaborationMemberSlugs: [],
+      });
       prisma.projectProviderKey.findMany.mockResolvedValue([
         { providerId: 'gemini', enabled: true, ciphertext: 'enc:key' },
       ]);
@@ -287,7 +291,11 @@ describe('WorkspaceService', () => {
 
       expect(prisma.project.findUnique).toHaveBeenCalledWith({
         where: { id: PROJECT_ID },
-        select: { gatewayToken: true },
+        select: {
+          gatewayToken: true,
+          collaborationEnabled: true,
+          collaborationMemberSlugs: true,
+        },
       });
       expect(resolveOssGatewayTokenMock).toHaveBeenCalledWith('db-token');
       expect(mergeGatewayBlockIfMissingMock).toHaveBeenCalledWith(

@@ -11,14 +11,13 @@ import { WorkspaceService } from '../workspace/workspace.service';
 import {
   compileAgentBootstrap,
   parseAgentFormData,
-  applyAgentTeamSettings,
-  validateAgentTeamSettings,
-  AgentTeamValidationError,
-  removeSlugFromTeamAllowList,
+  parseCollaborationMemberSlugs,
+  toStoredAgentFormData,
   type AgentBootstrapFilename,
   type AgentFormInput,
 } from '@aucobot/workspace-sync';
 import { slugifyAgentName, validateAgentSlug } from './agent-slug';
+import { CollaborationService } from './collaboration.service';
 
 export type ProjectAgentListRow = {
   slug: string;
@@ -28,6 +27,7 @@ export type ProjectAgentListRow = {
   model: string;
   enabled: boolean;
   isDefault: boolean;
+  inCollaboration: boolean;
   lastSyncedAt: string | null;
   lastSyncError: string | null;
   updatedAt: string;
@@ -59,6 +59,7 @@ export class AgentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workspace: WorkspaceService,
+    private readonly collaboration: CollaborationService,
   ) {}
 
   private hostAgentDir(dataDir: string, slug: string): string {
@@ -77,46 +78,26 @@ export class AgentService {
     }
   }
 
-  private async prepareFormData(
-    projectId: string,
-    form: AgentFormInput,
-    currentAgentSlug?: string,
-  ): Promise<AgentFormInput> {
+  private prepareFormData(form: AgentFormInput): AgentFormInput {
     this.assertFormValid(form);
-    const normalized = applyAgentTeamSettings(form);
-    const peers = await this.prisma.projectAgent.findMany({
-      where: { projectId },
-      select: { slug: true, enabled: true },
-    });
-
-    try {
-      validateAgentTeamSettings({
-        form: normalized,
-        currentAgentSlug,
-        projectAgents: peers,
-      });
-    } catch (err) {
-      if (err instanceof AgentTeamValidationError) {
-        throw new BadRequestException(err.message);
-      }
-      throw err;
-    }
-
-    return normalized;
+    return form;
   }
 
-  private toListRow(row: {
-    slug: string;
-    name: string;
-    description: string;
-    avatar: string;
-    formData: unknown;
-    enabled: boolean;
-    isDefault: boolean;
-    lastSyncedAt: Date | null;
-    lastSyncError: string | null;
-    updatedAt: Date;
-  }): ProjectAgentListRow {
+  private toListRow(
+    row: {
+      slug: string;
+      name: string;
+      description: string;
+      avatar: string;
+      formData: unknown;
+      enabled: boolean;
+      isDefault: boolean;
+      lastSyncedAt: Date | null;
+      lastSyncError: string | null;
+      updatedAt: Date;
+    },
+    extras?: { inCollaboration?: boolean },
+  ): ProjectAgentListRow {
     const form = parseAgentFormData(row.formData);
     return {
       slug: row.slug,
@@ -126,6 +107,7 @@ export class AgentService {
       model: form.model,
       enabled: row.enabled,
       isDefault: row.isDefault,
+      inCollaboration: extras?.inCollaboration ?? false,
       lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
       lastSyncError: row.lastSyncError,
       updatedAt: row.updatedAt.toISOString(),
@@ -179,18 +161,50 @@ export class AgentService {
   }
 
   async list(projectId: string): Promise<ProjectAgentListRow[]> {
-    const rows = await this.prisma.projectAgent.findMany({
-      where: { projectId },
-      orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
-    });
-    return rows.map((r) => this.toListRow(r));
+    const [rows, project] = await Promise.all([
+      this.prisma.projectAgent.findMany({
+        where: { projectId },
+        orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
+      }),
+      this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: {
+          collaborationEnabled: true,
+          collaborationMemberSlugs: true,
+        },
+      }),
+    ]);
+
+    const collaborationEnabled = project?.collaborationEnabled ?? false;
+    const memberSlugs = new Set(
+      parseCollaborationMemberSlugs(project?.collaborationMemberSlugs),
+    );
+
+    return rows.map((r) =>
+      this.toListRow(r, {
+        inCollaboration: collaborationEnabled && memberSlugs.has(r.slug),
+      }),
+    );
   }
 
   async get(projectId: string, slug: string): Promise<ProjectAgentDetail> {
     const row = await this.findRow(projectId, slug);
     const form = parseAgentFormData(row.formData);
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        collaborationEnabled: true,
+        collaborationMemberSlugs: true,
+      },
+    });
+    const collaborationEnabled = project?.collaborationEnabled ?? false;
+    const memberSlugs = parseCollaborationMemberSlugs(
+      project?.collaborationMemberSlugs,
+    );
     return {
-      ...this.toListRow(row),
+      ...this.toListRow(row, {
+        inCollaboration: collaborationEnabled && memberSlugs.includes(row.slug),
+      }),
       formData: form,
       createdAt: row.createdAt.toISOString(),
     };
@@ -216,7 +230,7 @@ export class AgentService {
   }): Promise<ProjectAgentDetail> {
     const parsed = parseAgentFormData(params.formData);
     const slug = params.slug ? validateAgentSlug(params.slug) : slugifyAgentName(parsed.name);
-    const form = await this.prepareFormData(params.projectId, parsed, slug);
+    const form = this.prepareFormData(parsed);
 
     const existing = await this.prisma.projectAgent.findUnique({
       where: { projectId_slug: { projectId: params.projectId, slug } },
@@ -241,7 +255,7 @@ export class AgentService {
         name: form.name.trim(),
         description: form.description.trim(),
         avatar: form.avatar.trim() || '🤖',
-        formData: form as object,
+        formData: toStoredAgentFormData(form) as object,
         enabled,
         isDefault,
       },
@@ -268,7 +282,7 @@ export class AgentService {
     const parsed = params.formData
       ? parseAgentFormData(params.formData)
       : parseAgentFormData(row.formData);
-    const form = await this.prepareFormData(projectId, parsed, slug);
+    const form = this.prepareFormData(parsed);
 
     if (params.isDefault === true) {
       await this.clearDefault(projectId);
@@ -283,7 +297,7 @@ export class AgentService {
         name: form.name.trim(),
         description: form.description.trim(),
         avatar: form.avatar.trim() || '🤖',
-        formData: form as object,
+        formData: toStoredAgentFormData(form) as object,
         enabled,
         isDefault,
       },
@@ -306,6 +320,8 @@ export class AgentService {
     const fresh = await this.findRow(projectId, slug);
     if (enabled) {
       await this.syncAgentToDisk(fresh);
+    } else {
+      await this.collaboration.removeMember(projectId, slug);
     }
     await this.workspace.syncProjectRuntime(projectId);
     return this.get(projectId, slug);
@@ -329,6 +345,7 @@ export class AgentService {
     slug: string,
     params?: { slug?: string; name?: string },
   ): Promise<ProjectAgentDetail> {
+    const sourceDetail = await this.get(projectId, slug);
     const source = await this.findRow(projectId, slug);
     const form = parseAgentFormData(source.formData);
     if (params?.name) {
@@ -337,30 +354,22 @@ export class AgentService {
       form.name = `${form.name} (Copy)`;
     }
     const newSlug = params?.slug ? validateAgentSlug(params.slug) : slugifyAgentName(form.name);
-    return this.create({
+    const created = await this.create({
       projectId,
       slug: newSlug,
       formData: form as unknown as Record<string, unknown>,
       enabled: false,
       isDefault: false,
     });
+    if (sourceDetail.inCollaboration) {
+      await this.collaboration.addMember(projectId, created.slug);
+    }
+    return this.get(projectId, created.slug);
   }
 
   async remove(projectId: string, slug: string): Promise<void> {
     const row = await this.findRow(projectId, slug);
-    const others = await this.prisma.projectAgent.findMany({
-      where: { projectId, id: { not: row.id } },
-    });
-    for (const peer of others) {
-      const nextForm = removeSlugFromTeamAllowList(peer.formData, row.slug);
-      if (!nextForm) {
-        continue;
-      }
-      await this.prisma.projectAgent.update({
-        where: { id: peer.id },
-        data: { formData: nextForm as object },
-      });
-    }
+    await this.collaboration.removeMember(projectId, row.slug);
     await this.prisma.projectAgent.delete({ where: { id: row.id } });
     const dataDir = this.workspace.resolveProjectDataDir(projectId);
     try {

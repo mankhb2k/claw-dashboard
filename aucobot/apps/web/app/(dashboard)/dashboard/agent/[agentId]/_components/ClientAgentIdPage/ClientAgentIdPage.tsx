@@ -24,7 +24,7 @@ export function ClientAgentIdPage({ agentId }: ClientAgentIdPageProps) {
       />
       {previewOpen ? (
         <div className={styles.previewWrap}>
-          <PreviewPanel />
+          <PreviewPanel agentSlug={agentId} />
         </div>
       ) : null}
     </div>

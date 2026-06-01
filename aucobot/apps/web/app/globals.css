@@ -4,7 +4,7 @@
   /* Neutral Colors */
   --font-inter: "Inter", sans-serif;
   --color-background: #f7f7f4;
-  --color-foreground: #616161;
+  --color-foreground: #4e4e4e;
   --color-accent: rgb(245, 245, 245);
   --color-accent-foreground: rgb(23, 23, 23);
   --color-border: rgb(223, 223, 223);
@@ -90,10 +90,10 @@
   --space-12: 3rem;
 
   /* Shape */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
 
   /* Typography */
   --font-size-xs: 11px;

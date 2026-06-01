@@ -353,6 +353,7 @@ export const projectAgentListRowSchema = z.object({
   model: z.string(),
   enabled: z.boolean(),
   isDefault: z.boolean(),
+  inCollaboration: z.boolean().default(false),
   lastSyncedAt: z.string().nullable(),
   lastSyncError: z.string().nullable(),
   updatedAt: z.coerce.string(),
@@ -376,8 +377,6 @@ export const agentFormInputSchema = z.object({
   askPolicy: z.enum(['always', 'on-miss', 'off']),
   safeBins: z.array(z.string()),
   timeoutSec: z.number(),
-  teamEnabled: z.boolean(),
-  allowedAgentSlugs: z.array(z.string()),
 })
 
 export const projectAgentDetailSchema = projectAgentListRowSchema.extend({
@@ -403,3 +402,30 @@ export type ProjectAgentListRow = z.infer<typeof projectAgentListRowSchema>
 export type ProjectAgentDetail = z.infer<typeof projectAgentDetailSchema>
 export type CreateProjectAgentInput = z.infer<typeof createProjectAgentSchema>
 export type UpdateProjectAgentInput = z.infer<typeof updateProjectAgentSchema>
+
+export const projectCollaborationSchema = z.object({
+  enabled: z.boolean(),
+  memberSlugs: z.array(z.string()),
+  effectiveAllow: z.array(z.string()),
+  legacyDerived: z.boolean().optional().default(false),
+})
+
+export const updateProjectCollaborationSchema = z
+  .object({
+    enabled: z.boolean(),
+    memberSlugs: z.array(z.string().min(1)).max(50),
+  })
+  .superRefine((data, ctx) => {
+    if (data.enabled && data.memberSlugs.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['memberSlugs'],
+        message: 'Select at least one agent when collaboration is enabled',
+      })
+    }
+  })
+
+export type ProjectCollaboration = z.infer<typeof projectCollaborationSchema>
+export type UpdateProjectCollaborationInput = z.infer<
+  typeof updateProjectCollaborationSchema
+>

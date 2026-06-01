@@ -18,6 +18,8 @@ import {
   agentTemplateRowSchema,
   projectAgentListRowSchema,
   projectAgentDetailSchema,
+  projectCollaborationSchema,
+  updateProjectCollaborationSchema,
   skillAiEditorOptionsResponseSchema,
   skillAiEditorCompleteInputSchema,
   skillAiEditorCompleteResponseSchema,
@@ -30,6 +32,8 @@ import {
   type ProjectAgentDetail,
   type CreateProjectAgentInput,
   type UpdateProjectAgentInput,
+  type ProjectCollaboration,
+  type UpdateProjectCollaborationInput,
   createProjectAgentSchema,
   updateProjectAgentSchema,
   type SkillAiEditorOptionsResponse,
@@ -397,5 +401,19 @@ export const projectApi = {
   syncAllAgents: async (id: string): Promise<{ synced: number; failed: number }> => {
     const res = await api.post(`/api/projects/${id}/agents/sync-all`)
     return z.object({ synced: z.number(), failed: z.number() }).parse(res.data)
+  },
+
+  getCollaboration: async (id: string): Promise<ProjectCollaboration> => {
+    const res = await api.get(`/api/projects/${id}/collaboration`)
+    return projectCollaborationSchema.parse(res.data)
+  },
+
+  updateCollaboration: async (
+    id: string,
+    input: UpdateProjectCollaborationInput,
+  ): Promise<ProjectCollaboration> => {
+    const body = updateProjectCollaborationSchema.parse(input)
+    const res = await api.put(`/api/projects/${id}/collaboration`, body)
+    return projectCollaborationSchema.parse(res.data)
   },
 }

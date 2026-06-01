@@ -98,3 +98,10 @@
   color: var(--color-muted-foreground);
   border: 1px solid var(--color-border);
 }
+
+/* Agent trong collaboration pool */
+.tagCollaboration {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+}

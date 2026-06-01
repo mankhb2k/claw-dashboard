@@ -1,15 +1,11 @@
-/* =============================================================================
-   1. VỎ BỌC (WRAPPER)
-   ============================================================================= */
+/* 1. Wrapper */
 .wrapper {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* =============================================================================
-   2. THANH TRƯỢT (ROOT)
-   ============================================================================= */
+/* 2. Root */
 .root {
   all: unset;
   width: 36px;
@@ -27,13 +23,11 @@
 }
 
 /* Trạng thái On */
-.root[data-state='checked'] {
-  background-color: var(--color-primary);
+.root[data-state="checked"] {
+  background-color: var(--color-success);
 }
 
-/* =============================================================================
-   3. NÚT TRƯỢT (THUMB)
-   ============================================================================= */
+/* 3. Thumb */
 .thumb {
   display: block;
   width: 16px;
@@ -46,13 +40,11 @@
   will-change: transform;
 }
 
-.root[data-state='checked'] .thumb {
+.root[data-state="checked"] .thumb {
   transform: translateX(18px);
 }
 
-/* =============================================================================
-   4. NHÃN (LABEL)
-   ============================================================================= */
+/* 4. Label */
 .label {
   font-size: 14px;
   color: var(--color-foreground);

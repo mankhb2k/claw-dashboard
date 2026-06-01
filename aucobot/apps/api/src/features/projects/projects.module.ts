@@ -2,6 +2,8 @@ import { Module, forwardRef } from '@nestjs/common';
 import { ProjectsController } from './projects.controller';
 import { ProjectSkillsController } from './skills/project-skills.controller';
 import { AgentController } from './agents/agent.controller';
+import { CollaborationController } from './agents/collaboration.controller';
+import { CollaborationService } from './agents/collaboration.service';
 import { SkillAiEditorController } from './skill-ai-editor/skill-ai-editor.controller';
 import { ProjectConnectorsCatalogController } from './connectors/project-connectors-catalog.controller';
 import { ProjectConnectorsController } from './connectors/project-connectors.controller';
@@ -30,6 +32,7 @@ import { ChannelsModule } from './channels/channels.module';
     ConnectorOAuthController,
     ProjectSkillsController,
     AgentController,
+    CollaborationController,
     SkillAiEditorController,
   ],
   providers: [
@@ -37,6 +40,7 @@ import { ChannelsModule } from './channels/channels.module';
     ProjectConnectorsService,
     ProjectSkillsService,
     AgentService,
+    CollaborationService,
     SkillAiEditorService,
   ],
   exports: [
@@ -47,6 +51,7 @@ import { ChannelsModule } from './channels/channels.module';
     ProjectConnectorsService,
     ProjectSkillsService,
     AgentService,
+    CollaborationService,
   ],
 })
 export class ProjectsModule {}

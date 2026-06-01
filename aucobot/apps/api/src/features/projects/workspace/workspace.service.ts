@@ -14,7 +14,13 @@ import {
   removeLegacyDotEnv,
   resolveProjectDataDir,
   type OpenClawProjectConfig,
+  legacyTeamFormSlice,
+  normalizeCollaborationSettings,
   parseAgentFormData,
+  parseCollaborationMemberSlugs,
+  resolveProjectCollaborationSettings,
+  shouldPersistDerivedCollaboration,
+  stripLegacyTeamKeysFromRawFormData,
   writeOpenClawConfigJson,
 } from '@aucobot/workspace-sync';
 import { PrismaService } from '../../../core/database/prisma.service';
@@ -86,7 +92,11 @@ export class WorkspaceService {
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { gatewayToken: true },
+      select: {
+        gatewayToken: true,
+        collaborationEnabled: true,
+        collaborationMemberSlugs: true,
+      },
     });
     mergeGatewayBlockIfMissing(config, resolveOssGatewayToken(project?.gatewayToken));
 
@@ -98,6 +108,44 @@ export class WorkspaceService {
     const agentRows = await this.prisma.projectAgent.findMany({
       where: { projectId, enabled: true },
     });
+    const allAgentRows = await this.prisma.projectAgent.findMany({
+      where: { projectId },
+      select: { id: true, slug: true, formData: true },
+    });
+
+    for (const row of allAgentRows) {
+      const cleaned = stripLegacyTeamKeysFromRawFormData(row.formData);
+      if (cleaned) {
+        await this.prisma.projectAgent.update({
+          where: { id: row.id },
+          data: { formData: cleaned as object },
+        });
+        row.formData = cleaned as object;
+      }
+    }
+
+    const storedCollaboration = normalizeCollaborationSettings({
+      enabled: project?.collaborationEnabled ?? false,
+      memberSlugs: parseCollaborationMemberSlugs(project?.collaborationMemberSlugs),
+    });
+    const collaboration = resolveProjectCollaborationSettings({
+      stored: storedCollaboration,
+      legacyAgents: allAgentRows.map((row) => ({
+        slug: row.slug,
+        formData: legacyTeamFormSlice(row.formData),
+      })),
+    });
+
+    if (shouldPersistDerivedCollaboration(storedCollaboration, collaboration)) {
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: {
+          collaborationEnabled: collaboration.enabled,
+          collaborationMemberSlugs: collaboration.memberSlugs,
+        },
+      });
+    }
+
     mergeAgentsIntoConfig(
       config,
       agentRows.map((row) => ({
@@ -106,6 +154,7 @@ export class WorkspaceService {
         formData: parseAgentFormData(row.formData),
         isDefault: row.isDefault,
       })),
+      collaboration,
     );
 
     const connectorRows = await this.prisma.projectConnector.findMany({

@@ -20,17 +20,20 @@ import {
   UserRoundPen,
   Brain,
   Wrench,
-  Users,
   Rocket,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BackButton } from "@/components/dashboard";
+import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+import { Users } from "lucide-react";
 import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
 import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
-import { CardTeam } from "../CardTeam/CardTeam";
 import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
+import { JoinCollaborationOnCreate } from "../JoinCollaborationOnCreate/JoinCollaborationOnCreate";
+import { addAgentToProjectCollaboration } from "@/lib/agent-collaboration";
 import styles from "./EditPanel.module.css";
 
 interface EditPanelProps {
@@ -45,7 +48,6 @@ type EditTab =
   | "identity"
   | "instructions"
   | "capabilities"
-  | "team"
   | "integrations";
 
 const AGENT_FORM_ID = "agent-edit-form";
@@ -53,7 +55,6 @@ const AGENT_FORM_ID = "agent-edit-form";
 const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
   { id: "identity", label: "Identity", icon: UserRoundPen },
   { id: "instructions", label: "Instructions", icon: Brain },
-  { id: "team", label: "Team", icon: Users },
   { id: "capabilities", label: "Capabilities", icon: Wrench },
   { id: "integrations", label: "Integrations", icon: Rocket },
 ];
@@ -136,6 +137,7 @@ export function EditPanel({
   const timeoutSec = watch("timeoutSec");
 
   const [newTagInput, setNewTagInput] = useState("");
+  const [joinCollaborationOnCreate, setJoinCollaborationOnCreate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const savedHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -192,6 +194,13 @@ export function EditPanel({
           formData: data,
           enabled: true,
         });
+        if (joinCollaborationOnCreate) {
+          try {
+            await addAgentToProjectCollaboration(projectId, created.slug);
+          } catch {
+            /* agent created; collaboration update is best-effort */
+          }
+        }
         router.replace(`/dashboard/agent/${created.slug}`);
       }
 
@@ -209,8 +218,21 @@ export function EditPanel({
 
   const tabContent = (
     <>
-      {activeTab === "identity" && <CardIdentity />}
-      {activeTab === "instructions" && <CardInstructions />}
+      {activeTab === "identity" && (
+        <CardIdentity
+          joinCollaborationSlot={
+            !isEditing ? (
+              <JoinCollaborationOnCreate
+                checked={joinCollaborationOnCreate}
+                onCheckedChange={setJoinCollaborationOnCreate}
+              />
+            ) : undefined
+          }
+        />
+      )}
+      {activeTab === "instructions" && (
+        <CardInstructions agentSlug={isEditing ? agentId : undefined} />
+      )}
       {activeTab === "capabilities" && (
         <CardCapabilities
           model={model}
@@ -234,7 +256,6 @@ export function EditPanel({
           handleRemoveTag={handleRemoveTag}
         />
       )}
-      {activeTab === "team" && <CardTeam currentAgentSlug={agentId} />}
       {activeTab === "integrations" && (
         <CardIntegrations agentId={agentId ?? "new-agent"} />
       )}
@@ -271,6 +292,15 @@ export function EditPanel({
       <div className={styles.header}>
         <BackButton href="/dashboard/agent">Back to Agents</BackButton>
         <Flex align="center" gap={8}>
+          {isEditing ? (
+            <Link
+              href={`${DASHBOARD_BASE_PATH}/agent/collaboration`}
+              className={styles.collaborationLink}
+            >
+              <Users size={14} aria-hidden />
+              Collaboration
+            </Link>
+          ) : null}
           {showSaved && (
             <Typography
               variant="small"

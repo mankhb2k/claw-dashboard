@@ -6,6 +6,7 @@ export interface AgentItem {
   model: string;
   skillsCount: number;
   isActive: boolean;
+  inCollaboration?: boolean;
 }
 
 export const INITIAL_AGENTS: AgentItem[] = [

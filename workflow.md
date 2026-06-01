@@ -406,7 +406,7 @@ flowchart TD
   R --> G["mergeGatewayBlockIfMissing"]
   G --> P["mergeProviderKeysIntoConfig"]
   P --> A["mergeAgentsIntoConfig"]
-  A --> T["mergeAgentTeamToolsIntoConfig\n(tools.agentToAgent)"]
+  A --> T["mergeAgentCollaborationToolsIntoConfig\n(tools.agentToAgent)"]
   A --> C["mergeConnectorsIntoConfig"]
   C --> CH["mergeChannelsIntoConfig"]
   CH --> CL["cleanupStaleMainAgentModels"]
@@ -418,7 +418,7 @@ flowchart TD
 
 1. `mergeGatewayBlockIfMissing` — đảm bảo `gateway.auth` (OSS token).
 2. `mergeProviderKeysIntoConfig` — `env.*`, `agents.defaults.model.primary`, `plugins.entries` (google/openai).
-3. `mergeAgentsIntoConfig` — `agents.list`, `agents.defaults.workspace`; cuối hàm gọi `mergeAgentTeamToolsIntoConfig`.
+3. `mergeAgentsIntoConfig` — `agents.list`, `agents.defaults.workspace`; cuối hàm gọi `mergeAgentCollaborationToolsIntoConfig` (từ `Project.collaboration*`).
 4. `mergeConnectorsIntoConfig` — `mcp.servers` (+ file credential Google trên disk nếu cần).
 5. `mergeChannelsIntoConfig` — `channels.*`, `plugins.entries` (telegram/discord).
 6. `cleanupStaleMainAgentModels` — dọn model legacy trên volume.
@@ -428,7 +428,7 @@ flowchart TD
 | --------- | ---------------------- | -------- | ---- |
 | `mergeProviderKeysIntoConfig` | `env.*`, `agents.defaults.model`, `plugins.entries` (provider) | `ProjectProviderKey` | `openclaw-config-merge.ts` |
 | `mergeAgentsIntoConfig` | `agents.list[]`, `agents.defaults.workspace` | `ProjectAgent` (enabled) | `openclaw-config-merge.ts` |
-| `mergeAgentTeamToolsIntoConfig` | `tools.agentToAgent` | `ProjectAgent.formData` (`teamEnabled`, `allowedAgentSlugs`) | `agent-team.ts` |
+| `mergeAgentCollaborationToolsIntoConfig` | `tools.agentToAgent` | `Project.collaborationEnabled`, `collaborationMemberSlugs` | `agent-collaboration.ts` |
 | `mergeConnectorsIntoConfig` | `mcp.servers` | `ProjectConnector` + secrets | `merge-connectors-into-config.ts` |
 | `mergeChannelsIntoConfig` | `channels.*`, `plugins.entries` (channel) | `ProjectChannel` + secrets | `merge-channels-into-config.ts` |
 
@@ -445,42 +445,39 @@ Khi agent create/update/delete, `AgentService.syncAgentToDisk` ghi markdown boot
 | `workspace-{slug}/IDENTITY.md` | `compileIdentityMd` |
 | `workspace-{slug}/TOOLS.md` | `compileToolsMd` |
 
-Patch runtime per agent trong `agents.list`: `compileOpenClawAgentConfig` (model, sandbox) — **không** ghi team policy vào từng entry; team nằm ở `tools.agentToAgent` (global).
+Patch runtime per agent trong `agents.list`: `compileOpenClawAgentConfig` (model, sandbox) — **không** ghi collaboration policy vào từng entry; allow list nằm ở `tools.agentToAgent` (global).
 
-#### Team / sub-agent calling (`tools.agentToAgent`)
+#### Agent collaboration (`tools.agentToAgent`)
 
-**UI:** Card Team trên agent editor — `teamEnabled`, `allowedAgentSlugs` (lưu `ProjectAgent.formData`).
+**UI:** `/dashboard/agent/collaboration` — project-level `collaborationEnabled`, `collaborationMemberSlugs` (cột `Project`). Tab Instructions trên agent editor: link + danh sách peer read-only. Tạo agent: checkbox “Add to collaboration”. Danh sách agents: badge + filter “Collaboration”.
 
-**Validation (API):** `validateAgentTeamSettings` / `applyAgentTeamSettings` (`agent-team.ts`, gọi từ `AgentService`):
+**API:** `GET/PUT /api/projects/:id/collaboration` (`CollaborationService`). `GET` tự persist nếu còn derive từ legacy `formData`. Save agent luôn omit `teamEnabled` / `allowedAgentSlugs`; `syncProjectRuntime` strip các key legacy còn trong DB.
 
-- Bật team phải chọn ≥1 peer enabled (không tự gọi, không `main`, slug hợp lệ).
-- Xóa agent → gỡ slug khỏi `allowedAgentSlugs` của peer.
+**Validation:** `validateCollaborationSettings` (`agent-collaboration.ts`) — bật collaboration phải có ≥1 member enabled; không `main`; slug hợp lệ. Xóa / disable agent → `CollaborationService.removeMember`; duplicate agent trong pool → `addMember`.
 
-**Merge runtime:** `buildAgentToAgentAllowList(enabledAgents)` → ghi `openclaw.json`:
+**Legacy migration:** `legacyTeamFormSlice` + `resolveProjectCollaborationSettings` (đọc một lần); module `agent-team.ts` đã gỡ — logic nằm trong `agent-collaboration.ts`.
+
+**Merge runtime:** `buildAgentToAgentAllowListFromCollaboration` → ghi `openclaw.json`:
 
 ```json5
 {
   tools: {
     agentToAgent: {
       enabled: true,
-      allow: ["agent-a", "agent-b", "main"]  // sorted union
+      allow: ["agent-a", "agent-b", "main"]  // main + enabled members
     }
   }
 }
 ```
 
-**Quy tắc build allow list (AucoBot):**
-
 | Điều kiện | Kết quả |
 | --------- | ------- |
-| Không agent nào `teamEnabled` | `{ enabled: false, allow: [] }` |
-| Có ≥1 agent `teamEnabled` | `enabled: true`; `allow` = union của `main`, slug caller bật team, và peer trong `allowedAgentSlugs` **chỉ khi peer đang enabled** trong project |
+| `collaborationEnabled: false` hoặc không member | `{ enabled: false, allow: [] }` |
+| Bật + có member | `enabled: true`; `allow` = `main` ∪ member slug **đang enabled** trong project |
 
-**Global whitelist (OpenClaw):** `tools.agentToAgent.allow` là **một list chung** cho cả gateway — không phải đồ thị hướng từng agent. UI chọn peer theo từng agent chỉ quyết định **ai được đưa vào list**; OpenClaw coi các slug trong list có thể dùng tool agent-to-agent (`sessions_send`, `sessions_spawn`, …). Chi tiết worker: `openclaw-architecture.md` §25.8.
+**OpenClaw:** `tools.agentToAgent.allow` là **một list chung** (mesh trong pool) — không team cách ly trên cùng gateway. Chi tiết: `openclaw-architecture.md` §25.8.
 
-> **Hạn chế hiện tại:** UI gợi ý “A chỉ gọi B”, runtime là **mesh** (B cũng nằm trong allow nếu A chọn B). Directed one-way cần lớp logic khác — OpenClaw config không hỗ trợ trực tiếp.
-
-**Khác `subagents.allowAgents`:** key per-agent trong `agents.list[]` — scope spawn sub-agent của agent đó; **khác** `tools.agentToAgent.allow` (global messaging). Xem `openclaw-architecture.md` §25.6 vs §25.8.
+**Khác `subagents.allowAgents`:** per-agent spawn scope; khác `tools.agentToAgent.allow` (global messaging). Xem `openclaw-architecture.md` §25.6 vs §25.8.
 
 ### 5.7 Hai luồng chat — Dashboard WS proxy vs kênh bot
 
@@ -675,7 +672,7 @@ sequenceDiagram
 | ------ | ---- |
 | Gateway upstream (RPC, channels, skills load) | `openclaw-architecture.md` |
 | Agent-to-agent tools (`sessions_send`, …) — worker | `openclaw-architecture.md` §25.8 |
-| Sync DB → disk, merge `openclaw.json`, team allow list (AucoBot) | `workflow.md` §5.6 |
+| Sync DB → disk, merge `openclaw.json`, collaboration allow list (AucoBot) | `workflow.md` §5.6 |
 | Sync, chat proxy, channels API (AucoBot) | `workflow.md` §5.5–5.7 |
 | Merge implementation | `aucobot/packages/workspace-sync/` |
 | Monorepo AucoBot, **4 service OSS**, compose, Phase migrate | `monorepoplan.md` §2, §14 |

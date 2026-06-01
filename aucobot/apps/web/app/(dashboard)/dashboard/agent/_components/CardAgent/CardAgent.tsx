@@ -131,6 +131,11 @@ export function CardAgent({
           <Sparkles size={12} />
           {agent.skillsCount} Skills
         </span>
+        {agent.inCollaboration ? (
+          <span className={`${styles.tag} ${styles.tagCollaboration}`}>
+            Collaboration
+          </span>
+        ) : null}
       </Flex>
     </Card>
   );

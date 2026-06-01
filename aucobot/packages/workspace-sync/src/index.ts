@@ -7,7 +7,7 @@ export {
 
 export {
   mergeAgentsIntoConfig,
-  mergeAgentTeamToolsIntoConfig,
+  mergeAgentCollaborationToolsIntoConfig,
   mergeProviderKeysIntoConfig,
   readOpenClawConfigJson,
   removeLegacyDotEnv,
@@ -34,19 +34,27 @@ export {
 } from './connector-mcp.js';
 
 export {
-  applyAgentTeamSettings,
-  AgentTeamValidationError,
-  buildAgentToAgentAllowList,
-  normalizeAgentTeamSettings,
-  removeSlugFromTeamAllowList,
-  validateAgentTeamSettings,
-  type AgentTeamMergeRow,
+  AgentCollaborationValidationError,
+  buildAgentToAgentAllowListFromCollaboration,
+  legacyTeamFormSlice,
+  normalizeCollaborationSettings,
+  parseCollaborationMemberSlugs,
+  removeSlugFromCollaborationMembers,
+  resolveProjectCollaborationSettings,
+  shouldPersistDerivedCollaboration,
+  validateCollaborationSettings,
   type AgentToAgentToolsConfig,
-  type ProjectAgentPeer,
-} from './agent-team.js';
+  type LegacyAgentTeamFormData,
+  type LegacyAgentTeamRow,
+  type ProjectCollaborationSettings,
+} from './agent-collaboration.js';
 
 export {
+  formDataHasLegacyTeamKeys,
+  LEGACY_TEAM_FORM_KEYS,
   parseAgentFormData,
+  stripLegacyTeamKeysFromRawFormData,
+  toStoredAgentFormData,
   type AgentFormInput,
   type AgentAskPolicy,
   type AgentInstructionsMode,

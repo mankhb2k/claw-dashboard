@@ -2037,6 +2037,8 @@ flowchart LR
 }
 ```
 
+**AucoBot SaaS:** một project = một pool collaboration (`Project.collaborationEnabled` + `collaborationMemberSlugs` → merge `tools.agentToAgent.allow`). Đây là **mesh trong pool**, không phải quyền một chiều A→B; UI tại `/dashboard/agent/collaboration` (xem `workflow.md` §5.6).
+
 **Tools giao tiếp agent:**
 
 | Tool | Chức năng |

@@ -2,7 +2,10 @@ import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AgentFormInput } from './agent-form.types.js';
 import { compileOpenClawAgentConfig } from './agent-workspace-compile.js';
-import { buildAgentToAgentAllowList } from './agent-team.js';
+import {
+  buildAgentToAgentAllowListFromCollaboration,
+  type ProjectCollaborationSettings,
+} from './agent-collaboration.js';
 import { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './provider-env-keys.js';
 import { CONTAINER_STATE_DIR, CONTAINER_WORKSPACE_DIR } from './openclaw-config.js';
 
@@ -108,13 +111,17 @@ export type ProjectAgentMergeRow = {
   isDefault: boolean;
 };
 
-/** Merge sub-agent calling policy into `tools.agentToAgent`. */
-export function mergeAgentTeamToolsIntoConfig(
+/** Merge agent-to-agent policy into `tools.agentToAgent` (project collaboration). */
+export function mergeAgentCollaborationToolsIntoConfig(
   config: Record<string, unknown>,
-  enabledAgents: ProjectAgentMergeRow[],
+  collaboration: ProjectCollaborationSettings,
+  enabledAgentSlugs: string[],
 ): Record<string, unknown> {
   const tools = (config.tools as Record<string, unknown> | undefined) ?? {};
-  tools.agentToAgent = buildAgentToAgentAllowList(enabledAgents);
+  tools.agentToAgent = buildAgentToAgentAllowListFromCollaboration(
+    collaboration,
+    enabledAgentSlugs,
+  );
   config.tools = tools;
   return config;
 }
@@ -123,6 +130,7 @@ export function mergeAgentTeamToolsIntoConfig(
 export function mergeAgentsIntoConfig(
   config: Record<string, unknown>,
   enabledAgents: ProjectAgentMergeRow[],
+  collaboration: ProjectCollaborationSettings,
 ): Record<string, unknown> {
   const agents = (config.agents as Record<string, unknown> | undefined) ?? {};
   const defaults = (agents.defaults as Record<string, unknown> | undefined) ?? {};
@@ -160,7 +168,13 @@ export function mergeAgentsIntoConfig(
   agents.defaults = defaults;
   agents.list = list;
   config.agents = agents;
-  mergeAgentTeamToolsIntoConfig(config, enabledAgents);
+
+  mergeAgentCollaborationToolsIntoConfig(
+    config,
+    collaboration,
+    enabledAgents.map((row) => row.slug),
+  );
+
   return config;
 }
 

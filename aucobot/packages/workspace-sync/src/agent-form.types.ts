@@ -20,9 +20,31 @@ export type AgentFormInput = {
   askPolicy: AgentAskPolicy;
   safeBins: string[];
   timeoutSec: number;
-  teamEnabled: boolean;
-  allowedAgentSlugs: string[];
 };
+
+export const LEGACY_TEAM_FORM_KEYS = ['teamEnabled', 'allowedAgentSlugs'] as const;
+
+export function formDataHasLegacyTeamKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') {
+    return false;
+  }
+  const o = raw as Record<string, unknown>;
+  return LEGACY_TEAM_FORM_KEYS.some((key) => key in o);
+}
+
+/** Returns cleaned JSON when legacy keys were present; otherwise null. */
+export function stripLegacyTeamKeysFromRawFormData(
+  raw: unknown,
+): Record<string, unknown> | null {
+  if (!formDataHasLegacyTeamKeys(raw)) {
+    return null;
+  }
+  const o = { ...(raw as Record<string, unknown>) };
+  for (const key of LEGACY_TEAM_FORM_KEYS) {
+    delete o[key];
+  }
+  return o;
+}
 
 export function parseAgentFormData(raw: unknown): AgentFormInput {
   if (!raw || typeof raw !== 'object') {
@@ -53,9 +75,14 @@ export function parseAgentFormData(raw: unknown): AgentFormInput {
       ? o.safeBins.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
       : [],
     timeoutSec: typeof o.timeoutSec === 'number' ? o.timeoutSec : 60,
-    teamEnabled: Boolean(o.teamEnabled),
-    allowedAgentSlugs: Array.isArray(o.allowedAgentSlugs)
-      ? o.allowedAgentSlugs.map((s) => String(s).trim()).filter(Boolean)
-      : [],
   };
+}
+
+/** Persisted JSON — omits legacy per-agent team keys (collaboration is project-level). */
+export function toStoredAgentFormData(form: AgentFormInput): Record<string, unknown> {
+  const stored: Record<string, unknown> = { ...form };
+  for (const key of LEGACY_TEAM_FORM_KEYS) {
+    delete stored[key];
+  }
+  return stored;
 }

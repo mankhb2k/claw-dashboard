@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Flex, Grid } from "@/components/layout";
 import {
@@ -16,7 +16,9 @@ import {
   Spinner,
   Typography,
 } from "@/components/ui";
-import { Plus, Bot } from "lucide-react";
+import Link from "next/link";
+import { Plus, Bot, Users } from "lucide-react";
+import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
 import { SearchItem } from "@/components/dashboard";
 import { CardAgent } from "../CardAgent/CardAgent";
 import styles from "./ClientAgentPage.module.css";
@@ -25,6 +27,7 @@ import { ModalTemplate } from "../ModalTemplate/ModalTemplate";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
+import { COLLABORATION_UPDATED_EVENT } from "@/lib/collaboration-events";
 
 function toAgentItem(row: ProjectAgentListRow): AgentItem {
   return {
@@ -35,6 +38,7 @@ function toAgentItem(row: ProjectAgentListRow): AgentItem {
     model: row.model,
     skillsCount: 0,
     isActive: row.enabled,
+    inCollaboration: row.inCollaboration,
   };
 }
 
@@ -48,10 +52,26 @@ export default function ClientAgentPage() {
   const [isModalTemplateOpen, setIsModalTemplateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [listFilter, setListFilter] = useState<"all" | "collaboration">("all");
+  const [collaborationEnabled, setCollaborationEnabled] = useState(false);
 
   useEffect(() => {
     void fetchProjects({ silent: true });
   }, [fetchProjects]);
+
+  const loadList = useCallback(async () => {
+    if (!projectId) {
+      setAgents([]);
+      setCollaborationEnabled(false);
+      return;
+    }
+    const [rows, collaboration] = await Promise.all([
+      projectApi.listAgents(projectId),
+      projectApi.getCollaboration(projectId),
+    ]);
+    setCollaborationEnabled(collaboration.enabled);
+    setAgents(rows.map(toAgentItem));
+  }, [projectId]);
 
   useEffect(() => {
     if (!projectId) {
@@ -61,23 +81,56 @@ export default function ClientAgentPage() {
     }
     setLoading(true);
     setError(null);
-    void projectApi
-      .listAgents(projectId)
-      .then((rows) => setAgents(rows.map(toAgentItem)))
+    void loadList()
       .catch((err) => {
         setAgents([]);
         setError(err instanceof Error ? err.message : "Cannot load agent list");
       })
       .finally(() => setLoading(false));
-  }, [projectId]);
+  }, [projectId, loadList]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadList().catch(() => undefined);
+    };
+    window.addEventListener(COLLABORATION_UPDATED_EVENT, refresh);
+    return () => window.removeEventListener(COLLABORATION_UPDATED_EVENT, refresh);
+  }, [loadList]);
+
+  useEffect(() => {
+    if (!collaborationEnabled && listFilter === "collaboration") {
+      setListFilter("all");
+    }
+  }, [collaborationEnabled, listFilter]);
+
+  const reloadAgents = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      await loadList();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cannot load agent list");
+    }
+  }, [projectId, loadList]);
 
   const filteredAgents = useMemo(() => {
-    return agents.filter(
-      (agent) =>
-        agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        agent.description.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [agents, searchQuery]);
+    return agents.filter((agent) => {
+      if (listFilter === "collaboration" && !agent.inCollaboration) {
+        return false;
+      }
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        agent.name.toLowerCase().includes(q) ||
+        agent.description.toLowerCase().includes(q) ||
+        agent.id.toLowerCase().includes(q)
+      );
+    });
+  }, [agents, searchQuery, listFilter]);
+
+  const collaborationCount = useMemo(
+    () => agents.filter((a) => a.inCollaboration).length,
+    [agents],
+  );
 
   const handleCreateNew = () => {
     setIsModalTemplateOpen(true);
@@ -91,8 +144,7 @@ export default function ClientAgentPage() {
     if (!projectId) return;
     void projectApi
       .duplicateAgent(projectId, agent.id)
-      .then(() => projectApi.listAgents(projectId))
-      .then((rows) => setAgents(rows.map(toAgentItem)))
+      .then(() => reloadAgents())
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Duplicate agent failed");
       });
@@ -106,9 +158,8 @@ export default function ClientAgentPage() {
     if (!deleteAgentId || !projectId) return;
     void projectApi
       .deleteAgent(projectId, deleteAgentId)
-      .then(() => projectApi.listAgents(projectId))
-      .then((rows) => {
-        setAgents(rows.map(toAgentItem));
+      .then(() => reloadAgents())
+      .then(() => {
         setDeleteAgentId(null);
       })
       .catch((err) => {
@@ -132,13 +183,38 @@ export default function ClientAgentPage() {
         </Typography>
       )}
 
-      <Flex justify="between" align="center" className={styles.toolbar}>
-        <SearchItem
-          id="agent-search"
-          placeholder="Search agent..."
-          value={searchQuery}
-          onChange={setSearchQuery}
-        />
+      <Flex justify="between" align="center" wrap="wrap" className={styles.toolbar}>
+        <Flex align="center" gap={3} className={styles.toolbarStart}>
+          <SearchItem
+            id="agent-search"
+            placeholder="Search agent..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+          {collaborationEnabled ? (
+            <Flex align="center" gap={2} className={styles.filterGroup}>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${
+                  listFilter === "all" ? styles.filterChipActive : ""
+                }`}
+                onClick={() => setListFilter("all")}
+              >
+                All ({agents.length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${
+                  listFilter === "collaboration" ? styles.filterChipActive : ""
+                }`}
+                onClick={() => setListFilter("collaboration")}
+              >
+                <Users size={14} aria-hidden />
+                Collaboration ({collaborationCount})
+              </button>
+            </Flex>
+          ) : null}
+        </Flex>
 
         <Button onClick={handleCreateNew} disabled={!projectId}>
           <Plus size={18} />
@@ -163,6 +239,26 @@ export default function ClientAgentPage() {
             />
           ))}
         </Grid>
+      ) : agents.length === 0 ? (
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          className={styles.emptyState}
+        >
+          <Bot size={48} className={styles.emptyIcon} />
+          <Typography variant="h3" className={styles.emptyTitle}>
+            No agents yet
+          </Typography>
+          <Typography variant="small" color="muted" className={styles.emptyDesc}>
+            Create your first agent, then configure collaboration so they can
+            work together.
+          </Typography>
+          <Button onClick={handleCreateNew} disabled={!projectId}>
+            <Plus size={18} />
+            Create first agent
+          </Button>
+        </Flex>
       ) : (
         <Flex
           direction="column"
@@ -172,20 +268,27 @@ export default function ClientAgentPage() {
         >
           <Bot size={48} className={styles.emptyIcon} />
           <Typography variant="h3" className={styles.emptyTitle}>
-            No Agent found
+            {listFilter === "collaboration"
+              ? "No agents in collaboration"
+              : "No matching agents"}
           </Typography>
-          <Typography
-            variant="small"
-            color="muted"
-            className={styles.emptyDesc}
-          >
-            No AI agent found matching your search query. Try changing the query
-            or creating a new agent from scratch.
+          <Typography variant="small" color="muted" className={styles.emptyDesc}>
+            {listFilter === "collaboration"
+              ? "Add agents on the Collaboration page or clear the filter."
+              : "Try a different search query."}
           </Typography>
-          <Button onClick={handleCreateNew} disabled={!projectId}>
-            <Plus size={18} />
-            Create First Agent
-          </Button>
+          {listFilter === "collaboration" ? (
+            <Link
+              href={`${DASHBOARD_BASE_PATH}/agent/collaboration`}
+              className={styles.collaborationLink}
+            >
+              Open collaboration settings
+            </Link>
+          ) : (
+            <Button type="button" variant="ghost" onClick={() => setSearchQuery("")}>
+              Clear search
+            </Button>
+          )}
         </Flex>
       )}
 

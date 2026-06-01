@@ -44,6 +44,8 @@ model Project {
   displayName  String        @map("display_name")
   subdomain    String        @unique
   gatewayToken String?       @map("gateway_token")
+  collaborationEnabled     Boolean @default(false) @map("collaboration_enabled")
+  collaborationMemberSlugs Json    @default("[]") @map("collaboration_member_slugs")
   status       ProjectStatus @default(CREATING)
   errorMessage String?       @map("error_message")
   lastActiveAt DateTime      @default(now()) @map("last_active_at")

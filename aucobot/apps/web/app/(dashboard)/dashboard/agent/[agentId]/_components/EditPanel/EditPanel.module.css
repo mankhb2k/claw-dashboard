@@ -51,6 +51,20 @@
   gap: var(--space-2);
 }
 
+.collaborationLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.collaborationLink:hover {
+  text-decoration: underline;
+}
+
 /* Form wrapped tabs + content */
 .form {
   flex: 1;
