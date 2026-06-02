@@ -1,5 +1,8 @@
 .card {
   padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .cardHeader {
@@ -13,9 +16,14 @@
 .headText {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-2);
   flex: 1;
   min-width: 0;
+}
+
+.titleLink {
+  text-decoration: none;
+  color: inherit;
 }
 
 .cardTitle {
@@ -38,6 +46,48 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+}
+
+.statusBadge {
+  width: fit-content;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid transparent;
+}
+
+.statusActive {
+  color: var(--color-success);
+  background: var(--color-success-dim);
+  border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
+}
+
+.statusDisabled {
+  color: var(--color-muted-foreground);
+  background: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+.statusError {
+  color: var(--color-danger);
+  background: var(--color-danger-dim);
+  border-color: color-mix(in srgb, var(--color-danger) 25%, transparent);
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.toggleWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 

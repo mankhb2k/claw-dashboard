@@ -12,6 +12,7 @@ import { ProjectConnectorsController } from './connectors/project-connectors.con
 import { ConnectorOAuthController } from './connectors/connector-oauth.controller';
 import { ProjectsService } from './projects.service';
 import { ProjectSkillsService } from './skills/project-skills.service';
+import { SkillStoreService } from './skills/skill-store.service';
 import { AgentService } from './agents/agent.service';
 import { SkillAiEditorService } from './skill-ai-editor/skill-ai-editor.service';
 import { ProjectConnectorsService } from './connectors/project-connectors.service';
@@ -42,6 +43,7 @@ import { ChannelsModule } from './channels/channels.module';
     ProjectsService,
     ProjectConnectorsService,
     ProjectSkillsService,
+    SkillStoreService,
     AgentService,
     AgentApiKeysService,
     CollaborationService,

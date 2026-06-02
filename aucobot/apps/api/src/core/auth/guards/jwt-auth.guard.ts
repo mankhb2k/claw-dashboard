@@ -1,3 +1,4 @@
+/** Protected routes: extract token → verify → req.user */
 import {
   CanActivate,
   ExecutionContext,

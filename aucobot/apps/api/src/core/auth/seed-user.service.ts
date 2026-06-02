@@ -1,3 +1,4 @@
+/** On boot: ensureSelfHostDefaultUser from env */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ensureSelfHostDefaultUser } from '@aucobot/control-plane-core';
 import { PrismaService } from '../database/prisma.service';

@@ -1,3 +1,5 @@
+/** Public user in auth API responses */
+
 export type PublicUser = {
   id: string;
   username: string;
@@ -6,6 +8,7 @@ export type PublicUser = {
   createdAt: string;
 };
 
+/** Prisma user → JSON-safe shape (no passwordHash) */
 export function toPublicUser(
   user: {
     id: string;
@@ -25,7 +28,7 @@ export function toPublicUser(
   };
 }
 
-/** Lowercase username for lookup and uniqueness. */
+/** trim + lowercase for register/login */
 export function normalizeUsername(raw: string): string {
   return raw.trim().toLowerCase();
 }

@@ -21,8 +21,11 @@ import {
   agentApiKeyListResponseSchema,
   agentApiKeyCreatedSchema,
   createAgentApiKeyInputSchema,
+  installSkillFromStoreInputSchema,
+  skillStoreDetailSchema,
   projectCollaborationSchema,
   updateProjectCollaborationSchema,
+  skillStoreSearchResponseSchema,
   skillAiEditorOptionsResponseSchema,
   skillAiEditorCompleteInputSchema,
   skillAiEditorCompleteResponseSchema,
@@ -30,6 +33,9 @@ import {
   type ProjectSkillDetail,
   type CreateProjectSkillInput,
   type UpdateProjectSkillInput,
+  type SkillStoreItem,
+  type SkillStoreDetail,
+  type InstallSkillFromStoreInput,
   type AgentTemplateRow,
   type ProjectAgentListRow,
   type ProjectAgentDetail,
@@ -322,6 +328,27 @@ export const projectApi = {
 
   deleteSkill: async (id: string, slug: string): Promise<void> => {
     await api.delete(`/api/projects/${id}/skills/${encodeURIComponent(slug)}`)
+  },
+
+  searchSkillStore: async (id: string, query?: string): Promise<SkillStoreItem[]> => {
+    const res = await api.get(`/api/projects/${id}/skills/store/search`, {
+      params: query?.trim() ? { q: query.trim() } : undefined,
+    })
+    return skillStoreSearchResponseSchema.parse(res.data).items
+  },
+
+  getSkillStoreItem: async (id: string, slug: string): Promise<SkillStoreDetail> => {
+    const res = await api.get(`/api/projects/${id}/skills/store/${encodeURIComponent(slug)}`)
+    return skillStoreDetailSchema.parse(res.data)
+  },
+
+  installSkillFromStore: async (
+    id: string,
+    input: InstallSkillFromStoreInput,
+  ): Promise<ProjectSkillDetail> => {
+    const body = installSkillFromStoreInputSchema.parse(input)
+    const res = await api.post(`/api/projects/${id}/skills/store/install`, body)
+    return projectSkillDetailSchema.parse(res.data)
   },
 
   syncAllSkills: async (id: string): Promise<{ synced: number; failed: number }> => {

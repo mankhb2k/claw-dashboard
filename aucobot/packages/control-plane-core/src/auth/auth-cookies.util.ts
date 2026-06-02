@@ -1,6 +1,7 @@
+/** Set-Cookie specs for API (login / refresh / logout) */
 import { AUTH_COOKIES, accessMaxAgeSec, refreshMaxAgeSec } from './auth.constants.js';
 
-/** Legacy paths that may still hold stale auth cookies in browsers. */
+/** Paths cleared on logout (stale browser cookies) */
 export const AUTH_COOKIE_CLEAR_PATHS = ['/', '/api', '/api/auth'] as const;
 
 export type AuthCookieOptions = {
@@ -25,6 +26,7 @@ function baseCookieOptions(): Pick<AuthCookieOptions, 'httpOnly' | 'sameSite' | 
   };
 }
 
+/** oc_access + oc_refresh after auth */
 export function buildAuthCookieSpecs(tokens: {
   accessToken: string;
   refreshToken: string;
@@ -44,6 +46,7 @@ export function buildAuthCookieSpecs(tokens: {
   ];
 }
 
+/** Expire auth cookies on all AUTH_COOKIE_CLEAR_PATHS */
 export function buildClearAuthCookieSpecs(): AuthCookieSpec[] {
   const base = baseCookieOptions();
   const specs: AuthCookieSpec[] = [];

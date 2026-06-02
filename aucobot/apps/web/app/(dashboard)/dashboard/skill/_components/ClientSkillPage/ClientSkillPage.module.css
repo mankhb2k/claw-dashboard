@@ -9,6 +9,12 @@
   margin-bottom: var(--space-6);
 }
 
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .headerTitleArea {
   flex: 1;
   min-width: 0;
@@ -41,11 +47,6 @@
 
 .cardWrapper {
   position: relative;
-}
-
-.cardFooter {
-  margin-top: var(--space-2);
-  padding: 0 var(--space-1);
 }
 
 .emptyText {

@@ -8,9 +8,6 @@
 **/vendor/
 **/*.tsbuildinfo
 *.log
-/openclaw-worker/
+openclaw-worker/
 .DS_Store
-.tmp-openclaw-upstream
-/generated/prisma
-/frontend/
-/9router
+

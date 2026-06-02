@@ -1,9 +1,11 @@
+/** Apply control-plane cookie specs on Fastify reply */
 import type { FastifyReply } from 'fastify';
 import {
   buildAuthCookieSpecs,
   buildClearAuthCookieSpecs,
 } from '@aucobot/control-plane-core';
 
+/** Clear stale cookies then set oc_access + oc_refresh */
 export function setAuthCookies(
   reply: FastifyReply,
   tokens: { accessToken: string; refreshToken: string },

@@ -1,7 +1,7 @@
+/** Default admin user on API startup (env SELF_HOST_USER_*) */
 import type { PrismaClient } from '@aucobot/database';
 import * as bcrypt from 'bcrypt';
 
-/** Self-host: default username/password from env (additional users via register). */
 export function selfHostUsernameFromEnv(): string {
   const raw =
     process.env.SELF_HOST_USER_USERNAME?.trim() ||
@@ -30,10 +30,7 @@ export function selfHostDisplayNameFromEnv(): string {
   );
 }
 
-/**
- * Create or update the default user from env (password synced on each run).
- * Other rows in `users` are left unchanged.
- */
+/** Create or sync default user from env (password updated each start) */
 export async function ensureSelfHostDefaultUser(
   prisma: PrismaClient,
 ): Promise<{ username: string; created: boolean }> {

@@ -1,8 +1,10 @@
+/** Read access/refresh from request; verify access via jwt-tokens.ts. Issuance: auth.service.ts */
 import { AUTH_COOKIES } from './auth.constants.js';
 import { verifyAccessToken, type JwtAccessPayload } from './jwt-tokens.js';
 
 export type { JwtAccessPayload as VerifiedJwtUser };
 
+/** Bearer → req.cookies[oc_access] → parse Cookie header */
 export function extractAccessTokenFromRequest(req: {
   headers?: { authorization?: string; cookie?: string };
   cookies?: Record<string, string | undefined>;
@@ -26,7 +28,7 @@ export function extractAccessTokenFromRequest(req: {
   return undefined;
 }
 
-/** Last `oc_refresh` wins when the browser sends duplicate cookies (stale + current). */
+/** Raw Cookie: last oc_refresh wins; else req.cookies[oc_refresh] */
 export function extractRefreshTokenFromRequest(req: {
   headers?: { cookie?: string };
   cookies?: Record<string, string | undefined>;
@@ -45,6 +47,7 @@ export function extractRefreshTokenFromRequest(req: {
   return fromRecord || undefined;
 }
 
+/** extract + verifyAccessToken → { sub, username } | null */
 export function verifyAccessTokenFromRequest(
   req: Parameters<typeof extractAccessTokenFromRequest>[0],
 ): JwtAccessPayload | null {

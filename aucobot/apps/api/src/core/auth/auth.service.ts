@@ -1,3 +1,4 @@
+/** Login/register/refresh/logout + DB (users, refresh_tokens) */
 import {
   ConflictException,
   Injectable,
@@ -55,6 +56,7 @@ export class AuthService {
     return this.issueTokens(user.id, user.username);
   }
 
+  /** Validate refresh hash, delete old row, issue new pair (rotation) */
   async refresh(
     refreshTokenRaw: string | undefined,
   ): Promise<AuthTokensResult> {
@@ -87,6 +89,7 @@ export class AuthService {
     await this.prisma.refreshToken.deleteMany({ where: { tokenHash } });
   }
 
+  /** signAccessToken + new refresh row + PublicUser */
   private async issueTokens(
     userId: string,
     username: string,

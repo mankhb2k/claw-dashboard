@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import JSZip from "jszip";
-import { Plus } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import {
   Button,
   Typography,
@@ -16,7 +16,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   Spinner,
-  Switch,
   toast,
 } from "@/components/ui";
 import {
@@ -25,10 +24,14 @@ import {
   type SkillDraft,
 } from "@/lib/skill-markdown";
 import { projectApi } from "@/lib/api/project";
-import type { ProjectSkillDetail, ProjectSkillListRow } from "@/schemas/project.schema";
+import type {
+  ProjectSkillDetail,
+  ProjectSkillListRow,
+} from "@/schemas/project.schema";
 import { useProjectStore } from "@/stores/project.store";
 import { CardSkill } from "../CardSkill/CardSkill";
 import { ModalCreateSkill } from "../ModalCreateSkill/ModalCreateSkill";
+import { ModalSkillStore } from "../ModalSkillStore/ModalSkillStore";
 import { Flex, Grid } from "@/components/layout";
 import styles from "./ClientSkillPage.module.css";
 
@@ -42,9 +45,11 @@ export function ClientSkillPage() {
   const [skills, setSkills] = useState<ProjectSkillListRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [togglingSlug, setTogglingSlug] = useState<string | null>(null);
+  const [installingStoreSlug, setInstallingStoreSlug] = useState<string | null>(null);
 
   const loadSkills = useCallback(async () => {
     if (!projectId) return;
@@ -54,7 +59,9 @@ export function ClientSkillPage() {
       setSkills(rows);
     } catch (err) {
       setSkills([]);
-      setLoadError(err instanceof Error ? err.message : "Không tải được skills");
+      setLoadError(
+        err instanceof Error ? err.message : "Không tải được skills",
+      );
     }
   }, [projectId]);
 
@@ -170,7 +177,9 @@ export function ClientSkillPage() {
     async (skill: ProjectSkillListRow, nextEnabled: boolean) => {
       setTogglingSlug(skill.slug);
       setSkills((prev) =>
-        prev.map((s) => (s.slug === skill.slug ? { ...s, enabled: nextEnabled } : s)),
+        prev.map((s) =>
+          s.slug === skill.slug ? { ...s, enabled: nextEnabled } : s,
+        ),
       );
       try {
         const result = await projectApi.setSkillEnabled(
@@ -185,8 +194,8 @@ export function ClientSkillPage() {
           toast.error("Sync skill thất bại", result.lastSyncError);
         } else if (nextEnabled) {
           toast.success(
-            "Đã bật skill",
-            "Agent áp dụng ở tin nhắn chat tiếp theo (/new nếu session cũ).",
+            "Enabled skill",
+            "Agent will apply at the next chat message (/new if old session).",
           );
         }
         await loadSkills();
@@ -197,7 +206,7 @@ export function ClientSkillPage() {
           ),
         );
         toast.error(
-          "Không đổi trạng thái skill",
+          "Cannot change skill status",
           err instanceof Error ? err.message : undefined,
         );
       } finally {
@@ -211,16 +220,40 @@ export function ClientSkillPage() {
     if (!skillToDelete || !projectId) return;
     try {
       await projectApi.deleteSkill(projectId, skillToDelete);
-      toast.success("Đã xóa skill");
+      toast.success("Deleted skill successfully");
       setSkillToDelete(null);
       await loadSkills();
     } catch (err) {
       toast.error(
-        "Xóa skill thất bại",
+        "Delete skill failed",
         err instanceof Error ? err.message : undefined,
       );
     }
   }, [skillToDelete, projectId, loadSkills]);
+
+  const handleInstallFromStore = useCallback(
+    async (slug: string, openAfterInstall = false) => {
+      if (!projectId) return;
+      setInstallingStoreSlug(slug);
+      try {
+        const created = await projectApi.installSkillFromStore(projectId, { slug });
+        toast.success("Installed skill", `${created.heading ?? created.name} is ready to edit.`);
+        await loadSkills();
+        setIsStoreModalOpen(false);
+        if (openAfterInstall) {
+          router.push(`/dashboard/skill/${created.slug}`);
+        }
+      } catch (err) {
+        toast.error(
+          "Install failed",
+          err instanceof Error ? err.message : "Cannot install from Browser Store.",
+        );
+      } finally {
+        setInstallingStoreSlug(null);
+      }
+    },
+    [projectId, loadSkills, router],
+  );
 
   const activeSkillForEdit = useMemo(() => {
     if (!editingSlug) return undefined;
@@ -244,7 +277,7 @@ export function ClientSkillPage() {
       >
         <Spinner size="md" />
         <Typography variant="p" color="muted">
-          Đang tải dữ liệu...
+          Loading data...
         </Typography>
       </Flex>
     );
@@ -253,7 +286,7 @@ export function ClientSkillPage() {
   if (!projectId) {
     return (
       <Typography variant="p" className={styles.errorText}>
-        Chưa có dự án. Hãy tạo dự án trước khi quản lý skills.
+        No project. Please create a project before managing skills.
       </Typography>
     );
   }
@@ -261,10 +294,16 @@ export function ClientSkillPage() {
   return (
     <>
       <div className={styles.toolbar}>
-        <Button onClick={openCreateModal}>
-          <Plus size={16} style={{ marginRight: 8 }} />
-          Tạo Skill mới
-        </Button>
+        <div className={styles.toolbarActions}>
+          <Button variant="secondary" onClick={() => setIsStoreModalOpen(true)}>
+            <Store size={16} style={{ marginRight: 8 }} />
+            Browser Store
+          </Button>
+          <Button onClick={openCreateModal}>
+            <Plus size={16} style={{ marginRight: 8 }} />
+            Create new skill
+          </Button>
+        </div>
       </div>
 
       <div className={styles.scrollArea}>
@@ -280,33 +319,22 @@ export function ClientSkillPage() {
                 title={skill.name}
                 description={skill.description}
                 href={`/dashboard/skill/${skill.slug}`}
+                enabled={skill.enabled}
+                hasSyncError={Boolean(skill.lastSyncError)}
+                isBusy={togglingSlug === skill.slug}
+                onToggleEnabled={(checked) =>
+                  void handleToggleEnabled(skill, checked)
+                }
                 onEdit={() => openEditModal(skill)}
                 onDownload={() => void handleDownloadZip(skill)}
                 onDelete={() => setSkillToDelete(skill.slug)}
               />
-              <Flex align="center" justify="between" className={styles.cardFooter}>
-                <Typography variant="small" color="muted">
-                  {skill.enabled
-                    ? skill.lastSyncError
-                      ? "Sync lỗi"
-                      : "Đã sync"
-                    : "Tắt"}
-                </Typography>
-                <Switch
-                  checked={skill.enabled}
-                  disabled={togglingSlug === skill.slug}
-                  onCheckedChange={(checked) =>
-                    void handleToggleEnabled(skill, checked)
-                  }
-                  aria-label={skill.enabled ? "Tắt skill" : "Bật skill"}
-                />
-              </Flex>
             </div>
           ))}
 
           {skills.length === 0 ? (
             <Typography variant="p" color="muted" className={styles.emptyText}>
-              Chưa có kỹ năng nào. Hãy tạo kỹ năng đầu tiên!
+              No skills yet. Please create the first skill!
             </Typography>
           ) : null}
         </Grid>
@@ -320,26 +348,38 @@ export function ClientSkillPage() {
         editingSlug={editingSlug}
       />
 
+      <ModalSkillStore
+        projectId={projectId}
+        isOpen={isStoreModalOpen}
+        installingSlug={installingStoreSlug}
+        onClose={() => setIsStoreModalOpen(false)}
+        onInstall={(slug, openAfterInstall) =>
+          void handleInstallFromStore(slug, openAfterInstall)
+        }
+        onOpenSkill={(slug) => router.push(`/dashboard/skill/${slug}`)}
+      />
+
       <AlertDialog
         open={!!skillToDelete}
         onOpenChange={(open) => !open && setSkillToDelete(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogTitle>Confirm delete</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa skill này không? Hành động này không thể hoàn tác.
+              Are you sure you want to delete this skill? This action cannot be
+              hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSkillToDelete(null)}>
-              Hủy
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               variant="danger"
               onClick={() => void confirmDeleteSkill()}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

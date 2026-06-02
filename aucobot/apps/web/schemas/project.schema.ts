@@ -274,10 +274,34 @@ export const updateProjectSkillSchema = z.object({
   enabled: z.boolean().optional(),
 })
 
+export const skillStoreItemSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  description: z.string(),
+  heading: z.string(),
+  tags: z.array(z.string()),
+  installed: z.boolean(),
+})
+
+export const skillStoreDetailSchema = skillStoreItemSchema.extend({
+  bodyMarkdown: z.string(),
+})
+
+export const skillStoreSearchResponseSchema = z.object({
+  items: z.array(skillStoreItemSchema),
+})
+
+export const installSkillFromStoreInputSchema = z.object({
+  slug: z.string().min(2).max(64),
+})
+
 export type ProjectSkillListRow = z.infer<typeof projectSkillListRowSchema>
 export type ProjectSkillDetail = z.infer<typeof projectSkillDetailSchema>
 export type CreateProjectSkillInput = z.infer<typeof createProjectSkillSchema>
 export type UpdateProjectSkillInput = z.infer<typeof updateProjectSkillSchema>
+export type SkillStoreItem = z.infer<typeof skillStoreItemSchema>
+export type SkillStoreDetail = z.infer<typeof skillStoreDetailSchema>
+export type InstallSkillFromStoreInput = z.infer<typeof installSkillFromStoreInputSchema>
 
 /** GET /api/projects/:id/skill-ai-editor/options */
 export const skillAiEditorOptionModelSchema = z.object({

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Container, Flex } from "@/components/layout";
-import { Typography, Button } from "@/components/ui";
+import { Typography, Button, toast } from "@/components/ui";
 import {
   agentFormSchema,
   agentTemplateToDefaults,
@@ -165,10 +165,7 @@ export function EditPanel({
   const [newTagInput, setNewTagInput] = useState("");
   const [joinCollaborationOnCreate, setJoinCollaborationOnCreate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showSaved, setShowSaved] = useState(false);
-  const savedHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  
 
   /* ── Handlers: add / remove command in allowlist sandbox ──────────────── */
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -190,31 +187,18 @@ export function EditPanel({
     );
   };
 
-  useEffect(() => {
-    return () => {
-      if (savedHideTimeoutRef.current) {
-        clearTimeout(savedHideTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const onSubmit = async (data: AgentFormInput) => {
     if (!projectId) {
-      setLoadError("No project — create a project first.");
+      toast.error("No project selected", "Create a project first.");
       return;
     }
-
-    if (savedHideTimeoutRef.current) {
-      clearTimeout(savedHideTimeoutRef.current);
-      savedHideTimeoutRef.current = null;
-    }
-    setShowSaved(false);
     setIsSaving(true);
     setLoadError(null);
 
     try {
       if (isEditing && agentId) {
         await projectApi.updateAgent(projectId, agentId, { formData: data });
+        toast.success("Agent updated", "Changes saved successfully.");
       } else {
         const created = await projectApi.createAgent(projectId, {
           formData: data,
@@ -227,16 +211,14 @@ export function EditPanel({
             /* agent created; collaboration update is best-effort */
           }
         }
+        toast.success("Agent created", "New agent saved successfully.");
         router.replace(`/dashboard/agent/${created.slug}`);
       }
-
-      setShowSaved(true);
-      savedHideTimeoutRef.current = setTimeout(() => {
-        setShowSaved(false);
-        savedHideTimeoutRef.current = null;
-      }, 3000);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Save agent failed");
+      toast.error(
+        "Save failed",
+        err instanceof Error ? err.message : "Could not save agent.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -246,6 +228,17 @@ export function EditPanel({
     <>
       {activeTab === "identity" && (
         <CardIdentity
+          collaborationSlot={
+            isEditing ? (
+              <Link
+                href={`${DASHBOARD_BASE_PATH}/agent/collaboration`}
+                className={styles.collaborationLink}
+              >
+                <Users size={14} aria-hidden />
+                Collaboration
+              </Link>
+            ) : undefined
+          }
           joinCollaborationSlot={
             !isEditing ? (
               <JoinCollaborationOnCreate
@@ -257,7 +250,7 @@ export function EditPanel({
         />
       )}
       {activeTab === "instructions" && (
-        <CardInstructions agentSlug={isEditing ? agentId : undefined} />
+        <CardInstructions />
       )}
       {activeTab === "capabilities" && (
         <CardCapabilities
@@ -321,25 +314,6 @@ export function EditPanel({
       <div className={styles.header}>
         <BackButton href="/dashboard/agent">Back to Agents</BackButton>
         <Flex align="center" gap={8}>
-          {isEditing ? (
-            <Link
-              href={`${DASHBOARD_BASE_PATH}/agent/collaboration`}
-              className={styles.collaborationLink}
-            >
-              <Users size={14} aria-hidden />
-              Collaboration
-            </Link>
-          ) : null}
-          {showSaved && (
-            <Typography
-              variant="small"
-              italic
-              weight="regular"
-              className={styles.saveStatus}
-            >
-              Saved ✓
-            </Typography>
-          )}
           <Button
             type="submit"
             form={AGENT_FORM_ID}

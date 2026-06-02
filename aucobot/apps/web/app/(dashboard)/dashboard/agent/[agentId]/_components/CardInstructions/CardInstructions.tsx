@@ -25,12 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { AgentFormInput } from "@/schemas/agentForm.schema";
-import { CardCollaborationPanel } from "../CardCollaborationPanel/CardCollaborationPanel";
 import styles from "./CardInstructions.module.css";
-
-interface CardInstructionsProps {
-  agentSlug?: string;
-}
 
 type InstructionsView = "editor" | "markdown";
 
@@ -47,7 +42,7 @@ const SIMPLE_SECTIONS: {
   { id: "tools", label: "Environment notes", icon: Wrench },
 ];
 
-export function CardInstructions({ agentSlug }: CardInstructionsProps) {
+export function CardInstructions() {
   const {
     register,
     watch,
@@ -241,7 +236,6 @@ export function CardInstructions({ agentSlug }: CardInstructionsProps) {
         </Flex>
       )}
 
-      <CardCollaborationPanel agentSlug={agentSlug} />
     </Card>
   );
 }

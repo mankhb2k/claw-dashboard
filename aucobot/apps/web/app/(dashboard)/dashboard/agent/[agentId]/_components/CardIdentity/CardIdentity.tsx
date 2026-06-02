@@ -19,10 +19,14 @@ function normalizeTag(raw: string) {
 }
 
 interface CardIdentityProps {
+  collaborationSlot?: React.ReactNode;
   joinCollaborationSlot?: React.ReactNode;
 }
 
-export function CardIdentity({ joinCollaborationSlot }: CardIdentityProps) {
+export function CardIdentity({
+  collaborationSlot,
+  joinCollaborationSlot,
+}: CardIdentityProps) {
   const {
     register,
     control,
@@ -60,9 +64,12 @@ export function CardIdentity({ joinCollaborationSlot }: CardIdentityProps) {
 
   return (
     <Card className={styles.card} disableHover>
-      <Typography variant="p" weight="bold">
-        Basic information
-      </Typography>
+      <div className={styles.cardHeader}>
+        <Typography variant="p" weight="bold">
+          Basic information
+        </Typography>
+        {collaborationSlot}
+      </div>
 
       <Flex align="center" gap={4} className={styles.avatarRow}>
         <Avatar src="" fallback={avatar} size="lg" />
