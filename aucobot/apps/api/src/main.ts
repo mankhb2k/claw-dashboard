@@ -10,7 +10,9 @@ import {
 } from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 import fastifyWebsocket from '@fastify/websocket';
+import { AVATAR_MAX_BYTES } from '@aucobot/runtime-contracts';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger as PinoNestLogger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -38,6 +40,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   await app.register(fastifyCookie);
+
+  await app.register(fastifyMultipart, {
+    limits: { fileSize: AVATAR_MAX_BYTES, files: 1 },
+  });
 
   await app.register(fastifyCors, {
     origin: [

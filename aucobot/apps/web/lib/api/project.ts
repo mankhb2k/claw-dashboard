@@ -18,6 +18,9 @@ import {
   agentTemplateRowSchema,
   projectAgentListRowSchema,
   projectAgentDetailSchema,
+  agentApiKeyListResponseSchema,
+  agentApiKeyCreatedSchema,
+  createAgentApiKeyInputSchema,
   projectCollaborationSchema,
   updateProjectCollaborationSchema,
   skillAiEditorOptionsResponseSchema,
@@ -32,6 +35,9 @@ import {
   type ProjectAgentDetail,
   type CreateProjectAgentInput,
   type UpdateProjectAgentInput,
+  type AgentApiKeyListItem,
+  type AgentApiKeyCreated,
+  type CreateAgentApiKeyInput,
   type ProjectCollaboration,
   type UpdateProjectCollaborationInput,
   createProjectAgentSchema,
@@ -405,6 +411,39 @@ export const projectApi = {
 
   deleteAgent: async (id: string, slug: string): Promise<void> => {
     await api.delete(`/api/projects/${id}/agents/${encodeURIComponent(slug)}`)
+  },
+
+  listAgentApiKeys: async (
+    id: string,
+    agentSlug: string,
+  ): Promise<AgentApiKeyListItem[]> => {
+    const res = await api.get(
+      `/api/projects/${id}/agents/${encodeURIComponent(agentSlug)}/api-keys`,
+    )
+    return agentApiKeyListResponseSchema.parse(res.data).items
+  },
+
+  createAgentApiKey: async (
+    id: string,
+    agentSlug: string,
+    input: CreateAgentApiKeyInput,
+  ): Promise<AgentApiKeyCreated> => {
+    const body = createAgentApiKeyInputSchema.parse(input)
+    const res = await api.post(
+      `/api/projects/${id}/agents/${encodeURIComponent(agentSlug)}/api-keys`,
+      body,
+    )
+    return agentApiKeyCreatedSchema.parse(res.data)
+  },
+
+  revokeAgentApiKey: async (
+    id: string,
+    agentSlug: string,
+    keyId: string,
+  ): Promise<void> => {
+    await api.delete(
+      `/api/projects/${id}/agents/${encodeURIComponent(agentSlug)}/api-keys/${encodeURIComponent(keyId)}`,
+    )
   },
 
   syncAllAgents: async (id: string): Promise<{ synced: number; failed: number }> => {

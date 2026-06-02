@@ -403,6 +403,30 @@ export type ProjectAgentDetail = z.infer<typeof projectAgentDetailSchema>
 export type CreateProjectAgentInput = z.infer<typeof createProjectAgentSchema>
 export type UpdateProjectAgentInput = z.infer<typeof updateProjectAgentSchema>
 
+export const agentApiKeyListItemSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  tokenPrefix: z.string(),
+  createdAt: z.coerce.string(),
+  lastUsedAt: z.coerce.string().nullable(),
+})
+
+export const agentApiKeyListResponseSchema = z.object({
+  items: z.array(agentApiKeyListItemSchema),
+})
+
+export const agentApiKeyCreatedSchema = agentApiKeyListItemSchema.extend({
+  token: z.string().min(1),
+})
+
+export const createAgentApiKeyInputSchema = z.object({
+  label: z.string().min(1).max(200),
+})
+
+export type AgentApiKeyListItem = z.infer<typeof agentApiKeyListItemSchema>
+export type AgentApiKeyCreated = z.infer<typeof agentApiKeyCreatedSchema>
+export type CreateAgentApiKeyInput = z.infer<typeof createAgentApiKeyInputSchema>
+
 export const projectCollaborationSchema = z.object({
   enabled: z.boolean(),
   memberSlugs: z.array(z.string()),

@@ -65,6 +65,13 @@ export const api = axios.create({
 
 setupMockInterceptor(api)
 
+api.interceptors.request.use((config) => {
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    config.headers.delete('Content-Type')
+  }
+  return config
+})
+
 api.interceptors.response.use(
   (res) => {
     if (res.data && typeof res.data === 'object' && 'success' in res.data) {

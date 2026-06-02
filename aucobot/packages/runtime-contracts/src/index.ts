@@ -18,3 +18,12 @@ export {
   type RuntimeProvisioner,
 } from './runtime-provisioner.js';
 export { NoopPlanGuard } from './noop-plan-guard.js';
+export {
+  AVATAR_MAX_BYTES,
+  AVATAR_ALLOWED_MIME_TYPES,
+  USER_AVATAR_API_PATH,
+  assertAvatarFile,
+  type AvatarFilePayload,
+  type AvatarReadResult,
+  type AvatarStorage,
+} from './avatar-storage.js';

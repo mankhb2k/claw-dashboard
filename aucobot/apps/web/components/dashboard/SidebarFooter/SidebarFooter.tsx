@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Monitor, Moon, Palette, Settings, Sun } from "lucide-react";
+import { LogOut, Monitor, Moon, Palette, Settings, Sun, User } from "lucide-react";
 import {
   Avatar,
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui";
 import type { ThemePreference } from "@/schemas/theme.schema";
+import { resolveUserAvatarSrc } from "@/lib/user-avatar";
 import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/stores/theme.store";
 import styles from "./SidebarFooter.module.css";
@@ -38,6 +39,12 @@ function FooterDropdownMenuContent({ onLogout }: { onLogout: () => void }) {
 
   return (
     <>
+      <DropdownMenuItem asChild>
+        <Link href="/dashboard/profile">
+          <User size={14} aria-hidden />
+          Profile
+        </Link>
+      </DropdownMenuItem>
       <DropdownMenuSub select>
         <DropdownMenuSubItem detail={THEME_DETAIL[theme]}>
           <Palette size={14} aria-hidden />
@@ -125,6 +132,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
             <Avatar
               size="md"
               className={styles.footerAvatar}
+              src={resolveUserAvatarSrc(user?.avatarUrl)}
               fallback={initials}
               alt={user?.username ?? "User avatar"}
             />
@@ -143,7 +151,11 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
         )}
       </DropdownMenu>
 
-      {!collapsed && <span className={styles.footerText}>{displayName}</span>}
+      {!collapsed && (
+        <Link href="/dashboard/profile" className={styles.footerText}>
+          {displayName}
+        </Link>
+      )}
 
       {!collapsed && (
         <div className={styles.settingsWrap}>

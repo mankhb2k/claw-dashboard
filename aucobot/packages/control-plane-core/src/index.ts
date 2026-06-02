@@ -50,6 +50,12 @@ export {
   generateRefreshTokenRaw,
 } from './auth/refresh-token.util.js';
 export {
+  AGENT_API_TOKEN_PREFIX,
+  AGENT_API_TOKEN_PREFIX_LENGTH,
+  generateAgentApiToken,
+  hashAgentApiToken,
+} from './auth/agent-api-token.util.js';
+export {
   AUTH_COOKIE_CLEAR_PATHS,
   buildAuthCookieSpecs,
   buildClearAuthCookieSpecs,

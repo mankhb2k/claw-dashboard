@@ -45,11 +45,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-decoration: none;
+  color: inherit;
   transition:
     opacity 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    color 0.2s ease;
   opacity: 1;
   transform: translateX(0);
+}
+
+.footerText:hover {
+  color: var(--color-sidebar-active, #ffffff);
 }
 
 .footerTextHidden {

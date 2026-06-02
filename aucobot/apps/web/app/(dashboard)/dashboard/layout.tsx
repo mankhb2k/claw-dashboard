@@ -37,7 +37,7 @@ function isDashboardCanvasRoute(pathname: string): boolean {
 }
 
 const DASHBOARD_ROUTE =
-  /^\/dashboard(?:\/(setting|ai-model|channel|chat|skill|connect|agent)(?:\/[^/]+)*)?$/;
+  /^\/dashboard(?:\/(setting|profile|ai-model|channel|chat|skill|connect|agent)(?:\/[^/]+)*)?$/;
 
 export default function DashboardLayout({
   children,
@@ -118,6 +118,7 @@ export default function DashboardLayout({
     connect: "Connect",
     skill: "Skill Directory",
     setting: "Settings",
+    profile: "Profile",
   };
 
   const title = titleMap[subSegment] || "Dashboard";

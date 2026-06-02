@@ -6,20 +6,21 @@ export type PublicUser = {
   createdAt: string;
 };
 
-export function toPublicUser(user: {
-  id: string;
-  username: string;
-  name: string | null;
-  avatarUrl?: string | null;
-  createdAt: Date;
-}): PublicUser {
+export function toPublicUser(
+  user: {
+    id: string;
+    username: string;
+    name: string | null;
+    createdAt: Date;
+  },
+  avatarDisplayUrl?: string | null,
+): PublicUser {
   const username = user.username.trim();
-  const avatar = user.avatarUrl?.trim();
   return {
     id: user.id,
     username,
     name: user.name?.trim() || username,
-    avatarUrl: avatar || null,
+    avatarUrl: avatarDisplayUrl?.trim() || null,
     createdAt: user.createdAt.toISOString(),
   };
 }

@@ -13,6 +13,11 @@ import {
   IconProvider,
   CodeBlock,
   Spinner,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
@@ -31,12 +36,8 @@ import {
   ArrowUpRight,
   Rocket,
 } from "lucide-react";
-import {
-  MOCK_API_KEYS,
-  type ApiKeyItem,
-  MOCK_AGENT_CHANNEL_TOOLS,
-  MOCK_AGENT_CONNECTOR_TOOLS,
-} from "../../../agentMockData";
+import { MOCK_AGENT_CHANNEL_TOOLS, MOCK_AGENT_CONNECTOR_TOOLS } from "../../../agentMockData";
+import type { AgentApiKeyListItem } from "@/schemas/project.schema";
 import {
   mergeChannelCatalog,
   type ChannelCatalogCard,
@@ -72,7 +73,7 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <Flex justify="between" align="start" gap={4} className={styles.headerRow}>
+    <Flex justify="between" align="center" gap={4} className={styles.headerRow}>
       <div className={styles.header}>
         <Typography variant="p" weight="bold">
           {title}
@@ -137,10 +138,20 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
   const router = useRouter();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
 
-  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(MOCK_API_KEYS);
-  const [newKeyName, setNewKeyName] = useState("");
-  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const isAgentPersisted = Boolean(projectId && agentId && agentId !== "new-agent");
+
+  const [apiKeys, setApiKeys] = useState<AgentApiKeyListItem[]>([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+  const [apiKeysError, setApiKeysError] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [dialogKeyName, setDialogKeyName] = useState("");
+  const [createdKeyDialog, setCreatedKeyDialog] = useState<{
+    label: string;
+    token: string;
+  } | null>(null);
+  const [copiedCreatedToken, setCopiedCreatedToken] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   const [snippetTab, setSnippetTab] = useState<SnippetTab>("curl");
 
@@ -209,10 +220,30 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     }
   }, [projectId]);
 
+  const loadAgentApiKeys = useCallback(async () => {
+    if (!isAgentPersisted) {
+      setApiKeys([]);
+      return;
+    }
+    setApiKeysError(null);
+    setApiKeysLoading(true);
+    try {
+      const items = await projectApi.listAgentApiKeys(projectId, agentId);
+      setApiKeys(items);
+    } catch (err) {
+      setApiKeysError(
+        err instanceof Error ? err.message : "Không tải được API keys",
+      );
+    } finally {
+      setApiKeysLoading(false);
+    }
+  }, [isAgentPersisted, projectId, agentId]);
+
   useEffect(() => {
     void loadProjectChannels();
     void loadProjectConnectors();
-  }, [loadProjectChannels, loadProjectConnectors]);
+    void loadAgentApiKeys();
+  }, [loadProjectChannels, loadProjectConnectors, loadAgentApiKeys]);
 
   useEffect(() => {
     setEnabledChannels((prev) => {
@@ -246,32 +277,66 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     });
   }, [projectConnectors]);
 
-  const handleGenerateKey = () => {
-    setIsGenerating(true);
-    setTimeout(() => {
-      const name = newKeyName.trim() || `API Key #${apiKeys.length + 1}`;
-      const hex = Array.from({ length: 24 }, () =>
-        Math.floor(Math.random() * 16).toString(16),
-      ).join("");
-      setApiKeys((prev) => [
-        ...prev,
-        {
-          id: `key-${Date.now()}`,
-          name,
-          token: `sk-claw-${hex}`,
-          createdAt: new Date().toISOString().split("T")[0],
-        },
-      ]);
-      setNewKeyName("");
-      setIsGenerating(false);
-    }, 800);
+  const closeCreateDialog = () => {
+    setCreateDialogOpen(false);
+    setDialogKeyName("");
   };
 
-  const handleCopyKey = (id: string, token: string) => {
-    void navigator.clipboard.writeText(token);
-    setCopiedKeyId(id);
-    setTimeout(() => setCopiedKeyId(null), 2000);
+  const openCreateDialog = () => {
+    setDialogKeyName("");
+    setCreateDialogOpen(true);
   };
+
+  const handleGenerateKey = async () => {
+    const label = dialogKeyName.trim();
+    if (!label || !isAgentPersisted) {
+      return;
+    }
+    setIsGenerating(true);
+    setApiKeysError(null);
+    try {
+      const created = await projectApi.createAgentApiKey(projectId, agentId, { label });
+      closeCreateDialog();
+      setCreatedKeyDialog({ label: created.label, token: created.token });
+      setCopiedCreatedToken(false);
+      await loadAgentApiKeys();
+    } catch (err) {
+      setApiKeysError(
+        err instanceof Error ? err.message : "Không tạo được API key",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRevokeKey = async (keyId: string) => {
+    if (!isAgentPersisted) {
+      return;
+    }
+    setDeletingKeyId(keyId);
+    setApiKeysError(null);
+    try {
+      await projectApi.revokeAgentApiKey(projectId, agentId, keyId);
+      setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
+    } catch (err) {
+      setApiKeysError(
+        err instanceof Error ? err.message : "Không xóa được API key",
+      );
+    } finally {
+      setDeletingKeyId(null);
+    }
+  };
+
+  const handleCopyCreatedToken = () => {
+    if (!createdKeyDialog) {
+      return;
+    }
+    void navigator.clipboard.writeText(createdKeyDialog.token);
+    setCopiedCreatedToken(true);
+    setTimeout(() => setCopiedCreatedToken(false), 2000);
+  };
+
+  const formatKeyDate = (iso: string) => iso.split("T")[0] ?? iso;
 
   const toggleChannel = (channelId: string) => {
     setEnabledChannels((prev) => ({
@@ -287,7 +352,9 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     }));
   };
 
-  const activeToken = apiKeys[0]?.token ?? "sk-claw-your-api-token";
+  const activeToken = apiKeys[0]?.tokenPrefix
+    ? `${apiKeys[0].tokenPrefix}…`
+    : "sk-claw-your-api-token";
 
   const channelAgentRows = useMemo((): ChannelAgentRow[] => {
     return channelCatalog.map((channel) => ({
@@ -386,9 +453,32 @@ print(response.json()["choices"][0]["message"]["content"])`,
         <SectionHeader
           title="API keys"
           description="Access tokens for external apps to call this agent via REST API."
+          action={
+            <Button
+              type="button"
+              size="sm"
+              onClick={openCreateDialog}
+              disabled={!isAgentPersisted}
+            >
+              <Plus size={14} aria-hidden />
+              Create API key
+            </Button>
+          }
         />
 
-        {apiKeys.length === 0 ? (
+        {!isAgentPersisted ? (
+          <Typography variant="small" color="muted" className={styles.emptyTable}>
+            Save the agent first to create API keys.
+          </Typography>
+        ) : apiKeysLoading ? (
+          <div className={styles.apiKeysLoading}>
+            <Spinner size="sm" />
+          </div>
+        ) : apiKeysError ? (
+          <Typography variant="small" className={styles.apiKeysError}>
+            {apiKeysError}
+          </Typography>
+        ) : apiKeys.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.emptyTable}>
             No API keys yet.
           </Typography>
@@ -406,37 +496,19 @@ print(response.json()["choices"][0]["message"]["content"])`,
               <tbody>
                 {apiKeys.map((key) => (
                   <tr key={key.id}>
-                    <td className={styles.keyName}>{key.name}</td>
+                    <td className={styles.keyName}>{key.label}</td>
                     <td>
-                      <div className={styles.tokenCell}>
-                        <span className={styles.tokenText}>
-                          {key.token.substring(0, 18)}…
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon_sm"
-                          onClick={() => handleCopyKey(key.id, key.token)}
-                          aria-label={`Copy token ${key.name}`}
-                        >
-                          {copiedKeyId === key.id ? (
-                            <Check size={14} />
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </Button>
-                      </div>
+                      <span className={styles.tokenText}>{key.tokenPrefix}…</span>
                     </td>
-                    <td className={styles.keyDate}>{key.createdAt}</td>
+                    <td className={styles.keyDate}>{formatKeyDate(key.createdAt)}</td>
                     <td className={styles.colActions}>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon_sm"
-                        onClick={() =>
-                          setApiKeys((prev) => prev.filter((k) => k.id !== key.id))
-                        }
-                        aria-label={`Delete ${key.name}`}
+                        loading={deletingKeyId === key.id}
+                        onClick={() => void handleRevokeKey(key.id)}
+                        aria-label={`Delete ${key.label}`}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -448,26 +520,91 @@ print(response.json()["choices"][0]["message"]["content"])`,
           </div>
         )}
 
-        <Flex align="end" gap={3} className={styles.createRow}>
-          <Input
-            id="new-api-key-name"
-            label="New key label"
-            placeholder="e.g. CRM integration"
-            value={newKeyName}
-            onChange={(e) => setNewKeyName(e.target.value)}
-            className={styles.createInput}
-          />
-          <Button
-            type="button"
-            size="sm"
-            loading={isGenerating}
-            onClick={handleGenerateKey}
-          >
-            <Plus size={14} aria-hidden />
-            Create API key
-          </Button>
-        </Flex>
       </Card>
+
+      <Dialog
+        open={createDialogOpen}
+        onOpenChange={(open) => !open && closeCreateDialog()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create API key</DialogTitle>
+          </DialogHeader>
+          <form
+            className={styles.dialogForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleGenerateKey();
+            }}
+          >
+            <Input
+              id="new-api-key-name"
+              label="Key name"
+              placeholder="e.g. CRM integration"
+              value={dialogKeyName}
+              onChange={(e) => setDialogKeyName(e.target.value)}
+              autoFocus
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={closeCreateDialog}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                loading={isGenerating}
+                disabled={!dialogKeyName.trim()}
+              >
+                Create
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={createdKeyDialog !== null}
+        onOpenChange={(open) => !open && setCreatedKeyDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>API key created</DialogTitle>
+          </DialogHeader>
+          <Typography variant="small" color="muted">
+            Copy this token now. You will not be able to see it again.
+          </Typography>
+          {createdKeyDialog ? (
+            <div className={styles.createdTokenRow}>
+              <code className={styles.createdToken}>{createdKeyDialog.token}</code>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon_sm"
+                onClick={handleCopyCreatedToken}
+                aria-label="Copy API key"
+              >
+                {copiedCreatedToken ? <Check size={14} /> : <Copy size={14} />}
+              </Button>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setCreatedKeyDialog(null)}
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className={styles.card} disableHover>
         <SectionHeader

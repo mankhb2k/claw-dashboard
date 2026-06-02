@@ -13,9 +13,12 @@ model User {
   id           String   @id @default(cuid())
   username     String   @unique
   passwordHash String   @map("password_hash")
-  name         String?
-  avatarUrl    String?  @map("avatar_url")
-  createdAt    DateTime @default(now()) @map("created_at")
+  name              String?
+  avatarUrl         String?  @map("avatar_url")
+  avatarMimeType    String?  @map("avatar_mime_type")
+  avatarData        Bytes?   @map("avatar_data")
+  avatarStorageKey  String?  @map("avatar_storage_key")
+  createdAt         DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   refreshTokens RefreshToken[]
@@ -139,11 +142,31 @@ model ProjectAgent {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project  Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  apiKeys  ProjectAgentApiKey[]
 
   @@unique([projectId, slug])
   @@index([projectId])
   @@map("project_agents")
+}
+
+/// REST/widget access tokens for a single agent (`sk-claw-…`). Plaintext shown once on create; only hash + prefix stored.
+model ProjectAgentApiKey {
+  id             String    @id @default(cuid())
+  projectAgentId String    @map("project_agent_id")
+  label          String
+  tokenPrefix    String    @map("token_prefix")
+  tokenHash      String    @unique @map("token_hash")
+  lastUsedAt     DateTime? @map("last_used_at")
+  revokedAt      DateTime? @map("revoked_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  projectAgent ProjectAgent @relation(fields: [projectAgentId], references: [id], onDelete: Cascade)
+
+  @@index([projectAgentId])
+  @@index([projectAgentId, revokedAt])
+  @@map("project_agent_api_keys")
 }
 
 model ProjectSkill {

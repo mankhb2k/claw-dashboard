@@ -10,6 +10,7 @@ interface AuthState {
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
+  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -25,6 +26,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isInitialized: true });
     }
   },
+
+  setUser: (user) => set({ user }),
 
   login: async (input) => {
     set({ isLoading: true });
