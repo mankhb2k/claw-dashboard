@@ -134,10 +134,21 @@ export class ProjectsService {
   private async syncOssProjectFromGateway(
     project: Awaited<ReturnType<typeof this.requireOwned>>,
   ) {
+    const canonicalToken = resolveOssGatewayToken(project.gatewayToken);
+    await this.workspace.syncGatewayAuthToDisk(project.id, canonicalToken);
+
+    const envToken = process.env.OPENCLAW_GATEWAY_TOKEN?.trim();
+    if (envToken && project.gatewayToken !== canonicalToken) {
+      project = await this.prisma.project.update({
+        where: { id: project.id },
+        data: { gatewayToken: canonicalToken },
+      });
+    }
+
     const live = await this.ossProvisioner.getStatus({
       projectId: project.id,
       mode: 'oss',
-      gatewayToken: resolveOssGatewayToken(project.gatewayToken),
+      gatewayToken: canonicalToken,
     });
 
     const gatewayDownMsg =

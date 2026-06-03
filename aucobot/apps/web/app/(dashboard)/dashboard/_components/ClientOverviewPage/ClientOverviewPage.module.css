@@ -1,0 +1,16 @@
+.loadingContainer {
+  flex: 1;
+  padding: var(--space-10) var(--space-6);
+}
+
+.errorText {
+  color: var(--color-danger);
+  padding: var(--space-4) 0;
+}
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: var(--space-8);
+}

@@ -1,0 +1,72 @@
+.card {
+  width: 100%;
+  height: 100%;
+  min-height: 8.5rem;
+  padding: var(--space-4);
+}
+
+.spanFull {
+  grid-column: 1 / -1;
+}
+
+.inner {
+  min-height: 0;
+  height: 100%;
+}
+
+/* Khối title, mô tả, stats + tags */
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  line-height: 1.35;
+}
+
+.desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  line-height: 1.45;
+}
+
+.metaRow {
+  flex-shrink: 0;
+}
+
+.stats {
+  flex-shrink: 0;
+}
+
+.tagRow {
+  flex-shrink: 0;
+  max-height: 1.625rem;
+  overflow: hidden;
+}
+
+.tag {
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+.stat {
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+/* Nút Install / Open editor — cột riêng */
+.action {
+  flex-shrink: 0;
+  align-self: center;
+}

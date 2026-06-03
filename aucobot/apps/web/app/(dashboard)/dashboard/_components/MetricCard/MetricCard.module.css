@@ -1,32 +1,37 @@
-.card {
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6) var(--space-6) calc(var(--space-6) + 4px);
+/* Bọc Card — chừa chỗ cho thanh accent dưới */
+.root {
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+  padding-bottom: calc(var(--space-5) + 4px);
+  transition:
+    transform 0.2s var(--ease-out),
+    border-color var(--transition-base) ease,
+    box-shadow var(--transition-base) ease;
 }
 
-.card:hover {
+/* Hover nâng nhẹ như bản cũ */
+.root:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.progressBar {
+/* Thanh màu trang trí dưới cùng */
+.accentBar {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 3px;
   opacity: 0.8;
+  background: var(--metric-accent);
 }
 
+/* Xu hướng tăng */
 .trendUp {
   color: var(--color-success);
 }
 
+/* Xu hướng giảm */
 .trendDown {
   color: var(--color-danger);
 }

@@ -1,0 +1,20 @@
+appId: ai.openclaw.node-device
+productName: OpenClaw Node
+npmRebuild: false
+directories:
+  output: release
+files:
+  - dist/**/*
+  - package.json
+  - node_modules/openclaw/**/*
+  - node_modules/.bin/openclaw*
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

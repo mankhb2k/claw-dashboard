@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from "@/components/ui";
 import { skillDraftSchema, type SkillDraft } from "@/lib/skill-markdown";
 import styles from "./ModalCreateSkill.module.css";
 
@@ -70,6 +79,11 @@ export function ModalCreateSkill({
           <DialogTitle>
             {editingSlug ? "Sửa thông tin Skill" : "Khởi tạo Skill mới"}
           </DialogTitle>
+          <DialogDescription>
+            {editingSlug
+              ? "Update the skill name and description shown in the directory."
+              : "Create a new skill with a unique slug for this project."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className={styles.body}>

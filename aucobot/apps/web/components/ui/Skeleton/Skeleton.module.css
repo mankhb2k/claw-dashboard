@@ -1,0 +1,37 @@
+/* Khối placeholder loading */
+.root {
+  display: block;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-muted);
+}
+
+/* Dòng chữ giả */
+.text {
+  height: 1rem;
+  width: 100%;
+}
+
+.textSm {
+  height: 0.75rem;
+}
+
+/* Hình tròn (avatar, icon) */
+.circle {
+  border-radius: 50%;
+}
+
+/* Hiệu ứng pulse */
+.pulse {
+  animation: skeletonPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}

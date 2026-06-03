@@ -1,0 +1,88 @@
+/* Vỏ cuộn ngang */
+.wrapper {
+  width: 100%;
+}
+
+.scrollable {
+  overflow-x: auto;
+}
+
+/* Bảng chính */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Kích thước dòng — md (mặc định) */
+.sizeMd th {
+  padding: var(--space-3) var(--space-2);
+}
+
+.sizeMd td {
+  padding: var(--space-4) var(--space-2);
+}
+
+/* Kích thước dòng — sm */
+.sizeSm th {
+  padding: var(--space-2) var(--space-2);
+}
+
+.sizeSm td {
+  padding: var(--space-3) var(--space-2);
+}
+
+/* Header cột */
+.header th {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Body */
+.body td {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.body tr:last-child td {
+  border-bottom: none;
+}
+
+/* Hover dòng */
+.rowHover:hover {
+  background: var(--color-muted);
+}
+
+.rowSelected {
+  background: var(--color-primary-dim);
+}
+
+/* Căn cột */
+.alignLeft {
+  text-align: left;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+/* Chú thích bảng */
+.caption {
+  caption-side: bottom;
+  padding-top: var(--space-3);
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-xs);
+}
+
+/* Ô trống */
+.empty {
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--color-muted-foreground);
+}

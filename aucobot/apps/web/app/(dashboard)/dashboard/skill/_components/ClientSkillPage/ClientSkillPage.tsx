@@ -312,24 +312,23 @@ export function ClientSkillPage() {
             {loadError}
           </Typography>
         ) : null}
-        <Grid columns={4} gap="1rem">
+        <Grid columns={4} gap="1rem" fullWidth className={styles.skillGrid}>
           {skills.map((skill) => (
-            <div key={skill.slug} className={styles.cardWrapper}>
-              <CardSkill
-                title={skill.name}
-                description={skill.description}
-                href={`/dashboard/skill/${skill.slug}`}
-                enabled={skill.enabled}
-                hasSyncError={Boolean(skill.lastSyncError)}
-                isBusy={togglingSlug === skill.slug}
-                onToggleEnabled={(checked) =>
-                  void handleToggleEnabled(skill, checked)
-                }
-                onEdit={() => openEditModal(skill)}
-                onDownload={() => void handleDownloadZip(skill)}
-                onDelete={() => setSkillToDelete(skill.slug)}
-              />
-            </div>
+            <CardSkill
+              key={skill.slug}
+              title={skill.name}
+              description={skill.description}
+              href={`/dashboard/skill/${skill.slug}`}
+              enabled={skill.enabled}
+              hasSyncError={Boolean(skill.lastSyncError)}
+              isBusy={togglingSlug === skill.slug}
+              onToggleEnabled={(checked) =>
+                void handleToggleEnabled(skill, checked)
+              }
+              onEdit={() => openEditModal(skill)}
+              onDownload={() => void handleDownloadZip(skill)}
+              onDelete={() => setSkillToDelete(skill.slug)}
+            />
           ))}
 
           {skills.length === 0 ? (

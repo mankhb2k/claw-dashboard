@@ -281,6 +281,8 @@ export const skillStoreItemSchema = z.object({
   heading: z.string(),
   tags: z.array(z.string()),
   installed: z.boolean(),
+  downloads: z.number().nullable(),
+  stars: z.number().nullable(),
 })
 
 export const skillStoreDetailSchema = skillStoreItemSchema.extend({
@@ -289,6 +291,7 @@ export const skillStoreDetailSchema = skillStoreItemSchema.extend({
 
 export const skillStoreSearchResponseSchema = z.object({
   items: z.array(skillStoreItemSchema),
+  nextCursor: z.string().nullable(),
 })
 
 export const installSkillFromStoreInputSchema = z.object({

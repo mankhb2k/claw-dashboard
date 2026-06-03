@@ -38,8 +38,8 @@ export default function RegisterPage() {
 
   return (
     <div className={styles.wrapper}>
-      <h1 className={styles.title}>Tạo tài khoản</h1>
-      <p className={styles.subtitle}>Self-host · Đăng ký bằng tên đăng nhập</p>
+      <h1 className={styles.title}>Create account</h1>
+      <p className={styles.subtitle}>Self-host · Register by username</p>
 
       <form
         className={styles.form}
@@ -49,7 +49,7 @@ export default function RegisterPage() {
         <Input
           id="username"
           type="text"
-          label="Tên đăng nhập"
+          label="Username"
           placeholder="admin"
           autoComplete="username"
           error={errors.username?.message}
@@ -59,7 +59,7 @@ export default function RegisterPage() {
         <Input
           id="password"
           type="password"
-          label="Mật khẩu"
+          label="Password"
           placeholder="••••••••"
           autoComplete="new-password"
           error={errors.password?.message}
@@ -69,7 +69,7 @@ export default function RegisterPage() {
         <Input
           id="confirmPassword"
           type="password"
-          label="Xác nhận mật khẩu"
+          label="Confirm password"
           placeholder="••••••••"
           autoComplete="new-password"
           error={errors.confirmPassword?.message}
@@ -81,14 +81,14 @@ export default function RegisterPage() {
         )}
 
         <Button type="submit" loading={isLoading} style={{ width: "100%" }}>
-          Tạo tài khoản
+          Create account
         </Button>
       </form>
 
       <p className={styles.footer}>
-        Đã có tài khoản?{" "}
+        Already have an account?{" "}
         <Link href="/login" className={styles.link}>
-          Đăng nhập
+          Login
         </Link>
       </p>
     </div>

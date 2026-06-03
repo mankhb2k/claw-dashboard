@@ -7,11 +7,21 @@ import {
 const DEFAULT_CLAWHUB_API_BASE = 'https://clawhub.ai';
 const REQUEST_TIMEOUT_MS = 30_000;
 
+export type ClawHubCatalogSort = 'recommended' | 'downloads' | 'stars' | 'newest' | 'updated';
+
 export type ClawHubCatalogEntry = {
   slug: string;
   displayName: string;
   summary: string;
   tags: string[];
+  downloads: number | null;
+  stars: number | null;
+};
+
+type ClawHubSkillStats = {
+  downloads?: number;
+  stars?: number;
+  installsCurrent?: number;
 };
 
 type ClawHubSearchResponse = {
@@ -19,6 +29,7 @@ type ClawHubSearchResponse = {
     slug?: string;
     displayName?: string;
     summary?: string | null;
+    stats?: ClawHubSkillStats;
   }>;
 };
 
@@ -28,8 +39,26 @@ type ClawHubSkillsListResponse = {
     displayName?: string;
     summary?: string | null;
     metadata?: { os?: string[]; systems?: string[] } | null;
+    stats?: ClawHubSkillStats;
   }>;
+  nextCursor?: string | null;
 };
+
+export type ClawHubSkillsPage = {
+  items: ClawHubCatalogEntry[];
+  nextCursor: string | null;
+};
+
+const DEFAULT_LIST_PAGE_SIZE = 50;
+const MAX_LIST_PAGE_SIZE = 200;
+
+const CLAWHUB_LIST_SORTS: ClawHubCatalogSort[] = [
+  'recommended',
+  'downloads',
+  'stars',
+  'newest',
+  'updated',
+];
 
 type ClawHubSkillDetailResponse = {
   skill?: {
@@ -37,6 +66,7 @@ type ClawHubSkillDetailResponse = {
     displayName?: string;
     summary?: string | null;
     metadata?: { os?: string[]; systems?: string[] } | null;
+    stats?: ClawHubSkillStats;
   };
 };
 
@@ -50,19 +80,35 @@ function metadataToTags(metadata?: { os?: string[]; systems?: string[] } | null)
   return tags.map((t) => String(t).trim()).filter(Boolean);
 }
 
-function normalizeEntry(
-  slug: string,
-  displayName: string | undefined,
-  summary: string | null | undefined,
-  metadata?: { os?: string[]; systems?: string[] } | null,
-): ClawHubCatalogEntry {
-  const safeSlug = slug.trim();
-  const name = displayName?.trim() || safeSlug;
+function resolveStats(stats?: ClawHubSkillStats | null): {
+  downloads: number | null;
+  stars: number | null;
+} {
+  const downloads =
+    typeof stats?.downloads === 'number' && Number.isFinite(stats.downloads)
+      ? stats.downloads
+      : null;
+  const stars =
+    typeof stats?.stars === 'number' && Number.isFinite(stats.stars) ? stats.stars : null;
+  return { downloads, stars };
+}
+
+function normalizeEntry(input: {
+  slug: string;
+  displayName?: string;
+  summary?: string | null;
+  metadata?: { os?: string[]; systems?: string[] } | null;
+  stats?: ClawHubSkillStats | null;
+}): ClawHubCatalogEntry {
+  const safeSlug = input.slug.trim();
+  const name = input.displayName?.trim() || safeSlug;
+  const stat = resolveStats(input.stats);
   return {
     slug: safeSlug,
     displayName: name,
-    summary: summary?.trim() || 'No description.',
-    tags: metadataToTags(metadata),
+    summary: input.summary?.trim() || 'No description.',
+    tags: metadataToTags(input.metadata),
+    ...stat,
   };
 }
 
@@ -113,7 +159,15 @@ async function clawHubRequest(path: string, query?: Record<string, string>): Pro
   return response;
 }
 
-export async function clawHubSearch(query: string, limit = 50): Promise<ClawHubCatalogEntry[]> {
+export function resolveClawHubListSort(sort?: string): ClawHubCatalogSort {
+  const value = sort?.trim() as ClawHubCatalogSort | undefined;
+  if (value && CLAWHUB_LIST_SORTS.includes(value)) {
+    return value;
+  }
+  return 'recommended';
+}
+
+export async function clawHubSearch(query: string, limit = 100): Promise<ClawHubCatalogEntry[]> {
   const response = await clawHubRequest('/api/v1/search', {
     q: query.trim(),
     limit: String(Math.min(Math.max(limit, 1), 100)),
@@ -125,26 +179,65 @@ export async function clawHubSearch(query: string, limit = 50): Promise<ClawHubC
     .map((row) => {
       const slug = String(row.slug ?? '').trim();
       if (!slug) return null;
-      return normalizeEntry(slug, row.displayName, row.summary);
+      return normalizeEntry({
+        slug,
+        displayName: row.displayName,
+        summary: row.summary,
+        stats: row.stats,
+      });
     })
     .filter((row): row is ClawHubCatalogEntry => Boolean(row));
 }
 
-export async function clawHubListSkills(limit = 50): Promise<ClawHubCatalogEntry[]> {
-  const response = await clawHubRequest('/api/v1/skills', {
-    limit: String(Math.min(Math.max(limit, 1), 200)),
-    sort: 'recommended',
-    nonSuspiciousOnly: 'true',
-  });
-  const data = (await response.json()) as ClawHubSkillsListResponse;
+function mapSkillsListRows(data: ClawHubSkillsListResponse): ClawHubCatalogEntry[] {
   const rows = data.items ?? [];
   return rows
     .map((row) => {
       const slug = String(row.slug ?? '').trim();
       if (!slug) return null;
-      return normalizeEntry(slug, row.displayName, row.summary, row.metadata);
+      return normalizeEntry({
+        slug,
+        displayName: row.displayName,
+        summary: row.summary,
+        metadata: row.metadata,
+        stats: row.stats,
+      });
     })
     .filter((row): row is ClawHubCatalogEntry => Boolean(row));
+}
+
+export async function clawHubListSkillsPage(options?: {
+  limit?: number;
+  cursor?: string;
+  sort?: ClawHubCatalogSort;
+}): Promise<ClawHubSkillsPage> {
+  const limit = Math.min(
+    Math.max(options?.limit ?? DEFAULT_LIST_PAGE_SIZE, 1),
+    MAX_LIST_PAGE_SIZE,
+  );
+  const query: Record<string, string> = {
+    limit: String(limit),
+    sort: resolveClawHubListSort(options?.sort),
+    nonSuspiciousOnly: 'true',
+  };
+  const cursor = options?.cursor?.trim();
+  if (cursor) {
+    query.cursor = cursor;
+  }
+
+  const response = await clawHubRequest('/api/v1/skills', query);
+  const data = (await response.json()) as ClawHubSkillsListResponse;
+  const next = data.nextCursor?.trim() || null;
+  return {
+    items: mapSkillsListRows(data),
+    nextCursor: next,
+  };
+}
+
+/** @deprecated Prefer clawHubListSkillsPage — fetches a single page only */
+export async function clawHubListSkills(limit = DEFAULT_LIST_PAGE_SIZE): Promise<ClawHubCatalogEntry[]> {
+  const page = await clawHubListSkillsPage({ limit });
+  return page.items;
 }
 
 export async function clawHubGetSkill(slug: string): Promise<ClawHubCatalogEntry> {
@@ -154,7 +247,13 @@ export async function clawHubGetSkill(slug: string): Promise<ClawHubCatalogEntry
   if (!skill?.slug) {
     throw new NotFoundException('Skill not found on ClawHub');
   }
-  return normalizeEntry(skill.slug, skill.displayName, skill.summary, skill.metadata);
+  return normalizeEntry({
+    slug: skill.slug,
+    displayName: skill.displayName,
+    summary: skill.summary,
+    metadata: skill.metadata,
+    stats: skill.stats,
+  });
 }
 
 export async function clawHubFetchSkillMarkdown(slug: string): Promise<string> {

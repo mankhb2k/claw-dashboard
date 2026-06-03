@@ -6,7 +6,7 @@ import {
   mergeAgentsIntoConfig,
   mergeChannelsIntoConfig,
   mergeConnectorsIntoConfig,
-  mergeGatewayBlockIfMissing,
+  syncGatewayAuthToken,
   mergeProviderKeysIntoConfig,
   openClawConfigPath,
   readOpenClawConfigJson,
@@ -34,7 +34,7 @@ jest.mock('@aucobot/workspace-sync', () => ({
   mergeAgentsIntoConfig: jest.fn(),
   mergeChannelsIntoConfig: jest.fn(),
   mergeConnectorsIntoConfig: jest.fn().mockResolvedValue(undefined),
-  mergeGatewayBlockIfMissing: jest.fn(),
+  syncGatewayAuthToken: jest.fn(),
   mergeProviderKeysIntoConfig: jest.fn(),
   openClawConfigPath: jest.fn((dataDir: string) => `${dataDir}/openclaw.json`),
   readOpenClawConfigJson: jest.fn(),
@@ -77,8 +77,8 @@ const buildInitialOpenClawConfigMock = buildInitialOpenClawConfig as jest.Mocked
 const readOpenClawConfigJsonMock = readOpenClawConfigJson as jest.MockedFunction<
   typeof readOpenClawConfigJson
 >;
-const mergeGatewayBlockIfMissingMock = mergeGatewayBlockIfMissing as jest.MockedFunction<
-  typeof mergeGatewayBlockIfMissing
+const syncGatewayAuthTokenMock = syncGatewayAuthToken as jest.MockedFunction<
+  typeof syncGatewayAuthToken
 >;
 const mergeProviderKeysIntoConfigMock = mergeProviderKeysIntoConfig as jest.MockedFunction<
   typeof mergeProviderKeysIntoConfig
@@ -195,47 +195,30 @@ describe('WorkspaceService', () => {
   });
 
   describe('ensureGatewayConfigOnDisk', () => {
-    it('writes initial config when openclaw.json is missing', async () => {
+    it('syncs gateway auth when openclaw.json is missing', async () => {
       const { service } = createService();
       readOpenClawConfigJsonMock.mockResolvedValue(null);
 
       await service.ensureGatewayConfigOnDisk(PROJECT_ID, 'new-token');
 
-      expect(buildInitialOpenClawConfigMock).toHaveBeenCalledWith({
-        gatewayToken: 'new-token',
-      });
-      expect(writeFileMock).toHaveBeenCalled();
+      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith({}, 'new-token');
+      expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(CONFIG_PATH, {});
     });
 
-    it('keeps existing config when gateway token auth is already set', async () => {
+    it('syncs canonical token even when a different token is already on disk', async () => {
       const { service } = createService();
-      readOpenClawConfigJsonMock.mockResolvedValue({
+      const config = {
         gateway: {
           mode: 'local',
           auth: { mode: 'token', token: 'existing-token' },
         },
-      });
-      writeFileMock.mockClear();
+      };
+      readOpenClawConfigJsonMock.mockResolvedValue(config);
 
       await service.ensureGatewayConfigOnDisk(PROJECT_ID, 'new-token');
 
-      expect(buildInitialOpenClawConfigMock).not.toHaveBeenCalled();
-      expect(writeFileMock).not.toHaveBeenCalled();
-    });
-
-    it('rewrites config when gateway block has no mode', async () => {
-      const { service } = createService();
-      readOpenClawConfigJsonMock.mockResolvedValue({
-        gateway: { auth: { mode: 'token', token: 'x' } },
-      });
-      writeFileMock.mockClear();
-
-      await service.ensureGatewayConfigOnDisk(PROJECT_ID, 'replace-token');
-
-      expect(buildInitialOpenClawConfigMock).toHaveBeenCalledWith({
-        gatewayToken: 'replace-token',
-      });
-      expect(writeFileMock).toHaveBeenCalled();
+      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith(config, 'new-token');
+      expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(CONFIG_PATH, config);
     });
   });
 
@@ -298,7 +281,7 @@ describe('WorkspaceService', () => {
         },
       });
       expect(resolveOssGatewayTokenMock).toHaveBeenCalledWith('db-token');
-      expect(mergeGatewayBlockIfMissingMock).toHaveBeenCalledWith(
+      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith(
         config,
         'resolved-oss-token',
       );
@@ -372,7 +355,7 @@ describe('WorkspaceService', () => {
 
       await service.syncProjectRuntime(PROJECT_ID);
 
-      expect(mergeGatewayBlockIfMissingMock).toHaveBeenCalledWith({}, 'resolved-oss-token');
+      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith({}, 'resolved-oss-token');
       expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(CONFIG_PATH, {});
     });
   });

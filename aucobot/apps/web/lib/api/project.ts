@@ -72,6 +72,20 @@ import {
   type CreateCronJobInput,
   type UpdateCronJobInput,
 } from '@/schemas/cron.schema'
+import {
+  nodesListResponseSchema,
+  nodesPairingResponseSchema,
+  renameNodeInputSchema,
+  nodeInviteCreatedSchema,
+  nodeInviteListResponseSchema,
+  createNodeInviteInputSchema,
+  type NodesListResponse,
+  type NodesPairingResponse,
+  type RenameNodeInput,
+  type NodeInviteCreated,
+  type NodeInviteListItem,
+  type CreateNodeInviteInput,
+} from '@/schemas/nodes.schema'
 import { z } from 'zod'
 
 export const projectApi = {
@@ -330,11 +344,20 @@ export const projectApi = {
     await api.delete(`/api/projects/${id}/skills/${encodeURIComponent(slug)}`)
   },
 
-  searchSkillStore: async (id: string, query?: string): Promise<SkillStoreItem[]> => {
+  searchSkillStore: async (
+    id: string,
+    options?: { q?: string; cursor?: string; limit?: number; sort?: string },
+  ): Promise<{ items: SkillStoreItem[]; nextCursor: string | null }> => {
+    const q = options?.q?.trim()
     const res = await api.get(`/api/projects/${id}/skills/store/search`, {
-      params: query?.trim() ? { q: query.trim() } : undefined,
+      params: {
+        ...(q ? { q } : {}),
+        ...(options?.cursor ? { cursor: options.cursor } : {}),
+        ...(options?.limit != null ? { limit: options.limit } : {}),
+        ...(options?.sort ? { sort: options.sort } : {}),
+      },
     })
-    return skillStoreSearchResponseSchema.parse(res.data).items
+    return skillStoreSearchResponseSchema.parse(res.data)
   },
 
   getSkillStoreItem: async (id: string, slug: string): Promise<SkillStoreDetail> => {
@@ -522,5 +545,66 @@ export const projectApi = {
 
   runCronJob: async (id: string, jobId: string): Promise<void> => {
     await api.post(`/api/projects/${id}/cron/${encodeURIComponent(jobId)}/run`)
+  },
+
+  listNodes: async (id: string): Promise<NodesListResponse> => {
+    const res = await api.get(`/api/projects/${id}/nodes`)
+    return nodesListResponseSchema.parse(res.data)
+  },
+
+  getNodesPairing: async (id: string): Promise<NodesPairingResponse> => {
+    const res = await api.get(`/api/projects/${id}/nodes/pairing`)
+    return nodesPairingResponseSchema.parse(res.data)
+  },
+
+  approveDevicePairing: async (id: string, requestId: string): Promise<void> => {
+    await api.post(
+      `/api/projects/${id}/nodes/devices/${encodeURIComponent(requestId)}/approve`,
+    )
+  },
+
+  rejectDevicePairing: async (id: string, requestId: string): Promise<void> => {
+    await api.post(
+      `/api/projects/${id}/nodes/devices/${encodeURIComponent(requestId)}/reject`,
+    )
+  },
+
+  approveNodePairing: async (id: string, requestId: string): Promise<void> => {
+    await api.post(
+      `/api/projects/${id}/nodes/pairing/${encodeURIComponent(requestId)}/approve`,
+    )
+  },
+
+  rejectNodePairing: async (id: string, requestId: string): Promise<void> => {
+    await api.post(
+      `/api/projects/${id}/nodes/pairing/${encodeURIComponent(requestId)}/reject`,
+    )
+  },
+
+  removeNode: async (id: string, nodeId: string): Promise<void> => {
+    await api.delete(`/api/projects/${id}/nodes/${encodeURIComponent(nodeId)}`)
+  },
+
+  renameNode: async (id: string, nodeId: string, input: RenameNodeInput): Promise<void> => {
+    const body = renameNodeInputSchema.parse(input)
+    await api.patch(`/api/projects/${id}/nodes/${encodeURIComponent(nodeId)}`, body)
+  },
+
+  createNodeInvite: async (
+    id: string,
+    input: CreateNodeInviteInput = {},
+  ): Promise<NodeInviteCreated> => {
+    const body = createNodeInviteInputSchema.parse(input)
+    const res = await api.post(`/api/projects/${id}/nodes/invites`, body)
+    return nodeInviteCreatedSchema.parse(res.data)
+  },
+
+  listNodeInvites: async (id: string): Promise<NodeInviteListItem[]> => {
+    const res = await api.get(`/api/projects/${id}/nodes/invites`)
+    return nodeInviteListResponseSchema.parse(res.data)
+  },
+
+  revokeNodeInvite: async (id: string, inviteId: string): Promise<void> => {
+    await api.delete(`/api/projects/${id}/nodes/invites/${encodeURIComponent(inviteId)}`)
   },
 }

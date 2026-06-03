@@ -95,6 +95,11 @@ export {
   resolveProjectDataDir,
 } from './project-paths.js';
 
-export { cleanupStaleMainAgentModels, mergeGatewayBlockIfMissing } from './sync-helpers.js';
+export {
+  cleanupStaleMainAgentModels,
+  gatewayAuthTokenFromConfig,
+  mergeGatewayBlockIfMissing,
+  syncGatewayAuthToken,
+} from './sync-helpers.js';
 
 export { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './provider-env-keys.js';

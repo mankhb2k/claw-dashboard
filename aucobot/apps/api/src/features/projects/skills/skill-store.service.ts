@@ -6,8 +6,9 @@ import {
 import {
   clawHubFetchSkillMarkdown,
   clawHubGetSkill,
-  clawHubListSkills,
+  clawHubListSkillsPage,
   clawHubSearch,
+  resolveClawHubListSort,
   type ClawHubCatalogEntry,
 } from './clawhub-client';
 import { ProjectSkillsService, type ProjectSkillDetail } from './project-skills.service';
@@ -19,10 +20,17 @@ type SkillStoreSearchItem = {
   heading: string;
   tags: string[];
   installed: boolean;
+  downloads: number | null;
+  stars: number | null;
 };
 
 type SkillStoreDetailItem = SkillStoreSearchItem & {
   bodyMarkdown: string;
+};
+
+export type SkillStoreSearchResult = {
+  items: SkillStoreSearchItem[];
+  nextCursor: string | null;
 };
 
 @Injectable()
@@ -37,6 +45,8 @@ export class SkillStoreService {
       heading: entry.displayName,
       tags: entry.tags,
       installed: installedSet.has(entry.slug),
+      downloads: entry.downloads,
+      stars: entry.stars,
     };
   }
 
@@ -71,16 +81,31 @@ export class SkillStoreService {
     return { name, description, heading, bodyMarkdown };
   }
 
-  async search(projectId: string, query?: string): Promise<SkillStoreSearchItem[]> {
+  async search(
+    projectId: string,
+    options?: { q?: string; cursor?: string; limit?: number; sort?: string },
+  ): Promise<SkillStoreSearchResult> {
     const installed = await this.skills.list(projectId);
     const installedSet = new Set(installed.map((row) => row.slug));
 
-    const trimmed = query?.trim() ?? '';
-    const entries = trimmed
-      ? await clawHubSearch(trimmed)
-      : await clawHubListSkills();
+    const trimmed = options?.q?.trim() ?? '';
+    if (trimmed) {
+      const entries = await clawHubSearch(trimmed, options?.limit ?? 100);
+      return {
+        items: entries.map((entry) => this.toSearchItem(entry, installedSet)),
+        nextCursor: null,
+      };
+    }
 
-    return entries.map((entry) => this.toSearchItem(entry, installedSet));
+    const page = await clawHubListSkillsPage({
+      cursor: options?.cursor,
+      limit: options?.limit,
+      sort: resolveClawHubListSort(options?.sort),
+    });
+    return {
+      items: page.items.map((entry) => this.toSearchItem(entry, installedSet)),
+      nextCursor: page.nextCursor,
+    };
   }
 
   async getDetail(projectId: string, slug: string): Promise<SkillStoreDetailItem> {
@@ -99,6 +124,8 @@ export class SkillStoreService {
       heading: parsed.heading,
       tags: entry.tags,
       installed,
+      downloads: entry.downloads,
+      stars: entry.stars,
       bodyMarkdown: parsed.bodyMarkdown,
     };
   }

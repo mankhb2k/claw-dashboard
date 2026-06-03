@@ -31,15 +31,15 @@ export default function LoginPage() {
       router.push(await resolveDashboardPath());
     } catch (err) {
       setError("root", {
-        message: err instanceof Error ? err.message : "Đăng nhập thất bại",
+        message: err instanceof Error ? err.message : "Login failed",
       });
     }
   };
 
   return (
     <div className={styles.wrapper}>
-      <h1 className={styles.title}>Đăng nhập</h1>
-      <p className={styles.subtitle}>Tên đăng nhập + mật khẩu</p>
+      <h1 className={styles.title}>Login</h1>
+      <p className={styles.subtitle}>Username + Password</p>
 
       <form
         className={styles.form}
@@ -50,7 +50,7 @@ export default function LoginPage() {
         <Input
           id="username"
           type="text"
-          label="Tên đăng nhập"
+          label="Username"
           placeholder="admin"
           autoComplete="username"
           error={errors.username?.message}
@@ -60,7 +60,7 @@ export default function LoginPage() {
         <Input
           id="password"
           type="password"
-          label="Mật khẩu"
+          label="Password"
           placeholder="••••••••"
           autoComplete="current-password"
           error={errors.password?.message}
@@ -72,14 +72,14 @@ export default function LoginPage() {
         )}
 
         <Button type="submit" loading={isLoading} style={{ width: "100%" }}>
-          Đăng nhập
+          Login
         </Button>
       </form>
 
       <p className={styles.footer}>
-        Chưa có tài khoản?{" "}
+        Don't have an account?{" "}
         <Link href="/register" className={styles.link}>
-          Đăng ký
+          Register
         </Link>
       </p>
     </div>

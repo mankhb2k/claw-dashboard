@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 const SKILL_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,63}$/;
 
@@ -9,6 +19,28 @@ export class SkillStoreSearchQueryDto {
   @IsString()
   @MaxLength(100)
   q?: string;
+
+  @ApiPropertyOptional({ description: 'ClawHub pagination cursor (browse mode only)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  cursor?: string;
+
+  @ApiPropertyOptional({ description: 'Page size for browse mode (1–200, default 50)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Browse sort (recommended | downloads | stars | newest | updated)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  sort?: string;
 }
 
 export class InstallSkillFromStoreDto {

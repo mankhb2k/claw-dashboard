@@ -19,6 +19,7 @@ import {
   Sparkles,
   Cable,
   Bot,
+  Smartphone,
 } from "lucide-react";
 import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
 import styles from "./layout.module.css";
@@ -37,7 +38,7 @@ function isDashboardCanvasRoute(pathname: string): boolean {
 }
 
 const DASHBOARD_ROUTE =
-  /^\/dashboard(?:\/(setting|profile|ai-model|channel|chat|skill|connect|agent)(?:\/[^/]+)*)?$/;
+  /^\/dashboard(?:\/(setting|profile|ai-model|channel|chat|skill|connect|agent|nodes)(?:\/[^/]+)*)?$/;
 
 export default function DashboardLayout({
   children,
@@ -116,6 +117,7 @@ export default function DashboardLayout({
     channel: "Channels",
     chat: "Chat",
     connect: "Connect",
+    nodes: "Companion Nodes",
     skill: "Skill Directory",
     setting: "Settings",
     profile: "Profile",
@@ -160,6 +162,12 @@ export default function DashboardLayout({
       label: "Connect",
       icon: Cable,
       isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/connect`),
+    },
+    {
+      href: `${DASHBOARD_BASE_PATH}/nodes`,
+      label: "Nodes",
+      icon: Smartphone,
+      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/nodes`),
     },
     {
       href: `${DASHBOARD_BASE_PATH}/skill`,

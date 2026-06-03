@@ -71,9 +71,12 @@ export class ProjectSkillsController {
     @Query() query: SkillStoreSearchQueryDto,
   ) {
     await this.projects.assertOwned(user.sub, id);
-    return {
-      items: await this.store.search(id, query.q),
-    };
+    return this.store.search(id, {
+      q: query.q,
+      cursor: query.cursor,
+      limit: query.limit,
+      sort: query.sort,
+    });
   }
 
   @Post(':id/skills/store/install')

@@ -1,66 +1,134 @@
-import React from 'react';
-import { Typography } from '@/components/ui';
-import { Flex } from '@/components/layout';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import styles from './OverviewChart.module.css';
+"use client";
+
+import { useId, useMemo } from "react";
+import type { TooltipProps } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Box, Flex } from "@/components/layout";
+import {
+  Card,
+  ToggleGroup,
+  ToggleGroupItem,
+  Typography,
+} from "@/components/ui";
+import styles from "./OverviewChart.module.css";
+
+export interface OverviewChartDataPoint {
+  name: string;
+  value: number;
+}
 
 interface OverviewChartProps {
   title: string;
-  data: any[];
+  data: OverviewChartDataPoint[];
   color?: string;
 }
 
-export function OverviewChart({ title, data, color = 'var(--color-primary)' }: OverviewChartProps) {
-  const chartId = title.replace(/\s+/g, '-').toLowerCase();
+const PERIOD_OPTIONS = [
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+] as const;
+
+const CHART_HEIGHT_PX = 300;
+
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) {
+  if (!active || !payload?.length) {
+    return null;
+  }
 
   return (
-    <div className={styles.chartCard}>
-      <Flex justify="between" align="center" className={styles.header}>
-        <Typography variant="p" weight="bold">{title}</Typography>
-        <Flex gap={12} className={styles.tabs}>
-          <button className={styles.tab}>Day</button>
-          <button className={`${styles.tab} ${styles.active}`}>Week</button>
-          <button className={styles.tab}>Month</button>
-        </Flex>
+    <Box border radius="md" color="white" className={styles.tooltip}>
+      <Flex direction="column" gap={4}>
+        <Typography variant="xs" color="muted">
+          {label}
+        </Typography>
+        <Typography variant="xs" weight="bold">
+          {payload[0]?.value}
+        </Typography>
       </Flex>
-      
-      <div className={styles.chartWrapper}>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+    </Box>
+  );
+}
+
+export function OverviewChart({
+  title,
+  data,
+  color = "var(--color-primary)",
+}: OverviewChartProps) {
+  const reactId = useId();
+  const gradientId = useMemo(
+    () => `overview-chart-${reactId.replace(/:/g, "")}`,
+    [reactId],
+  );
+
+  return (
+    <Card hover="md">
+      <Flex justify="between" align="center" className={styles.header}>
+        <Typography variant="p" weight="bold">
+          {title}
+        </Typography>
+        <ToggleGroup type="single" size="sm" defaultValue="week">
+          {PERIOD_OPTIONS.map((period) => (
+            <ToggleGroupItem key={period.value} value={period.value}>
+              {period.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </Flex>
+
+      <Box fullWidth className={styles.chartWrapper}>
+        <ResponsiveContainer
+          width="100%"
+          height={CHART_HEIGHT_PX}
+          minHeight={CHART_HEIGHT_PX}
+        >
+          <AreaChart
+            data={data}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
             <defs>
-              <linearGradient id={`color-${chartId}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.15}/>
-                <stop offset="95%" stopColor={color} stopOpacity={0}/>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={color} stopOpacity={0.15} />
+                <stop offset="95%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
-            <XAxis 
-              dataKey="name" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: 'var(--color-muted-foreground)', fontSize: 11 }}
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="var(--color-border)"
+              opacity={0.5}
+            />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
               dy={10}
             />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: 'var(--color-muted-foreground)', fontSize: 11 }}
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
             />
-            <Tooltip 
-              contentStyle={{ 
-                background: 'var(--color-background)', 
-                border: '1px solid var(--color-border)', 
-                borderRadius: 'var(--radius-md)',
-                fontSize: '12px',
-                boxShadow: 'var(--shadow-md)'
-              }}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="value" 
-              stroke={color} 
-              fillOpacity={1} 
-              fill={`url(#color-${chartId})`} 
+            <Tooltip content={<ChartTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              fillOpacity={1}
+              fill={`url(#${gradientId})`}
               strokeWidth={3}
               animationDuration={1500}
               dot={false}
@@ -68,7 +136,7 @@ export function OverviewChart({ title, data, color = 'var(--color-primary)' }: O
             />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+      </Box>
+    </Card>
   );
 }

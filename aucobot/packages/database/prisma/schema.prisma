@@ -61,8 +61,27 @@ model Project {
   projectAgents       ProjectAgent[]
   projectConnectors   ProjectConnector[]
   projectChannels     ProjectChannel[]
+  nodeInvites         NodeInvite[]
 
   @@map("projects")
+}
+
+/// Short-lived pairing code for OpenClaw Node desktop app (Phase 2).
+model NodeInvite {
+  id         String    @id @default(cuid())
+  projectId  String    @map("project_id")
+  codeHash   String    @unique @map("code_hash")
+  codePrefix String    @map("code_prefix")
+  label      String?
+  expiresAt  DateTime  @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([expiresAt])
+  @@map("node_invites")
 }
 
 model ProjectConnector {

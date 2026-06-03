@@ -118,13 +118,8 @@
   border-color: var(--color-border-hover, var(--color-border));
 }
 
-.controlUiLink {
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  text-decoration: none;
-  font-family: "SF Mono", "Fira Code", monospace;
-}
-
-.controlUiLink:hover {
-  text-decoration: underline;
+.controlUiActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

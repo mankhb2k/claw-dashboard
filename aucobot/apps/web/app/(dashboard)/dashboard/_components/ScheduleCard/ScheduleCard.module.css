@@ -1,0 +1,29 @@
+.stats {
+  padding: var(--space-2) 0;
+}
+
+.loading {
+  padding: var(--space-4) 0;
+}
+
+/* Cảnh báo job lỗi */
+.alertRow {
+  padding: var(--space-3) var(--space-4);
+  border-color: color-mix(in srgb, var(--color-danger) 28%, transparent);
+}
+
+.alertText {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Danh sách job lỗi gần đây */
+.failureList {
+  margin: 0;
+  padding-left: var(--space-5);
+  list-style: disc;
+}
+
+.footerLinks {
+  margin-top: var(--space-1);
+}

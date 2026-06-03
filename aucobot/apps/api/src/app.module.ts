@@ -10,6 +10,7 @@ import { UsersModule } from './core/users/users.module';
 import { ProjectsModule } from './features/projects/projects.module';
 import { ChatModule } from './features/projects/chat/chat.module';
 import { CronModule } from './features/projects/cron/cron.module';
+import { NodesModule } from './features/projects/nodes/nodes.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
 
 @Module({
@@ -28,6 +29,7 @@ import { DbHealthMiddleware } from './core/common/middleware/db-health.middlewar
     ProjectsModule,
     ChatModule,
     CronModule,
+    NodesModule,
   ],
   controllers: [AppController],
   providers: [AppService, DbHealthMiddleware],

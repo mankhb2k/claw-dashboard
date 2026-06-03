@@ -1,8 +1,8 @@
-import React from 'react';
-import { Typography } from '@/components/ui';
-import { Flex } from '@/components/layout';
-import styles from './MetricCard.module.css';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import type { CSSProperties } from "react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Flex } from "@/components/layout";
+import { Card, Typography } from "@/components/ui";
+import styles from "./MetricCard.module.css";
 
 interface MetricCardProps {
   title: string;
@@ -12,29 +12,53 @@ interface MetricCardProps {
   color?: string;
 }
 
-export function MetricCard({ title, value, subtitle, trend, color = 'var(--color-primary)' }: MetricCardProps) {
+export function MetricCard({
+  title,
+  value,
+  subtitle,
+  trend,
+  color = "var(--color-primary)",
+}: MetricCardProps) {
   const isPositive = trend !== undefined && trend >= 0;
 
   return (
-    <div className={styles.card}>
+    <Card hover="md" className={styles.root}>
       <Flex justify="between" align="start">
         <Flex direction="column" gap={4}>
-          <Typography variant="p" weight="medium">{title}</Typography>
-          <Typography variant="xs" color="muted">{subtitle}</Typography>
+          <Typography variant="p" weight="medium">
+            {title}
+          </Typography>
+          {subtitle ? (
+            <Typography variant="xs" color="muted">
+              {subtitle}
+            </Typography>
+          ) : null}
         </Flex>
-        
+
         <Flex align="center" gap={8}>
-          <Typography variant="h3" weight="bold">{value}</Typography>
-          {trend !== undefined && (
-            <span className={isPositive ? styles.trendUp : styles.trendDown}>
-              {isPositive ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
-            </span>
-          )}
+          <Typography variant="h3" weight="bold">
+            {value}
+          </Typography>
+          {trend !== undefined ? (
+            <Flex
+              align="center"
+              className={isPositive ? styles.trendUp : styles.trendDown}
+              aria-hidden
+            >
+              {isPositive ? (
+                <ArrowUpRight size={18} />
+              ) : (
+                <ArrowDownRight size={18} />
+              )}
+            </Flex>
+          ) : null}
         </Flex>
       </Flex>
-      
-      {/* Thanh màu trang trí ở dưới */}
-      <div className={styles.progressBar} style={{ backgroundColor: color }} />
-    </div>
+
+      <div
+        className={styles.accentBar}
+        style={{ "--metric-accent": color } as CSSProperties}
+      />
+    </Card>
   );
 }

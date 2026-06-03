@@ -45,12 +45,14 @@
   color: var(--color-warning-dark);
 }
 
-.cardWrapper {
-  position: relative;
+/* Lưới skill — 4 cột, full width */
+.skillGrid {
+  width: 100%;
+  align-items: stretch;
 }
 
 .emptyText {
-  grid-column: span 4;
+  grid-column: 1 / -1;
   text-align: center;
   padding: var(--space-10) 0;
 }

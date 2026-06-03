@@ -7,7 +7,7 @@ import {
   mergeAgentsIntoConfig,
   mergeChannelsIntoConfig,
   mergeConnectorsIntoConfig,
-  mergeGatewayBlockIfMissing,
+  syncGatewayAuthToken,
   mergeProviderKeysIntoConfig,
   openClawConfigPath,
   readOpenClawConfigJson,
@@ -62,27 +62,18 @@ export class WorkspaceService {
     return { dataDir };
   }
 
-  /** Ensure `openclaw.json` exists before the gateway reads the volume. */
-  async ensureGatewayConfigOnDisk(projectId: string, gatewayToken: string): Promise<void> {
+  /** Write `gateway.auth.token` on disk (OSS: must match `OPENCLAW_GATEWAY_TOKEN`). */
+  async syncGatewayAuthToDisk(projectId: string, gatewayToken: string): Promise<void> {
     const dataDir = await this.ensureProjectLayout(projectId);
     const configPath = openClawConfigPath(dataDir);
-    const existing = await readOpenClawConfigJson(configPath);
-    if (!existing) {
-      const config = buildInitialOpenClawConfig({ gatewayToken });
-      await this.syncOpenClawJsonToDisk(projectId, config);
-      return;
-    }
-    const gateway = existing.gateway as Record<string, unknown> | undefined;
-    const auth = gateway?.auth as Record<string, unknown> | undefined;
-    if (!gateway?.mode) {
-      const config = buildInitialOpenClawConfig({ gatewayToken });
-      await this.syncOpenClawJsonToDisk(projectId, config);
-    } else if (auth?.mode === 'token' && typeof auth.token === 'string') {
-      /* keep existing token */
-    } else {
-      const config = buildInitialOpenClawConfig({ gatewayToken });
-      await this.syncOpenClawJsonToDisk(projectId, config);
-    }
+    const config = (await readOpenClawConfigJson(configPath)) ?? {};
+    syncGatewayAuthToken(config, gatewayToken);
+    await writeOpenClawConfigJson(configPath, config);
+  }
+
+  /** Ensure `openclaw.json` exists and gateway auth matches the canonical token. */
+  async ensureGatewayConfigOnDisk(projectId: string, gatewayToken: string): Promise<void> {
+    await this.syncGatewayAuthToDisk(projectId, gatewayToken);
   }
 
   async syncProjectRuntime(projectId: string): Promise<void> {
@@ -98,7 +89,7 @@ export class WorkspaceService {
         collaborationMemberSlugs: true,
       },
     });
-    mergeGatewayBlockIfMissing(config, resolveOssGatewayToken(project?.gatewayToken));
+    syncGatewayAuthToken(config, resolveOssGatewayToken(project?.gatewayToken));
 
     const providerRows = await this.prisma.projectProviderKey.findMany({
       where: { projectId },
