@@ -23,6 +23,10 @@
   color: #fbbf24;
 }
 
+.titleAwaiting {
+  color: #67e8f9;
+}
+
 .timerRow {
   display: flex;
   align-items: center;

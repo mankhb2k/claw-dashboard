@@ -50,12 +50,6 @@ export const storedConfigSchema = nodeConfigSchema.extend({
 
 export type StoredConfig = z.infer<typeof storedConfigSchema>;
 
-export const connectPayloadSchema = nodeConfigSchema.extend({
-  gatewayToken: z.string().trim().min(8, "Gateway token is required").optional(),
-});
-
-export type ConnectPayload = z.infer<typeof connectPayloadSchema>;
-
 export const connectWithInviteSchema = z.object({
   webBaseUrl: z.string().trim().url("Dashboard URL is required"),
   inviteCode: z.string().trim().min(8, "Invite code is required"),

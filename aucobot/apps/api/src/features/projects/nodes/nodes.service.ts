@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { GatewayRpcService } from '../gateway/gateway-rpc.service';
 
 type NodeListResponse = {
@@ -28,6 +28,11 @@ type NodesPairingResponse = {
 function redactPairedNode(entry: Record<string, unknown>): Record<string, unknown> {
   const { token: _token, ...rest } = entry;
   return rest;
+}
+
+function isUnknownPairingTargetError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /unknown deviceId|unknown node/i.test(msg);
 }
 
 function redactDeviceTokens(entry: Record<string, unknown>): Record<string, unknown> {
@@ -144,7 +149,43 @@ export class NodesService {
     projectId: string,
     nodeId: string,
   ): Promise<Record<string, unknown>> {
-    return this.gateway.call(userId, projectId, 'node.pair.remove', { nodeId });
+    const id = nodeId.trim();
+    let removed = false;
+    let lastError: unknown;
+
+    try {
+      await this.gateway.call(userId, projectId, 'device.pair.remove', { deviceId: id });
+      removed = true;
+    } catch (err) {
+      lastError = err;
+      if (!isUnknownPairingTargetError(err)) {
+        throw err;
+      }
+    }
+
+    try {
+      const res = await this.gateway.call<Record<string, unknown>>(
+        userId,
+        projectId,
+        'node.pair.remove',
+        { nodeId: id },
+      );
+      removed = true;
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (!isUnknownPairingTargetError(err)) {
+        throw err;
+      }
+    }
+
+    if (!removed) {
+      throw new NotFoundException(
+        lastError instanceof Error ? lastError.message : 'Node or device not found on gateway',
+      );
+    }
+
+    return { ok: true };
   }
 
   async renameNode(

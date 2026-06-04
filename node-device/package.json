@@ -23,7 +23,7 @@
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",
     "@types/node": "^24.0.0",
-    "electron": "^35.7.5",
+    "electron": "^40.10.2",
     "electron-builder": "^26.0.12",
     "preact": "^10.27.2",
     "typescript": "^5.9.2",
@@ -34,7 +34,7 @@
     "extends": "./electron-builder.yml"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.19"
   },
   "packageManager": "pnpm@9.15.9"
 }

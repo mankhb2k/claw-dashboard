@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import type { NodeConnectionState } from "../shared/schemas/node-config.schema";
 import { toGatewayWsUrl } from "./gateway-url";
-import { resolveOpenclawBin } from "./openclaw-bin";
+import { buildOpenclawChildEnv, resolveOpenclawSpawn } from "./openclaw-bin";
 
 export type GatewayPollConfig = {
   gatewayUrl: string;
@@ -41,12 +41,12 @@ function matchNode(nodes: NodeRow[], displayName?: string): NodeRow | undefined 
 }
 
 async function runOpenclawJson(args: string[], gatewayToken: string): Promise<unknown> {
-  const bin = resolveOpenclawBin();
+  const { command, prefixArgs, useShell } = resolveOpenclawSpawn();
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, {
-      shell: process.platform === "win32",
+    const child = spawn(command, [...prefixArgs, ...args], {
+      shell: useShell,
       env: {
-        ...process.env,
+        ...buildOpenclawChildEnv(command),
         OPENCLAW_GATEWAY_TOKEN: gatewayToken,
       },
     });
@@ -86,7 +86,7 @@ async function runOpenclawJson(args: string[], gatewayToken: string): Promise<un
 }
 
 function isPendingApprovalError(message: string): boolean {
-  return /pending approval|pair required|pairing required|metadata change pending/i.test(
+  return /pending approval|pair required|pairing required|metadata change pending|role upgrade pending|identity changed/i.test(
     message,
   );
 }
@@ -103,7 +103,7 @@ async function runOpenclawJsonSafe(
   }
 }
 
-async function inferGatewayState(
+export async function fetchGatewayConnectionState(
   config: GatewayPollConfig,
 ): Promise<{ state: NodeConnectionState; detail?: string }> {
   const wsUrl = toGatewayWsUrl(config.gatewayUrl);
@@ -216,7 +216,7 @@ export class GatewayStatusPoller {
     const onState = this.onState;
 
     try {
-      const result = await inferGatewayState(config);
+      const result = await fetchGatewayConnectionState(config);
       if (this.active && this.onState === onState) {
         onState(result.state, result.detail);
       }

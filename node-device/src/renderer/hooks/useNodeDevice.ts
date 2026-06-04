@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type {
-  ConnectPayload,
   ConnectWithInvitePayload,
   NodeConfig,
   NodeConnectionState,
@@ -9,7 +8,7 @@ import type { StateEvent } from "../../preload/preload";
 
 export function useNodeDevice() {
   const [config, setConfig] = useState<NodeConfig | null>(null);
-  const [hasToken, setHasToken] = useState(false);
+  const [hasSavedSession, setHasSavedSession] = useState(false);
   const [state, setState] = useState<NodeConnectionState>("idle");
   const [stateDetail, setStateDetail] = useState<string | undefined>();
   const [logs, setLogs] = useState<string[]>([]);
@@ -26,7 +25,7 @@ export function useNodeDevice() {
   const loadConfig = useCallback(async () => {
     const res = await window.nodeDevice.getConfig();
     setConfig(res.config);
-    setHasToken(Boolean(res.hasToken));
+    setHasSavedSession(Boolean(res.hasSavedSession));
   }, []);
 
   useEffect(() => {
@@ -66,20 +65,6 @@ export function useNodeDevice() {
     [loadConfig],
   );
 
-  const connect = useCallback(async (payload: ConnectPayload) => {
-    setBusy(true);
-    setLogs([]);
-    try {
-      const result = await window.nodeDevice.connect(payload);
-      if (result.ok) {
-        await loadConfig();
-      }
-      return result;
-    } finally {
-      setBusy(false);
-    }
-  }, [loadConfig]);
-
   const connectWithInvite = useCallback(async (payload: ConnectWithInvitePayload) => {
     setBusy(true);
     setLogs([]);
@@ -116,15 +101,6 @@ export function useNodeDevice() {
     }
   }, []);
 
-  const testGateway = useCallback(async (gatewayUrl: string) => {
-    setBusy(true);
-    try {
-      return await window.nodeDevice.testGateway({ gatewayUrl });
-    } finally {
-      setBusy(false);
-    }
-  }, []);
-
   const openExternal = useCallback(async (url: string) => {
     await window.nodeDevice.openExternal(url);
   }, []);
@@ -133,7 +109,7 @@ export function useNodeDevice() {
 
   return {
     config,
-    hasToken,
+    hasSavedSession,
     state,
     stateDetail,
     logs,
@@ -141,11 +117,9 @@ export function useNodeDevice() {
     busy,
     loadConfig,
     saveConfig,
-    connect,
     connectWithInvite,
     reconnect,
     disconnect,
-    testGateway,
     openExternal,
     clearLogs,
   };

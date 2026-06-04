@@ -8,23 +8,41 @@ type ConnectionStatusTextProps = {
 
 export function ConnectionStatusText({ state, timerLabel }: ConnectionStatusTextProps) {
   const connected = state === "connected";
-  const pending = state === "connecting" || state === "awaiting_approval";
+  const awaiting = state === "awaiting_approval";
+  const connecting = state === "connecting";
+  const pending = connecting || awaiting;
 
-  const title = connected ? "CONNECTED" : pending ? "PAIRING" : state === "error" ? "ERROR" : "DISCONNECTED";
+  const title = connected
+    ? "CONNECTED"
+    : awaiting
+      ? "AWAITING"
+      : connecting
+        ? "CONNECTING"
+        : state === "error"
+          ? "ERROR"
+          : "DISCONNECTED";
 
   const sub = connected
     ? "Node đã kết nối gateway và sẵn sàng nhận lệnh từ agent."
-    : pending
-      ? "Mở Companion Nodes trên dashboard để duyệt device và node."
-      : state === "error"
-        ? "Kiểm tra log hoặc thử pairing lại với mã invite mới."
-        : "Bật toggle để nhập mã pairing và kết nối an toàn qua dashboard.";
+    : awaiting
+      ? "Đang chờ chấp nhận — mở Companion Nodes trên dashboard để duyệt device và node."
+      : connecting
+        ? "Đang kết nối gateway…"
+        : state === "error"
+          ? "Kiểm tra log hoặc thử pairing lại với mã invite mới."
+          : "Bật toggle để nhập mã invite và kết nối qua dashboard.";
 
   return (
     <div class={styles.wrap}>
       <h2
         class={`${styles.title} ${
-          connected ? styles.titleConnected : pending ? styles.titlePending : styles.titleDisconnected
+          connected
+            ? styles.titleConnected
+            : pending
+              ? awaiting
+                ? styles.titleAwaiting
+                : styles.titlePending
+              : styles.titleDisconnected
         }`}
       >
         {title}

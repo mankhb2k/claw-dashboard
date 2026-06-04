@@ -18,19 +18,22 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const isWin = process.platform === "win32";
-const openclawBin = path.join(
-  root,
-  "node_modules",
-  ".bin",
-  isWin ? "openclaw.cmd" : "openclaw",
-);
+const openclawMjs = path.join(root, "node_modules", "openclaw", "openclaw.mjs");
+
+function spawnOpenclaw(cliArgs, options) {
+  return spawn(process.execPath, [openclawMjs, ...cliArgs], {
+    shell: false,
+    cwd: root,
+    ...options,
+  });
+}
 
 const POLL_MS = 2500;
 const CLI_TIMEOUT_MS = 8000;
 
 function parseArgs(argv) {
   const opts = {
-    apiUrl: "http://localhost:3001",
+    apiUrl: "http://localhost:3000",
     invite: "",
     name: "cli-test",
     autoApprove: false,
@@ -81,7 +84,7 @@ function printHelp() {
 
 Options:
   --invite <code>         Pairing invite (required unless --approve-only)
-  --api-url <url>         AucoBot API base (default: http://localhost:3001)
+  --api-url <url>         AucoBot web base for redeem (default: http://localhost:3000)
   --name <displayName>    Node display name (default: cli-test)
   --auto-approve          Approve device + node via openclaw CLI
   --approve-only          Skip redeem/node run; only poll + approve (needs --gateway-url + --gateway-token)
@@ -149,9 +152,7 @@ async function redeemInvite(apiBaseUrl, code) {
 
 function runOpenclawJson(args, gatewayToken) {
   return new Promise((resolve, reject) => {
-    const child = spawn(openclawBin, args, {
-      shell: isWin,
-      cwd: root,
+    const child = spawnOpenclaw(args, {
       env: { ...process.env, OPENCLAW_GATEWAY_TOKEN: gatewayToken },
     });
 
@@ -377,9 +378,7 @@ async function approveAllPending(gatewayUrl, gatewayToken) {
 
 function startNodeProcess(host, port, displayName, gatewayToken) {
   const args = ["node", "run", "--host", host, "--port", String(port), "--display-name", displayName];
-  const child = spawn(openclawBin, args, {
-    shell: isWin,
-    cwd: root,
+  const child = spawnOpenclaw(args, {
     env: { ...process.env, OPENCLAW_GATEWAY_TOKEN: gatewayToken },
     stdio: ["ignore", "pipe", "pipe"],
   });

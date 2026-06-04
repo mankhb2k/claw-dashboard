@@ -14,12 +14,18 @@
 }
 
 .shellConnected {
-  background-image: radial-gradient(rgba(230, 80, 27, 0.08) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(
+    rgba(230, 80, 27, 0.08) 1.5px,
+    transparent 1.5px
+  );
   background-size: 24px 24px;
 }
 
 .shellDisconnected {
-  background-image: radial-gradient(rgba(239, 68, 68, 0.05) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(
+    rgba(239, 68, 68, 0.05) 1.5px,
+    transparent 1.5px
+  );
   background-size: 24px 24px;
 }
 

@@ -12,7 +12,8 @@ export default async function NodesPage() {
       <Container size="md" display="flex" className={styles.content}>
         <TitleHeader
           title="Companion Nodes"
-          description="Pair iOS, Android, or macOS devices with your OpenClaw gateway — approve requests and monitor connection status."
+          badge="BETA"
+          description="Create  invite, connect OpenClaw Node and approve companion devices with gateway."
           showBorder
         />
         <ClientNodesPage projectId={projectId} />

@@ -25,6 +25,21 @@
   min-width: 0;
 }
 
+.titleRow {
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.2;
+}
+
 .description {
   max-width: 600px;
 }

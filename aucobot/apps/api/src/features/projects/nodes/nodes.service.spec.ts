@@ -75,20 +75,45 @@ describe('NodesService', () => {
     });
   });
 
-  it('removes and renames nodes', async () => {
-    gateway.call.mockResolvedValueOnce({ nodeId: 'node-1' });
+  it('removes companion from device and node pairing stores', async () => {
+    gateway.call
+      .mockResolvedValueOnce({ deviceId: 'node-1' })
+      .mockResolvedValueOnce({ nodeId: 'node-1' });
     gateway.call.mockResolvedValueOnce({ nodeId: 'node-1', displayName: 'Phone' });
 
     await service.removeNode(userId, projectId, 'node-1');
     await service.renameNode(userId, projectId, 'node-1', '  Phone  ');
 
-    expect(gateway.call).toHaveBeenCalledWith(userId, projectId, 'node.pair.remove', {
+    expect(gateway.call).toHaveBeenNthCalledWith(1, userId, projectId, 'device.pair.remove', {
+      deviceId: 'node-1',
+    });
+    expect(gateway.call).toHaveBeenNthCalledWith(2, userId, projectId, 'node.pair.remove', {
       nodeId: 'node-1',
     });
     expect(gateway.call).toHaveBeenCalledWith(userId, projectId, 'node.rename', {
       nodeId: 'node-1',
       displayName: 'Phone',
     });
+  });
+
+  it('remove succeeds when only device pairing exists', async () => {
+    gateway.call
+      .mockResolvedValueOnce({ deviceId: 'dev-hex' })
+      .mockRejectedValueOnce(new Error('unknown nodeId'));
+
+    await expect(service.removeNode(userId, projectId, 'dev-hex')).resolves.toEqual({
+      ok: true,
+    });
+  });
+
+  it('remove throws when neither pairing store has the id', async () => {
+    gateway.call
+      .mockRejectedValueOnce(new Error('unknown deviceId'))
+      .mockRejectedValueOnce(new Error('unknown nodeId'));
+
+    await expect(service.removeNode(userId, projectId, 'missing')).rejects.toThrow(
+      'unknown nodeId',
+    );
   });
 
   it('propagates gateway RPC failures from GatewayRpcService', async () => {

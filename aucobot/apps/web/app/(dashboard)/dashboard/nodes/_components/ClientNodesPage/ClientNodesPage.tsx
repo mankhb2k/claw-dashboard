@@ -1,37 +1,75 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { projectApi } from "@/lib/api/project";
-import { resolveOssGatewayHttpBase } from "@/lib/gateway-control-ui";
-import { isCloudRuntime } from "@/lib/runtime-mode";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
 import type {
   DevicePairingPending,
   NodeEntry,
   NodeInviteListItem,
+  NodePairingPending,
   NodesPairingResponse,
 } from "@/schemas/nodes.schema";
 import { Flex } from "@/components/layout";
-import { Button, Card, Input, Spinner, Typography } from "@/components/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Spinner,
+  toast,
+  Typography,
+} from "@/components/ui";
+import {
+  buildApprovalGroups,
+  errorMessage,
+  isNodeDeviceRequest,
+} from "./nodes-utils";
+import { CardCreateInvite } from "../CardCreateInvite/CardCreateInvite";
+import { CardInviteHistory } from "../CardInviteHistory/CardInviteHistory";
+import { CardGuide } from "../CardGuide/CardGuide";
+import { CardDeviceManager } from "../CardDeviceManager/CardDeviceManager";
 import styles from "./ClientNodesPage.module.css";
-import pageStyles from "../../nodes.module.css";
 
-const POLL_MS = 12_000;
+const POLL_MS = 4_000;
+const POLL_BURST_MS = 2_000;
+const POLL_BURST_DURATION_MS = 90_000;
 
-function isNodeDeviceRequest(req: DevicePairingPending): boolean {
-  const role = req.role?.trim().toLowerCase();
-  if (role === "node") return true;
-  return (req.roles ?? []).some((r) => r.trim().toLowerCase() === "node");
-}
+type NodesConfirmAction =
+  | { kind: "remove"; nodeId: string; title: string }
+  | { kind: "reject-device"; req: DevicePairingPending }
+  | { kind: "reject-node"; req: NodePairingPending };
 
-function formatCaps(values: unknown[] | undefined): string[] {
-  if (!Array.isArray(values)) return [];
-  return values.map((v) => String(v)).filter(Boolean).slice(0, 12);
-}
-
-function errorMessage(reason: unknown, fallback: string): string {
-  return reason instanceof Error ? reason.message : fallback;
+function nodesConfirmCopy(action: NodesConfirmAction): {
+  title: string;
+  description: string;
+  confirmLabel: string;
+} {
+  switch (action.kind) {
+    case "remove":
+      return {
+        title: "Gỡ node khỏi gateway?",
+        description: `Bạn có chắc muốn gỡ node "${action.title}"? Thiết bị sẽ ngắt kết nối khỏi gateway.`,
+        confirmLabel: "Gỡ",
+      };
+    case "reject-device":
+      return {
+        title: "Từ chối pairing device?",
+        description:
+          "Yêu cầu ghép device sẽ bị hủy. Thiết bị cần tạo yêu cầu mới để kết nối lại.",
+        confirmLabel: "Từ chối",
+      };
+    case "reject-node":
+      return {
+        title: "Từ chối pairing node?",
+        description:
+          "Yêu cầu nâng cấp node sẽ bị hủy. Ứng dụng node cần ghép lại sau khi device đã được duyệt.",
+        confirmLabel: "Từ chối",
+      };
+  }
 }
 
 interface ClientNodesPageProps {
@@ -47,12 +85,18 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [invites, setInvites] = useState<NodeInviteListItem[]>([]);
   const [latestInviteCode, setLatestInviteCode] = useState<string | null>(null);
+  const [activeInviteId, setActiveInviteId] = useState<string | null>(null);
+  const [activeInviteExpiresAt, setActiveInviteExpiresAt] = useState<
+    string | null
+  >(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
-
-  const gatewayHttpBase = useMemo(
-    () => (isCloudRuntime() ? null : resolveOssGatewayHttpBase()),
-    [],
+  const [confirmAction, setConfirmAction] = useState<NodesConfirmAction | null>(
+    null,
   );
+  const confirmActionRef = useRef<NodesConfirmAction | null>(null);
+
+  const prevPendingRef = useRef(0);
+  const didNotifyPendingRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!projectId) return;
@@ -80,7 +124,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       setInviteError(null);
     } else {
       setInviteError(
-        errorMessage(inviteRes.reason, "Không tải được danh sách mã pairing."),
+        errorMessage(inviteRes.reason, "Không tải được danh sách mã invite."),
       );
     }
   }, [projectId]);
@@ -96,10 +140,41 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
 
   useEffect(() => {
     if (!projectId) return;
+
+    const burstUntil = Date.now() + POLL_BURST_DURATION_MS;
+    let burstTimer: ReturnType<typeof setInterval> | null = null;
+    const stopBurst = () => {
+      if (burstTimer) {
+        clearInterval(burstTimer);
+        burstTimer = null;
+      }
+    };
+
+    burstTimer = setInterval(() => {
+      void load();
+      if (Date.now() >= burstUntil) {
+        stopBurst();
+      }
+    }, POLL_BURST_MS);
+
     const timer = window.setInterval(() => {
       void load();
     }, POLL_MS);
-    return () => window.clearInterval(timer);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void load();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
+    return () => {
+      stopBurst();
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, [projectId, load]);
 
   const nodeDevicePending = useMemo(
@@ -108,6 +183,31 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   );
 
   const nodePending = pairing?.nodes.pending ?? [];
+  const pendingCount = nodeDevicePending.length + nodePending.length;
+  const approvalGroups = useMemo(
+    () => buildApprovalGroups(nodeDevicePending, nodePending),
+    [nodeDevicePending, nodePending],
+  );
+
+  useEffect(() => {
+    if (
+      pendingCount > 0 &&
+      prevPendingRef.current === 0 &&
+      !didNotifyPendingRef.current
+    ) {
+      toast.success(
+        "Có yêu cầu ghép nối mới",
+        "Duyệt device và node trong card quản lý thiết bị bên dưới.",
+      );
+      didNotifyPendingRef.current = true;
+    }
+    prevPendingRef.current = pendingCount;
+  }, [pendingCount]);
+
+  const setConfirm = (action: NodesConfirmAction | null) => {
+    confirmActionRef.current = action;
+    setConfirmAction(action);
+  };
 
   const runAction = async (key: string, fn: () => Promise<void>) => {
     setActionId(key);
@@ -125,30 +225,31 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   const handleCreateInvite = () => {
     void runAction("create-invite", async () => {
       setInviteError(null);
-      const created = await projectApi.createNodeInvite(projectId, { ttlMinutes: 15 });
+      const created = await projectApi.createNodeInvite(projectId, {
+        ttlMinutes: 15,
+      });
       setLatestInviteCode(created.code);
-      setInvites((prev) => [created.invite, ...prev.filter((row) => row.id !== created.invite.id)]);
+      setActiveInviteId(created.invite.id);
+      setActiveInviteExpiresAt(created.invite.expiresAt);
+      setInvites((prev) => [
+        created.invite,
+        ...prev.filter((row) => row.id !== created.invite.id),
+      ]);
     });
-  };
-
-  const handleCopyInvite = async () => {
-    if (!latestInviteCode) return;
-    try {
-      await navigator.clipboard.writeText(latestInviteCode);
-    } catch {
-      setInviteError("Không copy được mã — hãy chọn và copy thủ công.");
-    }
   };
 
   const handleRevokeInvite = (inviteId: string) => {
     void runAction(`revoke-invite-${inviteId}`, async () => {
       await projectApi.revokeNodeInvite(projectId, inviteId);
       setInvites((prev) => prev.filter((row) => row.id !== inviteId));
-      if (latestInviteCode) {
+      if (inviteId === activeInviteId) {
         setLatestInviteCode(null);
+        setActiveInviteId(null);
+        setActiveInviteExpiresAt(null);
       }
     });
   };
+
   const handleRename = (nodeId: string) => {
     const displayName = renameDrafts[nodeId]?.trim();
     if (!displayName) return;
@@ -157,9 +258,61 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
     );
   };
 
+  const handleApproveDevice = (req: DevicePairingPending) => {
+    void runAction(`dev-approve-${req.requestId}`, () =>
+      projectApi.approveDevicePairing(projectId, req.requestId),
+    );
+  };
+
+  const handleRejectDevice = (req: DevicePairingPending) => {
+    setConfirm({ kind: "reject-device", req });
+  };
+
+  const handleApproveNode = (req: NodePairingPending) => {
+    void runAction(`node-approve-${req.requestId}`, () =>
+      projectApi.approveNodePairing(projectId, req.requestId),
+    );
+  };
+
+  const handleRejectNode = (req: NodePairingPending) => {
+    setConfirm({ kind: "reject-node", req });
+  };
+
+  const handleRemoveNode = (nodeId: string, title: string) => {
+    setConfirm({ kind: "remove", nodeId, title });
+  };
+
+  const handleConfirmAction = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    const action = confirmActionRef.current;
+    if (!action) return;
+    setConfirm(null);
+
+    switch (action.kind) {
+      case "remove":
+        void runAction(`remove-${action.nodeId}`, () =>
+          projectApi.removeNode(projectId, action.nodeId),
+        );
+        break;
+      case "reject-device":
+        void runAction(`dev-reject-${action.req.requestId}`, () =>
+          projectApi.rejectDevicePairing(projectId, action.req.requestId),
+        );
+        break;
+      case "reject-node":
+        void runAction(`node-reject-${action.req.requestId}`, () =>
+          projectApi.rejectNodePairing(projectId, action.req.requestId),
+        );
+        break;
+    }
+  };
+
+  const actionBusy = Boolean(actionId);
+  const confirmCopy = confirmAction ? nodesConfirmCopy(confirmAction) : null;
+
   if (!projectId) {
     return (
-      <Typography variant="p" className={pageStyles.error}>
+      <Typography variant="p" className={styles.error}>
         Chưa có project. Tạo project tại mục Tổng quan trước.
       </Typography>
     );
@@ -172,7 +325,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
         align="center"
         justify="center"
         gap={3}
-        className={pageStyles.loadingContainer}
+        className={styles.loadingContainer}
       >
         <Spinner size="md" />
         <Typography variant="p" color="muted">
@@ -183,319 +336,72 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   }
 
   return (
-    <Flex direction="column" gap={24} className={pageStyles.content}>
+    <Flex direction="column" gap={24} className={styles.content}>
       {error ? (
-        <Typography variant="p" className={pageStyles.error}>
+        <Typography variant="p" className={styles.error}>
           {error}
         </Typography>
       ) : null}
 
-      <Card className={styles.setupCard}>
-        <div className={pageStyles.cardInner}>
-          <Typography variant="p" weight="medium">
-            Kết nối thiết bị (Companion Node)
-          </Typography>
-          <Typography variant="small" color="muted">
-            Cài app OpenClaw Node trên macOS hoặc Windows. Cách 1: nhập{" "}
-            <strong>Gateway token</strong> từ Settings. Cách 2 (khuyên dùng): tạo{" "}
-            <strong>mã pairing</strong> bên dưới, nhập mã trong app (hết hạn sau 15 phút, dùng
-            một lần). Sau khi app connect, duyệt device + node tại đây.
-          </Typography>
-          {gatewayHttpBase ? (
-            <Typography variant="small">
-              Gateway URL:{" "}
-              <code className={pageStyles.urlCode}>{gatewayHttpBase}</code>
-            </Typography>
-          ) : null}
-          <Link href={`${DASHBOARD_BASE_PATH}/setting`}>
-            <Button variant="secondary" size="sm">
-              Mở Settings (Gateway token)
-            </Button>
-          </Link>
+      <CardCreateInvite
+        latestInviteCode={latestInviteCode}
+        activeInviteExpiresAt={activeInviteExpiresAt}
+        inviteError={inviteError}
+        actionBusy={actionBusy}
+        onCreateInvite={handleCreateInvite}
+        onCopyError={(message) => setInviteError(message || null)}
+      />
+      <CardInviteHistory
+        invites={invites}
+        actionBusy={actionBusy}
+        onRevokeInvite={handleRevokeInvite}
+      />
+      <CardDeviceManager
+        groups={approvalGroups}
+        pendingCount={pendingCount}
+        hasDevicePending={nodeDevicePending.length > 0}
+        hasNodePending={nodePending.length > 0}
+        nodes={nodes}
+        renameDrafts={renameDrafts}
+        actionBusy={actionBusy}
+        onRefresh={() => void load()}
+        onApproveDevice={handleApproveDevice}
+        onRejectDevice={handleRejectDevice}
+        onApproveNode={handleApproveNode}
+        onRejectNode={handleRejectNode}
+        onRenameChange={(nodeId, value) =>
+          setRenameDrafts((prev) => ({ ...prev, [nodeId]: value }))
+        }
+        onRename={handleRename}
+        onRemove={handleRemoveNode}
+      />
+      <CardGuide />
 
-          <div className={styles.inviteBlock}>
-            <Typography variant="p" weight="medium">
-              Mã pairing (Phase 2)
-            </Typography>
-            <Typography variant="small" color="muted">
-              Tạo mã ngắn hạn cho OpenClaw Node — không cần copy gateway token dài.
-            </Typography>
-            {inviteError ? (
-              <Typography variant="small" className={pageStyles.error}>
-                {inviteError}
-              </Typography>
-            ) : null}
-            <div className={styles.inviteActions}>
-              <Button
-                size="sm"
-                disabled={Boolean(actionId)}
-                onClick={handleCreateInvite}
-              >
-                Tạo mã pairing
-              </Button>
-              {latestInviteCode ? (
-                <>
-                  <code className={pageStyles.urlCode}>{latestInviteCode}</code>
-                  <Button variant="secondary" size="sm" onClick={() => void handleCopyInvite()}>
-                    Copy
-                  </Button>
-                </>
-              ) : null}
-            </div>
-            {invites.length > 0 ? (
-              <div className={styles.inviteList}>
-                {invites.slice(0, 5).map((invite) => (
-                  <div key={invite.id} className={styles.inviteRow}>
-                    <Typography variant="small">
-                      <code className={pageStyles.urlCode}>{invite.codePrefix}…</code>
-                      {" · "}
-                      {invite.status}
-                      {" · "}
-                      hết hạn {new Date(invite.expiresAt).toLocaleString()}
-                    </Typography>
-                    {invite.status === "active" ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={Boolean(actionId)}
-                        onClick={() => handleRevokeInvite(invite.id)}
-                      >
-                        Thu hồi
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </Card>
-
-      {(nodeDevicePending.length > 0 || nodePending.length > 0) && (
-        <section className={pageStyles.section}>
-          <div className={pageStyles.sectionHeader}>
-            <div>
-              <Typography variant="p" weight="medium">
-                Yêu cầu pairing đang chờ
-              </Typography>
-              <Typography variant="small" color="muted">
-                Companion node cần duyệt cả device (WS auth) và node (capabilities).
-              </Typography>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={Boolean(actionId)}
-              onClick={() => void load()}
+      <AlertDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirm(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmCopy?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmCopy?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionBusy}>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              variant="danger"
+              disabled={actionBusy}
+              onClick={(e) => handleConfirmAction(e)}
             >
-              Làm mới
-            </Button>
-          </div>
-
-          {nodeDevicePending.map((req) => (
-            <div key={req.requestId} className={pageStyles.pendingItem}>
-              <Typography variant="p" weight="medium">
-                Device · {req.displayName || req.deviceId}
-              </Typography>
-              <Typography variant="small" color="muted">
-                {req.deviceId}
-                {req.remoteIp ? ` · ${req.remoteIp}` : ""}
-                {req.role ? ` · role: ${req.role}` : ""}
-              </Typography>
-              <div className={pageStyles.pendingActions}>
-                <Button
-                  size="sm"
-                  disabled={Boolean(actionId)}
-                  onClick={() =>
-                    void runAction(`dev-approve-${req.requestId}`, () =>
-                      projectApi.approveDevicePairing(projectId, req.requestId),
-                    )
-                  }
-                >
-                  Duyệt device
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={Boolean(actionId)}
-                  onClick={() => {
-                    if (!window.confirm("Từ chối yêu cầu pairing device này?")) return;
-                    void runAction(`dev-reject-${req.requestId}`, () =>
-                      projectApi.rejectDevicePairing(projectId, req.requestId),
-                    );
-                  }}
-                >
-                  Từ chối
-                </Button>
-              </div>
-            </div>
-          ))}
-
-          {nodePending.map((req) => (
-            <div key={req.requestId} className={pageStyles.pendingItem}>
-              <Typography variant="p" weight="medium">
-                Node · {req.displayName || req.nodeId}
-              </Typography>
-              <Typography variant="small" color="muted">
-                {req.nodeId}
-                {req.platform ? ` · ${req.platform}` : ""}
-                {req.remoteIp ? ` · ${req.remoteIp}` : ""}
-              </Typography>
-              {req.commands && req.commands.length > 0 ? (
-                <div className={pageStyles.chipRow}>
-                  {req.commands.slice(0, 8).map((cmd) => (
-                    <span key={cmd} className={pageStyles.chip}>
-                      {cmd}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              {req.requiredApproveScopes && req.requiredApproveScopes.length > 0 ? (
-                <Typography variant="small" color="muted">
-                  Scopes cần duyệt: {req.requiredApproveScopes.join(", ")}
-                </Typography>
-              ) : null}
-              <div className={pageStyles.pendingActions}>
-                <Button
-                  size="sm"
-                  disabled={Boolean(actionId)}
-                  onClick={() =>
-                    void runAction(`node-approve-${req.requestId}`, () =>
-                      projectApi.approveNodePairing(projectId, req.requestId),
-                    )
-                  }
-                >
-                  Duyệt node
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={Boolean(actionId)}
-                  onClick={() => {
-                    if (!window.confirm("Từ chối yêu cầu pairing node này?")) return;
-                    void runAction(`node-reject-${req.requestId}`, () =>
-                      projectApi.rejectNodePairing(projectId, req.requestId),
-                    );
-                  }}
-                >
-                  Từ chối
-                </Button>
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
-
-      <section className={pageStyles.section}>
-        <div className={pageStyles.sectionHeader}>
-          <div>
-            <Typography variant="p" weight="medium">
-              Nodes đã đăng ký
-            </Typography>
-            <Typography variant="small" color="muted">
-              Trạng thái từ gateway (paired / connected).
-            </Typography>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={Boolean(actionId)}
-            onClick={() => void load()}
-          >
-            Làm mới
-          </Button>
-        </div>
-
-        {nodes.length === 0 ? (
-          <Typography variant="p" color="muted">
-            Chưa kết nối với thiết bị companion nào.
-          </Typography>
-        ) : (
-          nodes.map((node) => {
-            const nodeId = String(node.nodeId ?? "");
-            const title =
-              (typeof node.displayName === "string" && node.displayName.trim()) ||
-              nodeId ||
-              "unknown";
-            const connected = Boolean(node.connected);
-            const paired = Boolean(node.paired);
-            const caps = formatCaps(node.caps as unknown[] | undefined);
-            const commands = formatCaps(node.commands as unknown[] | undefined);
-
-            return (
-              <div key={nodeId || title} className={pageStyles.nodeRow}>
-                <div className={pageStyles.nodeRowHeader}>
-                  <div>
-                    <Typography variant="p" weight="medium">
-                      {title}
-                    </Typography>
-                    <Typography variant="small" color="muted">
-                      {nodeId}
-                      {typeof node.platform === "string" ? ` · ${node.platform}` : ""}
-                      {typeof node.remoteIp === "string" ? ` · ${node.remoteIp}` : ""}
-                    </Typography>
-                    <div className={pageStyles.chipRow}>
-                      <span
-                        className={`${pageStyles.chip} ${paired ? pageStyles.chipOk : pageStyles.chipWarn}`}
-                      >
-                        {paired ? "paired" : "unpaired"}
-                      </span>
-                      <span
-                        className={`${pageStyles.chip} ${connected ? pageStyles.chipOk : pageStyles.chipWarn}`}
-                      >
-                        {connected ? "connected" : "offline"}
-                      </span>
-                      {caps.map((c) => (
-                        <span key={`cap-${c}`} className={pageStyles.chip}>
-                          {c}
-                        </span>
-                      ))}
-                      {commands.map((c) => (
-                        <span key={`cmd-${c}`} className={pageStyles.chip}>
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={Boolean(actionId) || !nodeId}
-                    onClick={() => {
-                      if (!window.confirm(`Gỡ node "${title}" khỏi gateway?`)) return;
-                      void runAction(`remove-${nodeId}`, () =>
-                        projectApi.removeNode(projectId, nodeId),
-                      );
-                    }}
-                  >
-                    Gỡ
-                  </Button>
-                </div>
-                {nodeId ? (
-                  <div className={pageStyles.renameRow}>
-                    <Input
-                      className={pageStyles.renameInput}
-                      placeholder="Tên hiển thị"
-                      value={renameDrafts[nodeId] ?? (typeof node.displayName === "string" ? node.displayName : "")}
-                      onChange={(e) =>
-                        setRenameDrafts((prev) => ({ ...prev, [nodeId]: e.target.value }))
-                      }
-                    />
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={Boolean(actionId)}
-                      onClick={() => handleRename(nodeId)}
-                    >
-                      Đổi tên
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })
-        )}
-      </section>
+              {confirmCopy?.confirmLabel}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Flex>
   );
 }

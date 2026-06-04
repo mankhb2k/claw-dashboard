@@ -1,0 +1,122 @@
+.card {
+  width: 100%;
+}
+
+.cardInner {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sectionHint {
+  margin-top: calc(var(--space-1) * -1);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.stepperTrack {
+  display: flex;
+  align-items: center;
+}
+
+.stepperDot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  background: var(--color-border);
+}
+
+.stepperDot[data-state="active"] {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
+
+.stepperDot[data-state="done"] {
+  background: var(--color-success);
+}
+
+.stepperLine {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  min-width: 24px;
+}
+
+.stepperLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.alertBanner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+}
+
+.groupList,
+.deviceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.inlineEmpty {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface-muted);
+}
+
+.inlineEmptyIcon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  margin-top: 1px;
+}

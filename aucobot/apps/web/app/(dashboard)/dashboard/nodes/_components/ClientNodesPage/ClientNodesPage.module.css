@@ -1,33 +1,18 @@
-.setupCard {
-  width: 100%;
-}
-
-.inviteBlock {
-  display: flex;
+.content {
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--space-2);
   flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
+  gap: var(--space-6);
+  padding-bottom: var(--space-8);
 }
 
-.inviteActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+.loadingContainer {
+  flex: 1;
+  min-height: 12rem;
 }
 
-.inviteList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.inviteRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.error {
+  color: var(--color-danger);
+  margin: 0;
 }

@@ -1,7 +1,14 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import type { NodeConnectionState } from "../shared/schemas/node-config.schema";
-import { GatewayStatusPoller } from "./gateway-status-poller";
-import { resolveOpenclawBin } from "./openclaw-bin";
+import {
+  fetchGatewayConnectionState,
+  GatewayStatusPoller,
+} from "./gateway-status-poller";
+import {
+  buildOpenclawChildEnv,
+  formatOpenclawNodeRequirementError,
+  resolveOpenclawSpawn,
+} from "./openclaw-bin";
 
 export type NodeRunnerStartOptions = {
   host: string;
@@ -31,7 +38,10 @@ function inferState(line: string): NodeConnectionState | null {
     lower.includes("pairing") ||
     lower.includes("pending approval") ||
     lower.includes("awaiting approval") ||
-    lower.includes("pair required")
+    lower.includes("pair required") ||
+    lower.includes("role upgrade") ||
+    lower.includes("identity changed") ||
+    lower.includes("metadata change")
   ) {
     return "awaiting_approval";
   }
@@ -61,6 +71,7 @@ export class NodeRunner {
   private child: ChildProcessWithoutNullStreams | null = null;
   private state: NodeConnectionState = "idle";
   private token = "";
+  private lastStartOpts: NodeRunnerStartOptions | null = null;
   private readonly poller = new GatewayStatusPoller();
 
   constructor(
@@ -114,20 +125,35 @@ export class NodeRunner {
   }
 
   async checkCli(): Promise<{ ok: boolean; message?: string }> {
-    const bin = resolveOpenclawBin();
+    let spawnConfig: ReturnType<typeof resolveOpenclawSpawn>;
+    try {
+      spawnConfig = resolveOpenclawSpawn();
+    } catch (err) {
+      return {
+        ok: false,
+        message: err instanceof Error ? err.message : "OpenClaw chưa được cài trong app.",
+      };
+    }
+
+    const { command, prefixArgs, useShell } = spawnConfig;
     return new Promise((resolve) => {
-      const probe = spawn(bin, ["--version"], {
-        shell: process.platform === "win32",
-        env: process.env,
+      const probe = spawn(command, [...prefixArgs, "--version"], {
+        shell: useShell,
+        env: buildOpenclawChildEnv(command),
       });
-      let out = "";
+      let stdout = "";
+      let stderr = "";
       probe.stdout.on("data", (chunk: Buffer) => {
-        out += chunk.toString();
+        stdout += chunk.toString();
+      });
+      probe.stderr.on("data", (chunk: Buffer) => {
+        stderr += chunk.toString();
       });
       probe.on("error", () => {
         resolve({
           ok: false,
-          message: "OpenClaw CLI not found. Reinstall the app or run pnpm install.",
+          message:
+            "Không chạy được OpenClaw CLI. Chạy `pnpm install` trong node-device hoặc cài lại app.",
         });
       });
       probe.on("close", (code) => {
@@ -135,9 +161,15 @@ export class NodeRunner {
           resolve({ ok: true });
           return;
         }
+        const combined = `${stderr}\n${stdout}`.trim();
+        const needsNode =
+          /Node\.js v22\.19|openclaw: Node/i.test(combined) ||
+          command === process.execPath;
         resolve({
           ok: false,
-          message: out.trim() || "OpenClaw CLI failed to run.",
+          message: needsNode
+            ? formatOpenclawNodeRequirementError()
+            : combined || "OpenClaw CLI failed to run.",
         });
       });
     });
@@ -154,8 +186,9 @@ export class NodeRunner {
       return cliCheck;
     }
 
-    const bin = resolveOpenclawBin();
+    const { command, prefixArgs, useShell } = resolveOpenclawSpawn();
     const args = [
+      ...prefixArgs,
       "node",
       "run",
       "--host",
@@ -166,17 +199,15 @@ export class NodeRunner {
     if (opts.displayName?.trim()) {
       args.push("--display-name", opts.displayName.trim());
     }
-    if (opts.port === 443 || opts.port === 80) {
-      /* default ports — CLI uses explicit --port */
-    }
 
     this.token = opts.gatewayToken;
+    this.lastStartOpts = opts;
     this.setState("connecting");
 
-    this.child = spawn(bin, args, {
-      shell: process.platform === "win32",
+    this.child = spawn(command, args, {
+      shell: useShell,
       env: {
-        ...process.env,
+        ...buildOpenclawChildEnv(command),
         OPENCLAW_GATEWAY_TOKEN: opts.gatewayToken,
       },
     });
@@ -201,14 +232,9 @@ export class NodeRunner {
     this.child.stderr.on("data", pushLine);
 
     this.child.on("close", (code) => {
-      this.stopStatusPolling();
       this.child = null;
       this.token = "";
-      if (code !== 0 && code !== null) {
-        this.setState("error", `Process exited (${code})`, true);
-      } else {
-        this.setState("idle", undefined, true);
-      }
+      void this.handleProcessExit(code);
     });
 
     this.child.on("error", (err) => {
@@ -222,8 +248,51 @@ export class NodeRunner {
     return { ok: true };
   }
 
+  private async handleProcessExit(code: number | null): Promise<void> {
+    if (code === 0 || code === null) {
+      this.stopStatusPolling();
+      this.lastStartOpts = null;
+      this.setState("idle", undefined, true);
+      return;
+    }
+
+    const opts = this.lastStartOpts;
+    if (opts?.gatewayUrl && opts.gatewayToken) {
+      try {
+        const result = await fetchGatewayConnectionState({
+          gatewayUrl: opts.gatewayUrl,
+          gatewayToken: opts.gatewayToken,
+          displayName: opts.displayName,
+        });
+        if (result.state === "awaiting_approval") {
+          this.setState(
+            "awaiting_approval",
+            result.detail ?? "Chờ duyệt trên Companion Nodes",
+            true,
+          );
+          return;
+        }
+        if (result.state === "connected") {
+          this.stopStatusPolling();
+          this.setState("connected", result.detail, true);
+          return;
+        }
+        if (result.state === "connecting") {
+          this.setState("connecting", result.detail, true);
+          return;
+        }
+      } catch {
+        // Fall through to error below.
+      }
+    }
+
+    this.stopStatusPolling();
+    this.setState("error", `Process exited (${code})`, true);
+  }
+
   stop(): void {
     this.stopStatusPolling();
+    this.lastStartOpts = null;
     if (!this.child) {
       this.setState("idle", undefined, true);
       return;

@@ -16,7 +16,7 @@ import styles from "./styles/app.module.css";
 export function App() {
   const {
     config,
-    hasToken,
+    hasSavedSession,
     state,
     stateDetail,
     logs,
@@ -27,6 +27,7 @@ export function App() {
     reconnect,
     disconnect,
     openExternal,
+    clearLogs,
   } = useNodeDevice();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -52,18 +53,16 @@ export function App() {
       return;
     }
 
-    if (hasToken && config?.gatewayUrl) {
-      const result = await reconnect();
-      if (!result.ok) {
-        setInviteError(result.message);
-        setInviteOpen(true);
-      }
+    if (hasSavedSession) {
+      setInviteError(undefined);
+      setInviteOpen(false);
+      await reconnect();
       return;
     }
 
     setInviteError(undefined);
     setInviteOpen(true);
-  }, [sessionActive, hasToken, config?.gatewayUrl, disconnect, reconnect]);
+  }, [sessionActive, hasSavedSession, disconnect, reconnect]);
 
   const handleInviteSubmit = useCallback(
     async (payload: { webBaseUrl: string; inviteCode: string }) => {
@@ -77,15 +76,21 @@ export function App() {
       });
 
       if (!result.ok) {
-        setInviteError(
+        const message =
           result.message ??
-            (result.errors
-              ? Object.values(result.errors).join(" ")
-              : "Kết nối thất bại."),
-        );
+          (result.errors ? Object.values(result.errors).join(" ") : "Kết nối thất bại.");
+        const alreadyUsed = /đã được sử dụng|already used|đã dùng/i.test(message);
+        if (alreadyUsed && hasSavedSession) {
+          setInviteError(undefined);
+          setInviteOpen(false);
+          await reconnect();
+          return;
+        }
+        setInviteError(message);
         return;
       }
 
+      setInviteError(undefined);
       setInviteOpen(false);
     },
     [connectWithInvite, config],
@@ -140,6 +145,9 @@ export function App() {
         open={settingsOpen}
         busy={busy}
         config={config}
+        logs={logs}
+        connectionState={state}
+        connectionDetail={stateDetail}
         onClose={() => setSettingsOpen(false)}
         onSave={async (patch) => {
           if (!config?.gatewayUrl) {
@@ -151,6 +159,7 @@ export function App() {
           if (nodesUrl) void openExternal(nodesUrl);
         }}
         onForgetPairing={() => void handleForgetPairing()}
+        onClearLogs={clearLogs}
       />
     </div>
   );

@@ -1,27 +1,40 @@
 import { useEffect, useState } from "preact/hooks";
-import type { NodeConfig, NodePermissionPrefs } from "@shared/schemas/node-config.schema";
+import type {
+  NodeConfig,
+  NodeConnectionState,
+  NodePermissionPrefs,
+} from "@shared/schemas/node-config.schema";
 import { SmallToggle } from "../shared/SmallToggle";
 import { DEFAULT_PERMISSIONS, PermissionToggles } from "./PermissionToggles";
+import { SettingsSessionLog } from "./SettingsSessionLog";
 import styles from "./SettingsSidebar.module.css";
 
 type SettingsSidebarProps = {
   open: boolean;
   busy: boolean;
   config: NodeConfig | null;
+  logs: string[];
+  connectionState: NodeConnectionState;
+  connectionDetail?: string;
   onClose: () => void;
   onSave: (patch: Partial<NodeConfig>) => Promise<{ ok: boolean; message?: string }>;
   onOpenNodes: () => void;
   onForgetPairing: () => void;
+  onClearLogs: () => void;
 };
 
 export function SettingsSidebar({
   open,
   busy,
   config,
+  logs,
+  connectionState,
+  connectionDetail,
   onClose,
   onSave,
   onOpenNodes,
   onForgetPairing,
+  onClearLogs,
 }: SettingsSidebarProps) {
   const [displayName, setDisplayName] = useState("");
   const [openAtLogin, setOpenAtLogin] = useState(false);
@@ -117,6 +130,16 @@ export function SettingsSidebar({
             </div>
             <SmallToggle label="Launch at login" on={openAtLogin} onChange={setOpenAtLogin} />
           </div>
+        </section>
+
+        <section class={styles.section}>
+          <SettingsSessionLog
+            settingsOpen={open}
+            logs={logs}
+            state={connectionState}
+            stateDetail={connectionDetail}
+            onClear={onClearLogs}
+          />
         </section>
 
         <section class={styles.section}>

@@ -5,6 +5,7 @@ import styles from "./TitleHeader.module.css";
 
 interface TitleHeaderProps {
   title: string;
+  badge?: string;
   description?: string;
   actions?: React.ReactNode;
   showBorder?: boolean;
@@ -19,6 +20,7 @@ interface TitleHeaderProps {
  */
 export function TitleHeader({
   title,
+  badge,
   description,
   actions,
   showBorder = false,
@@ -37,9 +39,12 @@ export function TitleHeader({
   return (
     <div className={rootClasses}>
       <Flex direction="column" gap={8} className={styles.content}>
-        <Typography variant="h3" weight="bold">
-          {title}
-        </Typography>
+        <Flex align="center" gap={8} className={styles.titleRow}>
+          <Typography variant="h3" weight="bold">
+            {title}
+          </Typography>
+          {badge ? <span className={styles.badge}>{badge}</span> : null}
+        </Flex>
         {description && (
           <Typography variant="p" color="muted" className={styles.description}>
             {description}

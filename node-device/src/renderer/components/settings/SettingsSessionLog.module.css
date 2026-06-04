@@ -1,0 +1,167 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-2) 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+
+.toggleLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.chevron {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.hint {
+  margin: 0;
+  padding-left: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.status {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.statusKey {
+  color: var(--color-text-subtle);
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.toolBtn,
+.toolBtnDanger {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.toolBtn {
+  color: #67e8f9;
+  background: rgba(8, 145, 178, 0.15);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+}
+
+.toolBtnDanger {
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.toolBtn:disabled,
+.toolBtnDanger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* VS Code–style terminal */
+.terminal {
+  max-height: 14rem;
+  overflow: auto;
+  border-radius: 0.375rem;
+  border: 1px solid #2d2d2d;
+  background: #1e1e1e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  scrollbar-width: thin;
+  scrollbar-color: #424242 #1e1e1e;
+}
+
+.terminal::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.terminal::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 4px;
+}
+
+.terminal::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.terminalPre {
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  font-family: Consolas, "Cascadia Mono", "Courier New", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.logLine {
+  display: block;
+}
+
+.toneDefault {
+  color: #d4d4d4;
+}
+
+.toneSuccess {
+  color: #4ec9b0;
+}
+
+.toneWarn {
+  color: #dcdcaa;
+}
+
+.toneError {
+  color: #f48771;
+}
+
+.toneMuted {
+  color: #808080;
+}
+
+.empty {
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  font-family: Consolas, "Cascadia Mono", "Courier New", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #808080;
+}

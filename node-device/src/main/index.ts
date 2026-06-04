@@ -11,10 +11,8 @@ import {
 import path from "node:path";
 import { formatZodErrors } from "../shared/parse";
 import {
-  connectPayloadSchema,
   connectWithInviteSchema,
   nodeConfigSchema,
-  type ConnectPayload,
   type ConnectWithInvitePayload,
   type NodeConfig,
   type NodeConnectionState,
@@ -204,38 +202,59 @@ function rebuildTrayMenu(): void {
   tray.setContextMenu(Menu.buildFromTemplate(template));
 }
 
-async function testGatewayReachable(gatewayUrl: string): Promise<{ ok: boolean; message?: string }> {
-  try {
-    const endpoint = parseGatewayUrl(gatewayUrl);
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(endpoint.httpBase, {
-      method: "GET",
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (res.ok || res.status === 404 || res.status === 401) {
-      return { ok: true, message: `Gateway reachable at ${endpoint.httpBase}` };
-    }
-    return { ok: false, message: `Gateway responded with HTTP ${res.status}` };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Gateway unreachable";
-    return { ok: false, message };
-  }
+function isInviteAlreadyUsedMessage(message: string): boolean {
+  return /already used|đã được sử dụng|đã dùng/i.test(message);
+}
+
+type SavedGatewaySession = StoredConfig & {
+  gatewayUrl: string;
+  gatewayToken: string;
+};
+
+async function startNodeFromStored(
+  stored: SavedGatewaySession,
+  displayName?: string,
+): Promise<{ ok: boolean; message?: string }> {
+  const endpoint = parseGatewayUrl(stored.gatewayUrl);
+  const port = toWsPortHint(endpoint);
+  return runner.start({
+    host: endpoint.host,
+    port,
+    displayName: displayName ?? stored.displayName,
+    gatewayToken: stored.gatewayToken,
+    gatewayUrl: stored.gatewayUrl,
+  });
 }
 
 async function performConnectWithInvite(
   data: ConnectWithInvitePayload,
 ): Promise<{ ok: boolean; message?: string; errors?: Record<string, string> }> {
+  const webUrl = data.webBaseUrl.replace(/\/$/, "");
+  let gatewayUrl: string;
+  let gatewayToken: string;
+  let aucobotWebUrl: string;
+
   const redeemed = await redeemNodeInvite(data.webBaseUrl, data.inviteCode);
   if (!redeemed.ok) {
-    return { ok: false, message: redeemed.message };
+    if (isInviteAlreadyUsedMessage(redeemed.message ?? "")) {
+      const stored = loadStoredConfig();
+      if (!stored?.gatewayUrl || !stored.gatewayToken) {
+        return {
+          ok: false,
+          message: "Mã invite đã được dùng. Tạo mã mới trên Companion Nodes.",
+        };
+      }
+      gatewayUrl = stored.gatewayUrl;
+      gatewayToken = stored.gatewayToken;
+      aucobotWebUrl = stored.aucobotWebUrl ?? webUrl;
+      pushLog("Mã invite đã redeem — tiếp tục kết nối bằng phiên đã lưu…");
+    } else {
+      return { ok: false, message: redeemed.message };
+    }
+  } else {
+    ({ gatewayUrl, gatewayToken, aucobotWebUrl } = redeemed.data);
+    pushLog("Invite redeemed — starting node…");
   }
-
-  const { gatewayUrl, gatewayToken, aucobotWebUrl } = redeemed.data;
-  const webUrl = data.webBaseUrl.replace(/\/$/, "");
-  const endpoint = parseGatewayUrl(gatewayUrl);
-  const port = toWsPortHint(endpoint);
 
   saveStoredConfig({
     gatewayUrl,
@@ -246,21 +265,26 @@ async function performConnectWithInvite(
     permissions: data.permissions,
   });
 
-  logs = [];
-  pushLog("Invite redeemed — starting node…");
-  const result = await runner.start({
-    host: endpoint.host,
-    port,
-    displayName: data.displayName,
-    gatewayToken,
-    gatewayUrl,
-  });
+  if (redeemed.ok) {
+    logs = [];
+  }
+  const result = await startNodeFromStored(
+    {
+      gatewayUrl,
+      gatewayToken,
+      aucobotWebUrl: aucobotWebUrl || webUrl,
+      displayName: data.displayName,
+      openAtLogin: data.openAtLogin,
+      permissions: data.permissions,
+    } satisfies SavedGatewaySession,
+    data.displayName,
+  );
 
   rebuildTrayMenu();
   if (!result.ok) {
     return result;
   }
-  return { ok: true, message: "Node host started." };
+  return { ok: true, message: "Đang kết nối gateway…" };
 }
 
 function watchExitOnConnected(): void {
@@ -323,7 +347,7 @@ function registerIpc(): void {
     const { gatewayToken: _token, ...publicConfig } = config;
     return {
       config: publicConfig as NodeConfig,
-      hasToken: Boolean(config.gatewayToken),
+      hasSavedSession: Boolean(config.gatewayUrl && config.gatewayToken),
     };
   });
 
@@ -352,50 +376,6 @@ function registerIpc(): void {
     return { ok: true };
   });
 
-  ipcMain.handle("node-device:connect", async (_event, payload: unknown) => {
-    const parsed = connectPayloadSchema.safeParse(payload);
-    if (!parsed.success) {
-      return { ok: false, errors: formatZodErrors(parsed.error) };
-    }
-
-    const data: ConnectPayload = parsed.data;
-    const prev = loadStoredConfig();
-    const gatewayToken = data.gatewayToken ?? prev?.gatewayToken;
-    if (!gatewayToken || gatewayToken.trim().length < 8) {
-      return {
-        ok: false,
-        errors: { gatewayToken: "Gateway token is required" },
-      };
-    }
-
-    const endpoint = parseGatewayUrl(data.gatewayUrl);
-    const port = toWsPortHint(endpoint);
-
-    saveStoredConfig({
-      gatewayUrl: data.gatewayUrl,
-      displayName: data.displayName,
-      aucobotWebUrl: data.aucobotWebUrl || undefined,
-      aucobotApiUrl: data.aucobotApiUrl || undefined,
-      openAtLogin: data.openAtLogin,
-      gatewayToken,
-    });
-
-    logs = [];
-    const result = await runner.start({
-      host: endpoint.host,
-      port,
-      displayName: data.displayName,
-      gatewayToken,
-      gatewayUrl: data.gatewayUrl,
-    });
-
-    rebuildTrayMenu();
-    if (!result.ok) {
-      return result;
-    }
-    return { ok: true, message: "Node process started." };
-  });
-
   ipcMain.handle("node-device:connect-with-invite", async (_event, payload: unknown) => {
     const parsed = connectWithInviteSchema.safeParse(payload);
     if (!parsed.success) {
@@ -407,41 +387,24 @@ function registerIpc(): void {
   ipcMain.handle("node-device:reconnect", async () => {
     const stored = loadStoredConfig();
     if (!stored?.gatewayUrl || !stored.gatewayToken) {
-      return { ok: false, message: "Chưa có cấu hình. Hãy kết nối bằng mã pairing trước." };
+      return { ok: false, message: "Chưa có cấu hình. Hãy kết nối bằng mã invite trước." };
     }
-
-    const endpoint = parseGatewayUrl(stored.gatewayUrl);
-    const port = toWsPortHint(endpoint);
 
     logs = [];
     pushLog("Reconnecting with saved credentials…");
-    const result = await runner.start({
-      host: endpoint.host,
-      port,
-      displayName: stored.displayName,
-      gatewayToken: stored.gatewayToken,
-      gatewayUrl: stored.gatewayUrl,
-    });
+    const result = await startNodeFromStored(stored as SavedGatewaySession);
 
     rebuildTrayMenu();
     if (!result.ok) {
       return result;
     }
-    return { ok: true, message: "Node reconnected." };
+    return { ok: true, message: "Đang kết nối gateway…" };
   });
 
   ipcMain.handle("node-device:disconnect", () => {
     runner.stop();
     rebuildTrayMenu();
     return { ok: true };
-  });
-
-  ipcMain.handle("node-device:test-gateway", async (_event, payload: unknown) => {
-    const parsed = nodeConfigSchema.pick({ gatewayUrl: true }).safeParse(payload);
-    if (!parsed.success) {
-      return { ok: false, errors: formatZodErrors(parsed.error) };
-    }
-    return testGatewayReachable(parsed.data.gatewayUrl);
   });
 
   ipcMain.handle("node-device:open-external", (_event, url: string) => {

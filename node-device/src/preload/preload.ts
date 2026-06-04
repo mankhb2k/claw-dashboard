@@ -1,6 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
-  ConnectPayload,
   ConnectWithInvitePayload,
   NodeConfig,
   NodeConnectionState,
@@ -15,7 +14,8 @@ export type NodeDeviceMeta = {
 
 export type GetConfigResponse = {
   config: NodeConfig | null;
-  hasToken?: boolean;
+  /** True when invite was redeemed and credentials are stored (reconnect without new code). */
+  hasSavedSession?: boolean;
 };
 
 export type IpcOk = {
@@ -34,14 +34,10 @@ const api = {
   getConfig: (): Promise<GetConfigResponse> => ipcRenderer.invoke("node-device:get-config"),
   saveConfig: (config: NodeConfig): Promise<IpcOk> =>
     ipcRenderer.invoke("node-device:save-config", config),
-  connect: (payload: ConnectPayload): Promise<IpcOk> =>
-    ipcRenderer.invoke("node-device:connect", payload),
   connectWithInvite: (payload: ConnectWithInvitePayload): Promise<IpcOk> =>
     ipcRenderer.invoke("node-device:connect-with-invite", payload),
   reconnect: (): Promise<IpcOk> => ipcRenderer.invoke("node-device:reconnect"),
   disconnect: (): Promise<IpcOk> => ipcRenderer.invoke("node-device:disconnect"),
-  testGateway: (payload: Pick<NodeConfig, "gatewayUrl">): Promise<IpcOk> =>
-    ipcRenderer.invoke("node-device:test-gateway", payload),
   openExternal: (url: string): Promise<IpcOk> =>
     ipcRenderer.invoke("node-device:open-external", url),
   clearConfig: (): Promise<IpcOk> => ipcRenderer.invoke("node-device:clear-config"),

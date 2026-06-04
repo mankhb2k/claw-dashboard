@@ -29,10 +29,16 @@ export async function redeemNodeInvite(
     });
     const json = (await res.json()) as ApiEnvelope<RedeemInviteResult>;
     if (!res.ok || !json.success || !json.data) {
-      const message =
+      const raw =
         (typeof json.error === "object" && json.error?.message) ||
         (typeof json.error === "string" && json.error) ||
         `Redeem failed (HTTP ${res.status})`;
+      const message =
+        raw === "Invite already used"
+          ? "Mã invite đã được sử dụng."
+          : raw === "Invite expired"
+            ? "Mã invite đã hết hạn."
+            : raw;
       return { ok: false, message };
     }
     return { ok: true, data: json.data };
