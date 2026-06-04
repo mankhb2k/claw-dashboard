@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 
 export default defineConfig({
-  plugins: [preact()],
+  plugins: [preact({ devToolsEnabled: false })],
   root: path.resolve(__dirname, "src/renderer"),
   base: "./",
   resolve: {

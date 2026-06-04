@@ -11,11 +11,16 @@ type ApiEnvelope<T> = {
   error: { message?: string } | string | null;
 };
 
+/** Redeem via dashboard origin only (`/api/nodes/invites/redeem` — Next rewrite, no API host in app). */
+export function redeemApiBaseFromWebUrl(webBaseUrl: string): string {
+  return webBaseUrl.trim().replace(/\/$/, "");
+}
+
 export async function redeemNodeInvite(
-  apiBaseUrl: string,
+  webBaseUrl: string,
   code: string,
 ): Promise<{ ok: true; data: RedeemInviteResult } | { ok: false; message: string }> {
-  const base = apiBaseUrl.trim().replace(/\/$/, "");
+  const base = redeemApiBaseFromWebUrl(webBaseUrl);
   try {
     const res = await fetch(`${base}/api/nodes/invites/redeem`, {
       method: "POST",
@@ -32,7 +37,7 @@ export async function redeemNodeInvite(
     }
     return { ok: true, data: json.data };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Could not reach AucoBot API";
+    const message = err instanceof Error ? err.message : "Could not reach dashboard";
     return { ok: false, message };
   }
 }

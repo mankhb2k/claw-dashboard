@@ -10,6 +10,7 @@ import { UsersModule } from './core/users/users.module';
 import { ProjectsModule } from './features/projects/projects.module';
 import { ChatModule } from './features/projects/chat/chat.module';
 import { CronModule } from './features/projects/cron/cron.module';
+import { HeartbeatModule } from './features/projects/heartbeat/heartbeat.module';
 import { NodesModule } from './features/projects/nodes/nodes.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
 
@@ -29,6 +30,7 @@ import { DbHealthMiddleware } from './core/common/middleware/db-health.middlewar
     ProjectsModule,
     ChatModule,
     CronModule,
+    HeartbeatModule,
     NodesModule,
   ],
   controllers: [AppController],

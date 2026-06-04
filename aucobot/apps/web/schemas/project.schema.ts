@@ -80,6 +80,15 @@ export const projectEnvMaskedRowSchema = z.object({
 
 export type ProjectEnvMaskedRow = z.infer<typeof projectEnvMaskedRowSchema>
 
+/** GET /api/projects/:id/provider-keys/:providerId/reveal */
+export const providerKeyRevealResponseSchema = z.object({
+  apiKey: z.string().min(1),
+})
+
+export type ProviderKeyRevealResponse = z.infer<
+  typeof providerKeyRevealResponseSchema
+>
+
 export const providerKeyTestResultSchema = z.object({
   ok: z.boolean(),
   enabled: z.boolean().optional(),
@@ -92,6 +101,52 @@ export const providerKeyTestResultSchema = z.object({
 })
 
 export type ProviderKeyTestResult = z.infer<typeof providerKeyTestResultSchema>
+
+export const heartbeatSummaryEntrySchema = z.object({
+  agentId: z.string(),
+  name: z.string(),
+  enabled: z.boolean(),
+  every: z.string().nullable(),
+  mode: z.enum(['off', 'inherit', 'custom']),
+  source: z.enum(['main', 'inherit', 'custom', 'off']),
+})
+
+export const projectHeartbeatResponseSchema = z.object({
+  enabled: z.boolean(),
+  every: z.string(),
+  heartbeatMd: z.string().nullable(),
+  effectiveEvery: z.string().nullable(),
+  agents: z.array(heartbeatSummaryEntrySchema),
+})
+
+export type ProjectHeartbeatResponse = z.infer<typeof projectHeartbeatResponseSchema>
+export type HeartbeatSummaryEntry = z.infer<typeof heartbeatSummaryEntrySchema>
+
+export const agentHeartbeatResponseSchema = z.object({
+  agentId: z.string(),
+  name: z.string(),
+  mode: z.enum(['off', 'inherit', 'custom']),
+  every: z.string().nullable(),
+  heartbeatMd: z.string().nullable(),
+  enabled: z.boolean(),
+  effectiveEvery: z.string().nullable(),
+  mainEnabled: z.boolean(),
+  mainEvery: z.string(),
+})
+
+export type AgentHeartbeatResponse = z.infer<typeof agentHeartbeatResponseSchema>
+
+export const updateProjectHeartbeatBodySchema = z.object({
+  enabled: z.boolean(),
+  every: z.string().min(1).max(32),
+  heartbeatMd: z.string().max(12000).nullable().optional(),
+})
+
+export const updateAgentHeartbeatBodySchema = z.object({
+  mode: z.enum(['off', 'inherit', 'custom']),
+  every: z.string().max(32).nullable().optional(),
+  heartbeatMd: z.string().max(12000).nullable().optional(),
+})
 
 /** GET /api/projects/providers/definitions */
 export const providerModelCatalogSchema = z.object({

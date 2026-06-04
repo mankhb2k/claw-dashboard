@@ -1,6 +1,15 @@
-import { SetupForm } from "./components/SetupForm";
-import { StatusPanel } from "./components/StatusPanel";
-import { LogConsole } from "./components/LogConsole";
+import { useCallback, useMemo, useState } from "preact/hooks";
+import { AppBackground } from "./components/layout/AppBackground";
+import { AppHeader } from "./components/layout/AppHeader";
+import { ConnectionCore } from "./components/connection/ConnectionCore";
+import { ConnectionToggle } from "./components/connection/ConnectionToggle";
+import { ConnectionStatusText } from "./components/connection/ConnectionStatusText";
+import { ConnectionFooter } from "./components/connection/ConnectionFooter";
+import { InviteModal } from "./components/invite/InviteModal";
+import { SettingsOverlay } from "./components/settings/SettingsOverlay";
+import { SettingsSidebar } from "./components/settings/SettingsSidebar";
+import { DEFAULT_PERMISSIONS } from "./components/settings/PermissionToggles";
+import { useConnectionTimer } from "./hooks/useConnectionTimer";
 import { useNodeDevice } from "./hooks/useNodeDevice";
 import styles from "./styles/app.module.css";
 
@@ -13,56 +22,136 @@ export function App() {
     logs,
     safeStorage,
     busy,
-    connect,
-    connectWithInvite,
-    disconnect,
     saveConfig,
-    testGateway,
+    connectWithInvite,
+    reconnect,
+    disconnect,
     openExternal,
-    clearLogs,
   } = useNodeDevice();
 
-  const nodesUrl = config?.aucobotWebUrl
-    ? `${config.aucobotWebUrl.replace(/\/$/, "")}/dashboard/nodes`
-    : undefined;
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteError, setInviteError] = useState<string | undefined>();
+
+  const connected = state === "connected";
+  const sessionActive =
+    connected || state === "connecting" || state === "awaiting_approval";
+  /** Toggle ON / đang kết nối — bật grid, glow, ripple như HTML mẫu */
+  const visualsActive = sessionActive;
+
+  const timerLabel = useConnectionTimer(connected);
+
+  const nodesUrl = useMemo(() => {
+    if (!config?.aucobotWebUrl) return undefined;
+    return `${config.aucobotWebUrl.replace(/\/$/, "")}/dashboard/nodes`;
+  }, [config?.aucobotWebUrl]);
+
+  const handleToggle = useCallback(async () => {
+    if (sessionActive) {
+      await disconnect();
+      return;
+    }
+
+    if (hasToken && config?.gatewayUrl) {
+      const result = await reconnect();
+      if (!result.ok) {
+        setInviteError(result.message);
+        setInviteOpen(true);
+      }
+      return;
+    }
+
+    setInviteError(undefined);
+    setInviteOpen(true);
+  }, [sessionActive, hasToken, config?.gatewayUrl, disconnect, reconnect]);
+
+  const handleInviteSubmit = useCallback(
+    async (payload: { webBaseUrl: string; inviteCode: string }) => {
+      setInviteError(undefined);
+      const result = await connectWithInvite({
+        webBaseUrl: payload.webBaseUrl,
+        inviteCode: payload.inviteCode,
+        displayName: config?.displayName,
+        openAtLogin: config?.openAtLogin,
+        permissions: config?.permissions ?? DEFAULT_PERMISSIONS,
+      });
+
+      if (!result.ok) {
+        setInviteError(
+          result.message ??
+            (result.errors
+              ? Object.values(result.errors).join(" ")
+              : "Kết nối thất bại."),
+        );
+        return;
+      }
+
+      setInviteOpen(false);
+    },
+    [connectWithInvite, config],
+  );
+
+  const handleForgetPairing = useCallback(async () => {
+    await disconnect();
+    await window.nodeDevice.clearConfig();
+    setSettingsOpen(false);
+    setInviteOpen(false);
+  }, [disconnect]);
 
   return (
-    <div class={styles.app}>
-      <header class={styles.header}>
-        <h1 class={styles.title}>OpenClaw Node</h1>
-        <p class={styles.subtitle}>
-          Desktop companion node — connects to your OpenClaw gateway via the CLI.
-        </p>
-      </header>
+    <div
+      class={`${styles.shell} ${visualsActive ? styles.shellConnected : styles.shellDisconnected}`}
+    >
+      <AppBackground active={visualsActive} />
 
       {!safeStorage ? (
-        <div class={`${styles.banner} ${styles.bannerWarn}`}>
-          OS encryption is unavailable; config is stored locally without extra protection.
+        <div class={styles.banner}>
+          OS encryption unavailable — config stored without extra protection.
         </div>
       ) : null}
 
-      <SetupForm
-        initial={config}
-        hasStoredToken={hasToken}
+      <AppHeader connected={visualsActive} onOpenSettings={() => setSettingsOpen(true)} />
+
+      <main class={styles.main}>
+        <ConnectionCore
+          state={state}
+          displayName={config?.displayName}
+          detail={stateDetail}
+        />
+
+        <ConnectionToggle on={sessionActive} busy={busy} onToggle={() => void handleToggle()} />
+
+        <ConnectionStatusText state={state} timerLabel={timerLabel} />
+      </main>
+
+      <ConnectionFooter state={state} logCount={logs.length} />
+
+      <InviteModal
+        open={inviteOpen}
         busy={busy}
-        onConnect={connect}
-        onConnectWithInvite={connectWithInvite}
-        onSave={saveConfig}
-        onTest={testGateway}
+        initialWebUrl={config?.aucobotWebUrl || "http://localhost:3000"}
+        error={inviteError}
+        onClose={() => setInviteOpen(false)}
+        onSubmit={(payload) => void handleInviteSubmit(payload)}
       />
 
-      <StatusPanel
-        state={state}
-        detail={stateDetail}
-        aucobotWebUrl={nodesUrl}
+      <SettingsOverlay open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsSidebar
+        open={settingsOpen}
         busy={busy}
+        config={config}
+        onClose={() => setSettingsOpen(false)}
+        onSave={async (patch) => {
+          if (!config?.gatewayUrl) {
+            return { ok: false, message: "Missing gateway config" };
+          }
+          return saveConfig({ ...config, ...patch });
+        }}
         onOpenNodes={() => {
           if (nodesUrl) void openExternal(nodesUrl);
         }}
-        onDisconnect={() => void disconnect()}
+        onForgetPairing={() => void handleForgetPairing()}
       />
-
-      <LogConsole lines={logs} onClear={clearLogs} />
     </div>
   );
 }

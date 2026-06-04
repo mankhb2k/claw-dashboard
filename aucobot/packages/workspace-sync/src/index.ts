@@ -103,3 +103,17 @@ export {
 } from './sync-helpers.js';
 
 export { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './provider-env-keys.js';
+
+export {
+  buildHeartbeatSummary,
+  mergeHeartbeatIntoConfig,
+  parseHeartbeatMode,
+  resolveAgentHeartbeatEvery,
+  resolveMainHeartbeatEvery,
+  validateHeartbeatEvery,
+  writeHeartbeatFiles,
+  type AgentHeartbeatRow,
+  type HeartbeatAgentMode,
+  type HeartbeatSummaryEntry,
+  type ProjectHeartbeatRow,
+} from './heartbeat-sync.js';

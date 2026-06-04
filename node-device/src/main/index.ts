@@ -4,6 +4,7 @@ import {
   ipcMain,
   Menu,
   nativeImage,
+  screen,
   shell,
   Tray,
 } from "electron";
@@ -30,6 +31,24 @@ import { NodeRunner } from "./node-runner";
 import { redeemNodeInvite } from "./redeem-invite";
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+const isHeadless = process.env.NODE_DEVICE_HEADLESS === "1";
+
+/** Main (~32rem) + settings sidebar (28rem) + shell padding */
+const WINDOW_DEFAULT_WIDTH = 1080;
+const WINDOW_MIN_WIDTH = 720;
+const WINDOW_MIN_HEIGHT = 720;
+
+function resolveDefaultWindowBounds(): { width: number; height: number } {
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+  const width = Math.min(
+    Math.max(WINDOW_DEFAULT_WIDTH, WINDOW_MIN_WIDTH),
+    Math.max(screenW - 48, WINDOW_MIN_WIDTH),
+  );
+  return {
+    width,
+    height: Math.min(Math.max(Math.round(screenH * 0.88), WINDOW_MIN_HEIGHT), 920),
+  };
+}
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -55,10 +74,16 @@ function pushLog(line: string): void {
   if (logs.length > MAX_LOGS) {
     logs = logs.slice(-MAX_LOGS);
   }
+  if (isHeadless) {
+    console.log(`[node-device:log] ${line}`);
+  }
   mainWindow?.webContents.send("node-device:log", line);
 }
 
 function broadcastState(state: NodeConnectionState, detail?: string): void {
+  if (isHeadless) {
+    console.log(`[node-device:state] ${state}${detail ? `: ${detail}` : ""}`);
+  }
   mainWindow?.webContents.send("node-device:state", { state, detail });
 }
 
@@ -76,13 +101,16 @@ function getRendererUrl(): string {
 }
 
 function createWindow(): void {
+  const { width, height } = resolveDefaultWindowBounds();
+
   mainWindow = new BrowserWindow({
-    width: 520,
-    height: 720,
-    minWidth: 420,
-    minHeight: 560,
+    width,
+    height,
+    minWidth: WINDOW_MIN_WIDTH,
+    minHeight: WINDOW_MIN_HEIGHT,
     show: false,
     autoHideMenuBar: true,
+    center: true,
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.js"),
       contextIsolation: true,
@@ -99,10 +127,15 @@ function createWindow(): void {
   }
 
   mainWindow.on("ready-to-show", () => {
-    mainWindow?.show();
+    if (!isHeadless) {
+      mainWindow?.show();
+    }
   });
 
   mainWindow.on("close", (event) => {
+    if (isHeadless) {
+      return;
+    }
     if (!app.isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
@@ -191,6 +224,89 @@ async function testGatewayReachable(gatewayUrl: string): Promise<{ ok: boolean; 
   }
 }
 
+async function performConnectWithInvite(
+  data: ConnectWithInvitePayload,
+): Promise<{ ok: boolean; message?: string; errors?: Record<string, string> }> {
+  const redeemed = await redeemNodeInvite(data.webBaseUrl, data.inviteCode);
+  if (!redeemed.ok) {
+    return { ok: false, message: redeemed.message };
+  }
+
+  const { gatewayUrl, gatewayToken, aucobotWebUrl } = redeemed.data;
+  const webUrl = data.webBaseUrl.replace(/\/$/, "");
+  const endpoint = parseGatewayUrl(gatewayUrl);
+  const port = toWsPortHint(endpoint);
+
+  saveStoredConfig({
+    gatewayUrl,
+    gatewayToken,
+    aucobotWebUrl: aucobotWebUrl || webUrl,
+    displayName: data.displayName,
+    openAtLogin: data.openAtLogin,
+    permissions: data.permissions,
+  });
+
+  logs = [];
+  pushLog("Invite redeemed — starting node…");
+  const result = await runner.start({
+    host: endpoint.host,
+    port,
+    displayName: data.displayName,
+    gatewayToken,
+    gatewayUrl,
+  });
+
+  rebuildTrayMenu();
+  if (!result.ok) {
+    return result;
+  }
+  return { ok: true, message: "Node host started." };
+}
+
+function watchExitOnConnected(): void {
+  if (process.env.NODE_DEVICE_EXIT_ON_CONNECTED !== "1") {
+    return;
+  }
+
+  const timer = setInterval(() => {
+    if (runner.getState() !== "connected") {
+      return;
+    }
+    clearInterval(timer);
+    console.log("[node-device] connected — exiting (NODE_DEVICE_EXIT_ON_CONNECTED=1)");
+    setTimeout(() => {
+      app.isQuitting = true;
+      runner.stop();
+      app.quit();
+    }, 1500);
+  }, 500);
+}
+
+async function runHeadlessAutoConnect(): Promise<void> {
+  const invite = process.env.NODE_DEVICE_AUTO_INVITE?.trim();
+  if (!invite) {
+    return;
+  }
+
+  const payload: ConnectWithInvitePayload = {
+    webBaseUrl: process.env.NODE_DEVICE_WEB_URL?.trim() || "http://localhost:3000",
+    inviteCode: invite,
+    displayName: process.env.NODE_DEVICE_AUTO_DISPLAY_NAME?.trim() || "headless-test",
+    openAtLogin: false,
+  };
+
+  const parsed = connectWithInviteSchema.safeParse(payload);
+  if (!parsed.success) {
+    console.error("[node-device] invalid auto-connect env:", formatZodErrors(parsed.error));
+    return;
+  }
+
+  console.log("[node-device] auto-connect via invite…");
+  const result = await performConnectWithInvite(parsed.data);
+  console.log(`[node-device] connect: ${result.ok ? "ok" : "failed"}${result.message ? ` — ${result.message}` : ""}`);
+  watchExitOnConnected();
+}
+
 function registerIpc(): void {
   ipcMain.handle("node-device:get-meta", () => ({
     safeStorage: isSafeStorageAvailable(),
@@ -270,6 +386,7 @@ function registerIpc(): void {
       port,
       displayName: data.displayName,
       gatewayToken,
+      gatewayUrl: data.gatewayUrl,
     });
 
     rebuildTrayMenu();
@@ -284,40 +401,33 @@ function registerIpc(): void {
     if (!parsed.success) {
       return { ok: false, errors: formatZodErrors(parsed.error) };
     }
+    return performConnectWithInvite(parsed.data);
+  });
 
-    const data: ConnectWithInvitePayload = parsed.data;
-    const redeemed = await redeemNodeInvite(data.apiBaseUrl, data.inviteCode);
-    if (!redeemed.ok) {
-      return { ok: false, message: redeemed.message };
+  ipcMain.handle("node-device:reconnect", async () => {
+    const stored = loadStoredConfig();
+    if (!stored?.gatewayUrl || !stored.gatewayToken) {
+      return { ok: false, message: "Chưa có cấu hình. Hãy kết nối bằng mã pairing trước." };
     }
 
-    const { gatewayUrl, gatewayToken, aucobotWebUrl } = redeemed.data;
-    const endpoint = parseGatewayUrl(gatewayUrl);
+    const endpoint = parseGatewayUrl(stored.gatewayUrl);
     const port = toWsPortHint(endpoint);
 
-    saveStoredConfig({
-      gatewayUrl,
-      gatewayToken,
-      aucobotWebUrl,
-      aucobotApiUrl: data.apiBaseUrl.replace(/\/$/, ""),
-      displayName: data.displayName,
-      openAtLogin: data.openAtLogin,
-    });
-
     logs = [];
-    pushLog("Invite redeemed — starting node…");
+    pushLog("Reconnecting with saved credentials…");
     const result = await runner.start({
       host: endpoint.host,
       port,
-      displayName: data.displayName,
-      gatewayToken,
+      displayName: stored.displayName,
+      gatewayToken: stored.gatewayToken,
+      gatewayUrl: stored.gatewayUrl,
     });
 
     rebuildTrayMenu();
     if (!result.ok) {
       return result;
     }
-    return { ok: true, message: "Connected using pairing invite." };
+    return { ok: true, message: "Node reconnected." };
   });
 
   ipcMain.handle("node-device:disconnect", () => {
@@ -358,10 +468,18 @@ declare global {
 
 app.whenReady().then(() => {
   registerIpc();
-  createTray();
-  createWindow();
+  if (!isHeadless) {
+    createTray();
+  }
+  if (!isHeadless) {
+    createWindow();
+  }
+  void runHeadlessAutoConnect();
 
   app.on("activate", () => {
+    if (isHeadless) {
+      return;
+    }
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     } else {

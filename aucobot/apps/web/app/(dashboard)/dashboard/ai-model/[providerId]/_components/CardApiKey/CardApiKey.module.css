@@ -105,6 +105,10 @@
   color: var(--color-text);
 }
 
+.eyeBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 /* =============================================================================
    5. CONNECTIONS LIST
@@ -137,4 +141,10 @@
 
 .maskedKey {
   font-size: 0.85rem;
+}
+
+.hiddenKeyPlaceholder {
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.04em;
+  line-height: 1;
 }

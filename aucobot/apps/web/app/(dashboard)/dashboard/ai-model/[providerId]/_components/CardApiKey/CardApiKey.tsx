@@ -15,6 +15,8 @@ import { Flex } from "@/components/layout";
 import { MoreHorizontal, Eye, EyeOff } from "lucide-react";
 import styles from "./CardApiKey.module.css";
 
+const HIDDEN_KEY_PLACEHOLDER = "·····························";
+
 interface Connection {
   id: string;
   name: string;
@@ -27,6 +29,7 @@ interface CardApiKeyProps {
   connections: Connection[];
   isLoaded: boolean;
   testingConnId?: string | null;
+  onRevealKey?: (connId: string) => Promise<string>;
   onEdit: (conn: Connection) => void;
   onDelete: (id: string) => void;
   onToggleDisabled: (id: string) => void;
@@ -36,16 +39,41 @@ export function CardApiKey({
   connections,
   isLoaded,
   testingConnId = null,
+  onRevealKey,
   onEdit,
   onDelete,
   onToggleDisabled,
 }: CardApiKeyProps) {
   const [visibleKeyIds, setVisibleKeyIds] = useState<string[]>([]);
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
+  const [revealingId, setRevealingId] = useState<string | null>(null);
 
-  const toggleKeyVisibility = (id: string) => {
-    setVisibleKeyIds((prev) =>
-      prev.includes(id) ? prev.filter((keyId) => keyId !== id) : [...prev, id],
-    );
+  const toggleKeyVisibility = (conn: Connection) => {
+    const { id } = conn;
+    if (visibleKeyIds.includes(id)) {
+      setVisibleKeyIds((prev) => prev.filter((keyId) => keyId !== id));
+      return;
+    }
+
+    if (revealedKeys[id]) {
+      setVisibleKeyIds((prev) => [...prev, id]);
+      return;
+    }
+
+    if (!onRevealKey) {
+      setVisibleKeyIds((prev) => [...prev, id]);
+      return;
+    }
+
+    setRevealingId(id);
+    void onRevealKey(id)
+      .then((apiKey) => {
+        setRevealedKeys((prev) => ({ ...prev, [id]: apiKey }));
+        setVisibleKeyIds((prev) => [...prev, id]);
+      })
+      .finally(() => {
+        setRevealingId((current) => (current === id ? null : current));
+      });
   };
 
   return (
@@ -58,9 +86,7 @@ export function CardApiKey({
         <div className={styles.connectionsGrid}>
           {connections.map((conn) => {
             const isVisible = visibleKeyIds.includes(conn.id);
-            const displayedKey = isVisible
-              ? conn.key
-              : "•••••••••••••••••••••••••••••••••••••••••";
+            const isRevealing = revealingId === conn.id;
             const isTesting = conn.pending || testingConnId === conn.id;
             return (
               <Card
@@ -91,28 +117,37 @@ export function CardApiKey({
                         <Typography
                           variant="p"
                           color="muted"
-                          className={styles.maskedKey}
+                          className={`${styles.maskedKey} ${!isVisible && !isRevealing ? styles.hiddenKeyPlaceholder : ""}`}
                         >
-                          {displayedKey}
+                          {isRevealing
+                            ? "Loading key..."
+                            : isVisible
+                              ? (revealedKeys[conn.id] ?? conn.key)
+                              : HIDDEN_KEY_PLACEHOLDER}
                         </Typography>
                         <button
+                          type="button"
                           className={styles.eyeBtn}
-                          onClick={() => toggleKeyVisibility(conn.id)}
-                          aria-label={isVisible ? "Ẩn key" : "Hiện key"}
+                          onClick={() => toggleKeyVisibility(conn)}
+                          disabled={isRevealing}
+                          aria-label={isVisible ? "Hide key" : "Show key"}
                         >
-                          {isVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
                         </button>
                       </Flex>
                     </div>
                   </Flex>
 
-                  {/* Toggle + Dropdown menu (ellipsis)*/}
                   <Flex align="center" gap={8}>
                     <Switch
                       checked={!conn.disabled && !conn.pending}
                       disabled={isTesting}
                       onCheckedChange={() => onToggleDisabled(conn.id)}
-                      aria-label={conn.disabled ? "Bật kết nối" : "Tắt kết nối"}
+                      aria-label={
+                        conn.disabled
+                          ? "Enable connection"
+                          : "Disable connection"
+                      }
                     />
                     <DropdownMenu>
                       <DropdownMenuTrigger variant="kebab">
@@ -125,7 +160,9 @@ export function CardApiKey({
                         <DropdownMenuItem
                           onSelect={() => onToggleDisabled(conn.id)}
                         >
-                          {conn.disabled ? "Kết nối" : "Tắt kết nối"}
+                          {conn.disabled
+                            ? "Enable connection"
+                            : "Disable connection"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

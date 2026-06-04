@@ -10,6 +10,14 @@ export const nodeConnectionStateSchema = z.enum([
 
 export type NodeConnectionState = z.infer<typeof nodeConnectionStateSchema>;
 
+export const nodePermissionPrefsSchema = z.object({
+  systemRun: z.boolean().optional(),
+  systemWhich: z.boolean().optional(),
+  execApprovals: z.boolean().optional(),
+});
+
+export type NodePermissionPrefs = z.infer<typeof nodePermissionPrefsSchema>;
+
 export const nodeConfigSchema = z.object({
   gatewayUrl: z
     .string()
@@ -28,8 +36,10 @@ export const nodeConfigSchema = z.object({
     ),
   displayName: z.string().trim().min(1).max(64).optional(),
   aucobotWebUrl: z.string().url().optional().or(z.literal("")),
+  /** @deprecated Stored for legacy; redeem uses web URL only. */
   aucobotApiUrl: z.string().url().optional().or(z.literal("")),
   openAtLogin: z.boolean().optional(),
+  permissions: nodePermissionPrefsSchema.optional(),
 });
 
 export type NodeConfig = z.infer<typeof nodeConfigSchema>;
@@ -47,10 +57,11 @@ export const connectPayloadSchema = nodeConfigSchema.extend({
 export type ConnectPayload = z.infer<typeof connectPayloadSchema>;
 
 export const connectWithInviteSchema = z.object({
-  apiBaseUrl: z.string().trim().url("AucoBot API URL is required"),
+  webBaseUrl: z.string().trim().url("Dashboard URL is required"),
   inviteCode: z.string().trim().min(8, "Invite code is required"),
   displayName: z.string().trim().min(1).max(64).optional(),
   openAtLogin: z.boolean().optional(),
+  permissions: nodePermissionPrefsSchema.optional(),
 });
 
 export type ConnectWithInvitePayload = z.infer<typeof connectWithInviteSchema>;

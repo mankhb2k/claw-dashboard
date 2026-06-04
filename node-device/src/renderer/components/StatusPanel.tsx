@@ -34,8 +34,7 @@ export function StatusPanel({
   onDisconnect,
   busy,
 }: StatusPanelProps) {
-  const showPairingHelp =
-    state === "awaiting_approval" || state === "connecting" || state === "connected";
+  const showPairingHelp = state === "awaiting_approval" || state === "connecting";
 
   return (
     <section class={styles.panel}>
@@ -43,6 +42,10 @@ export function StatusPanel({
         <span class={BADGE_CLASS[state]}>{STATE_LABEL[state]}</span>
       </div>
       {detail ? <p class={styles.detail}>{detail}</p> : null}
+
+      {state === "connected" ? (
+        <p class={styles.detail}>Node is connected and ready to receive gateway commands.</p>
+      ) : null}
 
       {showPairingHelp ? (
         <>
@@ -68,7 +71,7 @@ export function StatusPanel({
       {state !== "idle" ? (
         <button
           type="button"
-          class={styles.linkButton}
+          class={styles.disconnect}
           disabled={busy}
           onClick={onDisconnect}
         >

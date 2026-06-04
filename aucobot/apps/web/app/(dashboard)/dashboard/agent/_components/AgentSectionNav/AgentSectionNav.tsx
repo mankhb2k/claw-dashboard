@@ -12,6 +12,7 @@ import styles from "./AgentSectionNav.module.css";
 const AGENTS_HREF = `${DASHBOARD_BASE_PATH}/agent`;
 const COLLABORATION_HREF = `${DASHBOARD_BASE_PATH}/agent/collaboration`;
 const SCHEDULES_HREF = dashboardPath("agent", "schedules");
+const HEARTBEAT_HREF = dashboardPath("agent", "heartbeat");
 
 export function AgentSectionNav() {
   const pathname = usePathname();
@@ -24,12 +25,15 @@ export function AgentSectionNav() {
   const agentsRef = useRef<HTMLAnchorElement>(null);
   const collabRef = useRef<HTMLAnchorElement>(null);
   const schedulesRef = useRef<HTMLAnchorElement>(null);
+  const heartbeatRef = useRef<HTMLAnchorElement>(null);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
   const isAgents = pathname === AGENTS_HREF;
   const isCollaboration = pathname === COLLABORATION_HREF;
   const isSchedules =
     pathname === SCHEDULES_HREF || pathname.startsWith(`${SCHEDULES_HREF}/`);
+  const isHeartbeat =
+    pathname === HEARTBEAT_HREF || pathname.startsWith(`${HEARTBEAT_HREF}/`);
 
   useEffect(() => {
     if (!projectId) {
@@ -67,11 +71,13 @@ export function AgentSectionNav() {
 
   const updateIndicator = () => {
     const nav = navRef.current;
-    const activeEl = isSchedules
-      ? schedulesRef.current
-      : isCollaboration
-        ? collabRef.current
-        : agentsRef.current;
+    const activeEl = isHeartbeat
+      ? heartbeatRef.current
+      : isSchedules
+        ? schedulesRef.current
+        : isCollaboration
+          ? collabRef.current
+          : agentsRef.current;
     if (!nav || !activeEl) return;
     const navRect = nav.getBoundingClientRect();
     const rect = activeEl.getBoundingClientRect();
@@ -83,13 +89,22 @@ export function AgentSectionNav() {
 
   useLayoutEffect(() => {
     updateIndicator();
-  }, [pathname, memberCount, collaborationOn, failedCount, isAgents, isCollaboration, isSchedules]);
+  }, [
+    pathname,
+    memberCount,
+    collaborationOn,
+    failedCount,
+    isAgents,
+    isCollaboration,
+    isSchedules,
+    isHeartbeat,
+  ]);
 
   useEffect(() => {
     const onResize = () => updateIndicator();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [pathname, memberCount, isAgents, isCollaboration, isSchedules]);
+  }, [pathname, memberCount, isAgents, isCollaboration, isSchedules, isHeartbeat]);
 
   return (
     <nav ref={navRef} className={styles.subNav} aria-label="Agent section">
@@ -129,6 +144,13 @@ export function AgentSectionNav() {
         {failedCount > 0 ? (
           <span className={`${styles.badge} ${styles.badgeDanger}`}>{failedCount}</span>
         ) : null}
+      </Link>
+      <Link
+        ref={heartbeatRef}
+        href={HEARTBEAT_HREF}
+        className={`${styles.subNavLink} ${isHeartbeat ? styles.subNavLinkActive : ""}`}
+      >
+        Heartbeat
       </Link>
     </nav>
   );

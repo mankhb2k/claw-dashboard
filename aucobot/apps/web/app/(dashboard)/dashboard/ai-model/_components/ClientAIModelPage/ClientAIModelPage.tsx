@@ -51,7 +51,7 @@ export default function ClientAIModelPage() {
       .then(setEnvRows)
       .catch((err) => {
         setEnvRows([]);
-        setError(err instanceof Error ? err.message : "Không tải được API keys");
+        setError(err instanceof Error ? err.message : "Cannot load API keys");
       })
       .finally(() => setLoading(false));
   }, [projectId]);

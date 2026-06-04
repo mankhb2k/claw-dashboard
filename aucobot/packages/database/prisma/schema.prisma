@@ -49,6 +49,9 @@ model Project {
   gatewayToken String?       @map("gateway_token")
   collaborationEnabled     Boolean @default(false) @map("collaboration_enabled")
   collaborationMemberSlugs Json    @default("[]") @map("collaboration_member_slugs")
+  heartbeatEnabled         Boolean @default(false) @map("heartbeat_enabled")
+  heartbeatEvery           String  @default("30m") @map("heartbeat_every")
+  heartbeatMd              String? @map("heartbeat_md") @db.Text
   status       ProjectStatus @default(CREATING)
   errorMessage String?       @map("error_message")
   lastActiveAt DateTime      @default(now()) @map("last_active_at")
@@ -156,6 +159,9 @@ model ProjectAgent {
   formData      Json      @map("form_data")
   enabled       Boolean   @default(false)
   isDefault     Boolean   @default(false) @map("is_default")
+  heartbeatMode   String  @default("off") @map("heartbeat_mode")
+  heartbeatEvery  String? @map("heartbeat_every")
+  heartbeatMd     String? @map("heartbeat_md") @db.Text
   lastSyncedAt  DateTime? @map("last_synced_at")
   lastSyncError String?   @map("last_sync_error")
   createdAt     DateTime  @default(now()) @map("created_at")

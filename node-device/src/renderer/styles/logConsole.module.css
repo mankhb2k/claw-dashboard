@@ -1,7 +1,9 @@
 .console {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
 }
 
 .header {
@@ -14,39 +16,47 @@
   margin: 0;
   font-size: var(--font-size-sm);
   font-weight: 600;
+  color: var(--color-secondary-foreground);
 }
 
 .clear {
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
+  background: var(--color-surface);
+  color: var(--color-muted-foreground);
   cursor: pointer;
   font-size: var(--font-size-xs);
+  font-weight: 500;
+  transition:
+    background var(--transition-base) var(--ease-out),
+    color var(--transition-base) var(--ease-out);
 }
 
 .clear:hover {
-  color: var(--color-text);
+  background: var(--color-secondary);
+  color: var(--color-foreground);
 }
 
 .log {
   margin: 0;
-  padding: var(--space-3);
-  min-height: 160px;
-  max-height: 240px;
+  padding: var(--space-4);
+  flex: 1;
+  min-height: 200px;
+  max-height: none;
   overflow: auto;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: #0a0c10;
+  border: 1px solid var(--color-code-bg);
+  background: var(--color-code-bg);
   font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
   font-size: 11px;
-  line-height: 1.45;
-  color: #c9d1d9;
+  line-height: 1.5;
+  color: var(--color-code-fg);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .empty {
-  color: var(--color-muted);
+  color: var(--color-code-muted);
 }

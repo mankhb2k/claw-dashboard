@@ -107,6 +107,8 @@ export function ClientProviderIdPage({
     name: string;
     key: string;
   } | null>(null);
+  const [editKeyLoading, setEditKeyLoading] = useState(false);
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const [testingConnId, setTestingConnId] = useState<string | null>(null);
 
@@ -120,9 +122,58 @@ export function ClientProviderIdPage({
   const openEditModal = (conn: ProviderConnection) => {
     setFormMode("edit");
     setEditingConnId(conn.id);
-    setEditingConn({ name: conn.name, key: "" });
+    setEditingConn({ name: conn.name, key: revealedKeys[conn.id] ?? "" });
+    setEditKeyLoading(!revealedKeys[conn.id]);
     setShowForm(true);
+
+    if (revealedKeys[conn.id] || !projectId) {
+      setEditKeyLoading(false);
+      return;
+    }
+
+    void projectApi
+      .revealProviderKey(projectId, providerId)
+      .then(({ apiKey }) => {
+        setRevealedKeys((prev) => ({ ...prev, [conn.id]: apiKey }));
+        setEditingConn({ name: conn.name, key: apiKey });
+      })
+      .catch((err) => {
+        closeModal();
+        showError(
+          "Không tải được API key",
+          err instanceof Error ? err.message : undefined,
+        );
+      })
+      .finally(() => {
+        setEditKeyLoading(false);
+      });
   };
+
+  const revealProviderApiKey = useCallback(
+    async (connId: string): Promise<string> => {
+      if (revealedKeys[connId]) {
+        return revealedKeys[connId];
+      }
+      if (!projectId) {
+        throw new Error("Missing project");
+      }
+      try {
+        const { apiKey } = await projectApi.revealProviderKey(
+          projectId,
+          providerId,
+        );
+        setRevealedKeys((prev) => ({ ...prev, [connId]: apiKey }));
+        return apiKey;
+      } catch (err) {
+        showError(
+          "Không tải được API key",
+          err instanceof Error ? err.message : undefined,
+        );
+        throw err;
+      }
+    },
+    [projectId, providerId, revealedKeys],
+  );
 
   const closeModal = () => {
     setShowForm(false);
@@ -140,6 +191,7 @@ export function ClientProviderIdPage({
       const rows = await projectApi.listProviderKeys(projectId);
       const row = rows.find((r) => r.providerId === providerId);
       setConnections(row ? [rowToConnection(row)] : []);
+      setRevealedKeys({});
     } catch (err) {
       setConnections([]);
       showError(
@@ -372,6 +424,7 @@ export function ClientProviderIdPage({
             }))}
             isLoaded={isLoaded}
             testingConnId={testingConnId}
+            onRevealKey={revealProviderApiKey}
             onEdit={(conn) => {
               const full = connections.find((c) => c.id === conn.id);
               if (full) openEditModal(full);
@@ -392,6 +445,7 @@ export function ClientProviderIdPage({
         provider={{ name: providerData.name }}
         mode={formMode}
         editingConn={editingConn}
+        editKeyLoading={editKeyLoading}
         onSubmit={handleSave}
       />
 

@@ -1,22 +1,18 @@
-import { app } from "electron";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import path from "node:path";
 import type { NodeConnectionState } from "../shared/schemas/node-config.schema";
+import { GatewayStatusPoller } from "./gateway-status-poller";
+import { resolveOpenclawBin } from "./openclaw-bin";
 
 export type NodeRunnerStartOptions = {
   host: string;
   port: number;
   displayName?: string;
   gatewayToken: string;
+  gatewayUrl?: string;
 };
 
 type StateListener = (state: NodeConnectionState, detail?: string) => void;
 type LogListener = (line: string) => void;
-
-function resolveOpenclawBin(): string {
-  const bin = process.platform === "win32" ? "openclaw.cmd" : "openclaw";
-  return path.join(app.getAppPath(), "node_modules", ".bin", bin);
-}
 
 function redactSecrets(line: string, token: string): string {
   if (!token) return line;
@@ -25,6 +21,12 @@ function redactSecrets(line: string, token: string): string {
 
 function inferState(line: string): NodeConnectionState | null {
   const lower = line.toLowerCase();
+  if (
+    lower.includes("reconnect paused") &&
+    lower.includes("waiting for operator")
+  ) {
+    return "awaiting_approval";
+  }
   if (
     lower.includes("pairing") ||
     lower.includes("pending approval") ||
@@ -44,7 +46,8 @@ function inferState(line: string): NodeConnectionState | null {
     lower.includes("error") ||
     lower.includes("failed") ||
     lower.includes("unauthorized") ||
-    lower.includes("rejected")
+    lower.includes("rejected") ||
+    lower.includes("connect failed")
   ) {
     return "error";
   }
@@ -58,6 +61,7 @@ export class NodeRunner {
   private child: ChildProcessWithoutNullStreams | null = null;
   private state: NodeConnectionState = "idle";
   private token = "";
+  private readonly poller = new GatewayStatusPoller();
 
   constructor(
     private readonly onState: StateListener,
@@ -72,10 +76,41 @@ export class NodeRunner {
     return this.child !== null;
   }
 
-  private setState(next: NodeConnectionState, detail?: string): void {
-    if (this.state === next) return;
+  private setState(next: NodeConnectionState, detail?: string, force = false): void {
+    if (!force && this.state === next && !detail) {
+      return;
+    }
+    if (!force && this.state === next) {
+      this.onState(next, detail);
+      return;
+    }
     this.state = next;
     this.onState(next, detail);
+  }
+
+  private applyPolledState(next: NodeConnectionState, detail?: string): void {
+    if (this.state === "error" || !this.child) {
+      return;
+    }
+    this.setState(next, detail, true);
+  }
+
+  private startStatusPolling(opts: NodeRunnerStartOptions): void {
+    if (!opts.gatewayUrl) {
+      return;
+    }
+    this.poller.start(
+      {
+        gatewayUrl: opts.gatewayUrl,
+        gatewayToken: opts.gatewayToken,
+        displayName: opts.displayName,
+      },
+      (state, detail) => this.applyPolledState(state, detail),
+    );
+  }
+
+  private stopStatusPolling(): void {
+    this.poller.stop();
   }
 
   async checkCli(): Promise<{ ok: boolean; message?: string }> {
@@ -154,7 +189,10 @@ export class NodeRunner {
         this.onLog(redactSecrets(trimmed, this.token));
         const inferred = inferState(trimmed);
         if (inferred) {
-          this.setState(inferred, trimmed);
+          if (inferred === "error") {
+            this.stopStatusPolling();
+          }
+          this.setState(inferred, trimmed, inferred === "error");
         }
       }
     };
@@ -163,31 +201,36 @@ export class NodeRunner {
     this.child.stderr.on("data", pushLine);
 
     this.child.on("close", (code) => {
+      this.stopStatusPolling();
       this.child = null;
       this.token = "";
       if (code !== 0 && code !== null) {
-        this.setState("error", `Process exited (${code})`);
+        this.setState("error", `Process exited (${code})`, true);
       } else {
-        this.setState("idle");
+        this.setState("idle", undefined, true);
       }
     });
 
     this.child.on("error", (err) => {
+      this.stopStatusPolling();
       this.onLog(`Spawn error: ${err.message}`);
-      this.setState("error", err.message);
+      this.setState("error", err.message, true);
     });
+
+    this.startStatusPolling(opts);
 
     return { ok: true };
   }
 
   stop(): void {
+    this.stopStatusPolling();
     if (!this.child) {
-      this.setState("idle");
+      this.setState("idle", undefined, true);
       return;
     }
     this.child.kill();
     this.child = null;
     this.token = "";
-    this.setState("idle");
+    this.setState("idle", undefined, true);
   }
 }

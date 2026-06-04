@@ -14,12 +14,12 @@ import {
   Brain,
   LayoutDashboard,
   MessageSquareCodeIcon,
-  MessageSquare,
+  MessageCircle,
   Settings as SettingsIcon,
   Sparkles,
   Cable,
   Bot,
-  Smartphone,
+  MonitorSmartphone,
 } from "lucide-react";
 import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
 import styles from "./layout.module.css";
@@ -134,6 +134,12 @@ export default function DashboardLayout({
       isActive: (p) => p === DASHBOARD_BASE_PATH,
     },
     {
+      href: `${DASHBOARD_BASE_PATH}/chat`,
+      label: "Chat",
+      icon: MessageCircle,
+      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/chat`),
+    },
+    {
       href: `${DASHBOARD_BASE_PATH}/ai-model`,
       label: "AI Model",
       icon: Brain,
@@ -151,12 +157,7 @@ export default function DashboardLayout({
       icon: MessageSquareCodeIcon,
       isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/channel`),
     },
-    {
-      href: `${DASHBOARD_BASE_PATH}/chat`,
-      label: "Chat",
-      icon: MessageSquare,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/chat`),
-    },
+
     {
       href: `${DASHBOARD_BASE_PATH}/connect`,
       label: "Connect",
@@ -166,7 +167,7 @@ export default function DashboardLayout({
     {
       href: `${DASHBOARD_BASE_PATH}/nodes`,
       label: "Nodes",
-      icon: Smartphone,
+      icon: MonitorSmartphone,
       isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/nodes`),
     },
     {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Input,
   Button,
@@ -18,6 +19,7 @@ interface ModalAddConnectionProps {
   provider: { name: string };
   mode: "add" | "edit";
   editingConn: { name: string; key: string } | null;
+  editKeyLoading?: boolean;
   onSubmit: (data: { keyName: string; apiKey: string }) => void;
 }
 
@@ -27,11 +29,13 @@ export function ModalAddConnection({
   provider,
   mode,
   editingConn,
+  editKeyLoading = false,
   onSubmit,
 }: ModalAddConnectionProps) {
   const isEdit = mode === "edit";
   const [keyName, setKeyName] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,6 +46,7 @@ export function ModalAddConnection({
         setKeyName("");
         setApiKey("");
       }
+      setShowApiKey(isEdit);
     }
   }, [isOpen, isEdit, editingConn]);
 
@@ -49,6 +54,8 @@ export function ModalAddConnection({
     e.preventDefault();
     onSubmit({ keyName, apiKey });
   };
+
+  const apiKeyDisabled = isEdit && editKeyLoading;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -69,20 +76,37 @@ export function ModalAddConnection({
             onChange={(e) => setKeyName(e.target.value)}
             required
           />
-          <Input
-            label="API Key"
-            placeholder="sk-..."
-            type="text"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            required
-          />
+          <div className={styles.apiKeyField}>
+            <Input
+              label="API Key"
+              placeholder={isEdit ? "Loading key..." : "sk-..."}
+              type={showApiKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              disabled={apiKeyDisabled}
+              required
+            />
+            <button
+              type="button"
+              className={styles.eyeBtn}
+              onClick={() => setShowApiKey((prev) => !prev)}
+              disabled={apiKeyDisabled || !apiKey}
+              aria-label={showApiKey ? "Ẩn key" : "Hiện key"}
+            >
+              {showApiKey ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          </div>
 
           <DialogFooter>
             <Button variant="ghost" size="sm" onClick={onClose} type="button">
               Hủy
             </Button>
-            <Button variant="primary" size="sm" type="submit">
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              disabled={apiKeyDisabled || !apiKey.trim()}
+            >
               {isEdit ? "Update" : "Add key"}
             </Button>
           </DialogFooter>

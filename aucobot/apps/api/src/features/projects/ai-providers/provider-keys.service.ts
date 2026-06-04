@@ -37,6 +37,27 @@ export class ProviderKeysService {
     return PROVIDER_REGISTRY;
   }
 
+  async revealApiKey(
+    projectId: string,
+    providerId: string,
+  ): Promise<{ apiKey: string }> {
+    const provider = resolveProvider(providerId);
+    if (!provider) {
+      throw new BadRequestException(`Unknown provider: ${providerId}`);
+    }
+
+    const row = await this.prisma.projectProviderKey.findUnique({
+      where: {
+        projectId_providerId: { projectId, providerId: provider.id },
+      },
+    });
+    if (!row) {
+      throw new NotFoundException('No API key stored for this provider');
+    }
+
+    return { apiKey: decryptSecret(row.ciphertext) };
+  }
+
   async listMasked(projectId: string): Promise<ProviderKeyMaskedRow[]> {
     const rows = await this.prisma.projectProviderKey.findMany({
       where: { projectId },

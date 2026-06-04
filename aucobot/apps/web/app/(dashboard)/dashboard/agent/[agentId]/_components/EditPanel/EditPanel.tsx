@@ -22,6 +22,7 @@ import {
   Wrench,
   Rocket,
   CalendarClock,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +35,7 @@ import { CardInstructions } from "../CardInstructions/CardInstructions";
 import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
 import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
 import { CardSchedules } from "../CardSchedules/CardSchedules";
+import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
 import { JoinCollaborationOnCreate } from "../JoinCollaborationOnCreate/JoinCollaborationOnCreate";
 import { addAgentToProjectCollaboration } from "@/lib/agent-collaboration";
 import styles from "./EditPanel.module.css";
@@ -51,7 +53,8 @@ type EditTab =
   | "instructions"
   | "capabilities"
   | "integrations"
-  | "schedules";
+  | "schedules"
+  | "heartbeat";
 
 const AGENT_FORM_ID = "agent-edit-form";
 
@@ -61,6 +64,7 @@ const EDIT_TABS = new Set<EditTab>([
   "capabilities",
   "integrations",
   "schedules",
+  "heartbeat",
 ]);
 
 function tabFromSearchParams(params: URLSearchParams): EditTab {
@@ -77,6 +81,7 @@ const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
   { id: "capabilities", label: "Capabilities", icon: Wrench },
   { id: "integrations", label: "Integrations", icon: Rocket },
   { id: "schedules", label: "Schedules", icon: CalendarClock },
+  { id: "heartbeat", label: "Heartbeat", icon: Activity },
 ];
 
 /** Left panel: edit / create agent form (header + tabs + card content). */
@@ -280,6 +285,9 @@ export function EditPanel({
       )}
       {activeTab === "schedules" && (
         <CardSchedules agentId={agentId ?? "new-agent"} isEditing={Boolean(isEditing)} />
+      )}
+      {activeTab === "heartbeat" && (
+        <CardHeartbeat agentId={agentId ?? "new-agent"} isEditing={Boolean(isEditing)} />
       )}
     </>
   );

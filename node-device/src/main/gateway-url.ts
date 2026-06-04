@@ -34,3 +34,11 @@ export function toWsPortHint(endpoint: GatewayEndpoint): number {
   if (endpoint.port === 80 && !endpoint.useTls) return 80;
   return endpoint.port;
 }
+
+export function toGatewayWsUrl(gatewayUrl: string): string {
+  const endpoint = parseGatewayUrl(gatewayUrl);
+  const defaultPort = endpoint.useTls ? 443 : 80;
+  const portSuffix =
+    endpoint.port !== defaultPort ? `:${endpoint.port}` : "";
+  return `${endpoint.useTls ? "wss" : "ws"}://${endpoint.host}${portSuffix}`;
+}

@@ -30,7 +30,7 @@ function isMockRoute(url: string, method: string): boolean {
     { url: '/api/projects/connectors/definitions', methods: ['get'] },
     {
       pattern:
-        /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/provider-keys(\/[\w-]+(\/enabled|\/test)?)?|\/connectors(\/[\w-]+(\/secrets\/[\w-]+|\/test)?)?|$)/,
+        /^\/api\/projects\/[\w-]+(\/start|\/stop|\/health|\/gateway-token|\/provider-keys(\/[\w-]+(\/enabled|\/test|\/reveal)?)?|\/connectors(\/[\w-]+(\/secrets\/[\w-]+|\/test)?)?|$)/,
       methods: ['get', 'post', 'put', 'patch', 'delete'],
     },
   ]
@@ -206,8 +206,20 @@ export function setupMockInterceptor(api: AxiosInstance) {
         }
 
         const providerKeysMatch = url.match(
-          /^\/api\/projects\/([\w-]+)\/provider-keys(?:\/([\w-]+)(?:\/(enabled|test))?)?$/,
+          /^\/api\/projects\/([\w-]+)\/provider-keys(?:\/([\w-]+)(?:\/(enabled|test|reveal))?)?$/,
         )
+        if (providerKeysMatch && method === 'get' && providerKeysMatch[2] && providerKeysMatch[3] === 'reveal') {
+          const [, id, providerId] = providerKeysMatch
+          responseData = projectHandlers.revealProviderKey(id, providerId)
+          return Promise.resolve({
+            data: responseData,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+          } as AxiosResponse)
+        }
+
         if (providerKeysMatch && method === 'get' && !providerKeysMatch[2]) {
           const [, id] = providerKeysMatch
           responseData = projectHandlers.listProviderKeys(id)

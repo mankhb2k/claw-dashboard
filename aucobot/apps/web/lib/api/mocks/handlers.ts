@@ -278,6 +278,31 @@ export const projectHandlers = {
     }))
   },
 
+  revealProviderKey: (id: string, providerId: string): { apiKey: string } => {
+    if (!currentUser) throw new Error('Not authenticated')
+    if (!mockProjects.has(id)) throw new Error('Project not found')
+
+    const store = mockProjectEnv.get(id)
+    if (!store) throw new Error('No API key stored for this provider')
+
+    const envKeyToProviderId: Record<string, string> = {
+      OPENAI_API_KEY: 'openai',
+      ANTHROPIC_API_KEY: 'anthropic',
+      GEMINI_API_KEY: 'gemini',
+      OPENROUTER_API_KEY: 'openrouter',
+      GOOGLE_API_KEY: 'google',
+      DEEPSEEK_API_KEY: 'deepseek',
+      GROQ_API_KEY: 'groq',
+    }
+    const providerIdToEnvKey = Object.fromEntries(
+      Object.entries(envKeyToProviderId).map(([envKey, pid]) => [pid, envKey]),
+    )
+    const envKey = providerIdToEnvKey[providerId.trim()] ?? providerId.trim()
+    const apiKey = store.get(envKey)
+    if (!apiKey) throw new Error('No API key stored for this provider')
+    return { apiKey }
+  },
+
   deleteProviderKey: (id: string, providerId: string): void => {
     if (!currentUser) throw new Error('Not authenticated')
     if (!mockProjects.has(id)) throw new Error('Project not found')

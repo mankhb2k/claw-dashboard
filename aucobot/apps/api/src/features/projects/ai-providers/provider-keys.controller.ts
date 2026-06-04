@@ -32,6 +32,16 @@ export class ProviderKeysController {
     return this.providerKeys.listMasked(id);
   }
 
+  @Get(':id/provider-keys/:providerId/reveal')
+  async reveal(
+    @CurrentUser() user: JwtPayloadUser,
+    @Param('id') id: string,
+    @Param('providerId') providerId: string,
+  ) {
+    await this.projects.assertOwned(user.sub, id);
+    return this.providerKeys.revealApiKey(id, providerId);
+  }
+
   @Put(':id/provider-keys/:providerId')
   async saveAndTest(
     @CurrentUser() user: JwtPayloadUser,

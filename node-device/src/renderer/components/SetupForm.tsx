@@ -272,31 +272,47 @@ export function SetupForm({
         Launch at login (minimized to tray)
       </label>
 
-      {formMessage ? <div class={styles.formError}>{formMessage}</div> : null}
-      {fieldErrors._form ? <div class={styles.formError}>{fieldErrors._form}</div> : null}
+      {formMessage ? (
+        <div
+          class={
+            formMessage === "Settings saved."
+              ? styles.formNoticeSuccess
+              : styles.formNoticeError
+          }
+        >
+          {formMessage}
+        </div>
+      ) : null}
+      {fieldErrors._form ? (
+        <div class={styles.formNoticeError}>{fieldErrors._form}</div>
+      ) : null}
 
-      <div class={styles.row}>
-        <button type="submit" class={styles.buttonPrimary} disabled={busy}>
-          Connect
-        </button>
-        {mode === "token" ? (
+      <div class={styles.actions}>
+        <div class={styles.actionsPrimary}>
+          <button type="submit" class={styles.buttonPrimary} disabled={busy}>
+            Connect
+          </button>
+        </div>
+        <div class={styles.actionsSecondary}>
+          {mode === "token" ? (
+            <button
+              type="button"
+              class={styles.buttonSecondary}
+              disabled={busy}
+              onClick={() => void handleTest()}
+            >
+              Test gateway
+            </button>
+          ) : null}
           <button
             type="button"
             class={styles.buttonSecondary}
             disabled={busy}
-            onClick={() => void handleTest()}
+            onClick={() => void handleSave()}
           >
-            Test gateway
+            Save settings
           </button>
-        ) : null}
-        <button
-          type="button"
-          class={styles.buttonSecondary}
-          disabled={busy}
-          onClick={() => void handleSave()}
-        >
-          Save settings
-        </button>
+        </div>
       </div>
     </form>
   );

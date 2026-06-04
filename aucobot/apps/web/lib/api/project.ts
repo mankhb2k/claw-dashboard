@@ -5,7 +5,12 @@ import {
   projectSchema,
   projectHealthSchema,
   projectEnvMaskedRowSchema,
+  providerKeyRevealResponseSchema,
   providerKeyTestResultSchema,
+  projectHeartbeatResponseSchema,
+  agentHeartbeatResponseSchema,
+  updateProjectHeartbeatBodySchema,
+  updateAgentHeartbeatBodySchema,
   providerDefinitionSchema,
   gatewayTokenResponseSchema,
   connectorDefinitionSchema,
@@ -62,6 +67,9 @@ import {
   type ProviderDefinition,
   type ProviderKeyTestResult,
   type ProjectEnvMaskedRow,
+  type ProviderKeyRevealResponse,
+  type ProjectHeartbeatResponse,
+  type AgentHeartbeatResponse,
 } from '@/schemas/project.schema'
 import {
   createCronJobInputSchema,
@@ -148,6 +156,16 @@ export const projectApi = {
   listProviderKeys: async (id: string): Promise<ProjectEnvMaskedRow[]> => {
     const res = await api.get(`/api/projects/${id}/provider-keys`)
     return z.array(projectEnvMaskedRowSchema).parse(res.data)
+  },
+
+  revealProviderKey: async (
+    id: string,
+    providerId: string,
+  ): Promise<ProviderKeyRevealResponse> => {
+    const res = await api.get(
+      `/api/projects/${id}/provider-keys/${providerId}/reveal`,
+    )
+    return providerKeyRevealResponseSchema.parse(res.data)
   },
 
   saveProviderKey: async (
@@ -545,6 +563,47 @@ export const projectApi = {
 
   runCronJob: async (id: string, jobId: string): Promise<void> => {
     await api.post(`/api/projects/${id}/cron/${encodeURIComponent(jobId)}/run`)
+  },
+
+  getProjectHeartbeat: async (id: string): Promise<ProjectHeartbeatResponse> => {
+    const res = await api.get(`/api/projects/${id}/heartbeat`)
+    return projectHeartbeatResponseSchema.parse(res.data)
+  },
+
+  updateProjectHeartbeat: async (
+    id: string,
+    body: { enabled: boolean; every: string; heartbeatMd?: string | null },
+  ): Promise<ProjectHeartbeatResponse> => {
+    const payload = updateProjectHeartbeatBodySchema.parse(body)
+    const res = await api.patch(`/api/projects/${id}/heartbeat`, payload)
+    return projectHeartbeatResponseSchema.parse(res.data)
+  },
+
+  getAgentHeartbeat: async (
+    id: string,
+    slug: string,
+  ): Promise<AgentHeartbeatResponse> => {
+    const res = await api.get(
+      `/api/projects/${id}/agents/${encodeURIComponent(slug)}/heartbeat`,
+    )
+    return agentHeartbeatResponseSchema.parse(res.data)
+  },
+
+  updateAgentHeartbeat: async (
+    id: string,
+    slug: string,
+    body: {
+      mode: 'off' | 'inherit' | 'custom'
+      every?: string | null
+      heartbeatMd?: string | null
+    },
+  ): Promise<AgentHeartbeatResponse> => {
+    const payload = updateAgentHeartbeatBodySchema.parse(body)
+    const res = await api.patch(
+      `/api/projects/${id}/agents/${encodeURIComponent(slug)}/heartbeat`,
+      payload,
+    )
+    return agentHeartbeatResponseSchema.parse(res.data)
   },
 
   listNodes: async (id: string): Promise<NodesListResponse> => {

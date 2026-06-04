@@ -7,6 +7,8 @@ import {
   mergeAgentsIntoConfig,
   mergeChannelsIntoConfig,
   mergeConnectorsIntoConfig,
+  mergeHeartbeatIntoConfig,
+  writeHeartbeatFiles,
   syncGatewayAuthToken,
   mergeProviderKeysIntoConfig,
   openClawConfigPath,
@@ -87,6 +89,9 @@ export class WorkspaceService {
         gatewayToken: true,
         collaborationEnabled: true,
         collaborationMemberSlugs: true,
+        heartbeatEnabled: true,
+        heartbeatEvery: true,
+        heartbeatMd: true,
       },
     });
     syncGatewayAuthToken(config, resolveOssGatewayToken(project?.gatewayToken));
@@ -146,6 +151,48 @@ export class WorkspaceService {
         isDefault: row.isDefault,
       })),
       collaboration,
+    );
+
+    const heartbeatAgentRows = await this.prisma.projectAgent.findMany({
+      where: { projectId },
+      select: {
+        slug: true,
+        name: true,
+        enabled: true,
+        heartbeatMode: true,
+        heartbeatEvery: true,
+        heartbeatMd: true,
+      },
+    });
+    mergeHeartbeatIntoConfig(
+      config,
+      {
+        heartbeatEnabled: project?.heartbeatEnabled ?? false,
+        heartbeatEvery: project?.heartbeatEvery ?? '30m',
+        heartbeatMd: project?.heartbeatMd ?? null,
+      },
+      heartbeatAgentRows.map((row) => ({
+        slug: row.slug,
+        enabled: row.enabled,
+        heartbeatMode: row.heartbeatMode,
+        heartbeatEvery: row.heartbeatEvery,
+        heartbeatMd: row.heartbeatMd,
+      })),
+    );
+    await writeHeartbeatFiles(
+      dataDir,
+      {
+        heartbeatEnabled: project?.heartbeatEnabled ?? false,
+        heartbeatEvery: project?.heartbeatEvery ?? '30m',
+        heartbeatMd: project?.heartbeatMd ?? null,
+      },
+      heartbeatAgentRows.map((row) => ({
+        slug: row.slug,
+        enabled: row.enabled,
+        heartbeatMode: row.heartbeatMode,
+        heartbeatEvery: row.heartbeatEvery,
+        heartbeatMd: row.heartbeatMd,
+      })),
     );
 
     const connectorRows = await this.prisma.projectConnector.findMany({

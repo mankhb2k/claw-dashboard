@@ -38,6 +38,7 @@ const api = {
     ipcRenderer.invoke("node-device:connect", payload),
   connectWithInvite: (payload: ConnectWithInvitePayload): Promise<IpcOk> =>
     ipcRenderer.invoke("node-device:connect-with-invite", payload),
+  reconnect: (): Promise<IpcOk> => ipcRenderer.invoke("node-device:reconnect"),
   disconnect: (): Promise<IpcOk> => ipcRenderer.invoke("node-device:disconnect"),
   testGateway: (payload: Pick<NodeConfig, "gatewayUrl">): Promise<IpcOk> =>
     ipcRenderer.invoke("node-device:test-gateway", payload),

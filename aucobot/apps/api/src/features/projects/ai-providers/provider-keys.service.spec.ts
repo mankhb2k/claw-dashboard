@@ -290,6 +290,26 @@ describe('ProviderKeysService', () => {
     });
   });
 
+  describe('revealApiKey', () => {
+    it('throws when no stored key', async () => {
+      const { service, prisma } = createService();
+      prisma.projectProviderKey.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.revealApiKey(PROJECT_ID, 'gemini'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('returns decrypted api key', async () => {
+      const { service, prisma } = createService();
+      prisma.projectProviderKey.findUnique.mockResolvedValue(buildRow());
+
+      const result = await service.revealApiKey(PROJECT_ID, 'gemini');
+
+      expect(result.apiKey).toBe('abcdefghijklmnop');
+    });
+  });
+
   describe('listMasked', () => {
     it('maps db rows to masked response', async () => {
       const { service, prisma } = createService();

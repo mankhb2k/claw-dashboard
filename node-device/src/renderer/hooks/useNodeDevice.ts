@@ -94,6 +94,19 @@ export function useNodeDevice() {
     }
   }, [loadConfig]);
 
+  const reconnect = useCallback(async () => {
+    setBusy(true);
+    try {
+      const result = await window.nodeDevice.reconnect();
+      if (result.ok) {
+        await loadConfig();
+      }
+      return result;
+    } finally {
+      setBusy(false);
+    }
+  }, [loadConfig]);
+
   const disconnect = useCallback(async () => {
     setBusy(true);
     try {
@@ -130,6 +143,7 @@ export function useNodeDevice() {
     saveConfig,
     connect,
     connectWithInvite,
+    reconnect,
     disconnect,
     testGateway,
     openExternal,
