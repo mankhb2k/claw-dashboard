@@ -11,7 +11,7 @@
   width: 36px;
   height: 20px;
   background-color: var(--color-border);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   position: relative;
   transition: background-color var(--transition-fast) ease;
   cursor: pointer;
@@ -22,7 +22,7 @@
   box-shadow: var(--focus-ring);
 }
 
-/* Trạng thái On */
+/* On state */
 .root[data-state="checked"] {
   background-color: var(--color-success);
 }
@@ -33,7 +33,7 @@
   width: 16px;
   height: 16px;
   background-color: var(--color-primary-foreground);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   transition: transform var(--transition-fast) ease;
   transform: translateX(2px);
@@ -46,7 +46,7 @@
 
 /* 4. Label */
 .label {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   color: var(--color-foreground);
   user-select: none;
   cursor: pointer;

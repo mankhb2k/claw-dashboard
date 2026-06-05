@@ -47,7 +47,7 @@ export interface BoxProps extends React.HTMLAttributes<HTMLElement> {
 
   // Style
   border?: boolean
-  radius?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
   color?: ColorVariant | (string & {})
 
   asChild?: boolean

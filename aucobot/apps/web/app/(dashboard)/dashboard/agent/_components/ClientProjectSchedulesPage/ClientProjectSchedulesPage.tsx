@@ -287,7 +287,8 @@ export default function ClientProjectSchedulesPage() {
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon_sm"
+                      size="sm"
+                      iconOnly
                       disabled={busyJobId === job.id}
                       onClick={() => void runNow(job.id)}
                       aria-label={`Run ${job.name} now`}
@@ -303,7 +304,8 @@ export default function ClientProjectSchedulesPage() {
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon_sm"
+                      size="sm"
+                      iconOnly
                       disabled={busyJobId === job.id}
                       onClick={() => void removeJob(job.id)}
                       aria-label={`Delete ${job.name}`}

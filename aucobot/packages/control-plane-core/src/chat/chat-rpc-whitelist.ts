@@ -4,6 +4,11 @@ export const CHAT_RPC_WHITELIST = new Set([
   'chat.send',
   'chat.abort',
   'agents.list',
+  'sessions.list',
+  'sessions.create',
+  'sessions.patch',
+  'sessions.delete',
+  'sessions.subscribe',
 ]);
 
 export function isAllowedChatRpc(method: unknown): method is string {

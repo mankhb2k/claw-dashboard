@@ -31,7 +31,7 @@
 
     /* Tiêu đề thẻ */
     .title {
-      font-size: var(--font-size-base);
+      font-size: var(--font-size-md);
     }
 
     /* Trạng thái hoạt động */
@@ -41,6 +41,11 @@
     ```
 
 - **Dùng CSS Variables**: Sử dụng **CSS Custom Properties** (variables định nghĩa trong `globals.css`) cho color, spacing, radius, shadow — không hardcode giá trị thô.
+- **Thang size thống nhất (`xs` → `2xl`)** — định nghĩa tại `app/globals.css`, **không dùng `base`**:
+  - Typography: `--font-size-xs` (11px), `--font-size-sm` (13px), **`--font-size-md` (14px, mặc định body)**, `--font-size-lg`, `--font-size-xl`, `--font-size-2xl`
+  - Transition: `--transition-fast`, **`--transition-md`**, `--transition-slow`
+  - Component props `size`: dùng cùng tên `xs | sm | md | lg | xl | 2xl` khi có (ví dụ `DatePicker size="sm"`)
+  - **Button**: `size` = `xs | sm | md | lg` (mặc định `md`); nút chỉ icon dùng thêm `iconOnly` (ví dụ `<Button size="sm" iconOnly />`)
 - **Quy tắc Radius (Bo góc)**:
   - **Button, Input, Alert, Menu**: Sử dụng `var(--radius-md)` (10px).
   - **Card, Modal, Large Containers**: Sử dụng `var(--radius-lg)` (14px).
@@ -51,7 +56,7 @@
 - **Chuẩn giao diện Card**:
   - Mặc định: `border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);`
   - Hover: `border-color: var(--color-border-focus); box-shadow: var(--shadow-md);` (KHÔNG dùng `transform: translateY(-2px)` hay `border-color: var(--color-primary)`).
-  - Transition: Chỉ định rõ các thuộc tính cần transition, ví dụ: `transition: border-color var(--transition-base) ease, box-shadow var(--transition-base) ease;` (Tuyệt đối không dùng `transition: all`).
+  - Transition: Chỉ định rõ các thuộc tính cần transition, ví dụ: `transition: border-color var(--transition-md) ease, box-shadow var(--transition-md) ease;` (Tuyệt đối không dùng `transition: all`).
 - **Chuẩn giao diện Menu Dropdown**:
   - **Nút mở (Kebab/Dots)**: `width: 34px; height: 34px; border-radius: var(--radius-sm); color: var(--color-text-muted); background: transparent;`. Khi hover: `background: var(--color-primary-dim); color: var(--color-text);`.
   - **Menu Container**: `background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); padding: var(--space-1); z-index: 50;`.

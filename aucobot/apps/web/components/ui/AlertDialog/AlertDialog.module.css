@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. OVERLAY — Lớp nền mờ
-   ============================================================================= */
+/* 1. OVERLAY - Background blur */
 .overlay {
   position: fixed;
   inset: 0;
@@ -10,9 +8,7 @@
   animation: fadeIn 0.2s ease-out;
 }
 
-/* =============================================================================
-   2. CONTAINER — Căn giữa content
-   ============================================================================= */
+/* 2. CONTAINER - Center content */
 .container {
   position: fixed;
   inset: 0;
@@ -23,17 +19,15 @@
   pointer-events: none;
 }
 
-/* =============================================================================
-   3. CONTENT — Hộp thoại chính
-   ============================================================================= */
+/* 3. CONTENT - Main dialog */
 .content {
   pointer-events: auto;
   background-color: var(--color-background);
   width: 90vw;
   max-width: 440px;
-  padding: var(--space-6);
+  padding: 24px;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   border: 1px solid var(--color-border);
   animation: contentShow 0.2s ease-out;
 }
@@ -42,9 +36,7 @@
   outline: none;
 }
 
-/* =============================================================================
-   4. HEADER, FOOTER, TITLE, DESCRIPTION
-   ============================================================================= */
+/* 4. HEADER, FOOTER, TITLE, DESCRIPTION */
 .header {
   display: flex;
   flex-direction: column;
@@ -72,12 +64,14 @@
   margin-top: var(--space-8);
 }
 
-/* =============================================================================
-   5. ANIMATIONS
-   ============================================================================= */
+/* 5. ANIMATIONS */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes contentShow {

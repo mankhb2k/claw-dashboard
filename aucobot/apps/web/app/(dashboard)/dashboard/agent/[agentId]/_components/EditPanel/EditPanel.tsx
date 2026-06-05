@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Container, Flex } from "@/components/layout";
-import { Typography, Button, toast } from "@/components/ui";
+import { Typography, Button, toast, Tabs, type TabItem } from "@/components/ui";
 import {
   agentFormSchema,
   agentTemplateToDefaults,
@@ -83,6 +83,15 @@ const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
   { id: "schedules", label: "Schedules", icon: CalendarClock },
   { id: "heartbeat", label: "Heartbeat", icon: Activity },
 ];
+
+const PANEL_TAB_ITEMS: TabItem[] = TABS_LIST.map((tab) => {
+  const Icon = tab.icon;
+  return {
+    value: tab.id,
+    label: tab.label,
+    icon: <Icon size={16} aria-hidden />,
+  };
+});
 
 /** Left panel: edit / create agent form (header + tabs + card content). */
 export function EditPanel({
@@ -341,42 +350,34 @@ export function EditPanel({
         onSubmit={handleSubmit(onSubmit)}
         noValidate
       >
-        <div className={styles.tabBar}>
-          <div className={styles.tabList}>
-            {TABS_LIST.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`${styles.tabItem} ${activeTab === tab.id ? styles.active : ""}`}
-                >
-                  <Icon size={16} aria-hidden />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-          {onTogglePreview ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={styles.previewToggle}
-              onClick={onTogglePreview}
-              aria-label={previewOpen ? "Hide preview" : "Show preview"}
-              aria-pressed={previewOpen}
-              title={previewOpen ? "Hide preview" : "Show preview"}
-            >
-              {previewOpen ? (
-                <PanelRightClose size={18} />
-              ) : (
-                <PanelRightOpen size={18} />
-              )}
-            </Button>
-          ) : null}
-        </div>
+        <Tabs
+          items={PANEL_TAB_ITEMS}
+          value={activeTab}
+          onValueChange={(next) => setActiveTab(next as EditTab)}
+          variant="panel"
+          showIndicator={false}
+          aria-label="Agent form sections"
+          trailing={
+            onTogglePreview ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="md"
+                iconOnly
+                onClick={onTogglePreview}
+                aria-label={previewOpen ? "Hide preview" : "Show preview"}
+                aria-pressed={previewOpen}
+                title={previewOpen ? "Hide preview" : "Show preview"}
+              >
+                {previewOpen ? (
+                  <PanelRightClose size={18} />
+                ) : (
+                  <PanelRightOpen size={18} />
+                )}
+              </Button>
+            ) : null
+          }
+        />
         <div
           className={`${styles.body} ${activeTab === "instructions" ? styles.bodyInstructions : ""}`}
         >

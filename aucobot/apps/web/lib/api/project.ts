@@ -94,6 +94,11 @@ import {
   type NodeInviteListItem,
   type CreateNodeInviteInput,
 } from '@/schemas/nodes.schema'
+import {
+  overviewResponseSchema,
+  type OverviewChartPeriod,
+  type OverviewResponse,
+} from '@/schemas/overview.schema'
 import { z } from 'zod'
 
 export const projectApi = {
@@ -665,5 +670,17 @@ export const projectApi = {
 
   revokeNodeInvite: async (id: string, inviteId: string): Promise<void> => {
     await api.delete(`/api/projects/${id}/nodes/invites/${encodeURIComponent(inviteId)}`)
+  },
+
+  getOverview: async (
+    id: string,
+    params?: {
+      dateFrom?: string
+      dateTo?: string
+      chartPeriod?: OverviewChartPeriod
+    },
+  ): Promise<OverviewResponse> => {
+    const res = await api.get(`/api/projects/${id}/overview`, { params })
+    return overviewResponseSchema.parse(res.data)
   },
 }

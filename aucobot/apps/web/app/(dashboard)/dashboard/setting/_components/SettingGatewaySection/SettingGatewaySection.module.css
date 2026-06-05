@@ -23,7 +23,7 @@
 }
 
 .warningIcon {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   flex-shrink: 0;
   color: var(--color-warning);
   margin-top: 2px;

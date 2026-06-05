@@ -82,7 +82,7 @@
 
 /* Label */
 .label {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   color: var(--color-foreground);
   user-select: none;
   cursor: pointer;
@@ -94,7 +94,7 @@
 }
 
 .label_md {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
 }
 
 .label_lg {

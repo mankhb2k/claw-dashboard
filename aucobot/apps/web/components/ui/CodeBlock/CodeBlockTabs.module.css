@@ -36,12 +36,12 @@
   left: 0;
   height: 2px;
   background: var(--color-primary);
-  border-radius: 1px;
+  border-radius: var(--radius-xs);
   z-index: 1;
   pointer-events: none;
   transition:
-    transform var(--transition-base) var(--ease-out),
-    width var(--transition-base) var(--ease-out);
+    transform var(--transition-md) var(--ease-out),
+    width var(--transition-md) var(--ease-out);
 }
 
 .tab {
@@ -50,13 +50,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) 0;
+  padding: 8px 0;
   margin: 0;
   border: none;
   background: transparent;
   font-family: inherit;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   line-height: 1.2;
   color: var(--color-code-block-muted);
   cursor: pointer;
@@ -94,7 +94,7 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  padding-bottom: var(--space-2);
+  padding-bottom: 8px;
   font-size: var(--font-size-sm);
   color: var(--color-code-block-muted);
 }

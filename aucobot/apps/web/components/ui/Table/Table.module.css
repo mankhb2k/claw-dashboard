@@ -1,4 +1,4 @@
-/* Vỏ cuộn ngang */
+/* Horizontal scroll wrapper */
 .wrapper {
   width: 100%;
 }
@@ -7,31 +7,31 @@
   overflow-x: auto;
 }
 
-/* Bảng chính */
+/* Main table */
 .table {
   width: 100%;
   border-collapse: collapse;
 }
 
-/* Kích thước dòng — md (mặc định) */
+/* Row size - md (default) */
 .sizeMd th {
-  padding: var(--space-3) var(--space-2);
+  padding: 12px 8px;
 }
 
 .sizeMd td {
-  padding: var(--space-4) var(--space-2);
+  padding: 16px 8px;
 }
 
-/* Kích thước dòng — sm */
+/* Row size - sm */
 .sizeSm th {
-  padding: var(--space-2) var(--space-2);
+  padding: 8px 8px;
 }
 
 .sizeSm td {
-  padding: var(--space-3) var(--space-2);
+  padding: 12px 8px;
 }
 
-/* Header cột */
+/* Header column */
 .header th {
   border-bottom: 1px solid var(--color-border);
 }
@@ -41,7 +41,7 @@
   letter-spacing: 0.05em;
 }
 
-/* Body */
+/* Body - table rows */
 .body td {
   border-bottom: 1px solid var(--color-border);
 }
@@ -50,7 +50,7 @@
   border-bottom: none;
 }
 
-/* Hover dòng */
+/* Row hover */
 .rowHover:hover {
   background: var(--color-muted);
 }
@@ -59,7 +59,7 @@
   background: var(--color-primary-dim);
 }
 
-/* Căn cột */
+/* Column alignment */
 .alignLeft {
   text-align: left;
 }
@@ -72,17 +72,17 @@
   text-align: right;
 }
 
-/* Chú thích bảng */
+/* Table caption */
 .caption {
   caption-side: bottom;
-  padding-top: var(--space-3);
+  padding-top: 12px;
   color: var(--color-muted-foreground);
   font-size: var(--font-size-xs);
 }
 
-/* Ô trống */
+/* Empty cell */
 .empty {
-  padding: var(--space-8) var(--space-4);
+  padding: 32px 16px;
   text-align: center;
   color: var(--color-muted-foreground);
 }

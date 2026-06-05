@@ -38,7 +38,8 @@ export const DialogContent = React.forwardRef<
           <DialogPrimitive.Close asChild>
             <Button
               variant="ghost"
-              size="icon_sm"
+              size="sm"
+              iconOnly
               className={styles.closeBtn}
               aria-label="Close"
             >

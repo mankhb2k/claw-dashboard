@@ -166,13 +166,14 @@ export function PreviewPanel({ agentSlug }: PreviewPanelProps) {
           <Button
             type="button"
             variant="ghost"
-            size="icon"
+            size="md"
+            iconOnly
             title="Refresh conversation"
             onClick={resetChat}
           >
             <RotateCcw size={16} />
           </Button>
-          <Button type="button" variant="ghost" size="icon" title="Playground settings">
+          <Button type="button" variant="ghost" size="md" iconOnly title="Playground settings">
             <Settings size={16} />
           </Button>
         </Flex>
@@ -236,7 +237,8 @@ export function PreviewPanel({ agentSlug }: PreviewPanelProps) {
                 </div>
                 <Button
                   type="button"
-                  size="icon"
+                  size="md"
+                  iconOnly
                   onClick={handleSend}
                   disabled={!inputMessage.trim() || isTyping}
                   aria-label="Send message"

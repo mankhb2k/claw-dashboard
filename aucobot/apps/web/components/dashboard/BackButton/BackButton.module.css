@@ -55,7 +55,7 @@
 /* Nhãn cạnh icon */
 .label {
   font-weight: 300;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   line-height: 1.5;
   margin-bottom: 2px;
 }

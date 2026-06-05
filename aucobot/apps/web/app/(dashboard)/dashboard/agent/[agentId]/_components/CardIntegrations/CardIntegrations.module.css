@@ -142,8 +142,8 @@
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   transition:
-    background-color var(--transition-base) ease,
-    border-color var(--transition-base) ease;
+    background-color var(--transition-md) ease,
+    border-color var(--transition-md) ease;
 }
 
 .providerRow:hover {

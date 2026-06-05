@@ -1,13 +1,11 @@
-.base {
+.root {
   margin: 0;
   padding: 0;
   line-height: 1.5;
   color: var(--color-foreground);
 }
 
-/* =============================================================================
-   VARIANTS — Các biến thể về kích thước và định dạng
-   ============================================================================= */
+/* VARIANTS - Variations of size and format */
 
 .h1 {
   font-size: var(--font-size-2xl);
@@ -30,13 +28,13 @@
 }
 
 .h4 {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   font-weight: 600;
   line-height: 1.5;
 }
 
 .p {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   font-weight: 400;
   line-height: 1.6;
 }
@@ -53,9 +51,7 @@
   line-height: 1.4;
 }
 
-/* =============================================================================
-   MODIFIERS — Các hiệu chỉnh về màu sắc và trọng số
-   ============================================================================= */
+/* MODIFIERS - Color and weight adjustments */
 
 .muted {
   color: var(--color-muted-foreground);
@@ -93,7 +89,7 @@
   font-weight: 700;
 }
 
-/* Chữ nghiêng */
+/* Italic */
 .italic {
   font-style: italic;
 }

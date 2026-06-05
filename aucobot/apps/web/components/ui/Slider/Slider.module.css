@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. VỎ BỌC (WRAPPER)
-   ============================================================================= */
+/* 1. WRAPPER - Wrapper */
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -8,9 +6,7 @@
   width: 100%;
 }
 
-/* =============================================================================
-   2. THANH TRƯỢT (ROOT)
-   ============================================================================= */
+/* 2. SLIDER - Root */
 .root {
   position: relative;
   display: flex;
@@ -21,33 +17,29 @@
   height: 20px;
 }
 
-/* =============================================================================
-   3. ĐƯỜNG RAY (TRACK) & RANGE
-   ============================================================================= */
+/* 3. TRACK & RANGE */
 .track {
   background-color: var(--color-border);
   position: relative;
   flex-grow: 1;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   height: 5px;
 }
 
 .range {
   position: absolute;
   background-color: var(--color-primary);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   height: 100%;
 }
 
-/* =============================================================================
-   4. NÚT TRƯỢT (THUMB)
-   ============================================================================= */
+/* 4. THUMB */
 .thumb {
   display: block;
   width: 16px;
   height: 16px;
   background-color: var(--color-primary);
-  border: 2px solid var(--color-background); /* Viền nền */
+  border: 2px solid var(--color-background);
   border-radius: 50%;
   cursor: pointer;
   outline: none;
@@ -62,15 +54,13 @@
 }
 
 .thumb:active {
-  /* Khi kéo: xuất hiện shadow rộng màu đặc biệt */
+  /* When dragging: show wide special color shadow */
   box-shadow: 0 0 0 6px var(--color-primary-dim);
 }
 
-/* =============================================================================
-   5. NHÃN (LABEL)
-   ============================================================================= */
+/* 5. LABEL */
 .label {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-muted-foreground);
 }

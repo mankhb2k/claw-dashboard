@@ -4,7 +4,7 @@ import styles from './Container.module.css';
 
 export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   asChild?: boolean;
-  size?: 'sm' | 'setting' | 'md' | 'lg' | 'full';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'full';
   display?: React.CSSProperties['display'];
   align?: React.CSSProperties['alignItems'] | 'center' | 'left' | 'right';
 }

@@ -3,80 +3,181 @@
   box-sizing: border-box;
 }
 
-/* =============================================================================
-   COLORS — Các biến thể màu nền (Sử dụng prop 'color')
-   ============================================================================= */
+/* COLORS - Background color variations (using 'color' prop) */
 
-.color-white { background-color: var(--color-background); }
-.color-subtle { background-color: var(--color-muted); }
-.color-surface { background-color: var(--color-card); }
+.color-white {
+  background-color: var(--color-background);
+}
+.color-subtle {
+  background-color: var(--color-muted);
+}
+.color-surface {
+  background-color: var(--color-card-background);
+}
 
-/* Dim Colors (Nhạt) */
-.color-primary-dim { background-color: var(--color-primary-dim); }
-.color-danger-dim { background-color: var(--color-danger-dim); }
-.color-success-dim { background-color: var(--color-success-dim); }
+/* Dim Colors (Light) */
+.color-primary-dim {
+  background-color: var(--color-primary-dim);
+}
+.color-danger-dim {
+  background-color: var(--color-danger-dim);
+}
+.color-success-dim {
+  background-color: var(--color-success-dim);
+}
 
-/* Solid Colors (Đậm) */
-.color-primary { background-color: var(--color-primary); color: var(--color-primary-foreground); }
-.color-success { background-color: var(--color-success); color: var(--color-primary-foreground); }
-.color-warning { background-color: var(--color-warning); color: var(--color-primary-foreground); }
-.color-danger { background-color: var(--color-danger); color: var(--color-primary-foreground); }
+/* Solid Colors (Dark) */
+.color-primary {
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+.color-success {
+  background-color: var(--color-success);
+  color: var(--color-primary-foreground);
+}
+.color-warning {
+  background-color: var(--color-warning);
+  color: var(--color-primary-foreground);
+}
+.color-danger {
+  background-color: var(--color-danger);
+  color: var(--color-primary-foreground);
+}
 
-/* =============================================================================
-   BORDER & RADIUS — Đường viền và bo góc
-   ============================================================================= */
+/* BORDER & RADIUS - Border and radius */
 
 .border {
   border: 1px solid var(--color-border);
 }
 
-.radius-sm { border-radius: var(--radius-sm); }
-.radius-md { border-radius: var(--radius-md); }
-.radius-lg { border-radius: var(--radius-lg); }
-.radius-xl { border-radius: var(--radius-xl); }
-.radius-full { border-radius: 9999px; }
+.radius-xs {
+  border-radius: var(--radius-xs);
+}
+.radius-sm {
+  border-radius: var(--radius-sm);
+}
+.radius-md {
+  border-radius: var(--radius-md);
+}
+.radius-lg {
+  border-radius: var(--radius-lg);
+}
+.radius-xl {
+  border-radius: var(--radius-xl);
+}
+.radius-full {
+  border-radius: var(--radius-full);
+}
 
-/* =============================================================================
-   SPACING — Padding (Dùng biến hệ thống)
-   ============================================================================= */
+/* SPACING - Padding (using system variables) */
 
-.p-0 { padding: 0; }
-.p-1 { padding: var(--space-1); }
-.p-2 { padding: var(--space-2); }
-.p-3 { padding: var(--space-3); }
-.p-4 { padding: var(--space-4); }
-.p-6 { padding: var(--space-6); }
-.p-8 { padding: var(--space-8); }
+.p-0 {
+  padding: 0;
+}
+.p-1 {
+  padding: var(--space-1);
+}
+.p-2 {
+  padding: var(--space-2);
+}
+.p-3 {
+  padding: var(--space-3);
+}
+.p-4 {
+  padding: var(--space-4);
+}
+.p-6 {
+  padding: var(--space-6);
+}
+.p-8 {
+  padding: var(--space-8);
+}
 
-.px-0 { padding-left: 0; padding-right: 0; }
-.px-1 { padding-left: var(--space-1); padding-right: var(--space-1); }
-.px-2 { padding-left: var(--space-2); padding-right: var(--space-2); }
-.px-3 { padding-left: var(--space-3); padding-right: var(--space-3); }
-.px-4 { padding-left: var(--space-4); padding-right: var(--space-4); }
-.px-6 { padding-left: var(--space-6); padding-right: var(--space-6); }
-.px-8 { padding-left: var(--space-8); padding-right: var(--space-8); }
+.px-0 {
+  padding-left: 0;
+  padding-right: 0;
+}
+.px-1 {
+  padding-left: var(--space-1);
+  padding-right: var(--space-1);
+}
+.px-2 {
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+}
+.px-3 {
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+.px-4 {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+.px-6 {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+.px-8 {
+  padding-left: var(--space-8);
+  padding-right: var(--space-8);
+}
 
-.py-0 { padding-top: 0; padding-bottom: 0; }
-.py-1 { padding-top: var(--space-1); padding-bottom: var(--space-1); }
-.py-2 { padding-top: var(--space-2); padding-bottom: var(--space-2); }
-.py-3 { padding-top: var(--space-3); padding-bottom: var(--space-3); }
-.py-4 { padding-top: var(--space-4); padding-bottom: var(--space-4); }
-.py-6 { padding-top: var(--space-6); padding-bottom: var(--space-6); }
-.py-8 { padding-top: var(--space-8); padding-bottom: var(--space-8); }
+.py-0 {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.py-1 {
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+}
+.py-2 {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+.py-3 {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+.py-4 {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+.py-6 {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+}
+.py-8 {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
 
-.pt-1 { padding-top: var(--space-1); }
-.pt-2 { padding-top: var(--space-2); }
-.pt-3 { padding-top: var(--space-3); }
-.pt-4 { padding-top: var(--space-4); }
+.pt-1 {
+  padding-top: var(--space-1);
+}
+.pt-2 {
+  padding-top: var(--space-2);
+}
+.pt-3 {
+  padding-top: var(--space-3);
+}
+.pt-4 {
+  padding-top: var(--space-4);
+}
 
-.pb-1 { padding-bottom: var(--space-1); }
-.pb-2 { padding-bottom: var(--space-2); }
-.pb-3 { padding-bottom: var(--space-3); }
-.pb-4 { padding-bottom: var(--space-4); }
+.pb-1 {
+  padding-bottom: var(--space-1);
+}
+.pb-2 {
+  padding-bottom: var(--space-2);
+}
+.pb-3 {
+  padding-bottom: var(--space-3);
+}
+.pb-4 {
+  padding-bottom: var(--space-4);
+}
 
-/* =============================================================================
-   SIZING — Kích thước
-   ============================================================================= */
+/* SIZING - Size */
 
 .full-width {
   width: 100%;

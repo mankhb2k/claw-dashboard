@@ -1,4 +1,4 @@
-/* Khối placeholder loading */
+/* Block placeholder loading */
 .root {
   display: block;
   flex-shrink: 0;
@@ -6,7 +6,7 @@
   background: var(--color-muted);
 }
 
-/* Dòng chữ giả */
+/* Fake text */
 .text {
   height: 1rem;
   width: 100%;
@@ -16,12 +16,12 @@
   height: 0.75rem;
 }
 
-/* Hình tròn (avatar, icon) */
+/* Circle (avatar, icon) */
 .circle {
   border-radius: 50%;
 }
 
-/* Hiệu ứng pulse */
+/* Pulse effect */
 .pulse {
   animation: skeletonPulse 1.2s ease-in-out infinite;
 }

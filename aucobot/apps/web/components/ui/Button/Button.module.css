@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. NÚT — Nền tảng chung & Trạng thái
-   ============================================================================= */
+/* 1. BUTTON - Base & State */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -11,6 +9,7 @@
   background-clip: padding-box;
   font-size: var(--font-size-sm);
   font-weight: 500;
+  line-height: 1;
   white-space: nowrap;
   user-select: none;
   outline: none;
@@ -26,7 +25,7 @@
   width: 100%;
 }
 
-/* Hiệu ứng nhấn xuống */
+/* Press down effect */
 .btn:active:not([aria-haspopup="true"]) {
   transform: translateY(1px);
 }
@@ -40,13 +39,13 @@
   pointer-events: none;
 }
 
-/* Trạng thái lỗi (Aria-invalid) */
+/* Error state (Aria-invalid) */
 .btn[aria-invalid="true"] {
   border-color: var(--color-danger);
   box-shadow: 0 0 0 3px var(--color-danger-dim);
 }
 
-/* Icon trong nút */
+/* Icon in button */
 .btn svg {
   pointer-events: none;
   flex-shrink: 0;
@@ -54,9 +53,7 @@
   height: 16px;
 }
 
-/* =============================================================================
-   2. BIẾN THỂ (VARIANT)
-   ============================================================================= */
+/* 2. VARIANT - Variations */
 
 /* Primary */
 .v_primary {
@@ -104,10 +101,10 @@
 .v_danger {
   background: var(--color-danger-dim);
   color: var(--color-danger);
-  border-color: var(--color-danger-border, rgba(220, 38, 38, 0.4));
+  border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
 }
 .v_danger:hover:not(:disabled) {
-  background: rgba(220, 38, 38, 0.2);
+  background: color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
 .v_danger:focus-visible {
   border-color: var(--color-danger);
@@ -119,26 +116,16 @@
   background: transparent;
   color: var(--color-primary);
   padding: 0 !important;
-  height: auto !important;
 }
 .v_link:hover:not(:disabled) {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 
-/* =============================================================================
-   3. KÍCH THƯỚC (SIZE)
-   ============================================================================= */
-
-.s_default {
-  height: 36px;
-  padding: 0 var(--space-3);
-  gap: 6px;
-}
+/* 3. SIZE - xs, sm, md, lg + .iconOnly for square buttons */
 
 .s_xs {
-  height: 24px;
-  padding: 0 var(--space-2);
+  padding: 6px 8px;
   font-size: var(--font-size-xs);
   gap: 4px;
 }
@@ -148,46 +135,37 @@
 }
 
 .s_sm {
-  height: 32px;
-  padding: 0 var(--space-3);
+  padding: 8px 12px;
   gap: 4px;
 }
 
-.s_lg {
-  height: 40px;
-  padding: 0 var(--space-4);
+.s_md {
+  padding: 10px 12px;
   gap: 6px;
 }
 
-/* Icon variants */
-.s_icon {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-}
-.s_icon_xs {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-}
-.s_icon_xs svg {
-  width: 12px;
-  height: 12px;
-}
-.s_icon_sm {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-}
-.s_icon_lg {
-  width: 40px;
-  height: 40px;
-  padding: 0;
+.s_lg {
+  padding: 12px 16px;
+  gap: 6px;
 }
 
-/* =============================================================================
-   4. LOADING & SPINNER
-   ============================================================================= */
+.iconOnly.s_xs {
+  padding: 6px;
+}
+
+.iconOnly.s_sm {
+  padding: 8px;
+}
+
+.iconOnly.s_md {
+  padding: 10px;
+}
+
+.iconOnly.s_lg {
+  padding: 12px;
+}
+
+/* 4. LOADING & SPINNER */
 .loading {
   position: relative;
   color: transparent !important;
@@ -204,7 +182,7 @@
   animation: spin 0.6s linear infinite;
 }
 
-/* Spinner color logic */
+/* Spinner color logic - only for outline, secondary, ghost, link variants */
 .v_outline .spinner,
 .v_secondary .spinner,
 .v_ghost .spinner,
@@ -219,16 +197,18 @@
   }
 }
 
-/* =============================================================================
-   5. RESPONSIVE — điều chỉnh kích thước trên mobile
-   ============================================================================= */
+/* 5. RESPONSIVE - adjust size on mobile */
 @media (max-width: 640px) {
   .s_lg {
-    height: 36px;
-    padding: 0 var(--space-3);
+    padding: 8px 12px;
   }
-  .s_default {
-    height: 32px;
-    padding: 0 var(--space-3);
+  .s_md {
+    padding: 8px 12px;
+  }
+  .iconOnly.s_lg {
+    padding: 10px;
+  }
+  .iconOnly.s_md {
+    padding: 8px;
   }
 }

@@ -9,7 +9,17 @@ jest.mock('../workspace/workspace.service', () => ({
 jest.mock('@aucobot/control-plane-core', () => ({
   openGatewayUpstream: jest.fn(),
   isAllowedChatRpc: jest.fn((method: unknown) =>
-    ['chat.history', 'chat.send', 'chat.abort', 'agents.list'].includes(String(method)),
+    [
+      'chat.history',
+      'chat.send',
+      'chat.abort',
+      'agents.list',
+      'sessions.list',
+      'sessions.create',
+      'sessions.patch',
+      'sessions.delete',
+      'sessions.subscribe',
+    ].includes(String(method)),
   ),
 }));
 
@@ -57,7 +67,17 @@ describe('ChatGatewayProxyService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     isAllowedChatRpcMock.mockImplementation((method) =>
-      ['chat.history', 'chat.send', 'chat.abort', 'agents.list'].includes(String(method)),
+      [
+        'chat.history',
+        'chat.send',
+        'chat.abort',
+        'agents.list',
+        'sessions.list',
+        'sessions.create',
+        'sessions.patch',
+        'sessions.delete',
+        'sessions.subscribe',
+      ].includes(String(method)),
     );
   });
 

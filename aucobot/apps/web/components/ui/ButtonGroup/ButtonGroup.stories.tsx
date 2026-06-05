@@ -15,10 +15,10 @@ import { Button, type ButtonProps } from '@/components/ui/Button/Button'
 type ButtonGroupStoryArgs = {
   /** Button size applied to every child in the playground group */
   buttonSize: NonNullable<ButtonProps['size']>
-  /** Variant for unselected items in segmented demos */
+  /** Variant for every item — active state uses `aria-pressed` + ButtonGroup styles */
   inactiveVariant: NonNullable<ButtonProps['variant']>
-  /** Variant for the selected item in segmented demos */
-  activeVariant: NonNullable<ButtonProps['variant']>
+  /** @deprecated Dùng cùng variant + `aria-pressed`; giữ arg để không break controls cũ */
+  activeVariant?: NonNullable<ButtonProps['variant']>
   /** Disable all buttons in the playground group */
   disabled: boolean
   /** Allow the group to wrap onto multiple lines (narrow layouts) */
@@ -44,7 +44,7 @@ const meta: Meta<ButtonGroupStoryArgs> = {
   argTypes: {
     buttonSize: {
       control: 'select',
-      options: ['xs', 'sm', 'default', 'lg'],
+      options: ['xs', 'sm', 'md', 'lg'],
       description: 'Size passed to each Button in the interactive playground',
       table: { category: 'Button children' },
     },
@@ -57,7 +57,7 @@ const meta: Meta<ButtonGroupStoryArgs> = {
     activeVariant: {
       control: 'select',
       options: ['secondary', 'primary', 'outline', 'ghost'],
-      description: 'Variant for the selected segmented-control item',
+      description: 'Deprecated — active dùng aria-pressed, cùng variant outline',
       table: { category: 'Button children' },
     },
     disabled: {
@@ -79,7 +79,6 @@ const meta: Meta<ButtonGroupStoryArgs> = {
   args: {
     buttonSize: 'sm',
     inactiveVariant: 'outline',
-    activeVariant: 'secondary',
     disabled: false,
     wrap: false,
   },
@@ -127,7 +126,6 @@ function SegmentedButtons({
   defaultValue,
   size = 'sm',
   inactiveVariant = 'outline',
-  activeVariant = 'secondary',
   disabled = false,
   wrap = false,
   className,
@@ -136,7 +134,6 @@ function SegmentedButtons({
   defaultValue: string
   size?: ButtonProps['size']
   inactiveVariant?: ButtonProps['variant']
-  activeVariant?: ButtonProps['variant']
   disabled?: boolean
   wrap?: boolean
   className?: string
@@ -153,7 +150,7 @@ function SegmentedButtons({
           key={item.value}
           type="button"
           size={size}
-          variant={value === item.value ? activeVariant : inactiveVariant}
+          variant={inactiveVariant}
           disabled={disabled}
           aria-pressed={value === item.value}
           style={item.icon ? iconGap : undefined}
@@ -169,7 +166,7 @@ function SegmentedButtons({
 
 /** Interactive playground — args control child Button props */
 export const Default: Story = {
-  render: ({ buttonSize, inactiveVariant, activeVariant, disabled, wrap, className }) => (
+  render: ({ buttonSize, inactiveVariant, disabled, wrap, className }) => (
     <SegmentedButtons
       items={[
         { value: 'month', label: 'Month' },
@@ -179,7 +176,6 @@ export const Default: Story = {
       defaultValue="month"
       size={buttonSize}
       inactiveVariant={inactiveVariant}
-      activeVariant={activeVariant}
       disabled={disabled}
       wrap={wrap}
       className={className}
@@ -244,7 +240,7 @@ export const Variants: Story = {
             <Button variant="outline" size="sm">
               Week
             </Button>
-            <Button variant="secondary" size="sm" aria-pressed>
+            <Button variant="outline" size="sm" aria-pressed>
               Month
             </Button>
             <Button variant="outline" size="sm">
@@ -300,7 +296,7 @@ export const Sizes: Story = {
         <DemoLabel>Small — compact headers & forms</DemoLabel>
         <DemoBox>
           <ButtonGroup>
-            <Button variant="secondary" size="sm">
+            <Button variant="outline" size="sm" aria-pressed>
               Active
             </Button>
             <Button variant="outline" size="sm">
@@ -317,13 +313,13 @@ export const Sizes: Story = {
         <DemoLabel>Default — standard density</DemoLabel>
         <DemoBox>
           <ButtonGroup>
-            <Button variant="secondary" size="default">
+            <Button variant="outline" size="md" aria-pressed>
               Active
             </Button>
-            <Button variant="outline" size="default">
+            <Button variant="outline" size="md">
               Option B
             </Button>
-            <Button variant="outline" size="default">
+            <Button variant="outline" size="md">
               Option C
             </Button>
           </ButtonGroup>
@@ -334,7 +330,7 @@ export const Sizes: Story = {
         <DemoLabel>Large — spacious primary areas</DemoLabel>
         <DemoBox>
           <ButtonGroup>
-            <Button variant="secondary" size="lg">
+            <Button variant="outline" size="lg" aria-pressed>
               Active
             </Button>
             <Button variant="outline" size="lg">
@@ -371,7 +367,7 @@ export const States: Story = {
         <DemoLabel>Single disabled item in group</DemoLabel>
         <DemoBox>
           <ButtonGroup>
-            <Button variant="secondary" size="sm">
+            <Button variant="outline" size="sm" aria-pressed>
               Enabled
             </Button>
             <Button variant="outline" size="sm" disabled>

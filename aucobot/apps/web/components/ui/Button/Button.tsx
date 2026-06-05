@@ -2,9 +2,12 @@ import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import styles from './Button.module.css'
 
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg'
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'secondary' | 'ghost' | 'danger' | 'link'
-  size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon_xs' | 'icon_sm' | 'icon_lg'
+  size?: ButtonSize
+  iconOnly?: boolean
   loading?: boolean
   asChild?: boolean
   fullWidth?: boolean
@@ -12,7 +15,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export function Button({
   variant = 'primary',
-  size = 'default',
+  size = 'md',
+  iconOnly = false,
   loading = false,
   asChild = false,
   fullWidth = false,
@@ -27,6 +31,7 @@ export function Button({
     styles.btn,
     styles[`v_${variant}`],
     styles[`s_${size}`],
+    iconOnly ? styles.iconOnly : '',
     fullWidth ? styles.fullWidth : '',
     loading ? styles.loading : '',
     className ?? '',

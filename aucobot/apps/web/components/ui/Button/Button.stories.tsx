@@ -16,7 +16,10 @@ const meta: Meta<typeof Button> = {
     },
     size: {
       control: 'select',
-      options: ['default', 'xs', 'sm', 'lg', 'icon', 'icon_xs', 'icon_sm', 'icon_lg'],
+      options: ['xs', 'sm', 'md', 'lg'],
+    },
+    iconOnly: {
+      control: 'boolean',
     },
     loading: {
       control: 'boolean',
@@ -30,34 +33,36 @@ const meta: Meta<typeof Button> = {
 export default meta;
 type Story = StoryObj<typeof Button>;
 
-// Label helper for demos
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-muted-foreground)', 
+  <p style={{
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--color-muted-foreground)',
     fontWeight: 600,
-    marginBottom: '12px'
+    marginBottom: '12px',
   }}>
     {children}
   </p>
 );
 
-// Container helper for demos
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ 
-    display: 'flex', 
-    alignItems: 'center', 
-    gap: '16px', 
-    padding: '24px', 
-    border: '1px dashed var(--color-border)', 
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '24px',
+    border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
     background: 'var(--color-background)',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
   }}>
     {children}
   </div>
+);
+
+const ArrowIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
 );
 
 export const Primary: Story = {
@@ -93,7 +98,7 @@ export const Sizes: Story = {
         <DemoBox>
           <Button size="xs">Extra Small</Button>
           <Button size="sm">Small</Button>
-          <Button size="default">Default</Button>
+          <Button size="md">Medium</Button>
           <Button size="lg">Large</Button>
         </DemoBox>
       </div>
@@ -120,19 +125,19 @@ export const Icons: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <DemoLabel>Icon buttons</DemoLabel>
+        <DemoLabel>Icon-only buttons (iconOnly)</DemoLabel>
         <DemoBox>
-          <Button size="icon_xs">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          <Button size="xs" iconOnly aria-label="Next">
+            <ArrowIcon />
           </Button>
-          <Button size="icon_sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          <Button size="sm" iconOnly aria-label="Next">
+            <ArrowIcon />
           </Button>
-          <Button size="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          <Button size="md" iconOnly aria-label="Next">
+            <ArrowIcon />
           </Button>
-          <Button size="icon_lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          <Button size="lg" iconOnly aria-label="Next">
+            <ArrowIcon />
           </Button>
         </DemoBox>
       </div>

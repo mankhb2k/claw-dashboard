@@ -7,13 +7,13 @@
   box-sizing: border-box;
 }
 
-/* Các kích thước giới hạn chiều rộng */
-.size_sm {
-  max-width: var(--container-sm);
+/* Container sizes - limited width */
+.size_xs {
+  max-width: var(--container-xs);
 }
 
-.size_setting {
-  max-width: var(--container-setting);
+.size_sm {
+  max-width: var(--container-sm);
 }
 
 .size_md {

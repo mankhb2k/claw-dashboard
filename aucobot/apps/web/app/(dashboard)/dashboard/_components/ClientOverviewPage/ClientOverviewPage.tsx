@@ -1,30 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Flex, Grid } from "@/components/layout";
-import { Spinner, Typography } from "@/components/ui";
+import { DateRangePicker, Spinner, Typography } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import type {
+  OverviewChartPeriod,
+  OverviewResponse,
+} from "@/schemas/overview.schema";
 import { useProjectStore } from "@/stores/project.store";
 import { MetricCard } from "../MetricCard/MetricCard";
 import { OverviewChart } from "../OverviewChart/OverviewChart";
 import { UsageTable } from "../UsageTable/UsageTable";
 import { ScheduleCard } from "../ScheduleCard/ScheduleCard";
 import {
-  TOKEN_DATA,
-  LATENCY_DATA,
-  RECENT_CALLS,
-  METRIC_STATS,
-} from "../../fakedatadashboard";
+  chartPointsToRecharts,
+  formatCostUsd,
+  formatTokenCount,
+  mapRecentCalls,
+} from "../overview-mappers";
 import styles from "./ClientOverviewPage.module.css";
+
+function formatMetricsRange(dateFrom: string, dateTo: string): string {
+  if (dateFrom === dateTo) return dateFrom
+  return `${dateFrom} → ${dateTo}`
+}
 
 export function ClientOverviewPage() {
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const projectsLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
+
+  const [overview, setOverview] = useState<OverviewResponse | null>(null);
+  const [pickedDateFrom, setPickedDateFrom] = useState<string | undefined>(
+    undefined,
+  );
+  const [pickedDateTo, setPickedDateTo] = useState<string | undefined>(
+    undefined,
+  );
+  const [chartPeriod, setChartPeriod] = useState<OverviewChartPeriod>("week");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchProjects({ silent: true });
   }, [fetchProjects]);
+
+  const loadOverview = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await projectApi.getOverview(projectId, {
+        dateFrom: pickedDateFrom,
+        dateTo: pickedDateTo,
+        chartPeriod,
+      });
+      setOverview(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cannot load overview");
+      setOverview(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, pickedDateFrom, pickedDateTo, chartPeriod]);
 
   useEffect(() => {
     if (!projectId) {
@@ -34,10 +73,43 @@ export function ClientOverviewPage() {
       }
       return;
     }
-    setLoading(false);
-  }, [projectId, projectsLoading]);
+    void loadOverview();
+  }, [projectId, projectsLoading, loadOverview]);
 
-  if (loading) {
+  const inputChartData = useMemo(
+    () =>
+      overview ? chartPointsToRecharts(overview.charts.input, chartPeriod) : [],
+    [overview, chartPeriod],
+  );
+
+  const outputChartData = useMemo(
+    () =>
+      overview
+        ? chartPointsToRecharts(overview.charts.output, chartPeriod)
+        : [],
+    [overview, chartPeriod],
+  );
+
+  const recentCalls = useMemo(
+    () =>
+      overview ? mapRecentCalls(overview.recentCalls, overview.timezone) : [],
+    [overview],
+  );
+
+  const metricsFrom = pickedDateFrom ?? overview?.dateFrom ?? "";
+  const metricsTo = pickedDateTo ?? overview?.dateTo ?? "";
+  const metricsRangeLabel =
+    metricsFrom && metricsTo ? formatMetricsRange(metricsFrom, metricsTo) : "";
+
+  if (!projectId && !projectsLoading) {
+    return (
+      <Typography variant="p" className={styles.errorText}>
+        No project yet. Create a project before viewing the overview.
+      </Typography>
+    );
+  }
+
+  if (loading && !overview) {
     return (
       <Flex
         direction="column"
@@ -54,39 +126,69 @@ export function ClientOverviewPage() {
     );
   }
 
-  if (!projectId) {
-    return (
-      <Typography variant="p" className={styles.errorText}>
-        No project yet. Create a project before viewing the overview.
-      </Typography>
-    );
-  }
-
   return (
     <div className={styles.scrollArea}>
-      <Flex direction="column" gap={32} py="var(--space-8)">
-        <Grid columns={3} gap={24}>
-          {METRIC_STATS.map((stat, idx) => (
-            <MetricCard key={idx} {...stat} />
-          ))}
-        </Grid>
+      <Flex direction="column" gap={32}>
+        {error ? (
+          <Typography variant="p" className={styles.errorText}>
+            {error}
+          </Typography>
+        ) : null}
+
+        <Flex direction="column" gap={12} className={styles.metricsSection}>
+          <Flex justify="end">
+            <DateRangePicker
+              from={metricsFrom}
+              to={metricsTo}
+              onFromChange={setPickedDateFrom}
+              onToChange={setPickedDateTo}
+              size="sm"
+              disabled={loading}
+            />
+          </Flex>
+
+          <Grid columns={3} gap={24}>
+            <MetricCard
+              title="Total Input"
+              value={formatTokenCount(overview?.metrics.totalInput ?? 0)}
+              subtitle={metricsRangeLabel || "Selected range"}
+              color="#10b981"
+            />
+            <MetricCard
+              title="Total Output"
+              value={formatTokenCount(overview?.metrics.totalOutput ?? 0)}
+              subtitle={metricsRangeLabel || "Selected range"}
+              color="#3b82f6"
+            />
+            <MetricCard
+              title="Total Cost"
+              value={formatCostUsd(overview?.metrics.totalCostUsd ?? "0")}
+              subtitle={metricsRangeLabel || "Selected range"}
+              color="#ec4899"
+            />
+          </Grid>
+        </Flex>
 
         <ScheduleCard />
 
         <Grid columns={2} gap={24}>
           <OverviewChart
-            title="Token Usage"
-            data={TOKEN_DATA}
+            title="Input Usage"
+            data={inputChartData}
+            period={chartPeriod}
+            onPeriodChange={setChartPeriod}
             color="var(--color-primary)"
           />
           <OverviewChart
-            title="Planned Income"
-            data={LATENCY_DATA}
+            title="Output Usage"
+            data={outputChartData}
+            period={chartPeriod}
+            onPeriodChange={setChartPeriod}
             color="#8b5cf6"
           />
         </Grid>
 
-        <UsageTable title="Recent Model Calls" data={RECENT_CALLS} />
+        <UsageTable title="Recent Model Calls" data={recentCalls} />
       </Flex>
     </div>
   );

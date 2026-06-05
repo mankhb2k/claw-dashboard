@@ -14,3 +14,7 @@
   min-height: 0;
   padding-bottom: var(--space-8);
 }
+
+.metricsSection {
+  width: 100%;
+}

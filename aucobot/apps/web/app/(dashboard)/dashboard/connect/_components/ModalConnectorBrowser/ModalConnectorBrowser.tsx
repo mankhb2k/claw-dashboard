@@ -78,7 +78,8 @@ export function ModalConnectorBrowser({
                   <Button
                     type="button"
                     variant="outline"
-                    size="icon_sm"
+                    size="sm"
+                    iconOnly
                     aria-label="Cài đặt"
                     onClick={() => onOpenDetails(svc)}
                   >
@@ -88,7 +89,8 @@ export function ModalConnectorBrowser({
                   <Button
                     type="button"
                     variant="outline"
-                    size="icon_sm"
+                    size="sm"
+                    iconOnly
                     aria-label="Kết nối"
                     onClick={() => onConnect(svc.id)}
                   >

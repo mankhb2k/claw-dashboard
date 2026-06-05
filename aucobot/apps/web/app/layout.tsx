@@ -8,7 +8,7 @@ import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from "@/lib/i18n";
 import { THEME_APPEARANCE_COOKIE } from "@/lib/theme-constants";
 import { getThemeBootstrapInlineScript } from "@/lib/theme-bootstrap";
 
-const inter = Be_Vietnam_Pro({
+const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
   subsets: ["latin", "vietnamese"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -55,7 +55,7 @@ export default async function RootLayout({
   return (
     <html
       lang={htmlLang}
-      className={inter.variable}
+      className={beVietnamPro.variable}
       suppressHydrationWarning
       data-theme={isDark ? "dark" : undefined}
     >

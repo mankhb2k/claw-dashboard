@@ -80,7 +80,8 @@ export function ActiveConnection({
                   {service.supportUrl && (
                     <Button
                       variant="ghost"
-                      size="icon_sm"
+                      size="sm"
+                      iconOnly
                       asChild
                       title="Hỗ trợ"
                     >

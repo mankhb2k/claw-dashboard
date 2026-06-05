@@ -9,34 +9,47 @@ const meta: Meta<typeof Input> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    size: {
+      control: 'select',
+      options: ['sm', 'md'],
+    },
+    labelPosition: {
+      control: 'select',
+      options: ['top', 'left', 'right', 'none'],
+    },
+    disabled: {
+      control: 'boolean',
+    },
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof Input>;
 
 const DemoLabel = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ 
-    fontSize: '11px', 
-    textTransform: 'uppercase', 
-    letterSpacing: '0.05em', 
-    color: 'var(--color-muted-foreground)', 
+  <p style={{
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--color-muted-foreground)',
     fontWeight: 600,
-    marginBottom: '12px'
+    marginBottom: '12px',
   }}>
     {children}
   </p>
 );
 
 const DemoBox = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ 
-    display: 'flex', 
+  <div style={{
+    display: 'flex',
     flexDirection: 'column',
-    gap: '24px', 
-    padding: '32px', 
+    gap: '24px',
+    padding: '32px',
     minWidth: '400px',
-    border: '1px dashed var(--color-border)', 
+    border: '1px dashed var(--color-border)',
     borderRadius: 'var(--radius-md)',
-    background: 'var(--color-background)'
+    background: 'var(--color-background)',
   }}>
     {children}
   </div>
@@ -47,7 +60,77 @@ export const Default: Story = {
     label: 'Email address',
     placeholder: 'Enter your email...',
     type: 'email',
+    size: 'md',
+    labelPosition: 'top',
   },
+};
+
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div>
+        <DemoLabel>Sizes</DemoLabel>
+        <DemoBox>
+          <Input label="Medium (default)" size="md" placeholder="Enter text..." />
+          <Input label="Small" size="sm" placeholder="Enter text..." />
+        </DemoBox>
+      </div>
+    </div>
+  ),
+};
+
+export const LabelPositions: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <section>
+        <DemoLabel>Label trên (top)</DemoLabel>
+        <DemoBox>
+          <Input
+            id="input-label-top"
+            label="Email"
+            labelPosition="top"
+            placeholder="name@example.com"
+          />
+        </DemoBox>
+      </section>
+
+      <section>
+        <DemoLabel>Label bên trái (left)</DemoLabel>
+        <DemoBox>
+          <Input
+            id="input-label-left"
+            label="Region"
+            labelPosition="left"
+            defaultValue="Singapore"
+          />
+        </DemoBox>
+      </section>
+
+      <section>
+        <DemoLabel>Label bên phải (right)</DemoLabel>
+        <DemoBox>
+          <Input
+            id="input-label-right"
+            label="Plan"
+            labelPosition="right"
+            defaultValue="Pro"
+          />
+        </DemoBox>
+      </section>
+
+      <section>
+        <DemoLabel>Không label (none)</DemoLabel>
+        <DemoBox>
+          <Input
+            id="input-label-none"
+            label="Hidden label"
+            labelPosition="none"
+            placeholder="Search..."
+          />
+        </DemoBox>
+      </section>
+    </div>
+  ),
 };
 
 export const States: Story = {

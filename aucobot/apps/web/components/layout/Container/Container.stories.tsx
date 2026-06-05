@@ -12,7 +12,7 @@ const meta: Meta<typeof Container> = {
   argTypes: {
     size: {
       control: 'select',
-      options: ['sm', 'md', 'lg', 'full'],
+      options: ['xs', 'sm', 'md', 'lg', 'full'],
     },
     display: {
       control: 'text',
@@ -66,21 +66,28 @@ export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', padding: '24px 0' }}>
       <div>
-        <DemoLabel>Size: Small (640px)</DemoLabel>
+        <DemoLabel>Size: XS (640px)</DemoLabel>
+        <Container size="xs">
+          <DummyContent />
+        </Container>
+      </div>
+
+      <div>
+        <DemoLabel>Size: SM (768px)</DemoLabel>
         <Container size="sm">
           <DummyContent />
         </Container>
       </div>
 
       <div>
-        <DemoLabel>Size: Medium (1024px)</DemoLabel>
+        <DemoLabel>Size: MD (1024px)</DemoLabel>
         <Container size="md">
           <DummyContent />
         </Container>
       </div>
 
       <div>
-        <DemoLabel>Size: Large (1440px — default)</DemoLabel>
+        <DemoLabel>Size: LG (1440px — default)</DemoLabel>
         <Container size="lg">
           <DummyContent />
         </Container>
@@ -101,21 +108,21 @@ export const Alignment: Story = {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', padding: '24px 0' }}>
       <div>
         <DemoLabel>Align: left</DemoLabel>
-        <Container size="sm" align="left">
+        <Container size="xs" align="left">
           <DummyContent />
         </Container>
       </div>
 
       <div>
         <DemoLabel>Align: center (default)</DemoLabel>
-        <Container size="sm" align="center">
+        <Container size="xs" align="center">
           <DummyContent />
         </Container>
       </div>
 
       <div>
         <DemoLabel>Align: right</DemoLabel>
-        <Container size="sm" align="right">
+        <Container size="xs" align="right">
           <DummyContent />
         </Container>
       </div>

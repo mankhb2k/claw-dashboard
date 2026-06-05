@@ -505,7 +505,8 @@ print(response.json()["choices"][0]["message"]["content"])`,
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon_sm"
+                        size="sm"
+                        iconOnly
                         loading={deletingKeyId === key.id}
                         onClick={() => void handleRevokeKey(key.id)}
                         aria-label={`Delete ${key.label}`}
@@ -585,7 +586,8 @@ print(response.json()["choices"][0]["message"]["content"])`,
               <Button
                 type="button"
                 variant="ghost"
-                size="icon_sm"
+                size="sm"
+                iconOnly
                 onClick={handleCopyCreatedToken}
                 aria-label="Copy API key"
               >

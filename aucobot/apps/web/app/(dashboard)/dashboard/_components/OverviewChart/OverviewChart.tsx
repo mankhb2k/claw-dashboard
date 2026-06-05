@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useMemo } from "react";
-import type { TooltipProps } from "recharts";
 import {
   Area,
   AreaChart,
@@ -18,6 +17,8 @@ import {
   ToggleGroupItem,
   Typography,
 } from "@/components/ui";
+import type { OverviewChartPeriod } from "@/schemas/overview.schema";
+import { shouldShowChartTick } from "../overview-mappers";
 import styles from "./OverviewChart.module.css";
 
 export interface OverviewChartDataPoint {
@@ -28,6 +29,8 @@ export interface OverviewChartDataPoint {
 interface OverviewChartProps {
   title: string;
   data: OverviewChartDataPoint[];
+  period: OverviewChartPeriod;
+  onPeriodChange: (period: OverviewChartPeriod) => void;
   color?: string;
 }
 
@@ -39,11 +42,13 @@ const PERIOD_OPTIONS = [
 
 const CHART_HEIGHT_PX = 300;
 
-function ChartTooltip({
-  active,
-  payload,
-  label,
-}: TooltipProps<number, string>) {
+type ChartTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ value?: number }>;
+  label?: string;
+};
+
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) {
     return null;
   }
@@ -55,7 +60,7 @@ function ChartTooltip({
           {label}
         </Typography>
         <Typography variant="xs" weight="bold">
-          {payload[0]?.value}
+          {payload[0]?.value?.toLocaleString("en-US") ?? 0}
         </Typography>
       </Flex>
     </Box>
@@ -65,6 +70,8 @@ function ChartTooltip({
 export function OverviewChart({
   title,
   data,
+  period,
+  onPeriodChange,
   color = "var(--color-primary)",
 }: OverviewChartProps) {
   const reactId = useId();
@@ -73,16 +80,35 @@ export function OverviewChart({
     [reactId],
   );
 
+  const formatTick = (value: string) => {
+    if (!shouldShowChartTick(value, period)) {
+      return "";
+    }
+    if (period === "day") {
+      return `${value}h`;
+    }
+    return value;
+  };
+
   return (
     <Card hover="md">
       <Flex justify="between" align="center" className={styles.header}>
         <Typography variant="p" weight="bold">
           {title}
         </Typography>
-        <ToggleGroup type="single" size="sm" defaultValue="week">
-          {PERIOD_OPTIONS.map((period) => (
-            <ToggleGroupItem key={period.value} value={period.value}>
-              {period.label}
+        <ToggleGroup
+          type="single"
+          size="sm"
+          value={period}
+          onValueChange={(value) => {
+            if (value === "day" || value === "week" || value === "month") {
+              onPeriodChange(value);
+            }
+          }}
+        >
+          {PERIOD_OPTIONS.map((option) => (
+            <ToggleGroupItem key={option.value} value={option.value}>
+              {option.label}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
@@ -115,6 +141,7 @@ export function OverviewChart({
               axisLine={false}
               tickLine={false}
               tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
+              tickFormatter={formatTick}
               dy={10}
             />
             <YAxis

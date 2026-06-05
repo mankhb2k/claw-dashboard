@@ -11,12 +11,20 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   background: var(--color-card);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+.chatMain {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Header ───────────────────────────────────────────────────────────────── */
@@ -131,12 +139,20 @@
 
 .statusConnected {
   color: var(--color-success);
-  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+  border-color: color-mix(
+    in srgb,
+    var(--color-success) 35%,
+    var(--color-border)
+  );
 }
 
 .statusError {
   color: var(--color-danger);
-  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+  border-color: color-mix(
+    in srgb,
+    var(--color-danger) 35%,
+    var(--color-border)
+  );
 }
 
 @keyframes statusPulse {
@@ -258,12 +274,16 @@
   border: 1px solid var(--color-border);
   background: var(--color-background);
   transition:
-    border-color var(--transition-base) ease,
-    box-shadow var(--transition-base) ease;
+    border-color var(--transition-md) ease,
+    box-shadow var(--transition-md) ease;
 }
 
 .composerBox:focus-within {
-  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+  border-color: color-mix(
+    in srgb,
+    var(--color-primary) 50%,
+    var(--color-border)
+  );
   box-shadow: var(--focus-glow);
 }
 
@@ -277,7 +297,7 @@
   background: transparent;
   color: var(--color-foreground);
   font: inherit;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   line-height: 1.5;
   padding: var(--space-2) var(--space-1);
   outline: none;

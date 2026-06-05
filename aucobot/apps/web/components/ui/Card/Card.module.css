@@ -4,14 +4,18 @@
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: var(--space-5);
+  padding: 20px;
   transition:
-    border-color var(--transition-base) ease,
-    box-shadow var(--transition-base) ease,
+    border-color var(--transition-md) ease,
+    box-shadow var(--transition-md) ease,
     transform var(--transition-fast) ease;
 }
 
 /* --- RADIUS --- */
+.card[data-radius="xs"] {
+  border-radius: var(--radius-xs);
+}
+
 .card[data-radius="sm"] {
   border-radius: var(--radius-sm);
 }
@@ -28,6 +32,10 @@
   border-radius: var(--radius-xl);
 }
 
+.card[data-radius="full"] {
+  border-radius: var(--radius-full);
+}
+
 /* --- HOVER STATE --- */
 .card:not([data-disable-hover="true"]):hover {
   border-color: var(--color-card-boder-hover);
@@ -40,7 +48,7 @@
 
 :global(a:focus-visible:has(> [data-hover]))
   > .card:not([data-disable-hover="true"]) {
-  border-color: var(--color-hover);
+  border-color: var(--color-border-focus);
   box-shadow: var(--shadow-sm);
 }
 
@@ -64,15 +72,6 @@
 :global(a:focus-visible:has(> [data-hover]))
   > .card[data-hover="lg"]:not([data-disable-hover="true"]) {
   box-shadow: var(--shadow-lg);
-}
-
-.card[data-hover="xl"]:hover {
-  box-shadow: var(--shadow-xl);
-}
-
-:global(a:focus-visible:has(> [data-hover]))
-  > .card[data-hover="xl"]:not([data-disable-hover="true"]) {
-  box-shadow: var(--shadow-xl);
 }
 
 /* --- FOCUS STATE --- */

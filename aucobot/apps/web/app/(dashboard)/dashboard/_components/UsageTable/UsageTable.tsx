@@ -11,8 +11,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  ToggleGroup,
-  ToggleGroupItem,
   Typography,
 } from "@/components/ui";
 import styles from "./UsageTable.module.css";
@@ -25,7 +23,8 @@ export interface UsageTableRow {
   user: string;
   status: UsageTableRowStatus | string;
   latency: number;
-  tokens: number;
+  inputTokens: number;
+  outputTokens: number;
   color: string;
 }
 
@@ -34,18 +33,13 @@ interface UsageTableProps {
   data: UsageTableRow[];
 }
 
-const PERIOD_OPTIONS = [
-  { value: "day", label: "Day" },
-  { value: "week", label: "Week" },
-  { value: "month", label: "Month" },
-] as const;
-
 const TABLE_COLUMNS = [
   { key: "model", label: "Model / Task", align: "left" as const },
   { key: "user", label: "User / Source", align: "left" as const },
   { key: "status", label: "Status", align: "left" as const },
   { key: "latency", label: "Latency", align: "right" as const },
-  { key: "tokens", label: "Tokens", align: "right" as const },
+  { key: "input", label: "Input", align: "right" as const },
+  { key: "output", label: "Output", align: "right" as const },
 ];
 
 const COLUMN_COUNT = TABLE_COLUMNS.length;
@@ -64,13 +58,9 @@ export function UsageTable({ title, data }: UsageTableProps) {
         <Typography variant="p" weight="bold">
           {title}
         </Typography>
-        <ToggleGroup type="single" size="sm" defaultValue="week">
-          {PERIOD_OPTIONS.map((period) => (
-            <ToggleGroupItem key={period.value} value={period.value}>
-              {period.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <Typography variant="small" color="muted">
+          Last 20 calls
+        </Typography>
       </Flex>
 
       <Table scrollable>
@@ -123,11 +113,18 @@ export function UsageTable({ title, data }: UsageTableProps) {
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Typography variant="small">{row.latency}ms</Typography>
+                  <Typography variant="small">
+                    {row.latency > 0 ? `${row.latency}ms` : "—"}
+                  </Typography>
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="small" weight="bold">
-                    {row.tokens.toLocaleString("en-US")}
+                    {row.inputTokens.toLocaleString("en-US")}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="small" weight="bold">
+                    {row.outputTokens.toLocaleString("en-US")}
                   </Typography>
                 </TableCell>
               </TableRow>

@@ -44,7 +44,7 @@
 }
 
 .shape_circle {
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
 }
 
 /* =============================================================================

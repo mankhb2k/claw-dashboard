@@ -13,7 +13,7 @@
 
 /* --- HÌNH DÁNG (VARIANT) --- */
 .circle {
-  border-radius: 9999px; /* Tròn xoe cho User */
+  border-radius: var(--radius-full); /* Tròn xoe cho User */
 }
 
 .square {

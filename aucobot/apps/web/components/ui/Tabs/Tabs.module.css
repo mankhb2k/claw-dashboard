@@ -1,0 +1,142 @@
+/* Section - Bot Agent sub-nav (Agents, Collaboration, …) */
+.rootSection {
+  position: relative;
+  display: flex;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Panel — Agent edit form tabs (Identity, Instructions, …) */
+.rootPanel {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+
+.listWrapPanel {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.listWrapPanel::-webkit-scrollbar {
+  display: none;
+}
+
+.tabList {
+  position: relative;
+  display: flex;
+}
+
+.tabListSection {
+  gap: var(--space-1);
+}
+
+.tabListPanel {
+  gap: var(--space-6);
+}
+
+.indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: none;
+  pointer-events: none;
+}
+
+.indicatorAnimated {
+  transition:
+    transform var(--transition-md) ease,
+    width var(--transition-md) ease;
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color var(--transition-md) ease;
+}
+
+.tabSection {
+  padding: 12px 16px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+}
+
+.tabSection:hover {
+  color: var(--color-foreground);
+}
+
+.tabSection[data-active="true"] {
+  color: var(--color-foreground);
+}
+
+.tabPanel {
+  padding: 16px 0;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.tabPanel:hover {
+  color: var(--color-primary);
+}
+
+.tabPanel[data-active="true"] {
+  color: var(--color-primary);
+}
+
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.tabIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.badgeDanger {
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+}
+
+.trailing {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
+}

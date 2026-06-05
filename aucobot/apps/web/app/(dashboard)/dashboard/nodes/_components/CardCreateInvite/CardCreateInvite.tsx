@@ -84,7 +84,8 @@ export function CardCreateInvite({
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
+                  size="md"
+                  iconOnly
                   className={`${styles.copyBtn} ${copied ? styles.copyBtnDone : ""}`}
                   aria-label={copied ? "Đã sao chép" : "Sao chép mã invite"}
                   onClick={() => void handleCopy()}

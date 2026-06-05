@@ -75,7 +75,7 @@
 
 .text {
   margin: 0;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;

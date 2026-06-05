@@ -36,8 +36,8 @@
   color: var(--color-muted-foreground);
   cursor: pointer;
   transition:
-    background var(--transition-base) ease,
-    color var(--transition-base) ease;
+    background var(--transition-md) ease,
+    color var(--transition-md) ease;
 }
 
 .filterChip:hover {

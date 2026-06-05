@@ -33,7 +33,7 @@
 /* Tiêu đề — tối đa 1 dòng */
 .cardTitle {
   margin: 0;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   font-weight: 600;
   line-height: 1.35;
   color: var(--color-text);

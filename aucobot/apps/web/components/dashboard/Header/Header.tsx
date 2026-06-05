@@ -73,7 +73,8 @@ export function Header({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon_sm"
+                size="sm"
+                iconOnly
                 className={styles.mobileMenuBtn}
                 aria-label="Toggle navigation"
               >
@@ -115,7 +116,8 @@ export function Header({
         <Button
           type="button"
           variant="ghost"
-          size="icon_sm"
+          size="sm"
+          iconOnly
           className={styles.themeToggle}
           onClick={toggleTheme}
           aria-label={isDark ? switchToLightLabel : switchToDarkLabel}
@@ -133,7 +135,8 @@ export function Header({
             <Button
               className={styles.avatarButton}
               variant="ghost"
-              size="icon_sm"
+              size="sm"
+              iconOnly
               aria-label={openUserMenuLabel}
             >
               <Avatar className={styles.avatar} fallback={initials} size="md" />

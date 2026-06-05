@@ -37,3 +37,18 @@
 .group > *:focus-visible {
   z-index: 2;
 }
+
+/* 4. SELECTED — giữ border/nền như outline, chỉ đổi màu chữ */
+.group > *[aria-pressed="true"] {
+  background: var(--color-background) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-border) !important;
+  z-index: 1;
+}
+
+.group > *[aria-pressed="true"]:hover:not(:disabled),
+.group > *[aria-pressed="true"]:active:not(:disabled) {
+  background: var(--color-background) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-border) !important;
+}

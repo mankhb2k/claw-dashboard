@@ -65,9 +65,9 @@
   box-shadow: none;
   cursor: pointer;
   transition:
-    color var(--transition-base) ease,
-    background-color var(--transition-base) ease,
-    border-color var(--transition-base) ease;
+    color var(--transition-md) ease,
+    background-color var(--transition-md) ease,
+    border-color var(--transition-md) ease;
 }
 
 .cameraBtn:hover:not(:disabled) {

@@ -23,7 +23,7 @@ export default async function ProjectSettingPage() {
   if (!project) {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
-        <Container size="setting" className={styles.content}>
+        <Container size="sm" className={styles.content}>
           <p className={styles.error}>Không tìm thấy dự án.</p>
         </Container>
       </Flex>
@@ -32,7 +32,7 @@ export default async function ProjectSettingPage() {
 
   return (
     <Flex direction="column" align="stretch" className={styles.page}>
-      <Container size="setting" display="flex" className={styles.content}>
+      <Container size="sm" display="flex" className={styles.content}>
         <div className={styles.sections}>
           <SettingGeneralSection project={project} />
           <SettingRuntimeSection projectId={id} initialHealth={initialHealth} />

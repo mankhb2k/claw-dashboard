@@ -10,6 +10,10 @@
   padding-right: 36px !important;
 }
 
+.searchContainerSm .clearButton {
+  top: 6px;
+}
+
 /* Nút xóa nhanh nội dung tìm kiếm */
 .clearButton {
   position: absolute;

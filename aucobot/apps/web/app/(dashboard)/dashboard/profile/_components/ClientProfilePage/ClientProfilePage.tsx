@@ -45,7 +45,7 @@ export function ClientProfilePage() {
   if (error || !user) {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
-        <Container size="setting" className={styles.content}>
+        <Container size="sm" className={styles.content}>
           <Typography variant="small" color="muted">
             {error ?? "Profile unavailable"}
           </Typography>
@@ -56,7 +56,7 @@ export function ClientProfilePage() {
 
   return (
     <Flex direction="column" align="stretch" className={styles.page}>
-      <Container size="setting" display="flex" className={styles.content}>
+      <Container size="sm" display="flex" className={styles.content}>
         <div className={styles.sections}>
           <TitleSection
             title="Profile"

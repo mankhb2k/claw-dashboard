@@ -5,5 +5,7 @@ export {
   ConnectorConnectionStatus,
   ChannelConnectionStatus,
   ProjectStatus,
+  UsageStatus,
+  UsageSource,
 } from './generated/prisma/client.js';
 export { createPrismaClient, createPrismaPgAdapter } from './create-prisma-client.js';

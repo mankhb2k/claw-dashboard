@@ -14,7 +14,7 @@ const meta: Meta<typeof Box> = {
     pb: { control: 'number' },
     pl: { control: 'number' },
     pr: { control: 'number' },
-    radius: { control: 'select', options: ['sm', 'md', 'lg', 'xl', 'full'] },
+    radius: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl', 'full'] },
     color: { 
       control: 'select', 
       options: [

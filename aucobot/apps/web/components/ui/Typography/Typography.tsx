@@ -28,7 +28,7 @@ export const Typography = React.forwardRef<HTMLElement, TypographyProps>(
     const weightClass = weight ? styles[weight] : ''
 
     const classes = [
-      styles.base,
+      styles.root,
       styles[variant],
       color !== 'default' ? styles[color] : '',
       weightClass,

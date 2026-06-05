@@ -1,0 +1,203 @@
+/* 1. FIELD — Label + trigger wrapper */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-input-label);
+}
+
+/* 2. TRIGGER — Popover open button (single date) */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  background: var(--color-input-background);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-md);
+  color: var(--color-foreground);
+  line-height: 1;
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast) ease;
+}
+
+/* Trigger sizes — padding only, no fixed height */
+.triggerSm {
+  padding: 8px;
+  font-size: var(--font-size-sm);
+}
+
+.triggerMd {
+  padding: 8px;
+  font-size: var(--font-size-md);
+}
+
+/* Trigger states */
+.trigger:hover:not(:disabled) {
+  border-color: var(--color-input-focus);
+}
+
+.trigger:focus-visible {
+  border-color: var(--color-input-focus);
+}
+
+.triggerDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.triggerError {
+  border-color: var(--color-danger);
+}
+
+.triggerPlaceholder {
+  color: var(--color-muted-foreground);
+}
+
+.triggerIcon {
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+}
+
+/* 3. CALENDAR POPOVER — Month grid panel */
+.calendarContent {
+  min-width: 280px;
+  padding: 12px;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  line-height: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background: var(--color-primary-dim);
+}
+
+.monthTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  padding: 4px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+/* Day cell */
+.dayButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.dayButton:hover:not(:disabled) {
+  background: var(--color-primary-dim);
+}
+
+.dayOutside {
+  color: var(--color-muted-foreground);
+  opacity: 0.55;
+}
+
+.daySelected {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+.daySelected:hover:not(:disabled) {
+  background: var(--color-primary);
+}
+
+.dayDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* 4. ERROR — Validation message below field */
+.error {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+/* 5. DATE RANGE — DateRangePicker layout */
+.rangeRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: nowrap;
+}
+
+.rangeItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.rangeLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.rangePickerSm {
+  width: 152px;
+}
+
+.rangePickerMd {
+  width: 176px;
+}
+
+.rangePickerSm .field,
+.rangePickerMd .field {
+  width: 100%;
+}

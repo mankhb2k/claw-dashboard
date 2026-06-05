@@ -1,6 +1,4 @@
-/* =============================================================================
-   1. VỎ NGOÀI — Container chính của Toggle Group
-   ============================================================================= */
+/* 1. WRAPPER - Container of Toggle Group */
 .root {
   display: inline-flex;
   background-color: var(--color-background);
@@ -8,7 +6,7 @@
   padding: 2px;
   gap: 2px;
   border: 1px solid var(--color-border);
-  position: relative; /* Thêm để định vị indicator */
+  position: relative;
 }
 
 /* Vertical variant */
@@ -22,8 +20,8 @@
 }
 
 .root--sm .item {
-  padding: 0 var(--space-2);
-  font-size: 11px;
+  padding: 0 8px;
+  font-size: var(--font-size-xs);
   min-width: 28px;
 }
 
@@ -36,13 +34,11 @@
 }
 
 .root--lg .item {
-  padding: 0 var(--space-4);
-  font-size: var(--font-size-base);
+  padding: 0 16px;
+  font-size: var(--font-size-md);
 }
 
-/* =============================================================================
-   2. ITEM — Components
-   ============================================================================= */
+/* 2. ITEM - Components */
 .item {
   display: flex;
   align-items: center;
@@ -50,7 +46,7 @@
   background-color: transparent;
   color: var(--color-muted-foreground);
   border: none;
-  padding: var(--space-2) var(--space-3);
+  padding: 8px 12px;
   font-size: var(--font-size-sm);
   font-weight: 500;
   border-radius: calc(var(--radius-md) - 2px);

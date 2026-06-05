@@ -6,8 +6,8 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   width?: number | string;
   height?: number | string;
-  hover?: 'sm' | 'md' | 'lg' | 'xl';
-  radius?: 'sm' | 'md' | 'lg' | 'xl';
+  hover?: 'sm' | 'md' | 'lg';
+  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
   disableHover?: boolean;
 }
 

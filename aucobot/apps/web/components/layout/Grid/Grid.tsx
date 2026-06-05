@@ -41,7 +41,7 @@ export interface GridProps extends React.HTMLAttributes<HTMLElement> {
   // Style properties
   color?: ColorVariant | (string & {})
   border?: boolean
-  radius?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
   
   // Spacing properties
   p?: SpacingValue

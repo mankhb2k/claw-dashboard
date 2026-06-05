@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import Link from "next/link";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { Tabs, type TabItem } from "@/components/ui";
 import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/dashboard-route";
 import { projectApi } from "@/lib/api/project";
 import { COLLABORATION_UPDATED_EVENT } from "@/lib/collaboration-events";
 import { useProjectStore } from "@/stores/project.store";
-import styles from "./AgentSectionNav.module.css";
 
 const AGENTS_HREF = `${DASHBOARD_BASE_PATH}/agent`;
 const COLLABORATION_HREF = `${DASHBOARD_BASE_PATH}/agent/collaboration`;
@@ -21,19 +20,19 @@ export function AgentSectionNav() {
   const [collaborationOn, setCollaborationOn] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
 
-  const navRef = useRef<HTMLElement>(null);
-  const agentsRef = useRef<HTMLAnchorElement>(null);
-  const collabRef = useRef<HTMLAnchorElement>(null);
-  const schedulesRef = useRef<HTMLAnchorElement>(null);
-  const heartbeatRef = useRef<HTMLAnchorElement>(null);
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
-
-  const isAgents = pathname === AGENTS_HREF;
   const isCollaboration = pathname === COLLABORATION_HREF;
   const isSchedules =
     pathname === SCHEDULES_HREF || pathname.startsWith(`${SCHEDULES_HREF}/`);
   const isHeartbeat =
     pathname === HEARTBEAT_HREF || pathname.startsWith(`${HEARTBEAT_HREF}/`);
+
+  const activeValue = isHeartbeat
+    ? "heartbeat"
+    : isSchedules
+      ? "schedules"
+      : isCollaboration
+        ? "collaboration"
+        : "agents";
 
   useEffect(() => {
     if (!projectId) {
@@ -69,89 +68,35 @@ export function AgentSectionNav() {
     return () => window.removeEventListener(COLLABORATION_UPDATED_EVENT, loadCollaboration);
   }, [projectId, pathname]);
 
-  const updateIndicator = () => {
-    const nav = navRef.current;
-    const activeEl = isHeartbeat
-      ? heartbeatRef.current
-      : isSchedules
-        ? schedulesRef.current
-        : isCollaboration
-          ? collabRef.current
-          : agentsRef.current;
-    if (!nav || !activeEl) return;
-    const navRect = nav.getBoundingClientRect();
-    const rect = activeEl.getBoundingClientRect();
-    setIndicator({
-      left: rect.left - navRect.left,
-      width: rect.width,
-    });
-  };
-
-  useLayoutEffect(() => {
-    updateIndicator();
-  }, [
-    pathname,
-    memberCount,
-    collaborationOn,
-    failedCount,
-    isAgents,
-    isCollaboration,
-    isSchedules,
-    isHeartbeat,
-  ]);
-
-  useEffect(() => {
-    const onResize = () => updateIndicator();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [pathname, memberCount, isAgents, isCollaboration, isSchedules, isHeartbeat]);
+  const items = useMemo<TabItem[]>(
+    () => [
+      { value: "agents", label: "Agents", href: AGENTS_HREF },
+      {
+        value: "collaboration",
+        label: "Collaboration",
+        href: COLLABORATION_HREF,
+        badge:
+          collaborationOn && memberCount > 0 ? memberCount : undefined,
+      },
+      {
+        value: "schedules",
+        label: "Schedules",
+        href: SCHEDULES_HREF,
+        badge: failedCount > 0 ? failedCount : undefined,
+        badgeTone: failedCount > 0 ? "danger" : undefined,
+      },
+      { value: "heartbeat", label: "Heartbeat", href: HEARTBEAT_HREF },
+    ],
+    [collaborationOn, memberCount, failedCount],
+  );
 
   return (
-    <nav ref={navRef} className={styles.subNav} aria-label="Agent section">
-      <span
-        className={styles.indicator}
-        style={{
-          transform: `translateX(${indicator.left}px)`,
-          width: indicator.width,
-        }}
-        aria-hidden
-      />
-      <Link
-        ref={agentsRef}
-        href={AGENTS_HREF}
-        className={`${styles.subNavLink} ${isAgents ? styles.subNavLinkActive : ""}`}
-      >
-        Agents
-      </Link>
-      <Link
-        ref={collabRef}
-        href={COLLABORATION_HREF}
-        className={`${styles.subNavLink} ${
-          isCollaboration ? styles.subNavLinkActive : ""
-        }`}
-      >
-        Collaboration
-        {collaborationOn && memberCount > 0 ? (
-          <span className={styles.badge}>{memberCount}</span>
-        ) : null}
-      </Link>
-      <Link
-        ref={schedulesRef}
-        href={SCHEDULES_HREF}
-        className={`${styles.subNavLink} ${isSchedules ? styles.subNavLinkActive : ""}`}
-      >
-        Schedules
-        {failedCount > 0 ? (
-          <span className={`${styles.badge} ${styles.badgeDanger}`}>{failedCount}</span>
-        ) : null}
-      </Link>
-      <Link
-        ref={heartbeatRef}
-        href={HEARTBEAT_HREF}
-        className={`${styles.subNavLink} ${isHeartbeat ? styles.subNavLinkActive : ""}`}
-      >
-        Heartbeat
-      </Link>
-    </nav>
+    <Tabs
+      items={items}
+      value={activeValue}
+      variant="section"
+      showIndicator
+      aria-label="Agent section"
+    />
   );
 }

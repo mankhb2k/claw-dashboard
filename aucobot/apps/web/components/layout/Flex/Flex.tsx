@@ -42,7 +42,7 @@ export interface FlexProps extends React.HTMLAttributes<HTMLElement> {
   // Style properties (Consistent with Box)
   color?: ColorVariant | (string & {})
   border?: boolean
-  radius?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
   
   // Spacing properties
   p?: SpacingValue

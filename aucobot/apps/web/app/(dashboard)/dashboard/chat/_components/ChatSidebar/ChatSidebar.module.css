@@ -1,0 +1,316 @@
+/* 1. SIDEBAR — layout & collapse */
+
+.sidebar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  min-width: 280px;
+  border-right: 1px solid var(--color-sidebar-border);
+  background: var(--color-sidebar-background);
+  overflow: hidden;
+  transition:
+    width var(--transition-md) var(--ease-out),
+    min-width var(--transition-md) var(--ease-out);
+}
+
+.sidebarCollapsed {
+  width: 52px;
+  min-width: 52px;
+}
+
+/* 2. HEADER */
+
+.header {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-sidebar-border);
+}
+
+.sidebarCollapsed .header {
+  padding-inline: var(--space-2);
+}
+
+.collapseBtn {
+  color: var(--color-sidebar-primary);
+}
+
+.collapseBtn:hover:not(:disabled) {
+  color: var(--color-sidebar-active);
+  background: var(--color-sidebar-hover);
+}
+
+/* 3. ACTIONS */
+
+.actions {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+.sidebarCollapsed .actions {
+  padding: var(--space-3) var(--space-2);
+}
+
+.newChatBtn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* 4. SEARCH */
+
+.searchWrap {
+  flex-shrink: 0;
+  padding: 0 var(--space-3) var(--space-2);
+}
+
+.searchWrap[data-disabled] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 5. SESSION LIST */
+
+.listWrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-1) var(--space-3) var(--space-4);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--color-muted-foreground) 35%,
+      transparent
+    )
+    transparent;
+}
+
+.listWrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.listWrap::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: color-mix(
+    in srgb,
+    var(--color-muted-foreground) 35%,
+    transparent
+  );
+}
+
+.emptyState {
+  padding: var(--space-6) var(--space-3);
+}
+
+.emptyIcon {
+  color: var(--color-muted-foreground);
+  opacity: 0.65;
+}
+
+.emptyText {
+  max-width: 14rem;
+}
+
+.groupSection + .groupSection {
+  margin-top: var(--space-4);
+}
+
+.groupHeading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--color-sidebar-background);
+}
+
+.sessionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 6. SESSION ROW — mirrors dashboard Sidebar .navItem / .navItemActive */
+
+.sessionRow {
+  height: 40px;
+  padding: 0 10px;
+  color: var(--color-sidebar-primary);
+  border-radius: 6px;
+  overflow: hidden;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.sessionRow:hover:not(.sessionRowActive),
+.sessionRowMenuOpen:not(.sessionRowActive) {
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-active);
+}
+
+.sessionRowActive {
+  background: var(--color-sidebar-active-background);
+  color: var(--color-sidebar-active);
+}
+
+.sessionMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionMain:disabled {
+  cursor: default;
+}
+
+.sessionMain:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* 7. TRAILING — relative time & kebab menu */
+
+.sessionTrailing {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  min-width: 28px;
+}
+
+.sessionTime {
+  color: inherit;
+  opacity: 0.65;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.sessionRowActive .sessionTime {
+  opacity: 1;
+}
+
+.sessionRow:hover .sessionTime,
+.sessionRowMenuOpen .sessionTime {
+  opacity: 0;
+}
+
+.sessionRowEditing {
+  padding: 0 10px;
+}
+
+.sessionRowEditing :global(.field) {
+  flex: 1;
+  min-width: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.sessionRowEditing :global(.control) {
+  min-width: 0;
+}
+
+.sessionRenameInput {
+  width: 100%;
+  min-width: 0;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  min-height: unset !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit;
+  caret-color: currentColor;
+  font-size: 13px;
+  font-weight: 500;
+
+  overflow-x: auto;
+  text-overflow: clip;
+}
+
+.sessionRenameInput:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+.sessionMenuBtn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: var(--radius-full) !important;
+  opacity: 0;
+  pointer-events: none;
+  color: var(--color-muted-foreground);
+  transition:
+    opacity var(--transition-md) ease,
+    color var(--transition-md) ease;
+}
+
+.sessionRow:hover .sessionMenuBtn,
+.sessionRowMenuOpen .sessionMenuBtn,
+.sessionMenuBtn[data-state="open"] {
+  opacity: 1;
+  pointer-events: auto;
+  color: var(--color-primary);
+}
+
+.sessionMenuBtn:hover:not(:disabled) {
+  background: var(--color-primary-dim);
+  color: var(--color-primary);
+}
+
+/* 8. LOADING SKELETON */
+
+.skeletonRow {
+  padding: var(--space-2) var(--space-3);
+}
+
+/* 9. RESPONSIVE & TOUCH */
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+  }
+
+  .sidebarCollapsed {
+    width: 0;
+    min-width: 0;
+    border-right: none;
+    overflow: hidden;
+  }
+}
+
+@media (hover: none) {
+  .sessionMenuBtn {
+    opacity: 1;
+  }
+
+  .sessionTime {
+    display: none;
+  }
+}

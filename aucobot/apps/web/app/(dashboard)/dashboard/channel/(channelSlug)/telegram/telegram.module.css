@@ -52,7 +52,7 @@
 
 
 .cardTitle {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: var(--space-3);

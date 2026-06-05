@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Input } from "@/components/ui/Input/Input";
+import { Input, type InputSize } from "@/components/ui/Input/Input";
 import { X } from "lucide-react";
 import styles from "./SearchItem.module.css";
 
@@ -18,6 +18,8 @@ interface SearchItemProps {
   className?: string;
   /** Độ rộng tối đa (ví dụ: '320px', 360) */
   maxWidth?: string | number;
+  /** Kích thước input — mặc định `sm` cho thanh tìm kiếm gọn */
+  size?: InputSize;
 }
 
 export function SearchItem({
@@ -27,6 +29,7 @@ export function SearchItem({
   id = "search-input",
   className = "",
   maxWidth,
+  size = "sm",
 }: SearchItemProps) {
   const handleClear = () => {
     onChange("");
@@ -36,12 +39,15 @@ export function SearchItem({
 
   return (
     <div
-      className={`${styles.searchContainer} ${className}`}
+      className={`${styles.searchContainer} ${size === "sm" ? styles.searchContainerSm : ""} ${className}`}
       style={customStyle}
+      data-size={size}
     >
       <Input
         id={id}
         type="text"
+        size={size}
+        labelPosition="none"
         aria-label={placeholder}
         placeholder={placeholder}
         value={value}
