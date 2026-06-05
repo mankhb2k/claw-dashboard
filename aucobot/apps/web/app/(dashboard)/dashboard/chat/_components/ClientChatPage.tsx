@@ -747,7 +747,7 @@ export function ClientChatPage() {
 
   const agentOptions = agents.map((a) => ({
     value: a.id,
-    label: a.name ? `${a.name} (${a.id})` : a.id,
+    label: a.name?.trim() || a.id,
   }));
 
   const showEmpty =
