@@ -1,6 +1,7 @@
-/* =============================================================================
-   1. SIDEBAR — layout & size
-   ============================================================================= */
+/* ==========================================================================
+   SIDEBAR — base layout & structure
+   ========================================================================== */
+
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -13,16 +14,16 @@
   transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 50;
   overflow: hidden;
-  /* Đảm bảo không bị tràn khi thu nhỏ */
 }
 
 .sidebarCollapsed {
   width: var(--sidebar-collapsed-width, 64px);
 }
 
-/* =============================================================================
-   2. HEADER & LOGO
-   ============================================================================= */
+/* ==========================================================================
+   HEADER & LOGO
+   ========================================================================== */
+
 .header {
   height: var(--header-height, 64px);
   padding: 0 16px;
@@ -64,9 +65,10 @@
   pointer-events: none;
 }
 
-/* =============================================================================
-   3. COLLAPSE BUTTON
-   ============================================================================= */
+/* ==========================================================================
+   COLLAPSE BUTTON
+   ========================================================================== */
+
 .collapseBtn {
   background: transparent;
   border: none;
@@ -84,11 +86,6 @@
   flex-shrink: 0;
 }
 
-.collapseBtn:hover {
-  background: var(--color-sidebar-hover, #2c2d30);
-  color: var(--color-sidebar-active, #ffffff);
-}
-
 .collapseIcon {
   transition: transform 0.2s ease;
 }
@@ -97,9 +94,10 @@
   transform: rotate(180deg);
 }
 
-/* =============================================================================
-   4. NAVIGATION — menu items
-   ============================================================================= */
+/* ==========================================================================
+   NAVIGATION
+   ========================================================================== */
+
 .navWrap {
   flex: 1;
   overflow-y: auto;
@@ -107,15 +105,12 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* hide scrollbar but still allow scrolling */
 .navWrap::-webkit-scrollbar {
   display: none;
-}
-.navWrap {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
 }
 
 .navItem {
@@ -134,20 +129,19 @@
   flex-shrink: 0;
 }
 
-.navItem:hover:not(.navItemActive) {
-  background: var(--color-sidebar-hover, rgba(255, 95, 0, 0.06));
-  color: var(--color-sidebar-active, #ffffff);
-}
-
 .navItemActive {
   background: var(--color-sidebar-active-background, rgba(255, 95, 0, 0.12));
   color: var(--color-sidebar-active, #ff5f00);
 }
 
+.navItemActive .navText {
+  font-weight: 500;
+}
+
 .navIcon {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,8 +150,8 @@
 
 .navText {
   margin-left: 16px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-md);
+  font-weight: 400;
   white-space: nowrap;
   transition:
     opacity 0.2s ease,
@@ -172,20 +166,34 @@
   pointer-events: none;
 }
 
-/* =============================================================================
-   5. FOOTER
-   ============================================================================= */
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
 .footer {
   flex-shrink: 0;
   padding: var(--space-4) var(--space-3);
   border-top: 1px solid var(--color-sidebar-border, #2c2d30);
 }
 
-/* =============================================================================
-   6. RESPONSIVE
-   ============================================================================= */
+/* ==========================================================================
+   HOVER — interactive feedback (grouped for easy tuning)
+   ========================================================================== */
 
-/* when viewport <= 1024px: auto collapse */
+.collapseBtn:hover {
+  background: var(--color-sidebar-hover, #2c2d30);
+  color: var(--color-sidebar-active, #ffffff);
+}
+
+.navItem:hover:not(.navItemActive) {
+  background: var(--color-sidebar-hover, rgba(255, 95, 0, 0.06));
+  color: var(--color-sidebar-active, #ffffff);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
 @media (max-width: 1024px) {
   .sidebar {
     width: var(--sidebar-collapsed-width, 64px);
@@ -204,7 +212,6 @@
   }
 }
 
-/* when viewport <= 768px: hide completely */
 @media (max-width: 768px) {
   .sidebar {
     display: none;

@@ -1,0 +1,72 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  cursor: default;
+  outline: none;
+}
+
+.root:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.rootInteractive {
+  cursor: help;
+}
+
+.ring {
+  width: 22px;
+  height: 22px;
+  transform: rotate(-90deg);
+}
+
+.track {
+  stroke: color-mix(in srgb, var(--color-border) 85%, transparent);
+}
+
+.fillNormal {
+  stroke: var(--color-muted-foreground);
+  transition: stroke-dashoffset var(--transition-md) var(--ease-out);
+}
+
+.fillWarning {
+  stroke: var(--color-warning);
+  transition: stroke-dashoffset var(--transition-md) var(--ease-out);
+}
+
+.fillCritical,
+.fillOverflow {
+  stroke: var(--color-danger);
+  transition: stroke-dashoffset var(--transition-md) var(--ease-out);
+}
+
+.fillUnknown {
+  stroke: var(--color-muted-foreground);
+  opacity: 0.45;
+  stroke-dasharray: 3 4;
+}
+
+.stale {
+  opacity: 0.55;
+}
+
+.pulse {
+  animation: contextPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes contextPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}

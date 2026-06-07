@@ -1,15 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  MessageSquare,
-  RefreshCw,
-  Send,
-  Square,
-} from "lucide-react";
 import { SETUP_PATH, shouldRedirectToSetup } from "@/lib/entry-route";
 import { isOssRuntime } from "@/lib/runtime-mode";
 import { useProjectStore } from "@/stores/project.store";
@@ -48,32 +40,21 @@ import type {
   SessionsListResult,
 } from "@/lib/chat/session-types";
 import { matchesSessionKey, sessionKeyForAgent } from "@/lib/chat/session-key";
-import { Button, Select, Spinner } from "@/components/ui";
-import { ChatMessageBubble } from "./ChatMessageBubble";
+import {
+  ChatPanel,
+  type ChatPanelConnectionState,
+  type ChatPanelMessage,
+} from "./ChatPanel/ChatPanel";
 import { ChatSidebar } from "./ChatSidebar/ChatSidebar";
-import { ChatTypingIndicator } from "./ChatTypingIndicator";
 import styles from "./ClientChatPage.module.css";
 
-type ChatRow = {
-  id: string;
-  role: string;
-  text: string;
-};
-
-type ConnectionState = "idle" | "connecting" | "connected" | "error";
-
-const STATUS_LABEL: Record<ConnectionState, string> = {
-  idle: "Chờ kết nối",
-  connecting: "Đang kết nối…",
-  connected: "Đã kết nối",
-  error: "Lỗi kết nối",
-};
+type ConnectionState = ChatPanelConnectionState;
 
 const SESSIONS_LIST_LIMIT = 50;
 
 const HIDDEN_HISTORY_ROLES = new Set(["tool", "toolresult", "system"]);
 
-function rowFromMessage(message: unknown, index: number): ChatRow | null {
+function rowFromMessage(message: unknown, index: number): ChatPanelMessage | null {
   const text = extractText(message);
   if (!text?.trim()) return null;
   const role = roleOf(message);
@@ -115,7 +96,7 @@ export function ClientChatPage() {
   const [modelSaving, setModelSaving] = useState(false);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("idle");
-  const [messages, setMessages] = useState<ChatRow[]>([]);
+  const [messages, setMessages] = useState<ChatPanelMessage[]>([]);
   const [streamText, setStreamText] = useState("");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -124,8 +105,6 @@ export function ClientChatPage() {
   const streamRef = useRef("");
   const sessionKeyRef = useRef(sessionKey);
   const agentIdRef = useRef(agentId);
-  const listRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const historyRequestIdRef = useRef(0);
   const autoTitledSessionsRef = useRef(new Set<string>());
   const debouncedSessionSearchRef = useRef("");
@@ -169,7 +148,7 @@ export function ClientChatPage() {
       );
       if (requestId !== historyRequestIdRef.current) return;
       if (sessionKeyRef.current !== key) return;
-      const rows: ChatRow[] = [];
+      const rows: ChatPanelMessage[] = [];
       const list = Array.isArray(res.messages) ? res.messages : [];
       list.forEach((msg, i) => {
         const row = rowFromMessage(msg, i);
@@ -435,6 +414,17 @@ export function ClientChatPage() {
     [activeProvider],
   );
 
+  const activeContextUsage = useMemo(() => {
+    const row = sessions.find((s) => s.key === sessionKey);
+    if (!row) return undefined;
+    return {
+      totalTokens: row.totalTokens,
+      contextTokens: row.contextTokens,
+      totalTokensFresh: row.totalTokensFresh,
+      compactionCount: row.compactionCount,
+    };
+  }, [sessions, sessionKey]);
+
   const handleProviderChange = (nextProviderId: string) => {
     setProviderId(nextProviderId);
     const provider = modelOptions?.providers.find(
@@ -667,13 +657,6 @@ export function ClientChatPage() {
     });
   }, [sessionKey, connectionState, loadHistory]);
 
-  useEffect(() => {
-    listRef.current?.scrollTo({
-      top: listRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages, streamText]);
-
   const handleSend = async () => {
     const text = input.trim();
     const client = clientRef.current;
@@ -720,21 +703,6 @@ export function ClientChatPage() {
     setStreamText("");
   };
 
-  const canSend =
-    ready &&
-    connectionState === "connected" &&
-    !sending &&
-    input.trim().length > 0;
-
-  const statusClass =
-    connectionState === "connected"
-      ? styles.statusConnected
-      : connectionState === "connecting"
-        ? styles.statusConnecting
-        : connectionState === "error"
-          ? styles.statusError
-          : styles.statusIdle;
-
   if (!projectId) {
     return (
       <div className={styles.page}>
@@ -749,12 +717,6 @@ export function ClientChatPage() {
     value: a.id,
     label: a.name?.trim() || a.id,
   }));
-
-  const showEmpty =
-    messages.length === 0 &&
-    !streamText &&
-    !sending &&
-    connectionState === "connected";
 
   const sessionSidebarDisabled =
     connectionState !== "connected" || statusLoading || creatingSession;
@@ -779,226 +741,38 @@ export function ClientChatPage() {
           onDeleteSession={handleDeleteSession}
         />
 
-        <div className={styles.chatMain}>
-          <header className={styles.header}>
-            <div className={styles.headerMain}>
-              <p className={styles.headerTitle}>OpenClaw Chat</p>
-              <p className={styles.headerSub}>
-                {project?.displayName ?? "Project"} ·{" "}
-                {statusLoading
-                  ? "Checking…"
-                  : ready
-                    ? "Gateway ready"
-                    : `Status: ${project?.status ?? "—"}`}
-              </p>
-            </div>
-
-            <div className={styles.agentField}>
-              <Select
-                id="chat-agent"
-                label="Agent"
-                value={agentId}
-                onValueChange={handleAgentChange}
-                options={
-                  agentOptions.length
-                    ? agentOptions
-                    : [{ value: "main", label: "main" }]
-                }
-                disabled={
-                  connectionState === "connecting" || sending || statusLoading
-                }
-                placeholder="Chọn agent"
-              />
-            </div>
-
-            <div className={styles.agentField}>
-              <Select
-                id="chat-provider"
-                label="Provider"
-                value={providerId || undefined}
-                onValueChange={handleProviderChange}
-                options={providerSelectOptions}
-                disabled={
-                  modelsLoading ||
-                  modelSaving ||
-                  providerSelectOptions.length === 0 ||
-                  connectionState === "connecting" ||
-                  sending
-                }
-                placeholder={
-                  modelsLoading
-                    ? "Đang tải…"
-                    : providerSelectOptions.length === 0
-                      ? "Chưa có API key"
-                      : "Chọn provider"
-                }
-              />
-            </div>
-
-            <div className={styles.agentField}>
-              <Select
-                id="chat-model"
-                label="Model"
-                value={modelId || undefined}
-                onValueChange={handleModelChange}
-                options={modelSelectOptions}
-                disabled={
-                  modelsLoading ||
-                  modelSaving ||
-                  modelSelectOptions.length === 0 ||
-                  connectionState === "connecting" ||
-                  sending
-                }
-                placeholder={
-                  modelsLoading
-                    ? "Đang tải…"
-                    : modelSelectOptions.length === 0
-                      ? "Chọn provider trước"
-                      : "Chọn model"
-                }
-              />
-            </div>
-
-            <div className={styles.headerActions}>
-              <span
-                className={`${styles.statusPill} ${statusClass}`}
-                title={STATUS_LABEL[connectionState]}
-              >
-                <span className={styles.statusDot} />
-                {statusLoading
-                  ? "Đang kiểm tra…"
-                  : STATUS_LABEL[connectionState]}
-              </span>
-
-              {ready && connectionState === "error" && (
-                <Button size="sm" variant="outline" onClick={connectChat}>
-                  <RefreshCw size={14} />
-                  Kết nối lại
-                </Button>
-              )}
-            </div>
-          </header>
-
-          {!modelsLoading && (modelOptions?.providers.length ?? 0) === 0 && (
-            <div className={styles.modelHint} role="status">
-              Chưa có API key LLM.{" "}
-              <Link href="/dashboard/ai-model/gemini">Thêm Gemini API key</Link>{" "}
-              rồi chọn model bên trên.
-            </div>
-          )}
-
-          {error && (
-            <div className={styles.alert} role="alert">
-              <AlertCircle size={18} className={styles.alertIcon} />
-              <div className={styles.alertBody}>
-                <span className={styles.alertTitle}>Không thể chat</span>
-                {error}
-              </div>
-              {ready && (
-                <Button size="sm" variant="outline" onClick={connectChat}>
-                  Thử lại
-                </Button>
-              )}
-              {!ready && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => router.replace(SETUP_PATH)}
-                >
-                  Mở setup
-                </Button>
-              )}
-            </div>
-          )}
-
-          <div ref={listRef} className={styles.messagePane}>
-            {showEmpty && (
-              <div className={styles.empty}>
-                <div className={styles.emptyIcon}>
-                  <MessageSquare size={28} />
-                </div>
-                <h2 className={styles.emptyTitle}>Bắt đầu hội thoại</h2>
-                <p className={styles.emptyHint}>
-                  {isOssRuntime()
-                    ? "Send a message to chat with your OpenClaw agent via the shared gateway."
-                    : "Send a message to chat with your OpenClaw agent on your container."}
-                  Phím Enter gửi, Shift+Enter xuống dòng.
-                </p>
-                <Button
-                  size="sm"
-                  onClick={() => void handleNewSession()}
-                  disabled={sessionSidebarDisabled}
-                >
-                  Đoạn chat mới
-                </Button>
-              </div>
-            )}
-
-            {messages.map((m) => (
-              <ChatMessageBubble key={m.id} role={m.role} text={m.text} />
-            ))}
-
-            {streamText && (
-              <ChatMessageBubble role="assistant" text={streamText} streaming />
-            )}
-
-            {sending && !streamText && <ChatTypingIndicator />}
-          </div>
-
-          <footer className={styles.composer}>
-            <div className={styles.composerBox}>
-              <textarea
-                ref={inputRef}
-                className={styles.input}
-                rows={1}
-                placeholder={
-                  ready && connectionState === "connected"
-                    ? "Nhập tin nhắn…"
-                    : "Kết nối gateway để chat…"
-                }
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSend();
-                  }
-                }}
-                disabled={!ready || connectionState !== "connected" || sending}
-              />
-              <div className={styles.composerActions}>
-                {sending ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void handleAbort()}
-                    aria-label="Dừng phản hồi"
-                  >
-                    <Square size={16} />
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => void handleSend()}
-                    disabled={!canSend}
-                    aria-label="Gửi tin nhắn"
-                  >
-                    {sending ? <Spinner size="sm" /> : <Send size={16} />}
-                  </Button>
-                )}
-              </div>
-            </div>
-            <p className={styles.composerHint}>
-              Enter gửi · Shift+Enter xuống dòng
-              {connectionState === "connected" && (
-                <>
-                  {" "}
-                  · session <code>{sessionKey}</code>
-                </>
-              )}
-            </p>
-          </footer>
-        </div>
+        <ChatPanel
+          projectDisplayName={project?.displayName}
+          projectStatus={project?.status}
+          ready={ready}
+          statusLoading={statusLoading}
+          connectionState={connectionState}
+          error={error}
+          onConnect={connectChat}
+          onOpenSetup={() => router.replace(SETUP_PATH)}
+          agentId={agentId}
+          agentOptions={agentOptions}
+          onAgentChange={handleAgentChange}
+          providerId={providerId}
+          providerOptions={providerSelectOptions}
+          onProviderChange={handleProviderChange}
+          modelId={modelId}
+          modelOptions={modelSelectOptions}
+          onModelChange={handleModelChange}
+          modelsLoading={modelsLoading}
+          modelSaving={modelSaving}
+          hasProviders={(modelOptions?.providers.length ?? 0) > 0}
+          messages={messages}
+          streamText={streamText}
+          sending={sending}
+          input={input}
+          onInputChange={setInput}
+          onSend={() => void handleSend()}
+          onAbort={() => void handleAbort()}
+          sessionActionsDisabled={sessionSidebarDisabled}
+          onNewSession={() => void handleNewSession()}
+          contextUsage={activeContextUsage}
+        />
       </div>
     </div>
   );

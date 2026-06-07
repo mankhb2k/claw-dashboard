@@ -1,4 +1,6 @@
-/* 1. SIDEBAR — layout & collapse */
+/* ==========================================================================
+   SIDEBAR — base layout & collapse
+   ========================================================================== */
 
 .sidebar {
   flex-shrink: 0;
@@ -19,7 +21,9 @@
   min-width: 52px;
 }
 
-/* 2. HEADER */
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
 
 .header {
   flex-shrink: 0;
@@ -36,12 +40,9 @@
   color: var(--color-sidebar-primary);
 }
 
-.collapseBtn:hover:not(:disabled) {
-  color: var(--color-sidebar-active);
-  background: var(--color-sidebar-hover);
-}
-
-/* 3. ACTIONS */
+/* ==========================================================================
+   ACTIONS
+   ========================================================================== */
 
 .actions {
   flex-shrink: 0;
@@ -57,7 +58,9 @@
   justify-content: center;
 }
 
-/* 4. SEARCH */
+/* ==========================================================================
+   SEARCH
+   ========================================================================== */
 
 .searchWrap {
   flex-shrink: 0;
@@ -69,7 +72,9 @@
   pointer-events: none;
 }
 
-/* 5. SESSION LIST */
+/* ==========================================================================
+   SESSION LIST
+   ========================================================================== */
 
 .listWrap {
   flex: 1;
@@ -135,7 +140,9 @@
   gap: 4px;
 }
 
-/* 6. SESSION ROW — mirrors dashboard Sidebar .navItem / .navItemActive */
+/* ==========================================================================
+   SESSION ROW — mirrors dashboard Sidebar .navItem / .navItemActive
+   ========================================================================== */
 
 .sessionRow {
   height: 40px;
@@ -146,12 +153,6 @@
   transition:
     background 0.2s ease,
     color 0.2s ease;
-}
-
-.sessionRow:hover:not(.sessionRowActive),
-.sessionRowMenuOpen:not(.sessionRowActive) {
-  background: var(--color-sidebar-hover);
-  color: var(--color-sidebar-active);
 }
 
 .sessionRowActive {
@@ -188,7 +189,9 @@
   box-shadow: var(--focus-ring);
 }
 
-/* 7. TRAILING — relative time & kebab menu */
+/* ==========================================================================
+   TRAILING — relative time & kebab menu
+   ========================================================================== */
 
 .sessionTrailing {
   position: relative;
@@ -208,11 +211,6 @@
 
 .sessionRowActive .sessionTime {
   opacity: 1;
-}
-
-.sessionRow:hover .sessionTime,
-.sessionRowMenuOpen .sessionTime {
-  opacity: 0;
 }
 
 .sessionRowEditing {
@@ -243,7 +241,6 @@
   caret-color: currentColor;
   font-size: 13px;
   font-weight: 500;
-
   overflow-x: auto;
   text-overflow: clip;
 }
@@ -270,6 +267,34 @@
     color var(--transition-md) ease;
 }
 
+/* ==========================================================================
+   LOADING SKELETON
+   ========================================================================== */
+
+.skeletonRow {
+  padding: var(--space-2) var(--space-3);
+}
+
+/* ==========================================================================
+   HOVER & OPEN — interactive feedback (grouped for easy tuning)
+   ========================================================================== */
+
+.collapseBtn:hover:not(:disabled) {
+  color: var(--color-sidebar-active);
+  background: var(--color-sidebar-hover);
+}
+
+.sessionRow:hover:not(.sessionRowActive),
+.sessionRowMenuOpen:not(.sessionRowActive) {
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-active);
+}
+
+.sessionRow:hover .sessionTime,
+.sessionRowMenuOpen .sessionTime {
+  opacity: 0;
+}
+
 .sessionRow:hover .sessionMenuBtn,
 .sessionRowMenuOpen .sessionMenuBtn,
 .sessionMenuBtn[data-state="open"] {
@@ -283,13 +308,9 @@
   color: var(--color-primary);
 }
 
-/* 8. LOADING SKELETON */
-
-.skeletonRow {
-  padding: var(--space-2) var(--space-3);
-}
-
-/* 9. RESPONSIVE & TOUCH */
+/* ==========================================================================
+   RESPONSIVE & TOUCH
+   ========================================================================== */
 
 @media (max-width: 768px) {
   .sidebar {

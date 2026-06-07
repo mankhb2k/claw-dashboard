@@ -9,6 +9,10 @@ export type GatewaySessionRow = {
   updatedAt: number | null
   archived?: boolean
   hasActiveRun?: boolean
+  totalTokens?: number
+  contextTokens?: number
+  totalTokensFresh?: boolean
+  compactionCount?: number
 }
 
 export type SessionsListResult = {

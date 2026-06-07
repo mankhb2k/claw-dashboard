@@ -1,0 +1,247 @@
+/* ── MessageBox — Cursor-style composer ─────────────────────────────────────── */
+
+.root {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: color-mix(in srgb, var(--color-muted) 28%, var(--color-card));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-input-border);
+  background: var(--color-input-background);
+  box-shadow: none;
+  overflow: hidden;
+  transition: all var(--transition-fast) ease;
+}
+
+.card:focus-within {
+  border-color: var(--color-input-focus);
+}
+
+/* ── Input (top) ──────────────────────────────────────────────────────────── */
+
+.inputArea {
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.inputArea :global(.field) {
+  gap: 0;
+}
+
+.input {
+  min-height: 3.25rem;
+  max-height: 11rem;
+  resize: none;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: var(--font-size-md);
+  line-height: 1.55;
+}
+
+.input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-muted-foreground);
+  opacity: 0.5;
+}
+
+/* ── Toolbar (bottom) ───────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.toolbarSelect {
+  min-width: 0;
+  max-width: 11rem;
+}
+
+.toolbarSelect :global(.field) {
+  gap: 0;
+}
+
+.toolbarSelect :global([data-slot="select-trigger"]) {
+  width: auto;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
+  background: color-mix(in srgb, var(--color-muted) 55%, var(--color-background));
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-foreground);
+  gap: 4px;
+}
+
+.toolbarSelect :global([data-slot="select-trigger"]:hover:not(:disabled)) {
+  border-color: var(--color-border-focus);
+  background: color-mix(in srgb, var(--color-muted) 70%, var(--color-background));
+}
+
+.toolbarSelect :global([data-slot="select-value"]) {
+  font-size: var(--font-size-xs);
+}
+
+.toolbarSelect :global(.icon) {
+  margin-left: 2px;
+}
+
+.toolbarSelect :global(.icon svg) {
+  width: 12px;
+  height: 12px;
+}
+
+/* ── Icon + send buttons ────────────────────────────────────────────────────── */
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast) ease,
+    background var(--transition-fast) ease;
+}
+
+.iconBtn:hover:not(:disabled) {
+  color: var(--color-foreground);
+  background: color-mix(in srgb, var(--color-muted) 80%, transparent);
+}
+
+.iconBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.iconBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sendBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-muted) 75%, var(--color-border));
+  color: var(--color-muted-foreground);
+  cursor: not-allowed;
+  transition:
+    background var(--transition-md) var(--ease-out),
+    color var(--transition-md) ease,
+    transform var(--transition-fast) ease,
+    box-shadow var(--transition-md) ease;
+}
+
+.sendBtnActive {
+  background: var(--color-foreground);
+  color: var(--color-background);
+  cursor: pointer;
+}
+
+.sendBtnActive:hover {
+  background: color-mix(in srgb, var(--color-foreground) 88%, var(--color-primary));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sendBtnActive:active {
+  transform: translateY(0);
+}
+
+.sendBtnActive:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-glow);
+}
+
+.sendBtnStop {
+  background: var(--color-foreground);
+  color: var(--color-background);
+  cursor: pointer;
+}
+
+.sendBtnStop:hover {
+  background: color-mix(in srgb, var(--color-foreground) 85%, var(--color-danger));
+}
+
+.sendBtnStop:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-glow);
+}
+
+.hint {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+}
+
+@media (max-width: 640px) {
+  .root {
+    padding: var(--space-2) var(--space-3) var(--space-3);
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .toolbarLeft {
+    flex: 1 1 100%;
+    order: 2;
+  }
+
+  .toolbarRight {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .toolbarSelect {
+    flex: 1;
+    max-width: none;
+  }
+
+  .toolbarSelect :global([data-slot="select-trigger"]) {
+    width: 100%;
+  }
+}

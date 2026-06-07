@@ -96,11 +96,11 @@
 
   /* Typography scale — xs, sm, md, lg, xl, 2xl (body default = md) */
   --font-size-xs: 11px;
-  --font-size-sm: 13px;
-  --font-size-md: 14px;
-  --font-size-lg: 18px;
-  --font-size-xl: 22px;
-  --font-size-2xl: 32px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
 
   /* Transition duration — fast, md, slow */
   --transition-fast: 100ms;
