@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
 import {
   AlertCircle,
   MessageSquare,
@@ -12,7 +11,9 @@ import { Button, Select } from "@/components/ui";
 import { isOssRuntime } from "@/lib/runtime-mode";
 import { ChatMessageBubble } from "../ChatMessageBubble";
 import { ChatTypingIndicator } from "../ChatTypingIndicator";
+import { ContentArea } from "../ContentArea/ContentArea";
 import { MessageBox } from "../MessageBox/MessageBox";
+import type { ComposerSendPayload } from "../MessageBox/MessageBox";
 import styles from "./ChatPanel.module.css";
 
 export type ChatPanelMessage = {
@@ -65,7 +66,7 @@ export type ChatPanelProps = {
   sending: boolean;
   input: string;
   onInputChange: (value: string) => void;
-  onSend: () => void;
+  onSend: (payload: ComposerSendPayload) => void;
   onAbort: () => void;
   sessionActionsDisabled: boolean;
   onNewSession: () => void;
@@ -109,15 +110,6 @@ export function ChatPanel({
   onNewSession,
   contextUsage,
 }: ChatPanelProps) {
-  const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({
-      top: listRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages, streamText]);
-
   const showEmpty =
     messages.length === 0 &&
     !streamText &&
@@ -127,8 +119,7 @@ export function ChatPanel({
   const canSend =
     ready &&
     connectionState === "connected" &&
-    !sending &&
-    input.trim().length > 0;
+    !sending;
 
   const controlsDisabled =
     connectionState === "connecting" || sending || statusLoading;
@@ -160,7 +151,7 @@ export function ChatPanel({
         <div className={styles.agentField}>
           <Select
             id="chat-agent"
-            label="Agent"
+            labelPosition="none"
             value={agentId}
             onValueChange={onAgentChange}
             options={
@@ -219,29 +210,59 @@ export function ChatPanel({
         </div>
       )}
 
-      <div ref={listRef} className={styles.messagePane}>
-        {showEmpty && (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>
-              <MessageSquare size={28} />
+      <ContentArea
+        emptyState={
+          showEmpty ? (
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}>
+                <MessageSquare size={28} />
+              </div>
+              <h2 className={styles.emptyTitle}>Bắt đầu hội thoại</h2>
+              <p className={styles.emptyHint}>
+                {isOssRuntime()
+                  ? "Send a message to chat with your OpenClaw agent via the shared gateway."
+                  : "Send a message to chat with your OpenClaw agent on your container."}{" "}
+                Phím Enter gửi, Shift+Enter xuống dòng.
+              </p>
+              <Button
+                size="sm"
+                onClick={onNewSession}
+                disabled={sessionActionsDisabled}
+              >
+                Đoạn chat mới
+              </Button>
             </div>
-            <h2 className={styles.emptyTitle}>Bắt đầu hội thoại</h2>
-            <p className={styles.emptyHint}>
-              {isOssRuntime()
-                ? "Send a message to chat with your OpenClaw agent via the shared gateway."
-                : "Send a message to chat with your OpenClaw agent on your container."}{" "}
-              Phím Enter gửi, Shift+Enter xuống dòng.
-            </p>
-            <Button
-              size="sm"
-              onClick={onNewSession}
-              disabled={sessionActionsDisabled}
-            >
-              Đoạn chat mới
-            </Button>
-          </div>
-        )}
-
+          ) : undefined
+        }
+        footer={
+          <MessageBox
+            value={input}
+            onChange={onInputChange}
+            onSend={onSend}
+            onAbort={onAbort}
+            sending={sending}
+            canSend={canSend}
+            disabled={!ready || connectionState !== "connected"}
+            placeholder={
+              ready && connectionState === "connected"
+                ? "Nhập tin nhắn…"
+                : "Kết nối gateway để chat…"
+            }
+            providerId={providerId}
+            providerOptions={providerOptions}
+            onProviderChange={onProviderChange}
+            modelId={modelId}
+            modelOptions={modelOptions}
+            onModelChange={onModelChange}
+            modelsLoading={modelsLoading}
+            modelSaving={modelSaving}
+            modelLabel={
+              modelOptions.find((m) => m.value === modelId)?.label ?? modelId
+            }
+            contextUsage={contextUsage}
+          />
+        }
+      >
         {messages.map((message) => (
           <ChatMessageBubble
             key={message.id}
@@ -255,34 +276,7 @@ export function ChatPanel({
         )}
 
         {sending && !streamText && <ChatTypingIndicator />}
-      </div>
-
-      <MessageBox
-        value={input}
-        onChange={onInputChange}
-        onSend={onSend}
-        onAbort={onAbort}
-        sending={sending}
-        canSend={canSend}
-        disabled={!ready || connectionState !== "connected"}
-        placeholder={
-          ready && connectionState === "connected"
-            ? "Nhập tin nhắn…"
-            : "Kết nối gateway để chat…"
-        }
-        providerId={providerId}
-        providerOptions={providerOptions}
-        onProviderChange={onProviderChange}
-        modelId={modelId}
-        modelOptions={modelOptions}
-        onModelChange={onModelChange}
-        modelsLoading={modelsLoading}
-        modelSaving={modelSaving}
-        modelLabel={
-          modelOptions.find((m) => m.value === modelId)?.label ?? modelId
-        }
-        contextUsage={contextUsage}
-      />
+      </ContentArea>
     </Box>
   );
 }

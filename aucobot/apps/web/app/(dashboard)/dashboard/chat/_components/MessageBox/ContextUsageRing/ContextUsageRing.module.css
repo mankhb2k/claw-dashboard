@@ -3,14 +3,16 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
+
   padding: 0;
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   background: transparent;
   cursor: default;
   outline: none;
+  line-height: 0;
 }
 
 .root:focus-visible {
@@ -22,13 +24,14 @@
 }
 
 .ring {
-  width: 22px;
-  height: 22px;
+  display: block;
+  width: 20px;
+  height: 20px;
   transform: rotate(-90deg);
 }
 
 .track {
-  stroke: color-mix(in srgb, var(--color-border) 85%, transparent);
+  stroke: color-mix(in srgb, var(--color-border) 70%, var(--color-muted));
 }
 
 .fillNormal {
@@ -49,8 +52,8 @@
 
 .fillUnknown {
   stroke: var(--color-muted-foreground);
-  opacity: 0.45;
-  stroke-dasharray: 3 4;
+  opacity: 0.5;
+  stroke-dasharray: 4 5;
 }
 
 .stale {

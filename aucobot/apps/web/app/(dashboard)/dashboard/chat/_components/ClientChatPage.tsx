@@ -45,6 +45,7 @@ import {
   type ChatPanelConnectionState,
   type ChatPanelMessage,
 } from "./ChatPanel/ChatPanel";
+import type { ComposerSendPayload } from "./MessageBox/MessageBox";
 import { ChatSidebar } from "./ChatSidebar/ChatSidebar";
 import styles from "./ClientChatPage.module.css";
 
@@ -657,23 +658,35 @@ export function ClientChatPage() {
     });
   }, [sessionKey, connectionState, loadHistory]);
 
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (payload: ComposerSendPayload) => {
+    const text = payload.text.trim();
+    const attachments = payload.attachments;
     const client = clientRef.current;
-    if (!text || !client?.connected || sending) return;
+    if ((!text && attachments.length === 0) || !client?.connected || sending) {
+      return;
+    }
+
+    let messageText = text;
+    if (attachments.length > 0) {
+      const names = attachments.map((item) => item.file.name).join(", ");
+      messageText = text
+        ? `${text}\n\n[Đính kèm: ${names}]`
+        : `[Đính kèm: ${names}]`;
+    }
+
     setInput("");
     setSending(true);
     setError(null);
     setMessages((prev) => [
       ...prev,
-      { id: `u-${Date.now()}`, role: "user", text },
+      { id: `u-${Date.now()}`, role: "user", text: messageText },
     ]);
-    void maybeAutoTitleSession(text, sessionKey);
+    void maybeAutoTitleSession(messageText, sessionKey);
     const runId = crypto.randomUUID();
     try {
       await client.request("chat.send", {
         sessionKey,
-        message: text,
+        message: messageText,
         deliver: false,
         idempotencyKey: runId,
       });
@@ -767,7 +780,7 @@ export function ClientChatPage() {
           sending={sending}
           input={input}
           onInputChange={setInput}
-          onSend={() => void handleSend()}
+          onSend={(payload) => void handleSend(payload)}
           onAbort={() => void handleAbort()}
           sessionActionsDisabled={sessionSidebarDisabled}
           onNewSession={() => void handleNewSession()}

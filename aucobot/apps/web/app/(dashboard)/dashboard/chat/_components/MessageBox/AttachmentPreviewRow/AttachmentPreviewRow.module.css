@@ -1,0 +1,183 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 10px 12px 0;
+}
+
+/* ── Image chip ─────────────────────────────────────────────────────────────── */
+
+.imageChip {
+  position: relative;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+  background: color-mix(in srgb, var(--color-muted) 40%, transparent);
+}
+
+.imageThumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-background) 35%, transparent);
+}
+
+.removeBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-foreground) 82%, transparent);
+  color: var(--color-background);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast) ease;
+}
+
+.imageChip:hover .removeBtn,
+.imageChip:focus-within .removeBtn {
+  opacity: 1;
+}
+
+.removeBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* ── File chip ──────────────────────────────────────────────────────────────── */
+
+.fileChip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 220px;
+  padding: 6px 8px 6px 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+  background: var(--color-background);
+}
+
+.fileIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--color-primary-foreground);
+}
+
+.fileIconDoc {
+  background: #2563eb;
+}
+
+.fileIconPdf {
+  background: #dc2626;
+}
+
+.fileIconOther {
+  background: color-mix(in srgb, var(--color-muted-foreground) 70%, var(--color-muted));
+  color: var(--color-foreground);
+}
+
+.fileMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fileName {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileKind {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+
+.fileRemoveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast) ease,
+    background var(--transition-fast) ease;
+}
+
+.fileRemoveBtn:hover:not(:disabled) {
+  color: var(--color-foreground);
+  background: var(--color-accent);
+}
+
+.fileRemoveBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* ── Progress ring ──────────────────────────────────────────────────────────── */
+
+.progressRing {
+  display: block;
+}
+
+.progressTrack {
+  stroke: color-mix(in srgb, var(--color-background) 55%, transparent);
+}
+
+.progressFill {
+  stroke: var(--color-background);
+}
+
+.fileIcon .progressTrack {
+  stroke: color-mix(in srgb, var(--color-background) 40%, transparent);
+}
+
+.fileIcon .progressFill {
+  stroke: var(--color-background);
+}
+
+.imageOverlay .progressTrack {
+  stroke: color-mix(in srgb, var(--color-foreground) 25%, transparent);
+}
+
+.imageOverlay .progressFill {
+  stroke: var(--color-primary);
+}

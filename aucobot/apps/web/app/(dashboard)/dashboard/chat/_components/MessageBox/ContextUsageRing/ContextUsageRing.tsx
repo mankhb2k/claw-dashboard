@@ -8,8 +8,8 @@ import {
 } from "./context-usage.utils";
 import styles from "./ContextUsageRing.module.css";
 
-const SIZE = 22;
-const STROKE = 2.5;
+const SIZE = 24;
+const STROKE = 3;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
