@@ -68,6 +68,7 @@ export class ChatWsRegistrar implements OnApplicationBootstrap {
     await this.proxy.bridge({
       client: socket as unknown as import('ws').WebSocket,
       projectId,
+      userId: user.sub,
       gatewayWsUrl: runtime.gatewayWsUrl,
       gatewayToken: runtime.gatewayToken,
     });

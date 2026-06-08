@@ -4,7 +4,7 @@ import path from 'node:path';
 const GATEWAY_RUNTIME_UID = Number(process.env.OPENCLAW_RUNTIME_UID ?? 1000) || 1000;
 const GATEWAY_RUNTIME_GID = Number(process.env.OPENCLAW_RUNTIME_GID ?? 1000) || 1000;
 
-const PROJECT_SUBDIRS = ['workspace', 'devices', 'agents', 'logs'] as const;
+const PROJECT_SUBDIRS = ['workspace', 'devices', 'agents', 'logs', 'chat-uploads'] as const;
 
 export function resolveProjectDataDir(
   projectId: string,

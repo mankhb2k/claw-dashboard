@@ -6,6 +6,12 @@ export const agentAskPolicySchema = z.enum(['always', 'on-miss', 'off'])
 
 export const agentInstructionsModeSchema = z.enum(['simple', 'advanced'])
 
+export const agentSandboxModeSchema = z.enum(['non-main', 'all'])
+
+export const agentSandboxScopeSchema = z.enum(['agent', 'session'])
+
+export const agentSandboxWorkspaceAccessSchema = z.enum(['none', 'ro', 'rw'])
+
 const instructionsFieldMax = 12_000
 
 /** Agent form schema — UI view model; compiled to OpenClaw bootstrap on save */
@@ -31,6 +37,9 @@ export const agentFormSchema = z
 
     model: z.string(),
     sandboxEnabled: z.boolean(),
+    sandboxMode: agentSandboxModeSchema,
+    sandboxScope: agentSandboxScopeSchema,
+    sandboxWorkspaceAccess: agentSandboxWorkspaceAccessSchema,
     askPolicy: agentAskPolicySchema,
     safeBins: z.array(z.string()),
     timeoutSec: z.number().min(5, 'Minimum 5 seconds').max(3600, 'Maximum 3600 seconds'),
@@ -117,6 +126,9 @@ export function buildAgentFormDefaults(
 
     model: modelFromTemplate,
     sandboxEnabled: template?.sandboxEnabled ?? false,
+    sandboxMode: 'all',
+    sandboxScope: 'agent',
+    sandboxWorkspaceAccess: 'none',
     askPolicy: 'on-miss',
     safeBins:
       templateSlug === 'coding-assistant'

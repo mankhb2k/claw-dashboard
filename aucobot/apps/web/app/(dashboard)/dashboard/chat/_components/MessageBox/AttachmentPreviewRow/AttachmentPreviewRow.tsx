@@ -60,9 +60,10 @@ function ImageAttachmentChip({
   disabled?: boolean;
 }) {
   const uploading = attachment.status === "uploading";
+  const blocked = attachment.sandboxBlocked || attachment.status === "error";
 
   return (
-    <div className={styles.imageChip}>
+    <div className={`${styles.imageChip} ${blocked ? styles.chipBlocked : ""}`}>
       {attachment.previewUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -100,6 +101,7 @@ function FileAttachmentChip({
   disabled?: boolean;
 }) {
   const uploading = attachment.status === "uploading";
+  const blocked = attachment.sandboxBlocked || attachment.status === "error";
   const kindClass =
     attachment.kind === "pdf"
       ? styles.fileIconPdf
@@ -108,7 +110,7 @@ function FileAttachmentChip({
         : styles.fileIconOther;
 
   return (
-    <div className={styles.fileChip}>
+    <div className={`${styles.fileChip} ${blocked ? styles.chipBlocked : ""}`}>
       <div className={`${styles.fileIcon} ${kindClass}`}>
         {uploading ? (
           <UploadProgressRing progress={attachment.progress} />
@@ -121,7 +123,11 @@ function FileAttachmentChip({
           {attachment.file.name}
         </span>
         <span className={styles.fileKind}>
-          {formatFileKindLabel(attachment.kind, attachment.file)}
+          {attachment.sandboxBlocked
+            ? "Vượt 5 MB (sandbox)"
+            : attachment.error
+              ? attachment.error
+              : formatFileKindLabel(attachment.kind, attachment.file)}
         </span>
       </div>
       <button

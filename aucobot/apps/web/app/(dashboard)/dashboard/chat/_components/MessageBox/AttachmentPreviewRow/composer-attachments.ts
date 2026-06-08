@@ -13,6 +13,8 @@ export type ComposerAttachment = {
   status: AttachmentStatus;
   progress: number;
   error?: string;
+  serverId?: string;
+  sandboxBlocked?: boolean;
 };
 
 export type ComposerSendPayload = {

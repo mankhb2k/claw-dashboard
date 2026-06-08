@@ -3,7 +3,7 @@
 import React from "react";
 import { useAgentEditorUiStore } from "@/stores/agent-editor-ui.store";
 import { EditPanel } from "../EditPanel/EditPanel";
-import { PreviewPanel } from "../PreviewPanel/PreviewPanel";
+import { AgentPanel } from "../AgentPanel/AgentPanel";
 import styles from "./ClientAgentIdPage.module.css";
 
 interface ClientAgentIdPageProps {
@@ -11,20 +11,20 @@ interface ClientAgentIdPageProps {
 }
 
 export function ClientAgentIdPage({ agentId }: ClientAgentIdPageProps) {
-  const previewOpen = useAgentEditorUiStore((s) => s.previewOpen);
-  const togglePreview = useAgentEditorUiStore((s) => s.togglePreview);
+  const agentPanelOpen = useAgentEditorUiStore((s) => s.agentPanelOpen);
+  const toggleAgentPanel = useAgentEditorUiStore((s) => s.toggleAgentPanel);
 
   return (
     <div className={styles.root}>
       <EditPanel
         agentId={agentId}
         isEditing
-        previewOpen={previewOpen}
-        onTogglePreview={togglePreview}
+        previewOpen={agentPanelOpen}
+        onTogglePreview={toggleAgentPanel}
       />
-      {previewOpen ? (
-        <div className={styles.previewWrap}>
-          <PreviewPanel agentSlug={agentId} />
+      {agentPanelOpen ? (
+        <div className={styles.agentPanelWrap}>
+          <AgentPanel />
         </div>
       ) : null}
     </div>

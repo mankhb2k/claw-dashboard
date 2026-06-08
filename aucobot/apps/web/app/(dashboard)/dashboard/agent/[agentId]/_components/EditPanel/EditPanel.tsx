@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Container, Flex } from "@/components/layout";
@@ -13,6 +13,11 @@ import {
 } from "@/schemas/agentForm.schema";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
+import { useAgentEditorUiStore, type AgentEditTab } from "@/stores/agent-editor-ui.store";
+import {
+  AGENT_PANEL_APPLY_AGENTS_MD,
+  type AgentPanelApplyAgentsMdDetail,
+} from "@/lib/agent-editor/agent-panel-events";
 import {
   PanelRightClose,
   PanelRightOpen,
@@ -105,6 +110,8 @@ export function EditPanel({
   const templateId = searchParams.get("template");
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
+  const setFormSnapshot = useAgentEditorUiStore((s) => s.setFormSnapshot);
+  const setActiveEditTab = useAgentEditorUiStore((s) => s.setActiveEditTab);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(!isEditing && !templateId);
 
@@ -114,6 +121,55 @@ export function EditPanel({
   });
 
   const { handleSubmit, setValue, watch, reset } = formMethods;
+
+  useEffect(() => {
+    const sub = watch((values) => {
+      setFormSnapshot(values as AgentFormInput);
+    });
+    return () => sub.unsubscribe();
+  }, [watch, setFormSnapshot]);
+
+  useEffect(() => {
+    const onApply = (event: Event) => {
+      const detail = (event as CustomEvent<AgentPanelApplyAgentsMdDetail>).detail;
+      if (!detail?.markdown) return;
+      if (detail.mode === "advanced") {
+        setValue("instructionsMode", "advanced", { shouldDirty: true });
+        setValue("instructionsAdvanced", detail.markdown, { shouldDirty: true });
+        toast.success("Đã áp dụng", "AGENTS.md → Instructions (Markdown nâng cao).");
+        return;
+      }
+      setValue("instructionsMode", "simple", { shouldDirty: true });
+      if (detail.fields?.instructionsRole) {
+        setValue("instructionsRole", detail.fields.instructionsRole, {
+          shouldDirty: true,
+        });
+      }
+      if (detail.fields?.instructionsRules) {
+        setValue("instructionsRules", detail.fields.instructionsRules, {
+          shouldDirty: true,
+        });
+      }
+      if (detail.fields?.instructionsConstraints) {
+        setValue(
+          "instructionsConstraints",
+          detail.fields.instructionsConstraints,
+          { shouldDirty: true },
+        );
+      }
+      if (detail.fields?.instructionsOutputFormat) {
+        setValue(
+          "instructionsOutputFormat",
+          detail.fields.instructionsOutputFormat,
+          { shouldDirty: true },
+        );
+      }
+      toast.success("Đã áp dụng", "Nội dung → Instructions (Editor).");
+    };
+    window.addEventListener(AGENT_PANEL_APPLY_AGENTS_MD, onApply);
+    return () =>
+      window.removeEventListener(AGENT_PANEL_APPLY_AGENTS_MD, onApply);
+  }, [setValue]);
 
   useEffect(() => {
     void fetchProjects({ silent: true });
@@ -170,8 +226,15 @@ export function EditPanel({
     setActiveTab(tabFromSearchParams(searchParams));
   }, [searchParams]);
 
+  useEffect(() => {
+    setActiveEditTab(activeTab as AgentEditTab);
+  }, [activeTab, setActiveEditTab]);
+
   const model = watch("model");
   const sandboxEnabled = watch("sandboxEnabled");
+  const sandboxMode = watch("sandboxMode");
+  const sandboxScope = watch("sandboxScope");
+  const sandboxWorkspaceAccess = watch("sandboxWorkspaceAccess");
   const askPolicy = watch("askPolicy");
   const safeBins = watch("safeBins");
   const timeoutSec = watch("timeoutSec");
@@ -274,6 +337,18 @@ export function EditPanel({
           setSandboxEnabled={(val) =>
             setValue("sandboxEnabled", val, { shouldDirty: true })
           }
+          sandboxMode={sandboxMode}
+          setSandboxMode={(val) =>
+            setValue("sandboxMode", val, { shouldDirty: true })
+          }
+          sandboxScope={sandboxScope}
+          setSandboxScope={(val) =>
+            setValue("sandboxScope", val, { shouldDirty: true })
+          }
+          sandboxWorkspaceAccess={sandboxWorkspaceAccess}
+          setSandboxWorkspaceAccess={(val) =>
+            setValue("sandboxWorkspaceAccess", val, { shouldDirty: true })
+          }
           askPolicy={askPolicy}
           setAskPolicy={(val) =>
             setValue("askPolicy", val, { shouldDirty: true })
@@ -353,7 +428,11 @@ export function EditPanel({
         <Tabs
           items={PANEL_TAB_ITEMS}
           value={activeTab}
-          onValueChange={(next) => setActiveTab(next as EditTab)}
+          onValueChange={(next) => {
+            const tab = next as EditTab;
+            setActiveTab(tab);
+            setActiveEditTab(tab as AgentEditTab);
+          }}
           variant="panel"
           showIndicator={false}
           aria-label="Agent form sections"
@@ -365,9 +444,9 @@ export function EditPanel({
                 size="md"
                 iconOnly
                 onClick={onTogglePreview}
-                aria-label={previewOpen ? "Hide preview" : "Show preview"}
+                aria-label={previewOpen ? "Hide agent assistant" : "Show agent assistant"}
                 aria-pressed={previewOpen}
-                title={previewOpen ? "Hide preview" : "Show preview"}
+                title={previewOpen ? "Hide agent assistant" : "Show agent assistant"}
               >
                 {previewOpen ? (
                   <PanelRightClose size={18} />

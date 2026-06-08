@@ -41,6 +41,11 @@ import type {
 } from "@/lib/chat/session-types";
 import { matchesSessionKey, sessionKeyForAgent } from "@/lib/chat/session-key";
 import {
+  isFileOverSandboxStagingLimit,
+  SANDBOX_STAGING_MAX_BYTES,
+} from "@/lib/chat/sandbox-staging-limit";
+import { useChatSandboxContext } from "@/lib/chat/use-chat-sandbox-context";
+import {
   ChatPanel,
   type ChatPanelConnectionState,
   type ChatPanelMessage,
@@ -81,6 +86,11 @@ export function ClientChatPage() {
   const [ready, setReady] = useState(false);
   const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
   const [agentId, setAgentId] = useState("main");
+
+  const { sandboxActive, stagingMaxBytes } = useChatSandboxContext(
+    projectId,
+    agentId,
+  );
   const [sessionKey, setSessionKey] = useState("agent:main:main");
   const [sessions, setSessions] = useState<GatewaySessionRow[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -661,18 +671,35 @@ export function ClientChatPage() {
   const handleSend = async (payload: ComposerSendPayload) => {
     const text = payload.text.trim();
     const attachments = payload.attachments;
+    const attachmentIds = attachments
+      .map((item) => item.serverId)
+      .filter((id): id is string => Boolean(id));
     const client = clientRef.current;
-    if ((!text && attachments.length === 0) || !client?.connected || sending) {
+    if (
+      (!text && attachmentIds.length === 0) ||
+      !client?.connected ||
+      sending
+    ) {
       return;
     }
 
-    let messageText = text;
-    if (attachments.length > 0) {
-      const names = attachments.map((item) => item.file.name).join(", ");
-      messageText = text
-        ? `${text}\n\n[Đính kèm: ${names}]`
-        : `[Đính kèm: ${names}]`;
+    if (
+      sandboxActive &&
+      attachments.some((item) =>
+        isFileOverSandboxStagingLimit(item.file.size, true),
+      )
+    ) {
+      setError(
+        `File vượt ${Math.round(SANDBOX_STAGING_MAX_BYTES / (1024 * 1024))} MB — sandbox đang bật.`,
+      );
+      return;
     }
+
+    const messageText =
+      text ||
+      (attachmentIds.length > 0
+        ? attachments.map((item) => item.file.name).join(", ")
+        : "");
 
     setInput("");
     setSending(true);
@@ -689,6 +716,7 @@ export function ClientChatPage() {
         message: messageText,
         deliver: false,
         idempotencyKey: runId,
+        attachmentIds,
       });
     } catch (err) {
       setSending(false);
@@ -784,6 +812,9 @@ export function ClientChatPage() {
           onAbort={() => void handleAbort()}
           sessionActionsDisabled={sessionSidebarDisabled}
           onNewSession={() => void handleNewSession()}
+          projectId={projectId}
+          sandboxActive={sandboxActive}
+          stagingMaxBytes={stagingMaxBytes}
           contextUsage={activeContextUsage}
         />
       </div>

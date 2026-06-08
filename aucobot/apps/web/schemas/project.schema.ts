@@ -148,6 +148,18 @@ export const updateAgentHeartbeatBodySchema = z.object({
   heartbeatMd: z.string().max(12000).nullable().optional(),
 })
 
+export const projectSandboxResponseSchema = z.object({
+  enabled: z.boolean(),
+  mode: z.enum(['non-main', 'all']),
+})
+
+export type ProjectSandboxResponse = z.infer<typeof projectSandboxResponseSchema>
+
+export const updateProjectSandboxBodySchema = z.object({
+  enabled: z.boolean(),
+  mode: z.enum(['non-main', 'all']),
+})
+
 /** GET /api/projects/providers/definitions */
 export const providerModelCatalogSchema = z.object({
   id: z.string(),
@@ -407,6 +419,46 @@ export type SkillAiEditorOptionsResponse = z.infer<
 export type SkillAiEditorMessage = z.infer<typeof skillAiEditorMessageSchema>
 export type SkillAiEditorCompleteInput = z.infer<
   typeof skillAiEditorCompleteInputSchema
+>
+
+/** POST /api/projects/:id/agent-ai-editor/complete */
+export const agentAiEditorMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+})
+
+export const agentAiEditorCompleteInputSchema = z.object({
+  providerId: z.string(),
+  model: z.string(),
+  intent: z.enum(['optimize', 'chat']),
+  messages: z.array(agentAiEditorMessageSchema).min(1).max(20),
+  agentContext: z.object({
+    name: z.string(),
+    description: z.string(),
+    vibe: z.enum(['professional', 'friendly', 'strict']),
+    tags: z.array(z.string()),
+    instructionsMode: z.enum(['simple', 'advanced']),
+    currentAgentsMd: z.string(),
+    activeEditTab: z.string().optional(),
+    instructionsRole: z.string().optional(),
+    instructionsRules: z.string().optional(),
+    instructionsConstraints: z.string().optional(),
+    instructionsOutputFormat: z.string().optional(),
+  }),
+})
+
+export const agentAiEditorCompleteResponseSchema = z.object({
+  phase: z.enum(['clarify', 'optimize']),
+  message: z.string(),
+  questions: z.array(z.string()).optional(),
+  markdown: z.string().optional(),
+})
+
+export type AgentAiEditorCompleteInput = z.infer<
+  typeof agentAiEditorCompleteInputSchema
+>
+export type AgentAiEditorCompleteResponse = z.infer<
+  typeof agentAiEditorCompleteResponseSchema
 >
 
 /** GET /api/projects/:id/agents/templates */

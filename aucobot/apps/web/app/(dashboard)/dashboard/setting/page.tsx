@@ -3,6 +3,7 @@ import { projectApi } from "@/lib/api/project";
 import { getCurrentProject } from "@/lib/current-project";
 import { SettingGeneralSection } from "./_components/SettingGeneralSection/SettingGeneralSection";
 import { SettingRuntimeSection } from "./_components/SettingRuntimeSection/SettingRuntimeSection";
+import { SettingSandboxSection } from "./_components/SettingSandboxSection/SettingSandboxSection";
 import { SettingGatewaySection } from "./_components/SettingGatewaySection/SettingGatewaySection";
 import { SettingDangerZone } from "./_components/SettingDangerZone/SettingDangerZone";
 import styles from "./setting.module.css";
@@ -36,6 +37,7 @@ export default async function ProjectSettingPage() {
         <div className={styles.sections}>
           <SettingGeneralSection project={project} />
           <SettingRuntimeSection projectId={id} initialHealth={initialHealth} />
+          <SettingSandboxSection projectId={id} />
           <SettingGatewaySection projectId={id} subdomain={project.subdomain} />
           <SettingDangerZone project={project} />
         </div>

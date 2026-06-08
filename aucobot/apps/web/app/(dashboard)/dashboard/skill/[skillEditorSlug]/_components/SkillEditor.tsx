@@ -158,7 +158,7 @@ export const SkillEditor = forwardRef<SkillEditorHandle, SkillEditorProps>(
           </div>
           {viewMode === "markdown" ? (
             <Typography variant="small" color="muted" className={styles.markdownHint}>
-              Chỉ xem. Sửa nội dung ở tab Editor hoặc dùng AI bên phải rồi Áp dụng.
+              Chỉ xem. Sửa nội dung ở tab Editor hoặc dùng AI panel bên phải.
             </Typography>
           ) : null}
         </div>

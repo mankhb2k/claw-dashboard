@@ -1,0 +1,32 @@
+.quickPrompts {
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: min(720px, 100%);
+  margin-inline: auto;
+  padding: var(--space-3) var(--space-5) var(--space-3);
+  gap: var(--space-2);
+  box-sizing: border-box;
+}
+
+.quickChip {
+  font-size: var(--font-size-xs);
+}
+
+.assistantContent {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}
+
+.assistantContent strong {
+  font-weight: 600;
+}
+
+.welcomeText {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}

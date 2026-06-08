@@ -1125,23 +1125,178 @@ Not supported: Nhiều untrusted users sharing 1 agent
 
 ### 13.3 Sandboxing
 
+> **Nguồn:** `openclaw-worker/src/agents/sandbox/*`, `src/config/types.sandbox.ts`, `src/config/types.agents-shared.ts`, `docs/install/docker.md` (ghi chú sandbox). Cập nhật: 2026-06-08.
+
+**Sandbox** là lớp **cô lập runtime cho tool/agent** — khi bật, các lệnh shell, đọc/ghi file, và nhiều tool khác chạy **bên trong môi trường tách** (container Docker hoặc host SSH), không trực tiếp trên filesystem của gateway host. Mục tiêu: giảm blast radius khi agent xử lý nội dung không tin cậy (DM lạ, group chat, sub-agent, v.v.).
+
+**Mặc định: `mode: "off"`** — sandbox **tắt**; gateway và agent dùng workspace host bình thường. Bật sandbox **không** bắt buộc chạy gateway trong Docker, nhưng backend `docker` cần **Docker daemon** khả dụng trên máy chạy gateway (`doctor-sandbox`, `openclaw doctor`).
+
+```mermaid
+flowchart LR
+  subgraph GW["Gateway (host)"]
+    ROUTER["Session router"]
+    POLICY["Sandbox tool policy"]
+  end
+
+  subgraph RUNTIME["Sandbox runtime (khi sandboxed)"]
+    DOCKER["Docker container\nopenclaw-sbx-*"]
+    SSH["SSH remote workspace\n(tùy backend)"]
+  end
+
+  subgraph WS["Workspace trên disk"]
+    AGENT_WS["agent workspace\n(workspace/)"]
+    SBX_WS["sandbox workspace\n(sandboxes/…)"]
+  end
+
+  ROUTER --> POLICY
+  POLICY -->|"backend=docker"| DOCKER
+  POLICY -->|"backend=ssh"| SSH
+  DOCKER --> SBX_WS
+  SSH --> SBX_WS
+  AGENT_WS -.->|"workspaceAccess ro/rw"| DOCKER
+```
+
+#### 13.3.1 Khi nào session bị sandbox?
+
+`resolveSandboxRuntimeStatus()` (`runtime-status.ts`) quyết định theo `agents.defaults.sandbox.mode` (hoặc override per-agent `agents.list[].sandbox`):
+
+| `mode` | Hành vi |
+|--------|---------|
+| `"off"` | Không sandbox — mọi session chạy trên host |
+| `"non-main"` | Sandbox **mọi session không phải main** của agent (alias main được canonicalize) |
+| `"all"` | Sandbox **mọi** session, kể cả main |
+
+Main session key: `resolveAgentMainSessionKey()` — phụ thuộc `session.scope` (`global` → `"global"`, ngược lại `agent:<id>:<mainKey>`).
+
+#### 13.3.2 Cấu hình chính (`openclaw.json`)
+
 ```json5
 {
   agents: {
     defaults: {
       sandbox: {
-        mode: "non-main", // sandbox mọi session không phải main
-        backend: "docker", // docker | ssh | openShell
+        mode: "off",              // off | non-main | all
+        backend: "docker",        // mặc định; plugin có thể đăng ký backend khác
+        scope: "agent",           // session | agent | shared
+        workspaceAccess: "none",  // none | ro | rw — mount agent workspace vào sandbox
+        workspaceRoot: "~/.openclaw/sandboxes", // gốc workspace sandbox (STATE_DIR/sandboxes)
+        docker: {
+          image: "openclaw-sandbox:bookworm-slim",
+          containerPrefix: "openclaw-sbx-",
+          workdir: "/workspace",
+          readOnlyRoot: true,
+          network: "none",        // mặc định cô lập mạng
+          capDrop: ["ALL"],
+          tmpfs: ["/tmp", "/var/tmp", "/run"],
+          // memory, cpus, binds, seccompProfile, … — xem types.sandbox.ts
+        },
+        browser: {
+          enabled: false,         // browser sandbox = container riêng (CDP/VNC)
+          image: "openclaw-sandbox-browser:bookworm-slim",
+          network: "openclaw-sandbox-browser",
+        },
+        prune: {
+          idleHours: 24,
+          maxAgeDays: 7,
+        },
+        ssh: {
+          // backend "ssh": target user@host, workspaceRoot /tmp/openclaw-sandboxes
+        },
+      },
+    },
+    list: [
+      {
+        id: "family",
+        sandbox: { mode: "all", scope: "agent" },
+      },
+    ],
+  },
+  tools: {
+    sandbox: {
+      tools: {
+        // allow / deny / alsoAllow — override policy tool trong sandbox
       },
     },
   },
 }
 ```
 
-**Sandbox mặc định cho non-main sessions:**
+**Backend:**
 
-- Allow: `bash`, `process`, `read`, `write`, `edit`, `sessions_list`, `sessions_history`, `sessions_send`, `sessions_spawn`
-- Deny: `browser`, `canvas`, `nodes`, `cron`, `discord`, `gateway`
+| `backend` | Mô tả |
+|-----------|--------|
+| `"docker"` | Mặc định — `docker create` + `docker exec`; registry tại `{STATE_DIR}/sandbox/containers.json` |
+| `"ssh"` | Exec trên host SSH từ xa; workspace tại `ssh.workspaceRoot` |
+| *(plugin)* | `registerSandboxBackend(id, factory)` — backend id tùy plugin |
+
+#### 13.3.3 Workspace & mount trong container
+
+Khi sandbox bật, `ensureSandboxWorkspaceForSession()` (`context.ts`) chuẩn bị layout:
+
+| Path host (trong `OPENCLAW_STATE_DIR`) | Vai trò |
+|--------------------------------------|---------|
+| `workspace/` (agent) | Workspace gốc của agent — seed `AGENTS.md`, `SOUL.md`, skills |
+| `sandboxes/{scopeKey}/` | Workspace **bản sao/cô lập** cho sandbox (`scope: session` → key theo session) |
+| `sandbox/containers.json` | Registry container đang chạy |
+| `sandbox/containers/`, `sandbox/browsers/` | Metadata runtime |
+
+**`workspaceAccess`:**
+
+| Giá trị | Ý nghĩa |
+|---------|---------|
+| `"none"` | Agent chỉ thấy sandbox workspace (`sandboxes/…`); không mount `workspace/` gốc |
+| `"ro"` | Mount agent workspace read-only tại `/agent` trong container |
+| `"rw"` | Dùng thẳng agent workspace làm workdir (ít cô lập hơn) |
+
+Trong container Docker (`fs-paths.ts`):
+
+- Sandbox workspace → mount tại `docker.workdir` (mặc định `/workspace`)
+- Agent workspace (nếu `ro`/`rw`) → mount tại `/agent` (`SANDBOX_AGENT_WORKSPACE_MOUNT`)
+- `docker.binds` — bind mount bổ sung (có guard `dangerouslyAllow*` cho path nguy hiểm)
+
+Tool `read` / `write` / `edit` / `exec` qua **FsBridge** (`fs-bridge.ts`) — path được resolve host ↔ container, không cho escape mount.
+
+#### 13.3.4 Tool policy trong sandbox
+
+Policy riêng cho session sandboxed (`tool-policy.ts`, `constants.ts`) — **không** dùng chung policy host:
+
+**Allow mặc định (`DEFAULT_TOOL_ALLOW`):**
+
+`exec`, `process`, `read`, `write`, `edit`, `apply_patch`, `image`, `sessions_list`, `sessions_history`, `sessions_send`, `sessions_spawn`, `sessions_yield`, `subagents`, `session_status`
+
+**Deny mặc định (`DEFAULT_TOOL_DENY`):**
+
+`browser`, `canvas`, `nodes`, `cron`, `gateway`, và **mọi channel id** (WhatsApp, Telegram, Discord, …)
+
+Override: `tools.sandbox.tools.allow|deny|alsoAllow` hoặc `agents.list[].tools.sandbox.tools.*`.
+
+#### 13.3.5 Browser sandbox (tùy chọn)
+
+Khi `sandbox.browser.enabled: true` và backend `docker`, gateway có thể spawn container browser riêng (`openclaw-sbx-browser-*`) với CDP/VNC/noVNC. Mặc định **tắt**. Browser trong sandbox **không** dùng host browser trừ khi `allowHostControl: true`.
+
+#### 13.3.6 Chat attachments & media staging
+
+Khi user gửi file qua `chat.send` (`server-methods/chat.ts`):
+
+1. Gateway parse attachment base64 (cap **20 MB** — `resolveChatAttachmentMaxBytes`)
+2. Offload lớn / non-image → `media/inbound/`
+3. Nếu session **sandboxed** → `prestageMediaPathOffloads` copy vào `workspace/media/inbound/` trong sandbox workspace
+4. **Giới hạn staging sandbox: 5 MB** (`MEDIA_MAX_BYTES` / `STAGED_MEDIA_MAX_BYTES`) — file 5–20 MB có thể pass bước 1 nhưng **fail staging** → lỗi client
+
+Liên quan thiết kế AucoBot chat attachments: xem `chat-attachments-backend-plan.md` mục 8.
+
+#### 13.3.7 Vận hành & kiểm tra
+
+```bash
+openclaw doctor                    # kiểm tra Docker + sandbox images
+openclaw security audit --deep
+# Build sandbox images (khi dùng docker backend):
+# scripts/sandbox-setup.sh (doctor-sandbox gọi khi thiếu image)
+```
+
+CLI quản lý container: `openclaw sandbox` (list/prune — `commands/sandbox-display.ts`).
+
+**Lưu ý triển khai OSS (AucoBot):** gateway container mount `OPENCLAW_STATE_DIR` = `data/projects/{projectId}/`. Sandbox Docker backend cần gateway **truy cập Docker socket** để spawn `openclaw-sbx-*` — kiểm tra compose/runtime trước khi bật `sandbox.mode` khác `"off"` trên stack hosted.
 
 ### 13.4 Security Audit
 
@@ -3679,6 +3834,7 @@ flowchart TB
 | `src/auto-reply/` | Pipeline trả lời tự động khi có tin nhắn channel |
 | `src/routing/` | Session key, bindings, account routing → agent |
 | `src/agents/` | Agent loop (Pi embedded), system prompt, tool execution |
+| `src/agents/sandbox/` | Docker/SSH sandbox runtime, FsBridge, container registry, browser sandbox |
 | `src/tools/` | Built-in tool implementations |
 | `src/plugins/` | Plugin loader, registry, runtime hooks |
 | `src/config/` | `openclaw.json`, sessions store, merge patch |

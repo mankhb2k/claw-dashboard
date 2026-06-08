@@ -111,7 +111,8 @@ model ChatAttachment {
   mimeType     String               @map("mime_type")
   originalName String               @map("original_name")
   sizeBytes    Int                  @map("size_bytes")
-  storagePath  String               @map("storage_path")  // relative: chat-uploads/images/...
+  storagePath  String?              @map("storage_path")  // OSS: chat-uploads/...
+  storageKey   String?              @map("storage_key")   // Cloud R2 object key
   status       ChatAttachmentStatus @default(PENDING)
   linkedRunId  String?              @map("linked_run_id") // idempotencyKey chat.send
   expiresAt    DateTime?            @map("expires_at")    // orphan cleanup
@@ -121,12 +122,15 @@ model ChatAttachment {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([projectId, status])
+  @@index([projectId, userId])
   @@index([expiresAt])
   @@map("chat_attachments")
 }
 ```
 
-**Cloud phase (sau):** thêm `storageKey` (S3 object key), `storagePath` có thể null hoặc deprecated.
+**Ownership (production):** Postgres là source of truth (`projectId`, `userId`, `id`); R2/disk chỉ blob. Cloud dùng `storageKey`; OSS dùng `storagePath`. Download luôn qua `GET /api/projects/:id/chat/attachments/:id` (JWT + lookup scoped `projectId`).
+
+**Cloud phase:** `storageKey` bắt buộc khi `RUNTIME_MODE=cloud`; bucket R2 riêng (`CHAT_ATTACHMENT_S3_*` env).
 
 ---
 

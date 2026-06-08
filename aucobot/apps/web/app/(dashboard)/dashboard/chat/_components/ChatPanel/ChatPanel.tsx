@@ -70,6 +70,9 @@ export type ChatPanelProps = {
   onAbort: () => void;
   sessionActionsDisabled: boolean;
   onNewSession: () => void;
+  projectId?: string;
+  sandboxActive?: boolean;
+  stagingMaxBytes?: number;
   contextUsage?: {
     totalTokens?: number;
     contextTokens?: number;
@@ -108,6 +111,9 @@ export function ChatPanel({
   onAbort,
   sessionActionsDisabled,
   onNewSession,
+  projectId,
+  sandboxActive,
+  stagingMaxBytes,
   contextUsage,
 }: ChatPanelProps) {
   const showEmpty =
@@ -260,6 +266,9 @@ export function ChatPanel({
               modelOptions.find((m) => m.value === modelId)?.label ?? modelId
             }
             contextUsage={contextUsage}
+            projectId={projectId}
+            sandboxActive={sandboxActive}
+            stagingMaxBytes={stagingMaxBytes}
           />
         }
       >

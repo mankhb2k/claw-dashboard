@@ -11,6 +11,7 @@ import { ProjectsModule } from './features/projects/projects.module';
 import { ChatModule } from './features/projects/chat/chat.module';
 import { CronModule } from './features/projects/cron/cron.module';
 import { HeartbeatModule } from './features/projects/heartbeat/heartbeat.module';
+import { SandboxModule } from './features/projects/sandbox/sandbox.module';
 import { NodesModule } from './features/projects/nodes/nodes.module';
 import { OverviewModule } from './features/projects/overview/overview.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
@@ -32,6 +33,7 @@ import { DbHealthMiddleware } from './core/common/middleware/db-health.middlewar
     ChatModule,
     CronModule,
     HeartbeatModule,
+    SandboxModule,
     NodesModule,
     OverviewModule,
   ],

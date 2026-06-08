@@ -1,0 +1,37 @@
+/* Sandbox Section Specific Styles */
+
+.cardRow {
+  gap: var(--space-8);
+}
+
+.rowInfo {
+  gap: var(--space-1);
+}
+
+.rowAction {
+  max-width: 400px;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.fieldError {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-4) 0 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+}
+
+.callout code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.85em;
+}

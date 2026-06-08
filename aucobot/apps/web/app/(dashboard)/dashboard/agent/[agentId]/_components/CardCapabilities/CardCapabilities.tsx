@@ -20,11 +20,37 @@ const MODEL_OPTIONS = [
   { value: "gemini-1-5-pro", label: "Gemini 1.5 Pro" },
 ];
 
+const SANDBOX_MODE_OPTIONS = [
+  { value: "all", label: "All agents (full isolation)" },
+  { value: "non-main", label: "Sub-agents only (non-main)" },
+];
+
+const SANDBOX_SCOPE_OPTIONS = [
+  { value: "agent", label: "Per agent" },
+  { value: "session", label: "Per session" },
+];
+
+const SANDBOX_WORKSPACE_ACCESS_OPTIONS = [
+  { value: "none", label: "None (no workspace mount)" },
+  { value: "ro", label: "Read-only" },
+  { value: "rw", label: "Read-write" },
+];
+
+type SandboxMode = "non-main" | "all";
+type SandboxScope = "agent" | "session";
+type SandboxWorkspaceAccess = "none" | "ro" | "rw";
+
 interface CardCapabilitiesProps {
   model: string;
   setModel: (val: string) => void;
   sandboxEnabled: boolean;
   setSandboxEnabled: (val: boolean) => void;
+  sandboxMode: SandboxMode;
+  setSandboxMode: (val: SandboxMode) => void;
+  sandboxScope: SandboxScope;
+  setSandboxScope: (val: SandboxScope) => void;
+  sandboxWorkspaceAccess: SandboxWorkspaceAccess;
+  setSandboxWorkspaceAccess: (val: SandboxWorkspaceAccess) => void;
   askPolicy: "always" | "on-miss" | "off";
   setAskPolicy: (val: "always" | "on-miss" | "off") => void;
   safeBins: string[];
@@ -81,6 +107,12 @@ export function CardCapabilities({
   setModel,
   sandboxEnabled,
   setSandboxEnabled,
+  sandboxMode,
+  setSandboxMode,
+  sandboxScope,
+  setSandboxScope,
+  sandboxWorkspaceAccess,
+  setSandboxWorkspaceAccess,
   askPolicy,
   setAskPolicy,
   safeBins,
@@ -158,6 +190,32 @@ export function CardCapabilities({
               Advanced sandbox
             </Typography>
           </div>
+
+          <Select
+            id="sandbox-mode"
+            label="Isolation level"
+            options={SANDBOX_MODE_OPTIONS}
+            value={sandboxMode}
+            onValueChange={(val) => setSandboxMode(val as SandboxMode)}
+          />
+
+          <Select
+            id="sandbox-scope"
+            label="Isolation scope"
+            options={SANDBOX_SCOPE_OPTIONS}
+            value={sandboxScope}
+            onValueChange={(val) => setSandboxScope(val as SandboxScope)}
+          />
+
+          <Select
+            id="sandbox-workspace-access"
+            label="Workspace access"
+            options={SANDBOX_WORKSPACE_ACCESS_OPTIONS}
+            value={sandboxWorkspaceAccess}
+            onValueChange={(val) =>
+              setSandboxWorkspaceAccess(val as SandboxWorkspaceAccess)
+            }
+          />
 
           <div className={styles.field}>
             <Typography variant="small" weight="medium">

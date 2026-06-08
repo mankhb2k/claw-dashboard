@@ -1,6 +1,9 @@
 export type AgentVibe = 'professional' | 'friendly' | 'strict';
 export type AgentAskPolicy = 'always' | 'on-miss' | 'off';
 export type AgentInstructionsMode = 'simple' | 'advanced';
+export type AgentSandboxMode = 'non-main' | 'all';
+export type AgentSandboxScope = 'agent' | 'session';
+export type AgentSandboxWorkspaceAccess = 'none' | 'ro' | 'rw';
 
 export type AgentFormInput = {
   name: string;
@@ -17,6 +20,9 @@ export type AgentFormInput = {
   toolsNotes: string;
   model: string;
   sandboxEnabled: boolean;
+  sandboxMode: AgentSandboxMode;
+  sandboxScope: AgentSandboxScope;
+  sandboxWorkspaceAccess: AgentSandboxWorkspaceAccess;
   askPolicy: AgentAskPolicy;
   safeBins: string[];
   timeoutSec: number;
@@ -68,6 +74,15 @@ export function parseAgentFormData(raw: unknown): AgentFormInput {
     toolsNotes: String(o.toolsNotes ?? ''),
     model: String(o.model ?? 'claude-3-5-sonnet'),
     sandboxEnabled: Boolean(o.sandboxEnabled),
+    sandboxMode: (['non-main', 'all'].includes(String(o.sandboxMode))
+      ? o.sandboxMode
+      : 'all') as AgentSandboxMode,
+    sandboxScope: (['agent', 'session'].includes(String(o.sandboxScope))
+      ? o.sandboxScope
+      : 'agent') as AgentSandboxScope,
+    sandboxWorkspaceAccess: (['none', 'ro', 'rw'].includes(String(o.sandboxWorkspaceAccess))
+      ? o.sandboxWorkspaceAccess
+      : 'none') as AgentSandboxWorkspaceAccess,
     askPolicy: (['always', 'on-miss', 'off'].includes(String(o.askPolicy))
       ? o.askPolicy
       : 'on-miss') as AgentAskPolicy,

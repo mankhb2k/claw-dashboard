@@ -92,6 +92,8 @@ export class WorkspaceService {
         heartbeatEnabled: true,
         heartbeatEvery: true,
         heartbeatMd: true,
+        sandboxDefaultEnabled: true,
+        sandboxDefaultMode: true,
       },
     });
     syncGatewayAuthToken(config, resolveOssGatewayToken(project?.gatewayToken));
@@ -142,6 +144,14 @@ export class WorkspaceService {
       });
     }
 
+    const projectSandboxDefault = project?.sandboxDefaultEnabled
+      ? ({
+          mode: project.sandboxDefaultMode === 'all' ? 'all' : 'non-main',
+          scope: 'agent',
+          workspaceAccess: 'none',
+        } as const)
+      : undefined;
+
     mergeAgentsIntoConfig(
       config,
       agentRows.map((row) => ({
@@ -151,6 +161,7 @@ export class WorkspaceService {
         isDefault: row.isDefault,
       })),
       collaboration,
+      projectSandboxDefault,
     );
 
     const heartbeatAgentRows = await this.prisma.projectAgent.findMany({

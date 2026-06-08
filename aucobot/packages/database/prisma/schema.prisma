@@ -26,6 +26,7 @@ model User {
   refreshTokens    RefreshToken[]
   projects         Project[]
   modelUsageEvents ModelUsageEvent[]
+  chatAttachments  ChatAttachment[]
 
   @@map("users")
 }
@@ -55,6 +56,8 @@ model Project {
   heartbeatEnabled         Boolean @default(false) @map("heartbeat_enabled")
   heartbeatEvery           String  @default("30m") @map("heartbeat_every")
   heartbeatMd              String? @map("heartbeat_md") @db.Text
+  sandboxDefaultEnabled    Boolean @default(false) @map("sandbox_default_enabled")
+  sandboxDefaultMode       String  @default("non-main") @map("sandbox_default_mode")
   status       ProjectStatus @default(CREATING)
   errorMessage String?       @map("error_message")
   lastActiveAt DateTime      @default(now()) @map("last_active_at")
@@ -69,6 +72,7 @@ model Project {
   projectChannels     ProjectChannel[]
   nodeInvites         NodeInvite[]
   modelUsageEvents    ModelUsageEvent[]
+  chatAttachments     ChatAttachment[]
 
   @@map("projects")
 }
@@ -343,4 +347,41 @@ model ModelPricing {
 
   @@id([providerId, modelId])
   @@map("model_pricing")
+}
+
+enum ChatAttachmentKind {
+  IMAGE
+  DOCUMENT
+}
+
+enum ChatAttachmentStatus {
+  PENDING
+  LINKED
+  DELETED
+}
+
+/// Chat file metadata — bytes on disk (OSS) or R2 (Cloud); never blob in DB.
+model ChatAttachment {
+  id           String               @id @default(cuid())
+  projectId    String               @map("project_id")
+  userId       String               @map("user_id")
+  sessionKey   String?              @map("session_key")
+  kind         ChatAttachmentKind
+  mimeType     String               @map("mime_type")
+  originalName String               @map("original_name")
+  sizeBytes    Int                  @map("size_bytes")
+  storagePath  String?              @map("storage_path")
+  storageKey   String?              @map("storage_key")
+  status       ChatAttachmentStatus @default(PENDING)
+  linkedRunId  String?              @map("linked_run_id")
+  expiresAt    DateTime?            @map("expires_at")
+  createdAt    DateTime             @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
+  @@index([projectId, userId])
+  @@index([expiresAt])
+  @@map("chat_attachments")
 }

@@ -24,6 +24,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import { useAgentEditorUiStore } from "@/stores/agent-editor-ui.store";
 import type { AgentFormInput } from "@/schemas/agentForm.schema";
 import styles from "./CardInstructions.module.css";
 
@@ -43,6 +44,9 @@ const SIMPLE_SECTIONS: {
 ];
 
 export function CardInstructions() {
+  const requestOptimizeFlow = useAgentEditorUiStore(
+    (s) => s.requestOptimizeFlow,
+  );
   const {
     register,
     watch,
@@ -119,6 +123,7 @@ export function CardInstructions() {
           variant="ghost"
           size="sm"
           className={styles.aiBtn}
+          onClick={() => requestOptimizeFlow()}
         >
           <Zap size={14} />
           Optimize with AI

@@ -7,5 +7,7 @@ export {
   ProjectStatus,
   UsageStatus,
   UsageSource,
+  ChatAttachmentKind,
+  ChatAttachmentStatus,
 } from './generated/prisma/client.js';
 export { createPrismaClient, createPrismaPgAdapter } from './create-prisma-client.js';

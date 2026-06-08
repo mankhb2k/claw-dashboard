@@ -6,6 +6,10 @@ jest.mock('../workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
 
+jest.mock('./chat-attachments.service', () => ({
+  ChatAttachmentsService: class MockChatAttachmentsService {},
+}));
+
 jest.mock('@aucobot/control-plane-core', () => ({
   openGatewayUpstream: jest.fn(),
   isAllowedChatRpc: jest.fn((method: unknown) =>
@@ -55,8 +59,15 @@ function createService() {
   const workspace = {
     ensureProjectLayout: jest.fn().mockResolvedValue(DATA_DIR),
   };
-  const service = new ChatGatewayProxyService(workspace as never);
-  return { service, workspace };
+  const attachments = {
+    buildChatSendAttachments: jest.fn().mockResolvedValue([]),
+    markLinked: jest.fn().mockResolvedValue(undefined),
+  };
+  const service = new ChatGatewayProxyService(
+    workspace as never,
+    attachments as never,
+  );
+  return { service, workspace, attachments };
 }
 
 function parseSent(socket: MockSocket): Record<string, unknown>[] {
@@ -90,6 +101,7 @@ describe('ChatGatewayProxyService', () => {
       await service.bridge({
         client: client as unknown as WebSocket,
         projectId: PROJECT_ID,
+        userId: 'user_test_1',
         gatewayWsUrl: 'ws://127.0.0.1:18789',
         gatewayToken: 'gw-token',
       });
@@ -114,6 +126,7 @@ describe('ChatGatewayProxyService', () => {
       await service.bridge({
         client: client as unknown as WebSocket,
         projectId: PROJECT_ID,
+        userId: 'user_test_1',
         gatewayWsUrl: 'ws://127.0.0.1:18789',
         gatewayToken: 'gw-token',
       });
@@ -127,6 +140,8 @@ describe('ChatGatewayProxyService', () => {
         'message',
         JSON.stringify({ type: 'req', id: 'req-1', method: 'chat.send', params: { text: 'hi' } }),
       );
+
+      await new Promise((resolve) => setImmediate(resolve));
 
       expect(parseSent(upstream)).toContainEqual(
         expect.objectContaining({ type: 'req', method: 'chat.send' }),
@@ -142,6 +157,7 @@ describe('ChatGatewayProxyService', () => {
       await service.bridge({
         client: client as unknown as WebSocket,
         projectId: PROJECT_ID,
+        userId: 'user_test_1',
         gatewayWsUrl: 'ws://127.0.0.1:18789',
         gatewayToken: 'gw-token',
       });
@@ -173,6 +189,7 @@ describe('ChatGatewayProxyService', () => {
       await service.bridge({
         client: client as unknown as WebSocket,
         projectId: PROJECT_ID,
+        userId: 'user_test_1',
         gatewayWsUrl: 'ws://127.0.0.1:18789',
         gatewayToken: 'gw-token',
       });
@@ -203,6 +220,7 @@ describe('ChatGatewayProxyService', () => {
       await service.bridge({
         client: client as unknown as WebSocket,
         projectId: PROJECT_ID,
+        userId: 'user_test_1',
         gatewayWsUrl: 'ws://127.0.0.1:18789',
         gatewayToken: 'gw-token',
       });

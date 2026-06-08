@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Paperclip, Square } from "lucide-react";
+import { ArrowUp, AlertTriangle, Paperclip, Square } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -12,6 +12,15 @@ import {
 } from "react";
 import { Box } from "@/components/layout";
 import { Select, Textarea } from "@/components/ui";
+import {
+  deleteChatAttachment,
+  uploadChatAttachment,
+  chatAttachmentDownloadPath,
+} from "@/lib/api/chat-attachments";
+import {
+  isFileOverSandboxStagingLimit,
+  sandboxStagingLimitError,
+} from "@/lib/chat/sandbox-staging-limit";
 import { ContextUsageRing } from "./ContextUsageRing/ContextUsageRing";
 import type { ContextUsageSnapshot } from "./ContextUsageRing/context-usage.utils";
 import { AttachmentPreviewRow } from "./AttachmentPreviewRow/AttachmentPreviewRow";
@@ -32,7 +41,6 @@ import {
 import styles from "./MessageBox.module.css";
 
 const MAX_INPUT_LINES = 12;
-const UPLOAD_TICK_MS = 45;
 
 type SelectOption = {
   value: string;
@@ -58,6 +66,9 @@ export type MessageBoxProps = {
   modelSaving?: boolean;
   modelLabel?: string;
   contextUsage?: ContextUsageSnapshot;
+  projectId?: string;
+  sandboxActive?: boolean;
+  stagingMaxBytes?: number;
 };
 
 function syncComposerHeight(
@@ -76,20 +87,42 @@ function syncComposerHeight(
     element.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 
-async function simulateAttachmentUpload(
-  id: string,
+async function uploadComposerAttachment(
+  projectId: string,
+  localId: string,
+  file: File,
   setAttachments: Dispatch<SetStateAction<ComposerAttachment[]>>,
 ): Promise<void> {
-  for (let progress = 25; progress <= 100; progress += 25) {
-    await new Promise((resolve) => window.setTimeout(resolve, UPLOAD_TICK_MS));
+  try {
     setAttachments((prev) =>
       prev.map((item) =>
-        item.id === id
+        item.id === localId ? { ...item, progress: 40, status: "uploading" } : item,
+      ),
+    );
+    const result = await uploadChatAttachment(projectId, file);
+    const previewUrl =
+      result.kind === "image"
+        ? chatAttachmentDownloadPath(projectId, result.id)
+        : undefined;
+    setAttachments((prev) =>
+      prev.map((item) =>
+        item.id === localId
           ? {
               ...item,
-              progress,
-              status: progress >= 100 ? "ready" : "uploading",
+              serverId: result.id,
+              progress: 100,
+              status: "ready",
+              previewUrl: previewUrl ?? item.previewUrl,
             }
+          : item,
+      ),
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Upload failed";
+    setAttachments((prev) =>
+      prev.map((item) =>
+        item.id === localId
+          ? { ...item, status: "error", error: message, progress: 0 }
           : item,
       ),
     );
@@ -115,6 +148,9 @@ export function MessageBox({
   modelSaving = false,
   modelLabel,
   contextUsage,
+  projectId,
+  sandboxActive = false,
+  stagingMaxBytes,
 }: MessageBoxProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -136,14 +172,21 @@ export function MessageBox({
     providerOptions.length === 0;
 
   const hasReadyAttachments = attachments.some(
-    (item) => item.status === "ready",
+    (item) => item.status === "ready" && !item.sandboxBlocked,
   );
   const hasUploadingAttachments = attachments.some(
     (item) => item.status === "uploading",
   );
+  const hasSandboxOversized = attachments.some(
+    (item) =>
+      item.status === "ready" &&
+      (item.sandboxBlocked ||
+        isFileOverSandboxStagingLimit(item.file.size, sandboxActive)),
+  );
   const canSendNow =
     canSend &&
     !hasUploadingAttachments &&
+    !hasSandboxOversized &&
     (value.trim().length > 0 || hasReadyAttachments);
 
   const adjustHeight = useCallback(() => {
@@ -152,13 +195,21 @@ export function MessageBox({
     syncComposerHeight(el, MAX_INPUT_LINES);
   }, []);
 
-  const removeAttachment = useCallback((id: string) => {
-    setAttachments((prev) => {
-      const target = prev.find((item) => item.id === id);
-      if (target) revokeAttachmentPreview(target);
-      return prev.filter((item) => item.id !== id);
-    });
-  }, []);
+  const removeAttachment = useCallback(
+    (id: string) => {
+      setAttachments((prev) => {
+        const target = prev.find((item) => item.id === id);
+        if (target) {
+          revokeAttachmentPreview(target);
+          if (projectId && target.serverId) {
+            void deleteChatAttachment(projectId, target.serverId).catch(() => undefined);
+          }
+        }
+        return prev.filter((item) => item.id !== id);
+      });
+    },
+    [projectId],
+  );
 
   const clearAttachments = useCallback(() => {
     setAttachments((prev) => {
@@ -179,6 +230,11 @@ export function MessageBox({
         if (slotCount >= MAX_ATTACHMENTS) {
           errors.push(`Tối đa ${MAX_ATTACHMENTS} file.`);
           break;
+        }
+
+        if (sandboxActive && isFileOverSandboxStagingLimit(file.size, true)) {
+          errors.push(sandboxStagingLimitError(file.name));
+          continue;
         }
 
         const result = validateFile(file, slotCount);
@@ -202,11 +258,15 @@ export function MessageBox({
       if (!nextItems.length) return;
 
       setAttachments((prev) => [...prev, ...nextItems]);
-      for (const item of nextItems) {
-        void simulateAttachmentUpload(item.id, setAttachments);
+      if (projectId) {
+        for (const item of nextItems) {
+          void uploadComposerAttachment(projectId, item.id, item.file, setAttachments);
+        }
+      } else {
+        setAttachmentErrors((prev) => [...prev, "Chưa chọn dự án để upload file."]);
       }
     },
-    [inputDisabled],
+    [inputDisabled, projectId, sandboxActive],
   );
 
   const handlePaste = useCallback(
@@ -285,13 +345,32 @@ export function MessageBox({
     if (!canSendNow) return;
 
     const readyAttachments = attachments.filter(
-      (item) => item.status === "ready",
+      (item) =>
+        item.status === "ready" &&
+        !item.sandboxBlocked &&
+        item.serverId &&
+        !isFileOverSandboxStagingLimit(item.file.size, sandboxActive),
     );
     onSend({ text: value.trim(), attachments: readyAttachments });
     onChange("");
     clearAttachments();
     setAttachmentErrors([]);
-  }, [attachments, canSendNow, clearAttachments, onChange, onSend, value]);
+  }, [attachments, canSendNow, clearAttachments, onChange, onSend, sandboxActive, value]);
+
+  useEffect(() => {
+    if (!sandboxActive) {
+      setAttachments((prev) =>
+        prev.map((item) => ({ ...item, sandboxBlocked: false })),
+      );
+      return;
+    }
+    setAttachments((prev) =>
+      prev.map((item) => ({
+        ...item,
+        sandboxBlocked: isFileOverSandboxStagingLimit(item.file.size, true),
+      })),
+    );
+  }, [sandboxActive]);
 
   useEffect(() => {
     adjustHeight();
@@ -343,6 +422,17 @@ export function MessageBox({
           onRemove={removeAttachment}
           disabled={inputDisabled}
         />
+
+        {sandboxActive ? (
+          <div className={styles.sandboxCallout} role="status">
+            <AlertTriangle size={14} aria-hidden />
+            <span>
+              Sandbox đang bật — file đính kèm tối đa{" "}
+              {Math.round((stagingMaxBytes ?? 5 * 1024 * 1024) / (1024 * 1024))} MB.
+              File lớn hơn sẽ không gửi được.
+            </span>
+          </div>
+        ) : null}
 
         {attachmentErrors.length > 0 ? (
           <div className={styles.attachmentErrors} role="alert">
@@ -438,7 +528,11 @@ export function MessageBox({
                 onClick={handleSendClick}
                 disabled={!canSendNow}
                 aria-label="Gửi tin nhắn"
-                title="Gửi tin nhắn"
+                title={
+                  hasSandboxOversized
+                    ? "Có file vượt 5 MB (sandbox)"
+                    : "Gửi tin nhắn"
+                }
               >
                 <ArrowUp size={16} strokeWidth={2} />
               </button>

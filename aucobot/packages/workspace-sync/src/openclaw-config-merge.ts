@@ -1,7 +1,10 @@
 import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AgentFormInput } from './agent-form.types.js';
-import { compileOpenClawAgentConfig } from './agent-workspace-compile.js';
+import {
+  compileOpenClawAgentConfig,
+  type OpenClawAgentSandbox,
+} from './agent-workspace-compile.js';
 import {
   buildAgentToAgentAllowListFromCollaboration,
   type ProjectCollaborationSettings,
@@ -131,10 +134,19 @@ export function mergeAgentsIntoConfig(
   config: Record<string, unknown>,
   enabledAgents: ProjectAgentMergeRow[],
   collaboration: ProjectCollaborationSettings,
+  projectSandboxDefault?: OpenClawAgentSandbox,
 ): Record<string, unknown> {
   const agents = (config.agents as Record<string, unknown> | undefined) ?? {};
   const defaults = (agents.defaults as Record<string, unknown> | undefined) ?? {};
   defaults.workspace = CONTAINER_WORKSPACE_DIR;
+
+  // Project-level sandbox default applies to every agent (incl. main) unless a
+  // per-agent entry overrides it via agents.list[].sandbox.
+  if (projectSandboxDefault) {
+    defaults.sandbox = projectSandboxDefault;
+  } else {
+    delete defaults.sandbox;
+  }
 
   const list: Record<string, unknown>[] = [
     {
@@ -158,6 +170,7 @@ export function mergeAgentsIntoConfig(
       name: row.name.trim() || row.slug,
       workspace: `${CONTAINER_STATE_DIR}/workspace-${row.slug}`,
       model: patch.model,
+      exec: patch.exec,
     };
     if (patch.sandbox) {
       entry.sandbox = patch.sandbox;

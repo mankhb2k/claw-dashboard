@@ -27,3 +27,22 @@ export {
   type AvatarReadResult,
   type AvatarStorage,
 } from './avatar-storage.js';
+export {
+  SANDBOX_STAGING_MAX_BYTES,
+  CHAT_ATTACHMENT_MAX_IMAGE_BYTES,
+  CHAT_ATTACHMENT_MAX_DOC_BYTES,
+  CHAT_ATTACHMENT_MAX_COUNT,
+  classifyChatAttachmentKind,
+  maxBytesForChatKind,
+  extensionForChatMime,
+  chatAttachmentObjectKey,
+  chatAttachmentRelativePath,
+  resolveEffectiveSandboxActive,
+  agentSlugFromSessionKey,
+  type ChatAttachmentKind,
+  type ChatAttachmentStorageRef,
+  type ChatAttachmentSaveInput,
+  type ChatAttachmentSaveResult,
+  type ChatAttachmentReadResult,
+  type ChatAttachmentStorage,
+} from './chat-attachment-storage.js';

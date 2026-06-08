@@ -11,6 +11,8 @@ import {
   agentHeartbeatResponseSchema,
   updateProjectHeartbeatBodySchema,
   updateAgentHeartbeatBodySchema,
+  projectSandboxResponseSchema,
+  updateProjectSandboxBodySchema,
   providerDefinitionSchema,
   gatewayTokenResponseSchema,
   connectorDefinitionSchema,
@@ -34,6 +36,8 @@ import {
   skillAiEditorOptionsResponseSchema,
   skillAiEditorCompleteInputSchema,
   skillAiEditorCompleteResponseSchema,
+  agentAiEditorCompleteInputSchema,
+  agentAiEditorCompleteResponseSchema,
   type ProjectSkillListRow,
   type ProjectSkillDetail,
   type CreateProjectSkillInput,
@@ -55,6 +59,8 @@ import {
   updateProjectAgentSchema,
   type SkillAiEditorOptionsResponse,
   type SkillAiEditorCompleteInput,
+  type AgentAiEditorCompleteInput,
+  type AgentAiEditorCompleteResponse,
   type Project,
   type CreateProjectInput,
   type ProjectHealth,
@@ -70,6 +76,7 @@ import {
   type ProviderKeyRevealResponse,
   type ProjectHeartbeatResponse,
   type AgentHeartbeatResponse,
+  type ProjectSandboxResponse,
 } from '@/schemas/project.schema'
 import {
   createCronJobInputSchema,
@@ -420,6 +427,17 @@ export const projectApi = {
     return skillAiEditorCompleteResponseSchema.parse(res.data)
   },
 
+  agentAiEditorComplete: async (
+    id: string,
+    input: AgentAiEditorCompleteInput,
+  ): Promise<AgentAiEditorCompleteResponse> => {
+    const body = agentAiEditorCompleteInputSchema.parse(input)
+    const res = await api.post(`/api/projects/${id}/agent-ai-editor/complete`, body, {
+      timeout: 130_000,
+    })
+    return agentAiEditorCompleteResponseSchema.parse(res.data)
+  },
+
   listAgentTemplates: async (id: string): Promise<AgentTemplateRow[]> => {
     const res = await api.get(`/api/projects/${id}/agents/templates`)
     return z.array(agentTemplateRowSchema).parse(res.data)
@@ -582,6 +600,20 @@ export const projectApi = {
     const payload = updateProjectHeartbeatBodySchema.parse(body)
     const res = await api.patch(`/api/projects/${id}/heartbeat`, payload)
     return projectHeartbeatResponseSchema.parse(res.data)
+  },
+
+  getProjectSandbox: async (id: string): Promise<ProjectSandboxResponse> => {
+    const res = await api.get(`/api/projects/${id}/sandbox`)
+    return projectSandboxResponseSchema.parse(res.data)
+  },
+
+  updateProjectSandbox: async (
+    id: string,
+    body: { enabled: boolean; mode: 'non-main' | 'all' },
+  ): Promise<ProjectSandboxResponse> => {
+    const payload = updateProjectSandboxBodySchema.parse(body)
+    const res = await api.patch(`/api/projects/${id}/sandbox`, payload)
+    return projectSandboxResponseSchema.parse(res.data)
   },
 
   getAgentHeartbeat: async (

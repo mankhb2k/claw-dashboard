@@ -19,6 +19,11 @@
   background: color-mix(in srgb, var(--color-muted) 40%, transparent);
 }
 
+.chipBlocked {
+  border-color: var(--color-destructive, #dc2626);
+  opacity: 0.85;
+}
+
 .imageThumb {
   display: block;
   width: 100%;

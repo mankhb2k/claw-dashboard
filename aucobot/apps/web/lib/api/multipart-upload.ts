@@ -44,7 +44,7 @@ export async function uploadMultipart(
         'message' in json &&
         String((json as { message: unknown }).message)) ||
       `Upload failed (${res.status})`
-    throw new Error(message)
+    throw new Error(String(message))
   }
 
   return parseApiEnvelope(json)

@@ -7,6 +7,7 @@ import { AgentApiKeysService } from './agents/agent-api-keys.service';
 import { CollaborationController } from './agents/collaboration.controller';
 import { CollaborationService } from './agents/collaboration.service';
 import { SkillAiEditorController } from './skill-ai-editor/skill-ai-editor.controller';
+import { AgentAiEditorController } from './agent-ai-editor/agent-ai-editor.controller';
 import { ProjectConnectorsCatalogController } from './connectors/project-connectors-catalog.controller';
 import { ProjectConnectorsController } from './connectors/project-connectors.controller';
 import { ConnectorOAuthController } from './connectors/connector-oauth.controller';
@@ -15,6 +16,7 @@ import { ProjectSkillsService } from './skills/project-skills.service';
 import { SkillStoreService } from './skills/skill-store.service';
 import { AgentService } from './agents/agent.service';
 import { SkillAiEditorService } from './skill-ai-editor/skill-ai-editor.service';
+import { AgentAiEditorService } from './agent-ai-editor/agent-ai-editor.service';
 import { ProjectConnectorsService } from './connectors/project-connectors.service';
 import { AuthModule } from '../../core/auth/auth.module';
 import { WorkspaceModule } from './workspace/workspace.module';
@@ -38,6 +40,7 @@ import { ChannelsModule } from './channels/channels.module';
     AgentApiKeysController,
     CollaborationController,
     SkillAiEditorController,
+    AgentAiEditorController,
   ],
   providers: [
     ProjectsService,
@@ -48,6 +51,7 @@ import { ChannelsModule } from './channels/channels.module';
     AgentApiKeysService,
     CollaborationService,
     SkillAiEditorService,
+    AgentAiEditorService,
   ],
   exports: [
     ProjectsService,

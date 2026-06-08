@@ -2,11 +2,24 @@
  * E2E smoke: connect upstream + chat.send + wait for assistant reply.
  * Usage: pnpm --filter @aucobot/control-plane-core build && npm run test:chat-send
  * Env: CHAT_TEST_WS_URL, CHAT_TEST_PORT, CHAT_TEST_TOKEN, CHAT_TEST_PROJECT_DIR
+ * Optional: CHAT_TEST_ATTACH=1 — send a tiny PNG via attachments[] (gateway base64 path)
+ * Optional: CHAT_TEST_ATTACH_PDF=1 — send a minimal PDF via attachments[]
  */
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openGatewayUpstream } from '@aucobot/control-plane-core';
+
+/** 1×1 red PNG */
+const TINY_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+/** Minimal valid PDF (~minimal structure) */
+const TINY_PDF_BASE64 =
+  'JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvTWVkaWFCb3ggWzAgMCA2NCA2NF0+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgNC9Sb290IDEgMCBSL0luZm8gNCAwIFI+PgpzdGFydHhyZWYKMTk0CiUlRU9G';
+
+const withAttach = process.env.CHAT_TEST_ATTACH === '1';
+const withPdf = process.env.CHAT_TEST_ATTACH_PDF === '1';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const projectDir =
@@ -76,12 +89,37 @@ try {
   console.log(`chat.history ok (${prior} messages in session "${sessionKey}")`);
 
   const runId = randomUUID();
-  console.log(`Sending: "${userMessage}"`);
+  const attachments = [];
+  if (withAttach) {
+    attachments.push({
+      mimeType: 'image/png',
+      fileName: 'spike.png',
+      content: TINY_PNG_BASE64,
+    });
+  }
+  if (withPdf) {
+    attachments.push({
+      mimeType: 'application/pdf',
+      fileName: 'spike.pdf',
+      content: TINY_PDF_BASE64,
+    });
+  }
+
+  const sendMessage =
+    attachments.length > 0
+      ? process.env.CHAT_TEST_MESSAGE?.trim() ||
+        'Acknowledge the attachment(s) in one short sentence.'
+      : userMessage;
+
+  console.log(
+    `Sending: "${sendMessage}"${attachments.length ? ` (+${attachments.length} attachment(s))` : ''}`,
+  );
   await request(ws, 'chat.send', {
     sessionKey,
-    message: userMessage,
+    message: sendMessage,
     deliver: false,
     idempotencyKey: runId,
+    ...(attachments.length ? { attachments } : {}),
   });
   console.log('chat.send accepted, waiting for assistant reply…');
 

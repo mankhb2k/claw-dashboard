@@ -1,0 +1,44 @@
+.noModelBanner {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: min(720px, 100%);
+  margin-inline: auto;
+  padding: var(--space-2) var(--space-4) 0;
+}
+
+.noModelText {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  background: color-mix(in srgb, var(--color-muted) 50%, transparent);
+  border-bottom: 1px solid var(--color-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.noModelLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.errorBanner {
+  width: 100%;
+  max-width: min(720px, 100%);
+  margin-inline: auto;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-4);
+}
+
+.errorBannerInner {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-destructive) 12%, transparent);
+  color: var(--color-destructive);
+  font-size: var(--font-size-sm);
+}
+
+.errorBannerInner a {
+  color: inherit;
+  font-weight: 600;
+}
