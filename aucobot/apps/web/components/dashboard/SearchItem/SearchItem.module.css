@@ -10,10 +10,6 @@
   padding-right: 36px !important;
 }
 
-.searchContainerSm .clearButton {
-  top: 6px;
-}
-
 /* Nút xóa nhanh nội dung tìm kiếm */
 .clearButton {
   position: absolute;
@@ -32,6 +28,10 @@
   border-radius: var(--radius-sm);
   transition: background-color var(--transition-fast) ease, color var(--transition-fast) ease;
   z-index: 10;
+}
+
+.searchContainer[data-size="sm"] .clearButton {
+  top: 6px;
 }
 
 /* Hiệu ứng hover nút xóa */

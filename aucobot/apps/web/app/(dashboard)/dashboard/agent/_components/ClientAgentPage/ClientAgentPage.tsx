@@ -94,7 +94,8 @@ export default function ClientAgentPage() {
       void loadList().catch(() => undefined);
     };
     window.addEventListener(COLLABORATION_UPDATED_EVENT, refresh);
-    return () => window.removeEventListener(COLLABORATION_UPDATED_EVENT, refresh);
+    return () =>
+      window.removeEventListener(COLLABORATION_UPDATED_EVENT, refresh);
   }, [loadList]);
 
   useEffect(() => {
@@ -183,7 +184,12 @@ export default function ClientAgentPage() {
         </Typography>
       )}
 
-      <Flex justify="between" align="center" wrap="wrap" className={styles.toolbar}>
+      <Flex
+        justify="between"
+        align="center"
+        wrap="wrap"
+        className={styles.toolbar}
+      >
         <Flex align="center" gap={3} className={styles.toolbarStart}>
           <SearchItem
             id="agent-search"
@@ -250,7 +256,11 @@ export default function ClientAgentPage() {
           <Typography variant="h3" className={styles.emptyTitle}>
             No agents yet
           </Typography>
-          <Typography variant="small" color="muted" className={styles.emptyDesc}>
+          <Typography
+            variant="small"
+            color="muted"
+            className={styles.emptyDesc}
+          >
             Create your first agent, then configure collaboration so they can
             work together.
           </Typography>
@@ -272,7 +282,11 @@ export default function ClientAgentPage() {
               ? "No agents in collaboration"
               : "No matching agents"}
           </Typography>
-          <Typography variant="small" color="muted" className={styles.emptyDesc}>
+          <Typography
+            variant="small"
+            color="muted"
+            className={styles.emptyDesc}
+          >
             {listFilter === "collaboration"
               ? "Add agents on the Collaboration page or clear the filter."
               : "Try a different search query."}
@@ -285,7 +299,11 @@ export default function ClientAgentPage() {
               Open collaboration settings
             </Link>
           ) : (
-            <Button type="button" variant="ghost" onClick={() => setSearchQuery("")}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setSearchQuery("")}
+            >
               Clear search
             </Button>
           )}

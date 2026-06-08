@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React, { useState } from "react";
 import { SearchItem } from "@/components/dashboard/SearchItem/SearchItem";
 
@@ -9,45 +9,107 @@ const meta: Meta<typeof SearchItem> = {
     layout: "centered",
   },
   tags: ["autodocs"],
-  decorators: [
-    (Story) => (
-      <div style={{ width: "400px", padding: "20px", background: "var(--color-background)", borderRadius: "var(--radius-lg)", border: "1px solid var(--color-border)" }}>
-        <Story />
-      </div>
-    ),
-  ],
+  argTypes: {
+    size: {
+      control: "select",
+      options: ["sm", "md"],
+    },
+    maxWidth: {
+      control: "text",
+    },
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof SearchItem>;
 
-/** Component wrapper để quản lý state động trong Storybook */
-function SearchItemInteractive(args: any) {
+const DemoLabel = ({ children }: { children: React.ReactNode }) => (
+  <p
+    style={{
+      fontSize: "11px",
+      textTransform: "uppercase",
+      letterSpacing: "0.05em",
+      color: "var(--color-muted-foreground)",
+      fontWeight: 600,
+      marginBottom: "12px",
+    }}
+  >
+    {children}
+  </p>
+);
+
+const DemoBox = ({ children }: { children: React.ReactNode }) => (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "24px",
+      padding: "32px",
+      minWidth: "400px",
+      border: "1px dashed var(--color-border)",
+      borderRadius: "var(--radius-md)",
+      background: "var(--color-background)",
+    }}
+  >
+    {children}
+  </div>
+);
+
+function SearchItemInteractive(args: React.ComponentProps<typeof SearchItem>) {
   const [value, setValue] = useState(args.value || "");
   return <SearchItem {...args} value={value} onChange={setValue} />;
 }
-
-export const Interactive: Story = {
-  render: (args) => <SearchItemInteractive {...args} />,
-  args: {
-    placeholder: "Gõ thử để trải nghiệm nút Clear...",
-    id: "search-interactive",
-  },
-};
 
 export const Default: Story = {
   args: {
     value: "",
     onChange: () => {},
     placeholder: "Tìm kiếm agent, kỹ năng...",
+    size: "md",
   },
+};
+
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div>
+        <DemoLabel>Sizes</DemoLabel>
+        <DemoBox>
+          <SearchItem
+            id="search-size-md"
+            value=""
+            onChange={() => {}}
+            placeholder="Medium (default)"
+            size="md"
+          />
+          <SearchItem
+            id="search-size-sm"
+            value=""
+            onChange={() => {}}
+            placeholder="Small"
+            size="sm"
+          />
+        </DemoBox>
+      </div>
+    </div>
+  ),
 };
 
 export const WithText: Story = {
   args: {
     value: "Claude 3.5 Sonnet",
     onChange: () => {},
-    placeholder: "Tìm kiếm...",
+    placeholder: "Searching...",
+    size: "md",
+  },
+};
+
+export const Interactive: Story = {
+  render: (args) => <SearchItemInteractive {...args} />,
+  args: {
+    placeholder: "Gõ thử để trải nghiệm nút Clear...",
+    id: "search-interactive",
+    size: "md",
   },
 };
 
@@ -56,6 +118,7 @@ export const CustomPlaceholder: Story = {
     value: "",
     onChange: () => {},
     placeholder: "Tìm kiếm theo tên kênh kết nối...",
+    size: "md",
   },
 };
 
@@ -65,5 +128,6 @@ export const CustomMaxWidth: Story = {
     onChange: () => {},
     placeholder: "Rộng tối đa 200px...",
     maxWidth: 200,
+    size: "md",
   },
 };

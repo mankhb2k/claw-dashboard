@@ -1,0 +1,12 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  flex: 1;
+  min-height: 0;
+  padding-bottom: var(--space-8);
+}
+
+.loading {
+  min-height: 200px;
+}

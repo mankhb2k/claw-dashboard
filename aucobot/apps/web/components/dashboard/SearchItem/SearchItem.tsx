@@ -18,28 +18,30 @@ interface SearchItemProps {
   className?: string;
   /** Độ rộng tối đa (ví dụ: '320px', 360) */
   maxWidth?: string | number;
-  /** Kích thước input — mặc định `sm` cho thanh tìm kiếm gọn */
+  /** Kích thước input — mặc định `md` */
   size?: InputSize;
 }
 
 export function SearchItem({
   value,
   onChange,
-  placeholder = "Tìm kiếm...",
+  placeholder = "Searching...",
   id = "search-input",
   className = "",
   maxWidth,
-  size = "sm",
+  size = "md",
 }: SearchItemProps) {
   const handleClear = () => {
     onChange("");
   };
 
-  const customStyle = maxWidth ? { maxWidth: typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth } : undefined;
+  const customStyle = maxWidth
+    ? { maxWidth: typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth }
+    : undefined;
 
   return (
     <div
-      className={`${styles.searchContainer} ${size === "sm" ? styles.searchContainerSm : ""} ${className}`}
+      className={`${styles.searchContainer} ${className}`}
       style={customStyle}
       data-size={size}
     >

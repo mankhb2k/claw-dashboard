@@ -1,122 +1,125 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import Link from 'next/link'
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import styles from './Tabs.module.css'
+import * as React from "react";
+import Link from "next/link";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import styles from "./Tabs.module.css";
 
-export type TabBadgeTone = 'default' | 'danger'
+export type TabBadgeTone = "default" | "danger";
 
 export type TabItem = {
-  value: string
-  label: React.ReactNode
-  icon?: React.ReactNode
-  href?: string
-  badge?: React.ReactNode
-  badgeTone?: TabBadgeTone
-  disabled?: boolean
-}
+  value: string;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+  href?: string;
+  badge?: React.ReactNode;
+  badgeTone?: TabBadgeTone;
+  disabled?: boolean;
+};
 
-export type TabsVariant = 'section' | 'panel'
+export type TabsVariant = "section" | "panel";
 
 export type TabsProps = {
-  items: readonly TabItem[]
-  value: string
-  onValueChange?: (value: string) => void
+  items: readonly TabItem[];
+  value: string;
+  onValueChange?: (value: string) => void;
   /** Sliding underline under the active tab */
-  showIndicator?: boolean
-  variant?: TabsVariant
-  className?: string
-  trailing?: React.ReactNode
-  trailingClassName?: string
-  'aria-label'?: string
-}
+  showIndicator?: boolean;
+  variant?: TabsVariant;
+  className?: string;
+  trailing?: React.ReactNode;
+  trailingClassName?: string;
+  "aria-label"?: string;
+};
 
 type IndicatorState = {
-  left: number
-  width: number
-}
+  left: number;
+  width: number;
+};
 
 export function Tabs({
   items,
   value,
   onValueChange,
   showIndicator = true,
-  variant = 'section',
-  className = '',
+  variant = "section",
+  className = "",
   trailing,
-  trailingClassName = '',
-  'aria-label': ariaLabel = 'Tabs',
+  trailingClassName = "",
+  "aria-label": ariaLabel = "Tabs",
 }: TabsProps) {
-  const listRef = useRef<HTMLDivElement>(null)
-  const indicatorAnimatedRef = useRef(false)
-  const [indicator, setIndicator] = useState<IndicatorState>({ left: 0, width: 0 })
-  const [indicatorAnimated, setIndicatorAnimated] = useState(false)
+  const listRef = useRef<HTMLDivElement>(null);
+  const indicatorAnimatedRef = useRef(false);
+  const [indicator, setIndicator] = useState<IndicatorState>({
+    left: 0,
+    width: 0,
+  });
+  const [indicatorAnimated, setIndicatorAnimated] = useState(false);
 
   const updateIndicator = useCallback(() => {
     if (!showIndicator) {
-      return
+      return;
     }
 
-    const list = listRef.current
+    const list = listRef.current;
     if (!list) {
-      return
+      return;
     }
 
-    const active = list.querySelector<HTMLElement>('[data-active="true"]')
+    const active = list.querySelector<HTMLElement>('[data-active="true"]');
     if (!active) {
-      setIndicator({ left: 0, width: 0 })
-      return
+      setIndicator({ left: 0, width: 0 });
+      return;
     }
 
     const next = {
       left: active.offsetLeft,
       width: active.offsetWidth,
-    }
+    };
 
-    setIndicator(next)
+    setIndicator(next);
 
     if (next.width > 0 && !indicatorAnimatedRef.current) {
-      indicatorAnimatedRef.current = true
+      indicatorAnimatedRef.current = true;
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => setIndicatorAnimated(true))
-      })
+        requestAnimationFrame(() => setIndicatorAnimated(true));
+      });
     }
-  }, [showIndicator])
+  }, [showIndicator]);
 
   useLayoutEffect(() => {
-    updateIndicator()
+    updateIndicator();
 
-    const list = listRef.current
+    const list = listRef.current;
     if (!list) {
-      return undefined
+      return undefined;
     }
 
-    const observer = new ResizeObserver(() => updateIndicator())
-    observer.observe(list)
+    const observer = new ResizeObserver(() => updateIndicator());
+    observer.observe(list);
 
-    return () => observer.disconnect()
-  }, [value, items, updateIndicator, showIndicator])
+    return () => observer.disconnect();
+  }, [value, items, updateIndicator, showIndicator]);
 
   useLayoutEffect(() => {
-    const onResize = () => updateIndicator()
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [updateIndicator])
+    const onResize = () => updateIndicator();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [updateIndicator]);
 
   const rootClass = [
-    variant === 'panel' ? styles.rootPanel : styles.rootSection,
+    variant === "panel" ? styles.rootPanel : styles.rootSection,
     className,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(" ");
 
   const listClass = [
     styles.tabList,
-    variant === 'panel' ? styles.tabListPanel : styles.tabListSection,
-  ].join(' ')
+    variant === "panel" ? styles.tabListPanel : styles.tabListSection,
+  ].join(" ");
 
-  const tabClass = variant === 'panel' ? styles.tabPanel : styles.tabSection
+  const tabClass = variant === "panel" ? styles.tabPanel : styles.tabSection;
 
   const renderTabContent = (item: TabItem) => (
     <>
@@ -130,16 +133,16 @@ export function Tabs({
         <span
           className={[
             styles.badge,
-            item.badgeTone === 'danger' ? styles.badgeDanger : '',
+            item.badgeTone === "danger" ? styles.badgeDanger : "",
           ]
             .filter(Boolean)
-            .join(' ')}
+            .join(" ")}
         >
           {item.badge}
         </span>
       ) : null}
     </>
-  )
+  );
 
   const listInner = (
     <div
@@ -152,10 +155,10 @@ export function Tabs({
         <span
           className={[
             styles.indicator,
-            indicatorAnimated ? styles.indicatorAnimated : '',
+            indicatorAnimated ? styles.indicatorAnimated : "",
           ]
             .filter(Boolean)
-            .join(' ')}
+            .join(" ")}
           aria-hidden
           style={{
             width: indicator.width,
@@ -164,9 +167,9 @@ export function Tabs({
         />
       ) : null}
       {items.map((item) => {
-        const isActive = item.value === value
-        const sharedClass = [styles.tab, tabClass].join(' ')
-        const dataActive = isActive ? 'true' : 'false'
+        const isActive = item.value === value;
+        const sharedClass = [styles.tab, tabClass].join(" ");
+        const dataActive = isActive ? "true" : "false";
 
         if (item.href) {
           return (
@@ -174,13 +177,13 @@ export function Tabs({
               key={item.value}
               href={item.href}
               role="tab"
-              aria-current={isActive ? 'page' : undefined}
+              aria-current={isActive ? "page" : undefined}
               data-active={dataActive}
               className={sharedClass}
             >
               {renderTabContent(item)}
             </Link>
-          )
+          );
         }
 
         return (
@@ -196,23 +199,27 @@ export function Tabs({
           >
             {renderTabContent(item)}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 
-  if (variant === 'panel') {
+  if (variant === "panel") {
     return (
       <div className={rootClass}>
         <div className={styles.listWrapPanel}>{listInner}</div>
         {trailing ? (
-          <div className={[styles.trailing, trailingClassName].filter(Boolean).join(' ')}>
+          <div
+            className={[styles.trailing, trailingClassName]
+              .filter(Boolean)
+              .join(" ")}
+          >
             {trailing}
           </div>
         ) : null}
       </div>
-    )
+    );
   }
 
-  return <nav className={rootClass}>{listInner}</nav>
+  return <nav className={rootClass}>{listInner}</nav>;
 }

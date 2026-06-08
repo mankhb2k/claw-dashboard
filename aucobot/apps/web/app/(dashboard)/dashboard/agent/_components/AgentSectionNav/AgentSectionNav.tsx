@@ -65,7 +65,11 @@ export function AgentSectionNav() {
     loadCollaboration();
     loadCron();
     window.addEventListener(COLLABORATION_UPDATED_EVENT, loadCollaboration);
-    return () => window.removeEventListener(COLLABORATION_UPDATED_EVENT, loadCollaboration);
+    return () =>
+      window.removeEventListener(
+        COLLABORATION_UPDATED_EVENT,
+        loadCollaboration,
+      );
   }, [projectId, pathname]);
 
   const items = useMemo<TabItem[]>(
@@ -75,8 +79,7 @@ export function AgentSectionNav() {
         value: "collaboration",
         label: "Collaboration",
         href: COLLABORATION_HREF,
-        badge:
-          collaborationOn && memberCount > 0 ? memberCount : undefined,
+        badge: collaborationOn && memberCount > 0 ? memberCount : undefined,
       },
       {
         value: "schedules",

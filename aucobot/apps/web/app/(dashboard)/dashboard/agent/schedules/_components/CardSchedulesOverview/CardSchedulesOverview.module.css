@@ -1,0 +1,32 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.headerRow {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.quota {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+}
+
+.agentLink {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.agentLink:hover {
+  text-decoration: underline;
+}
