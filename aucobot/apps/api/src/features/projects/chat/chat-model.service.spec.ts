@@ -101,6 +101,7 @@ describe('ChatModelService', () => {
       const result = await service.listModels(PROJECT_ID);
 
       expect(result.primaryModel).toBe('google/gemini-2.5-flash');
+      expect(result.agentPrimaryModel).toBe('google/gemini-2.5-flash');
       expect(result.providers).toHaveLength(1);
       expect(result.providers[0]).toMatchObject({
         providerId: 'gemini',
@@ -120,6 +121,43 @@ describe('ChatModelService', () => {
       const result = await service.listModels(PROJECT_ID);
 
       expect(result.providers).toHaveLength(0);
+    });
+
+    it('returns agentPrimaryModel from custom agent formData', async () => {
+      const { service, prisma, agents } = createService();
+      prisma.projectProviderKey.findMany.mockResolvedValue([
+        {
+          providerId: 'openai',
+          defaultModel: 'openai/gpt-4o',
+          lastTestOk: true,
+          updatedAt: new Date(),
+        },
+      ]);
+      agents.get.mockResolvedValue({
+        slug: 'support',
+        formData: { model: 'openai/gpt-5.4-mini' },
+      });
+
+      const result = await service.listModels(PROJECT_ID, 'support');
+
+      expect(result.agentPrimaryModel).toBe('openai/gpt-5.4-mini');
+      expect(result.primaryModel).toBe('google/gemini-2.5-flash');
+    });
+
+    it('returns project primary for main agent', async () => {
+      const { service, prisma } = createService();
+      prisma.projectProviderKey.findMany.mockResolvedValue([
+        {
+          providerId: 'gemini',
+          defaultModel: 'google/gemini-2.5-flash',
+          lastTestOk: true,
+          updatedAt: new Date(),
+        },
+      ]);
+
+      const result = await service.listModels(PROJECT_ID, 'main');
+
+      expect(result.agentPrimaryModel).toBe('google/gemini-2.5-flash');
     });
   });
 

@@ -88,8 +88,49 @@ export class ChatModelService {
     return stored?.trim() || resolveProvider(providerId)?.defaultModel || null;
   }
 
-  async listModels(projectId: string): Promise<{
+  private isModelInCatalog(
+    providers: ChatModelProviderGroup[],
+    openclawId: string,
+  ): boolean {
+    const trimmed = openclawId.trim();
+    if (!trimmed) return false;
+    return providers.some((provider) =>
+      provider.models.some((model) => model.openclawId === trimmed),
+    );
+  }
+
+  private async resolveAgentPrimaryModel(
+    projectId: string,
+    agentId: string,
+    projectPrimary: string | null,
+    providers: ChatModelProviderGroup[],
+  ): Promise<string | null> {
+    if (agentId === 'main') {
+      return projectPrimary;
+    }
+
+    try {
+      const agent = await this.agents.get(projectId, agentId);
+      const form = parseAgentFormData(agent.formData);
+      const raw = typeof form.model === 'string' ? form.model.trim() : '';
+      if (!raw) {
+        return projectPrimary;
+      }
+      if (this.isModelInCatalog(providers, raw)) {
+        return raw;
+      }
+      return projectPrimary;
+    } catch {
+      return projectPrimary;
+    }
+  }
+
+  async listModels(
+    projectId: string,
+    agentId?: string,
+  ): Promise<{
     primaryModel: string | null;
+    agentPrimaryModel: string | null;
     providers: ChatModelProviderGroup[];
   }> {
     const rows = await this.prisma.projectProviderKey.findMany({
@@ -136,9 +177,20 @@ export class ChatModelService {
       });
     }
 
-    return { primaryModel, providers };
+    const trimmedAgentId = agentId?.trim();
+    const agentPrimaryModel = trimmedAgentId
+      ? await this.resolveAgentPrimaryModel(
+          projectId,
+          trimmedAgentId,
+          primaryModel,
+          providers,
+        )
+      : primaryModel;
+
+    return { primaryModel, agentPrimaryModel, providers };
   }
 
+  /** @deprecated Dashboard Chat uses gateway `sessions.patch` for session overrides. */
   async setModel(params: {
     projectId: string;
     agentId: string;

@@ -74,7 +74,7 @@
   overflow: hidden;
 }
 
-/* Tab content area — flex column; scroll khi tab dài, fill khi card dùng flex:1 */
+/* Tab content area — flex column; scroll tall tabs, flex-fill cards */
 .body {
   flex: 1;
   min-height: 0;
@@ -94,7 +94,7 @@
   width: 100%;
 }
 
-/* Instructions tab: không scroll body, textarea tự scroll */
+/* Instructions tab: body does not scroll; textarea scrolls internally */
 .bodyInstructions {
   overflow: hidden;
 }

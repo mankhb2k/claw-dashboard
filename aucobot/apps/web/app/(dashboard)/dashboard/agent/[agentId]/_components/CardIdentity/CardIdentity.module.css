@@ -1,4 +1,4 @@
-/* Khung card identity */
+/* Identity card shell */
 .card {
   display: flex;
   flex-direction: column;
@@ -12,7 +12,7 @@
   gap: var(--space-2);
 }
 
-/* Hàng avatar + upload */
+/* Avatar + upload row */
 .avatarRow {
   margin-bottom: var(--space-2);
 }
@@ -23,7 +23,7 @@
   gap: var(--space-2);
 }
 
-/* Ô nhập tag */
+/* Tag input field */
 .tagContainer {
   display: flex;
   flex-wrap: wrap;
@@ -81,7 +81,7 @@
   color: var(--color-muted-foreground);
 }
 
-/* Lỗi validation tag */
+/* Tag validation error */
 .fieldError {
   font-size: var(--font-size-xs);
   color: var(--color-danger);

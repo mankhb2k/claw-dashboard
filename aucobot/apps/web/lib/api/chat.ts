@@ -32,6 +32,7 @@ const chatModelProviderSchema = z.object({
 
 export const chatModelsResponseSchema = z.object({
   primaryModel: z.string().nullable(),
+  agentPrimaryModel: z.string().nullable().optional(),
   providers: z.array(chatModelProviderSchema),
 })
 
@@ -45,9 +46,20 @@ export const chatApi = {
     return chatStatusSchema.parse(res.data)
   },
 
-  listModels: async (projectId: string): Promise<ChatModelsResponse> => {
-    const res = await api.get(`/api/projects/${projectId}/chat/models`)
-    return chatModelsResponseSchema.parse(res.data)
+  listModels: async (
+    projectId: string,
+    agentId?: string,
+  ): Promise<ChatModelsResponse> => {
+    const params = agentId?.trim() ? { agentId: agentId.trim() } : undefined
+    const res = await api.get(`/api/projects/${projectId}/chat/models`, {
+      params,
+    })
+    const parsed = chatModelsResponseSchema.parse(res.data)
+    return {
+      ...parsed,
+      agentPrimaryModel:
+        parsed.agentPrimaryModel ?? parsed.primaryModel ?? null,
+    }
   },
 
   setModel: async (

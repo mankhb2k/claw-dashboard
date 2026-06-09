@@ -1,4 +1,4 @@
-/* Thẻ thông tin của từng Agent */
+/* Single agent card */
 .card {
   display: flex;
   flex-direction: column;
@@ -7,7 +7,7 @@
   cursor: pointer;
 }
 
-/* Phần header của thẻ */
+/* Card header */
 .cardHeader {
   display: flex;
   justify-content: space-between;
@@ -15,7 +15,7 @@
   gap: var(--space-3);
 }
 
-/* Khung bọc avatar tròn */
+/* Round avatar wrapper */
 .avatar {
   width: 44px !important;
   height: 44px !important;
@@ -23,15 +23,14 @@
   font-size: 20px !important;
 }
 
-/* Phần thông tin tên Agent */
+/* Agent name block */
 .info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-
-/* Chấm trạng thái hoạt động pulsing */
+/* Active status dot */
 .statusIndicator {
   width: 8px;
   height: 8px;
@@ -40,13 +39,13 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-success) 20%, transparent);
 }
 
-/* Chấm trạng thái tắt hoạt động */
+/* Inactive status dot */
 .statusIndicator.inactive {
   background-color: var(--color-muted-foreground);
   box-shadow: none;
 }
 
-/* Mô tả nhiệm vụ của Agent */
+/* Agent description */
 .description {
   min-height: 42px;
   display: -webkit-box;
@@ -55,12 +54,12 @@
   overflow: hidden;
 }
 
-/* Khung chứa các tag đính kèm */
+/* Metadata tags row */
 .tags {
   margin-top: auto;
 }
 
-/* Tag chung */
+/* Base tag pill */
 .tag {
   font-size: var(--font-size-xs);
   font-weight: 500;
@@ -71,35 +70,35 @@
   gap: 4px;
 }
 
-/* Tag dành cho Model của OpenAI */
+/* OpenAI model tag */
 .tagOpenAI {
   background: color-mix(in srgb, #10b981 10%, transparent);
   color: #059669;
   border: 1px solid color-mix(in srgb, #10b981 20%, transparent);
 }
 
-/* Tag dành cho Model của Anthropic Claude */
+/* Anthropic Claude model tag */
 .tagClaude {
   background: color-mix(in srgb, #d97706 10%, transparent);
   color: #b45309;
   border: 1px solid color-mix(in srgb, #d97706 20%, transparent);
 }
 
-/* Tag dành cho Model của Google Gemini */
+/* Google Gemini model tag */
 .tagGemini {
   background: color-mix(in srgb, #3b82f6 10%, transparent);
   color: #2563eb;
   border: 1px solid color-mix(in srgb, #3b82f6 20%, transparent);
 }
 
-/* Tag phụ */
+/* Secondary tag */
 .tagSecondary {
   background: var(--color-muted);
   color: var(--color-muted-foreground);
   border: 1px solid var(--color-border);
 }
 
-/* Agent trong collaboration pool */
+/* Collaboration pool badge */
 .tagCollaboration {
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--color-primary);

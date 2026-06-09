@@ -38,6 +38,7 @@ import { Users } from "lucide-react";
 import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
 import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
+import { CardSkill } from "../CardSkill/CardSkill";
 import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
 import { CardSchedules } from "../CardSchedules/CardSchedules";
 import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
@@ -136,7 +137,7 @@ export function EditPanel({
       if (detail.mode === "advanced") {
         setValue("instructionsMode", "advanced", { shouldDirty: true });
         setValue("instructionsAdvanced", detail.markdown, { shouldDirty: true });
-        toast.success("Đã áp dụng", "AGENTS.md → Instructions (Markdown nâng cao).");
+        toast.success("Applied", "AGENTS.md → Instructions (Advanced markdown).");
         return;
       }
       setValue("instructionsMode", "simple", { shouldDirty: true });
@@ -164,7 +165,7 @@ export function EditPanel({
           { shouldDirty: true },
         );
       }
-      toast.success("Đã áp dụng", "Nội dung → Instructions (Editor).");
+      toast.success("Applied", "Content applied → Instructions (Editor).");
     };
     window.addEventListener(AGENT_PANEL_APPLY_AGENTS_MD, onApply);
     return () =>
@@ -330,39 +331,43 @@ export function EditPanel({
         <CardInstructions />
       )}
       {activeTab === "capabilities" && (
-        <CardCapabilities
-          model={model}
-          setModel={(val) => setValue("model", val, { shouldDirty: true })}
-          sandboxEnabled={sandboxEnabled}
-          setSandboxEnabled={(val) =>
-            setValue("sandboxEnabled", val, { shouldDirty: true })
-          }
-          sandboxMode={sandboxMode}
-          setSandboxMode={(val) =>
-            setValue("sandboxMode", val, { shouldDirty: true })
-          }
-          sandboxScope={sandboxScope}
-          setSandboxScope={(val) =>
-            setValue("sandboxScope", val, { shouldDirty: true })
-          }
-          sandboxWorkspaceAccess={sandboxWorkspaceAccess}
-          setSandboxWorkspaceAccess={(val) =>
-            setValue("sandboxWorkspaceAccess", val, { shouldDirty: true })
-          }
-          askPolicy={askPolicy}
-          setAskPolicy={(val) =>
-            setValue("askPolicy", val, { shouldDirty: true })
-          }
-          safeBins={safeBins}
-          newTagInput={newTagInput}
-          setNewTagInput={setNewTagInput}
-          timeoutSec={timeoutSec}
-          setTimeoutSec={(val) =>
-            setValue("timeoutSec", val, { shouldDirty: true })
-          }
-          handleAddTag={handleAddTag}
-          handleRemoveTag={handleRemoveTag}
-        />
+        <>
+          <CardCapabilities
+            projectId={projectId}
+            model={model}
+            setModel={(val) => setValue("model", val, { shouldDirty: true })}
+            sandboxEnabled={sandboxEnabled}
+            setSandboxEnabled={(val) =>
+              setValue("sandboxEnabled", val, { shouldDirty: true })
+            }
+            sandboxMode={sandboxMode}
+            setSandboxMode={(val) =>
+              setValue("sandboxMode", val, { shouldDirty: true })
+            }
+            sandboxScope={sandboxScope}
+            setSandboxScope={(val) =>
+              setValue("sandboxScope", val, { shouldDirty: true })
+            }
+            sandboxWorkspaceAccess={sandboxWorkspaceAccess}
+            setSandboxWorkspaceAccess={(val) =>
+              setValue("sandboxWorkspaceAccess", val, { shouldDirty: true })
+            }
+            askPolicy={askPolicy}
+            setAskPolicy={(val) =>
+              setValue("askPolicy", val, { shouldDirty: true })
+            }
+            safeBins={safeBins}
+            newTagInput={newTagInput}
+            setNewTagInput={setNewTagInput}
+            timeoutSec={timeoutSec}
+            setTimeoutSec={(val) =>
+              setValue("timeoutSec", val, { shouldDirty: true })
+            }
+            handleAddTag={handleAddTag}
+            handleRemoveTag={handleRemoveTag}
+          />
+          <CardSkill />
+        </>
       )}
       {activeTab === "integrations" && (
         <CardIntegrations agentId={agentId ?? "new-agent"} />

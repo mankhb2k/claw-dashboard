@@ -190,7 +190,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setChannelCatalog(mergeChannelCatalog(definitions, rows));
     } catch (err) {
       setChannelsError(
-        err instanceof Error ? err.message : "Không tải được danh sách kênh",
+        err instanceof Error ? err.message : "Failed to load channels",
       );
     } finally {
       setChannelsLoading(false);
@@ -213,7 +213,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setProjectConnectors(connectors);
     } catch (err) {
       setConnectorsError(
-        err instanceof Error ? err.message : "Không tải được danh sách connector",
+        err instanceof Error ? err.message : "Failed to load connectors",
       );
     } finally {
       setConnectorsLoading(false);
@@ -232,7 +232,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setApiKeys(items);
     } catch (err) {
       setApiKeysError(
-        err instanceof Error ? err.message : "Không tải được API keys",
+        err instanceof Error ? err.message : "Failed to load API keys",
       );
     } finally {
       setApiKeysLoading(false);
@@ -302,7 +302,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       await loadAgentApiKeys();
     } catch (err) {
       setApiKeysError(
-        err instanceof Error ? err.message : "Không tạo được API key",
+        err instanceof Error ? err.message : "Failed to create API key",
       );
     } finally {
       setIsGenerating(false);
@@ -320,7 +320,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
     } catch (err) {
       setApiKeysError(
-        err instanceof Error ? err.message : "Không xóa được API key",
+        err instanceof Error ? err.message : "Failed to revoke API key",
       );
     } finally {
       setDeletingKeyId(null);

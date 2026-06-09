@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Put, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Put, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
@@ -46,11 +46,16 @@ export class ChatController {
   }
 
   @Get(':id/chat/models')
-  async listModels(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
+  async listModels(
+    @CurrentUser() user: JwtPayloadUser,
+    @Param('id') id: string,
+    @Query('agentId') agentId?: string,
+  ) {
     await this.projects.assertOwned(user.sub, id);
-    return this.chatModels.listModels(id);
+    return this.chatModels.listModels(id, agentId?.trim() || undefined);
   }
 
+  /** @deprecated Dashboard Chat uses gateway sessions.patch for session-only overrides. */
   @Put(':id/chat/model')
   async setModel(
     @CurrentUser() user: JwtPayloadUser,

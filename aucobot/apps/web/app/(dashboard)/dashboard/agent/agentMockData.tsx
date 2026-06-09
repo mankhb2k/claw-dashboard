@@ -14,7 +14,7 @@ export const INITIAL_AGENTS: AgentItem[] = [
     id: "agent-1",
     name: "Customer Support",
     avatar: "🤖",
-    description: "Giải đáp thắc mắc và hỗ trợ khách hàng tự động trên các kênh chat.",
+    description: "Answers questions and provides automated customer support across chat channels.",
     model: "Claude 3.5 Sonnet",
     skillsCount: 3,
     isActive: true,
@@ -23,7 +23,7 @@ export const INITIAL_AGENTS: AgentItem[] = [
     id: "agent-2",
     name: "Data Analyst",
     avatar: "📊",
-    description: "Phân tích số liệu và trích xuất báo cáo thông minh từ cơ sở dữ liệu.",
+    description: "Analyzes metrics and extracts smart reports from your data sources.",
     model: "GPT-4o",
     skillsCount: 5,
     isActive: true,
@@ -32,7 +32,7 @@ export const INITIAL_AGENTS: AgentItem[] = [
     id: "agent-3",
     name: "Sales Assistant",
     avatar: "💼",
-    description: "Tự động tư vấn sản phẩm, báo giá và hỗ trợ chốt đơn hàng nhanh chóng.",
+    description: "Recommends products, quotes prices, and helps close orders quickly.",
     model: "Gemini 1.5 Pro",
     skillsCount: 2,
     isActive: false,
@@ -58,77 +58,77 @@ export interface AgentTemplate {
 export const INITIAL_TEMPLATES: AgentTemplate[] = [
   {
     id: "empty",
-    name: "Agent Tự Thiết Kế",
+    name: "Custom Agent",
     avatar: "⚙️",
-    description: "Tự do cấu hình hoàn toàn từ con số không. Thích hợp cho chuyên gia muốn xây dựng logic riêng biệt.",
+    description: "Configure everything from scratch. Best for experts who want their own logic.",
     model: "claude-3-5-sonnet",
     vibe: "professional",
     toolsProfile: "minimal",
     sandboxEnabled: false,
     bootstrapFiles: {
-      identity: "# Tên Agent\n- Mô tả chung về trợ lý.",
-      soul: "# LINH HỒN (SOUL.md)\n- Định hình tính cách và các giới hạn đạo đức.",
-      agents: "# CHỈ THỊ (AGENTS.md)\n- Các quy tắc thực thi và kịch bản hỗ trợ.",
+      identity: "# Agent name\n- General description of the assistant.",
+      soul: "# SOUL.md\n- Define personality and ethical boundaries.",
+      agents: "# AGENTS.md\n- Execution rules and support playbooks.",
     },
   },
   {
     id: "customer-support",
-    name: "Trợ Lý Hỗ Trợ Khách Hàng",
+    name: "Customer Support Assistant",
     avatar: "🤖",
-    description: "Giao tiếp lịch thiệp, hỗ trợ giải đáp thắc mắc, phân loại yêu cầu và lưu giữ hội thoại tốt.",
+    description: "Polite communication, Q&A, request triage, and strong conversation memory.",
     model: "gemini-1-5-pro",
     vibe: "friendly",
     toolsProfile: "messaging",
     sandboxEnabled: false,
     bootstrapFiles: {
-      identity: "# Trợ Lý Hỗ Trợ Khách Hàng\n- Emoji: 🤖\n- Phong cách: Ân cần, lắng nghe, chu đáo.",
-      soul: "# LINH HỒN (SOUL.md)\n- Bạn là đại diện hỗ trợ kỹ thuật và chăm sóc khách hàng của OpenClaw.\n- Luôn kiên nhẫn, thấu hiểu và xoa dịu những khách hàng đang bực bội.",
-      agents: "# CHỈ THỊ (AGENTS.md)\n- Hỗ trợ giải đáp các thắc mắc về sản phẩm và dịch vụ.\n- Phân loại yêu cầu của người dùng để chuyển tiếp lên kỹ thuật nếu cần.\n- Sử dụng memory_search để nhớ lịch sử và thông tin khách hàng qua các phiên làm việc.",
+      identity: "# Customer Support Assistant\n- Emoji: 🤖\n- Style: Kind, attentive, thorough.",
+      soul: "# SOUL.md\n- You represent OpenClaw technical support and customer care.\n- Stay patient, empathetic, and calm frustrated customers.",
+      agents: "# AGENTS.md\n- Answer product and service questions.\n- Triage user requests and escalate to engineering when needed.\n- Use memory_search to recall customer history across sessions.",
     },
   },
   {
     id: "coding-assistant",
-    name: "Kỹ Sư Lập Trình AI",
+    name: "AI Software Engineer",
     avatar: "💻",
-    description: "Đọc, sửa, viết code chuẩn mực. Tích hợp sâu hệ thống file để tự động hóa lập trình và debug.",
+    description: "Read, edit, and write clean code with deep filesystem integration for automation and debugging.",
     model: "claude-3-5-sonnet",
     vibe: "strict",
     toolsProfile: "coding",
     sandboxEnabled: true,
     bootstrapFiles: {
-      identity: "# Kỹ Sư Lập Trình AI\n- Emoji: 💻\n- Phong cách: Cực kỳ ngắn gọn, kỹ thuật, logic.",
-      soul: "# LINH HỒN (SOUL.md)\n- Bạn là một lập trình viên cao cấp, viết code sạch (clean code) theo tiêu chuẩn công nghiệp.\n- Trả lời trực tiếp vào giải pháp kỹ thuật, tránh rườm rà sáo rỗng.",
-      agents: "# CHỈ THỊ (AGENTS.md)\n- Sử dụng các công cụ hệ thống file (read/write/edit/apply_patch) để trực tiếp xem và sửa đổi mã nguồn.\n- Luôn kiểm tra tính toàn vẹn và thực thi chạy thử code trước khi hoàn thành task.\n- Viết hướng dẫn ngắn kèm chú thích trong code.",
+      identity: "# AI Software Engineer\n- Emoji: 💻\n- Style: Concise, technical, logical.",
+      soul: "# SOUL.md\n- You are a senior engineer writing clean, industry-standard code.\n- Go straight to the technical solution; avoid filler language.",
+      agents: "# AGENTS.md\n- Use filesystem tools (read/write/edit/apply_patch) to inspect and change source code.\n- Verify integrity and run code before marking a task complete.\n- Add brief inline comments where helpful.",
     },
   },
   {
     id: "data-analyst",
-    name: "Chuyên Gia Phân Tích & Tra Cứu",
+    name: "Research & Analytics Specialist",
     avatar: "📊",
-    description: "Tra cứu web thời gian thực, đọc hiểu tài liệu, phân tích số liệu và xuất báo cáo trực quan.",
+    description: "Real-time web research, document reading, data analysis, and visual reporting.",
     model: "gpt-4o",
     vibe: "professional",
     toolsProfile: "full",
     sandboxEnabled: true,
     bootstrapFiles: {
-      identity: "# Chuyên Gia Phân Tích & Tra Cứu\n- Emoji: 📊\n- Phong cách: Khoa học, khách quan, dữ liệu thực tế.",
-      soul: "# LINH HỒN (SOUL.md)\n- Bạn là nhà nghiên cứu thị trường và phân tích số liệu.\n- Chỉ đưa ra thông tin dựa trên dữ kiện thực tế có thể kiểm chứng. Tránh phán đoán chủ quan.",
-      agents: "# CHỈ THỊ (AGENTS.md)\n- Sử dụng công cụ web_search để cập nhật thông tin nóng hổi nhất từ Internet.\n- Sử dụng browser để cào dữ liệu chuyên sâu và code_execution để phân tích các tập tin CSV/Excel.\n- Xuất báo cáo theo dạng biểu bảng trực quan, cấu trúc rõ ràng.",
+      identity: "# Research & Analytics Specialist\n- Emoji: 📊\n- Style: Scientific, objective, evidence-based.",
+      soul: "# SOUL.md\n- You are a market researcher and data analyst.\n- Only state verifiable facts; avoid subjective guesses.",
+      agents: "# AGENTS.md\n- Use web_search for up-to-date information.\n- Use browser for deep scraping and code_execution for CSV/Excel analysis.\n- Deliver structured reports with clear tables.",
     },
   },
   {
     id: "orchestrator",
-    name: "Tổng Đài Điều Phối Đa Agent",
+    name: "Multi-Agent Orchestrator",
     avatar: "🧠",
-    description: "Phân chia công việc phức tạp thành các task nhỏ và giao phó cho các Sub-agents phù hợp.",
+    description: "Break complex work into subtasks and delegate to the right sub-agents.",
     model: "gemini-1-5-pro",
     vibe: "professional",
     toolsProfile: "full",
     sandboxEnabled: false,
     bootstrapFiles: {
-      identity: "# Tổng Đài Điều Phối Đa Agent\n- Emoji: 🧠\n- Phong cách: Có tầm nhìn, tổ chức, quản lý xuất sắc.",
-      soul: "# LINH HỒN (SOUL.md)\n- Bạn là tổng đài trưởng điều phối hệ thống đa tác nhân (Multi-Agent Systems).\n- Mục tiêu của bạn là tối đa hóa hiệu quả bằng cách giao việc cho các sub-agents chuyên môn cao.",
-      agents: "# CHỈ THỊ (AGENTS.md)\n- Khi nhận yêu cầu phức tạp từ người dùng, hãy chia nhỏ thành các nhiệm vụ con.\n- Sử dụng công cụ subagents để triệu gọi các Agent phụ (như Kỹ sư lập trình hoặc Chuyên gia tra cứu) để xử lý.\n- Kiểm tra chéo kết quả từ các Agent phụ trước khi tổng hợp gửi báo cáo hoàn chỉnh cho người dùng.",
+      identity: "# Multi-Agent Orchestrator\n- Emoji: 🧠\n- Style: Visionary, organized, strong coordinator.",
+      soul: "# SOUL.md\n- You lead a multi-agent system.\n- Maximize efficiency by delegating to specialized sub-agents.",
+      agents: "# AGENTS.md\n- Split complex user requests into subtasks.\n- Use subagents to call specialists (e.g. coding or research agents).\n- Cross-check sub-agent results before delivering the final report.",
     },
   },
 ];
@@ -151,7 +151,7 @@ export interface FacebookConfig {
 export const MOCK_API_KEYS: ApiKeyItem[] = [
   {
     id: "key-1",
-    name: "Website Chatbot (Sản xuất)",
+    name: "Website Chatbot (Production)",
     token: "sk-claw-w8a927c6b12f45ea9834bc6293f3c12a",
     createdAt: "2026-05-18",
   },
@@ -164,7 +164,7 @@ export const MOCK_API_KEYS: ApiKeyItem[] = [
 ];
 
 // ─── Agent ↔ Channel (mock until API persists per agent) ───────────────────
-/** Agent lắng nghe / trả lời trên channelId nào (cấu hình kênh ở tab Channel). */
+/** Which channelIds this agent listens on (channel config lives under Channels). */
 
 export interface AgentChannelAssignment {
   channelId: string;
@@ -177,7 +177,7 @@ export const MOCK_AGENT_CHANNEL_TOOLS: AgentChannelAssignment[] = [
 ];
 
 // ─── Agent ↔ Connector tools (mock until API persists per agent) ───────────
-/** Agent được phép gọi tool của connector slug nào (quyền chi tiết ở tab Connect). */
+/** Which connector slugs this agent may call (details under Connect tab). */
 
 export interface AgentConnectorToolAssignment {
   connectorSlug: string;
@@ -189,6 +189,4 @@ export const MOCK_AGENT_CONNECTOR_TOOLS: AgentConnectorToolAssignment[] = [
   { connectorSlug: "notion", isActive: true },
   { connectorSlug: "shopee", isActive: true },
 ];
-
-
 

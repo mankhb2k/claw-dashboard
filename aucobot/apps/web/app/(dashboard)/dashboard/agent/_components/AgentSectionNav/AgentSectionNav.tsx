@@ -99,6 +99,7 @@ export function AgentSectionNav() {
       value={activeValue}
       variant="section"
       showIndicator
+      style={{ paddingTop: "var(--space-6)" }}
       aria-label="Agent section"
     />
   );

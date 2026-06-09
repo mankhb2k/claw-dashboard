@@ -107,6 +107,32 @@ export function mergeProviderKeysIntoConfig(
   return config;
 }
 
+const SHARED_PROJECT_SKILLS_DIR = `${CONTAINER_WORKSPACE_DIR}/skills`;
+
+/** Ensure per-agent workspaces can load project skills synced under `workspace/skills/`. */
+export function mergeSharedSkillsLoadIntoConfig(
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  const skills = (config.skills as Record<string, unknown> | undefined) ?? {};
+  const load = (skills.load as Record<string, unknown> | undefined) ?? {};
+  const existing = Array.isArray(load.extraDirs)
+    ? load.extraDirs.map((entry) => String(entry).trim()).filter(Boolean)
+    : [];
+  const extraDirs = existing.includes(SHARED_PROJECT_SKILLS_DIR)
+    ? existing
+    : [SHARED_PROJECT_SKILLS_DIR, ...existing];
+  load.extraDirs = extraDirs;
+  skills.load = load;
+  config.skills = skills;
+  return config;
+}
+
+function normalizeAgentSkillAllowlist(formData: AgentFormInput): string[] {
+  return Array.from(new Set(formData.skillNames.map((name) => name.trim()).filter(Boolean))).sort(
+    (a, b) => a.localeCompare(b),
+  );
+}
+
 export type ProjectAgentMergeRow = {
   slug: string;
   name: string;
@@ -175,12 +201,15 @@ export function mergeAgentsIntoConfig(
     if (patch.sandbox) {
       entry.sandbox = patch.sandbox;
     }
+    entry.skills = normalizeAgentSkillAllowlist(row.formData);
     list.push(entry);
   }
 
   agents.defaults = defaults;
   agents.list = list;
   config.agents = agents;
+
+  mergeSharedSkillsLoadIntoConfig(config);
 
   mergeAgentCollaborationToolsIntoConfig(
     config,

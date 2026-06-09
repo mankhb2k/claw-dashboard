@@ -7,9 +7,19 @@ import { isOssRuntime } from "@/lib/runtime-mode";
 import { useProjectStore } from "@/stores/project.store";
 import { chatApi, type ChatModelsResponse } from "@/lib/api/chat";
 import {
+  resolveAgentPrimaryOpenClawId,
+  resolveModelSelection,
+} from "@/lib/chat/model-catalog";
+import {
   ProjectChatClient,
   type GatewayEventFrame,
 } from "@/lib/chat/project-chat-client";
+import { patchSessionModel } from "@/lib/chat/session-model-patch";
+import {
+  clearSessionModelSelection,
+  loadSessionModelSelection,
+  saveSessionModelSelection,
+} from "@/lib/chat/session-model-storage";
 import {
   extractText,
   roleOf,
@@ -345,29 +355,76 @@ export function ClientChatPage() {
     client.connect();
   }, [projectId, ready, loadHistory, loadSessions, subscribeSessions]);
 
-  const applyModel = useCallback(
-    async (nextModel: string, nextProviderId?: string) => {
-      if (!projectId || !nextModel.trim()) return;
+  const agentPrimaryModel = useMemo(
+    () => resolveAgentPrimaryOpenClawId(modelOptions),
+    [modelOptions],
+  );
+
+  const modelIsOverride = useMemo(() => {
+    if (!modelId || !agentPrimaryModel) return false;
+    return modelId.trim() !== agentPrimaryModel.trim();
+  }, [modelId, agentPrimaryModel]);
+
+  const applySessionModel = useCallback(
+    async (
+      nextModel: string,
+      nextProviderId?: string,
+      options?: { persist?: boolean },
+    ) => {
+      const trimmed = nextModel.trim();
+      if (!trimmed || !sessionKeyRef.current) return;
+      const client = clientRef.current;
+      if (!client?.connected) return;
+
       setModelSaving(true);
       setError(null);
       try {
-        const res = await chatApi.setModel(projectId, {
-          agentId,
-          model: nextModel.trim(),
-        });
-        setModelId(res.model);
+        await patchSessionModel(client, sessionKeyRef.current, trimmed);
+        setModelId(trimmed);
         if (nextProviderId) setProviderId(nextProviderId);
-        setModelOptions((prev) =>
-          prev ? { ...prev, primaryModel: res.primaryModel } : prev,
-        );
+        if (options?.persist !== false && projectId) {
+          saveSessionModelSelection(
+            projectId,
+            agentIdRef.current,
+            sessionKeyRef.current,
+            nextProviderId ?? providerId ?? "",
+            trimmed,
+          );
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Không đổi model");
+        setError(err instanceof Error ? err.message : "Failed to change model");
       } finally {
         setModelSaving(false);
       }
     },
-    [projectId, agentId],
+    [projectId, providerId],
   );
+
+  const resetSessionModelToAgentDefault = useCallback(async () => {
+    const primary = agentPrimaryModel?.trim();
+    if (!primary) return;
+    const selection = resolveModelSelection(modelOptions, primary);
+    if (projectId && sessionKeyRef.current) {
+      clearSessionModelSelection(
+        projectId,
+        agentIdRef.current,
+        sessionKeyRef.current,
+      );
+    }
+    setProviderId(selection.providerId);
+    setModelId(selection.modelId);
+    const client = clientRef.current;
+    if (!client?.connected || !sessionKeyRef.current) return;
+    setModelSaving(true);
+    setError(null);
+    try {
+      await patchSessionModel(client, sessionKeyRef.current, null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset model");
+    } finally {
+      setModelSaving(false);
+    }
+  }, [agentPrimaryModel, modelOptions, projectId]);
 
   useEffect(() => {
     if (!projectId) {
@@ -376,31 +433,51 @@ export function ClientChatPage() {
     }
     setModelsLoading(true);
     void chatApi
-      .listModels(projectId)
+      .listModels(projectId, agentId)
       .then((res) => {
         setModelOptions(res);
-        const primary = res.primaryModel?.trim();
-        const provider =
-          res.providers.find((p) =>
-            p.models.some((m) => m.openclawId === primary),
-          ) ?? res.providers[0];
-        if (provider) {
-          setProviderId(provider.providerId);
-          const model =
-            primary && provider.models.some((m) => m.openclawId === primary)
-              ? primary
-              : (provider.defaultModel ?? provider.models[0]?.openclawId ?? "");
-          setModelId(model);
-        }
       })
       .catch((err) => {
-        setModelOptions({ primaryModel: null, providers: [] });
+        setModelOptions({
+          primaryModel: null,
+          agentPrimaryModel: null,
+          providers: [],
+        });
         setError(
-          err instanceof Error ? err.message : "Không tải danh sách model",
+          err instanceof Error ? err.message : "Failed to load model catalog",
         );
       })
       .finally(() => setModelsLoading(false));
-  }, [projectId]);
+  }, [projectId, agentId]);
+
+  useEffect(() => {
+    if (!projectId || !modelOptions || modelsLoading) return;
+
+    const stored = loadSessionModelSelection(projectId, agentId, sessionKey);
+    const target =
+      stored?.modelId?.trim() ||
+      agentPrimaryModel?.trim() ||
+      modelOptions.primaryModel?.trim() ||
+      "";
+    const selection = resolveModelSelection(modelOptions, target);
+    setProviderId(selection.providerId);
+    setModelId(selection.modelId);
+
+    const client = clientRef.current;
+    if (!client?.connected || connectionState !== "connected" || !target) {
+      return;
+    }
+
+    void patchSessionModel(client, sessionKey, target).catch(() => undefined);
+  }, [
+    projectId,
+    agentId,
+    sessionKey,
+    modelOptions,
+    modelsLoading,
+    agentPrimaryModel,
+    connectionState,
+  ]);
 
   const activeProvider = useMemo(
     () => modelOptions?.providers.find((p) => p.providerId === providerId),
@@ -444,7 +521,7 @@ export function ClientChatPage() {
     const nextModel =
       provider?.defaultModel ?? provider?.models[0]?.openclawId ?? "";
     if (nextModel) {
-      void applyModel(nextModel, nextProviderId);
+      void applySessionModel(nextModel, nextProviderId);
     } else {
       setModelId("");
     }
@@ -452,7 +529,7 @@ export function ClientChatPage() {
 
   const handleModelChange = (nextModel: string) => {
     setModelId(nextModel);
-    void applyModel(nextModel);
+    void applySessionModel(nextModel);
   };
 
   const handleAgentChange = (nextAgentId: string) => {
@@ -500,13 +577,31 @@ export function ClientChatPage() {
       setStreamText("");
       streamRef.current = "";
       setSending(false);
+      const primary = agentPrimaryModel?.trim();
+      if (primary) {
+        await patchSessionModel(client, key, primary).catch(() => undefined);
+        const selection = resolveModelSelection(modelOptions, primary);
+        setProviderId(selection.providerId);
+        setModelId(selection.modelId);
+        if (projectId) {
+          clearSessionModelSelection(projectId, agentId, key);
+        }
+      }
       await loadSessions(client, agentId, debouncedSessionSearchRef.current);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không tạo phiên mới");
     } finally {
       setCreatingSession(false);
     }
-  }, [agentId, creatingSession, sending, projectId, loadSessions]);
+  }, [
+    agentId,
+    agentPrimaryModel,
+    creatingSession,
+    sending,
+    projectId,
+    modelOptions,
+    loadSessions,
+  ]);
 
   const handleRenameSession = useCallback(
     async (key: string, label: string) => {
@@ -816,6 +911,17 @@ export function ClientChatPage() {
           sandboxActive={sandboxActive}
           stagingMaxBytes={stagingMaxBytes}
           contextUsage={activeContextUsage}
+          modelIsOverride={modelIsOverride}
+          modelHint={
+            modelIsOverride
+              ? "Session only — Telegram, Discord, and other channels still use the agent default model."
+              : undefined
+          }
+          onResetModel={
+            modelIsOverride
+              ? () => void resetSessionModelToAgentDefault()
+              : undefined
+          }
         />
       </div>
     </div>

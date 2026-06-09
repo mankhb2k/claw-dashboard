@@ -34,7 +34,7 @@ export function CardAgent({
   onDuplicate,
   onDelete,
 }: CardAgentProps) {
-  // Xác định dòng chip màu của từng dòng mô hình AI
+  // Model chip color by provider family
   const getModelClass = (modelName: string) => {
     const name = modelName.toLowerCase();
     if (name.includes("gpt")) return styles.tagOpenAI;
@@ -73,7 +73,7 @@ export function CardAgent({
           </div>
         </Flex>
 
-        {/* Nút thao tác nhanh */}
+        {/* Quick actions menu */}
         <DropdownMenu>
           <DropdownMenuTrigger variant="kebab" onClick={(e) => e.stopPropagation()}>
             <MoreVertical size={16} />
@@ -117,12 +117,12 @@ export function CardAgent({
         </DropdownMenu>
       </div>
 
-      {/* Mô tả nhiệm vụ */}
+      {/* Description */}
       <Typography variant="small" color="muted" className={styles.description}>
         {agent.description}
       </Typography>
 
-      {/* Phân loại các thông số đính kèm */}
+      {/* Metadata tags */}
       <Flex wrap="wrap" gap={8} className={styles.tags}>
         <span className={`${styles.tag} ${getModelClass(agent.model)}`}>
           {agent.model}

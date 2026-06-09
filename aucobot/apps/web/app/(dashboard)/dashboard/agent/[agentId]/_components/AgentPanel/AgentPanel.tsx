@@ -47,7 +47,7 @@ function renderSimpleMarkdown(text: string): React.ReactNode {
 }
 
 function formatApiError(err: unknown, providerId?: string): React.ReactNode {
-  const msg = err instanceof Error ? err.message : "AI không phản hồi";
+  const msg = err instanceof Error ? err.message : "AI did not respond";
   const needsKey =
     msg.includes("NO_PROVIDER_KEY") ||
     msg.includes("PROVIDER_DISABLED") ||
@@ -58,7 +58,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
       <>
         {msg}{" "}
         <Link href={`/dashboard/ai-model/${providerId}`}>
-          Mở cài đặt provider
+          Open provider settings
         </Link>
       </>
     );
@@ -67,7 +67,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
     return (
       <>
         {msg}{" "}
-        <Link href="/dashboard/ai-model">Kết nối AI Model</Link>
+        <Link href="/dashboard/ai-model">Connect AI Model</Link>
       </>
     );
   }
@@ -121,7 +121,7 @@ export function AgentPanel() {
       intent: "optimize" | "chat",
     ) => {
       if (!projectId || !providerId || !modelId) {
-        throw new Error("Chọn provider và model trước");
+        throw new Error("Select a provider and model first");
       }
 
       const apiMessages = nextMessages
@@ -297,8 +297,8 @@ export function AgentPanel() {
             </Typography>
             <Typography variant="xs" color="muted">
               {optimizeMode
-                ? "Đang tối ưu AGENTS.md…"
-                : "Soạn AGENTS.md · hướng dẫn tab Bot Agent"}
+                ? "Optimizing AGENTS.md…"
+                : "Draft AGENTS.md · Bot Agent tab guidance"}
             </Typography>
           </Flex>
         </Flex>
@@ -392,7 +392,7 @@ export function AgentPanel() {
                 <Flex align="center" gap={8}>
                   <Spinner size="sm" />
                   <Typography variant="small" color="muted">
-                    {optimizeMode ? "AI đang phân tích…" : "Đang soạn…"}
+                    {optimizeMode ? "AI is analyzing…" : "Drafting…"}
                   </Typography>
                 </Flex>
               </Box>
@@ -412,8 +412,8 @@ export function AgentPanel() {
           disabled={inputDisabled}
           placeholder={
             optimizeMode
-              ? "Trả lời câu hỏi của AI để hoàn thiện AGENTS.md…"
-              : "Mô tả agent, hỏi về tab, hoặc nhờ viết AGENTS.md…"
+              ? "Answer the AI's questions to finish AGENTS.md…"
+              : "Describe the agent, ask about a tab, or request AGENTS.md…"
           }
           providerId={providerId}
           providerOptions={providerSelectOptions}
@@ -425,10 +425,10 @@ export function AgentPanel() {
           inputId="agent-panel-message-input"
           composerId="agent-panel-composer"
           ariaLabel="Agent assistant message input"
-          hint={`Tab trái: ${activeEditTab}. ${
+          hint={`Left tab: ${activeEditTab}. ${
             hasProviders
-              ? "Optimize with AI dùng model đã chọn."
-              : "Thêm API key để dùng AI."
+              ? "Optimize with AI uses the selected model."
+              : "Add an API key to use AI."
           }`}
         />
       </div>

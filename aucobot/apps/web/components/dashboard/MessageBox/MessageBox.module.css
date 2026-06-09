@@ -132,6 +132,32 @@
   max-width: 11rem;
 }
 
+.resetModelBtn {
+  flex-shrink: 0;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(
+    in srgb,
+    var(--color-muted) 55%,
+    var(--color-background)
+  );
+  color: var(--color-foreground);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.resetModelBtn:hover:not(:disabled) {
+  background: var(--color-muted);
+}
+
+.resetModelBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .toolbarSelect :global(.field) {
   gap: 0;
 }

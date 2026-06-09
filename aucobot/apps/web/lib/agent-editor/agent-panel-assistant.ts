@@ -26,65 +26,65 @@ export type EditTabGuide =
   | 'heartbeat';
 
 const TAB_GUIDES: Record<EditTabGuide, string> = {
-  identity: `**Identity** — tên, mô tả, avatar emoji, tags và vibe (professional / friendly / strict).
+  identity: `**Identity** — name, description, avatar emoji, tags, and vibe (professional / friendly / strict).
 
-- Vibe ảnh hưởng **SOUL.md** (giọng điệu) khi lưu agent.
-- Mô tả ngắn giúp agent hiểu vai trò tổng quát; chi tiết hành vi nằm ở **Instructions**.`,
+- Vibe shapes **SOUL.md** (tone) when the agent is saved.
+- A short description sets the overall role; detailed behavior lives under **Instructions**.`,
 
-  instructions: `**Instructions** — biên soạn **AGENTS.md** (quy tắc vận hành agent).
+  instructions: `**Instructions** — edit **AGENTS.md** (how the agent operates).
 
-Hai chế độ:
-1. **Editor** — điền Role, Rules, Constraints, Output format; backend compile thành AGENTS.md khi Save.
-2. **Markdown** — chỉnh trực tiếp AGENTS.md (Advanced) hoặc xem preview (Simple).
+Two modes:
+1. **Editor** — fill Role, Rules, Constraints, Output format; the backend compiles AGENTS.md on Save.
+2. **Markdown** — edit AGENTS.md directly (Advanced) or preview (Simple).
 
-Cấu trúc AGENTS.md chuẩn:
+Standard AGENTS.md structure:
 \`\`\`markdown
 # Role
-Mô tả vai trò...
+Role description...
 
 # Rules
-- Quy tắc 1
-- Quy tắc 2
+- Rule 1
+- Rule 2
 
 # Constraints
-- Giới hạn an toàn...
+- Safety limits...
 
 # Output format
-(Tùy chọn) Định dạng trả lời...
+(Optional) Response format...
 \`\`\`
 
-Dùng panel này để soạn/thảo markdown rồi bấm **Áp dụng vào Instructions**.`,
+Use this panel to draft markdown, then click **Apply to Instructions**.`,
 
-  capabilities: `**Capabilities** — model AI, sandbox Docker, exec policy.
+  capabilities: `**Capabilities** — AI model, Docker sandbox, exec policy.
 
-- **Model** — provider chính (Claude, GPT, Gemini…).
-- **Sandbox** — chạy lệnh trong container; giới hạn file đính kèm chat ~5 MB khi bật.
-- **Exec ask policy** — always / on-miss / off trước khi chạy lệnh.
-- **Safe bins** — allowlist binary (python, node…).
-- **Timeout** — giới hạn thời gian exec (giây).`,
+- **Model** — primary provider (Claude, GPT, Gemini…).
+- **Sandbox** — run commands in a container; chat attachments are limited to ~5 MB when enabled.
+- **Exec ask policy** — always / on-miss / off before running commands.
+- **Safe bins** — allowlisted binaries (python, node…).
+- **Timeout** — exec time limit in seconds.`,
 
-  integrations: `**Integrations** — kênh và connector gắn với agent (Telegram, Slack, MCP…).
+  integrations: `**Integrations** — channels and connectors bound to this agent (Telegram, Slack, MCP…).
 
-Cấu hình tích hợp theo project; tab này liên kết agent với kênh đã bật.`,
+Integration config is project-wide; this tab links the agent to enabled channels.`,
 
-  schedules: `**Schedules** — cron job theo agent (gateway cron).
+  schedules: `**Schedules** — per-agent cron jobs (gateway cron).
 
-Tạo lịch chạy định kỳ; cần agent đã lưu và gateway hoạt động.`,
+Create recurring runs; requires a saved agent and a running gateway.`,
 
-  heartbeat: `**Heartbeat** — agent tự “thở” định kỳ (kiểm tra inbox, nhắc việc…).
+  heartbeat: `**Heartbeat** — periodic agent wake-ups (inbox checks, reminders…).
 
-Bật/tắt và cấu hình interval; phù hợp agent giám sát liên tục.`,
+Enable/disable and set the interval; useful for always-on monitoring agents.`,
 };
 
-const WELCOME = `Xin chào! Tôi là **trợ lý soạn agent** — giúp bạn viết **AGENTS.md** và hiểu các tab **Bot Agent**.
+const WELCOME = `Hi! I am the **agent drafting assistant** — I help you write **AGENTS.md** and understand **Bot Agent** tabs.
 
-Bạn có thể:
-- Hỏi *"tab Capabilities làm gì?"*
-- Nhờ *"viết AGENTS.md cho agent support khách hàng"*
-- Gửi mô tả vai trò để tôi đề xuất Role + Rules
-- Bấm nút gợi ý bên dưới ô chat
+You can:
+- Ask *"what does the Capabilities tab do?"*
+- Request *"write AGENTS.md for a customer support agent"*
+- Send a role brief and I will suggest Role + Rules
+- Use the quick prompts below the chat box
 
-Khi tôi đề xuất markdown, dùng **Áp dụng vào Instructions** để đưa vào form (tab Instructions → Markdown).`;
+When I suggest markdown, use **Apply to Instructions** to push it into the form (Instructions tab → Markdown).`;
 
 function normalize(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
@@ -95,7 +95,7 @@ function extractTabIntent(text: string): EditTabGuide | null {
   if (n.includes('identity') || n.includes('danh tinh') || n.includes('vibe')) return 'identity';
   if (n.includes('instruction') || n.includes('agents.md') || n.includes('agents md')) return 'instructions';
   if (n.includes('capabilit') || n.includes('sandbox') || n.includes('model')) return 'capabilities';
-  if (n.includes('integrat') || n.includes('connector') || n.includes('kenh')) return 'integrations';
+  if (n.includes('integrat') || n.includes('connector') || n.includes('kenh') || n.includes('channel')) return 'integrations';
   if (n.includes('schedule') || n.includes('cron') || n.includes('lich')) return 'schedules';
   if (n.includes('heartbeat') || n.includes('nhip tim')) return 'heartbeat';
   return null;
@@ -186,7 +186,7 @@ export function respondToUserMessage(
   const id = `a-${Date.now()}`;
 
   const tabFromMsg = extractTabIntent(userText);
-  if (tabFromMsg && (n.includes('tab') || n.includes('huong dan') || n.includes('là gì') || n.includes('lam gi') || n.includes('guide') || n.includes('explain'))) {
+  if (tabFromMsg && (n.includes('tab') || n.includes('huong dan') || n.includes('la gi') || n.includes('lam gi') || n.includes('guide') || n.includes('explain') || n.includes('what does'))) {
     return {
       id,
       role: 'assistant',
@@ -194,12 +194,12 @@ export function respondToUserMessage(
     };
   }
 
-  if (n.includes('agents.md') && (n.includes('mau') || n.includes('sample') || n.includes('template') || n.includes('vi du'))) {
+  if (n.includes('agents.md') && (n.includes('mau') || n.includes('sample') || n.includes('template') || n.includes('vi du') || n.includes('example'))) {
     const md = buildSampleAgentsMd(context);
     return {
       id,
       role: 'assistant',
-      content: `Đây là **AGENTS.md mẫu** dựa trên tên/mô tả agent hiện tại. Chỉnh lại trước khi áp dụng:`,
+      content: `Here is a **sample AGENTS.md** based on the current agent name/description. Edit it before applying:`,
       suggestedMarkdown: md,
       applyMode: 'advanced',
     };
@@ -209,7 +209,8 @@ export function respondToUserMessage(
     n.includes('review') ||
     n.includes('xem lai') ||
     n.includes('kiem tra') ||
-    n.includes('hien tai')
+    n.includes('hien tai') ||
+    n.includes('current')
   ) {
     const current = compileAgentsMd({
       instructionsMode: context.instructionsMode ?? 'simple',
@@ -224,19 +225,19 @@ export function respondToUserMessage(
         id,
         role: 'assistant',
         content:
-          'Form Instructions đang trống. Hãy điền Role trong tab Instructions hoặc nhờ tôi tạo AGENTS.md mẫu.',
+          'Instructions form is empty. Fill Role in the Instructions tab or ask me for a sample AGENTS.md.',
       };
     }
     const tips: string[] = [];
-    if (!current.includes('# Role')) tips.push('- Thêm heading `# Role` rõ ràng.');
+    if (!current.includes('# Role')) tips.push('- Add a clear `# Role` heading.');
     if (!current.toLowerCase().includes('constraint') && !current.includes('# Constraints')) {
-      tips.push('- Nên có `# Constraints` cho giới hạn an toàn.');
+      tips.push('- Add `# Constraints` for safety limits.');
     }
-    const tipBlock = tips.length ? `\n\n**Gợi ý cải thiện:**\n${tips.join('\n')}` : '\n\nCấu trúc cơ bản ổn — có thể bổ sung Rules cụ thể hơn.';
+    const tipBlock = tips.length ? `\n\n**Improvement tips:**\n${tips.join('\n')}` : '\n\nBasic structure looks fine — you can add more specific Rules.';
     return {
       id,
       role: 'assistant',
-      content: `**AGENTS.md hiện tại** (compile từ form):${tipBlock}`,
+      content: `**Current AGENTS.md** (compiled from form):${tipBlock}`,
       suggestedMarkdown: current,
       applyMode: context.instructionsMode === 'advanced' ? 'advanced' : 'simple',
     };
@@ -257,34 +258,34 @@ export function respondToUserMessage(
       id,
       role: 'assistant',
       content:
-        'Tôi đã soạn đề xuất **AGENTS.md** từ mô tả của bạn. Bấm **Áp dụng** để đưa vào tab Instructions (chế độ Markdown nâng cao hoặc Editor tùy nút).',
+        'I drafted a proposed **AGENTS.md** from your description. Click **Apply** to send it to the Instructions tab (Advanced markdown or Editor depending on the button).',
       suggestedMarkdown: md,
       applyMode: 'advanced',
       applyFields: fields,
     };
   }
 
-  if (activeTab && (n.includes('tab nay') || n.includes('this tab') || n.includes('o day'))) {
+  if (activeTab && (n.includes('tab nay') || n.includes('this tab') || n.includes('o day') || n.includes('here'))) {
     return { id, role: 'assistant', content: TAB_GUIDES[activeTab] };
   }
 
   return {
     id,
     role: 'assistant',
-    content: `Tôi có thể giúp:
+    content: `I can help with:
 
-1. **Hướng dẫn tab** — ví dụ: "tab Instructions làm gì?"
-2. **Soạn AGENTS.md** — mô tả vai trò agent bạn muốn
-3. **Mẫu AGENTS.md** — "cho tôi mẫu AGENTS.md"
-4. **Review** — "review AGENTS.md hiện tại"
+1. **Tab guides** — e.g. "what does the Instructions tab do?"
+2. **Draft AGENTS.md** — describe the agent role you want
+3. **Sample AGENTS.md** — "give me a sample AGENTS.md"
+4. **Review** — "review current AGENTS.md"
 
-Tab đang mở bên trái: **${activeTab ?? 'identity'}**. Hỏi về tab đó hoặc dùng nút gợi ý bên dưới.`,
+Left panel tab: **${activeTab ?? 'identity'}**. Ask about that tab or use a quick prompt below.`,
   };
 }
 
 export const QUICK_PROMPTS = [
-  { id: 'guide-instructions', label: 'Hướng dẫn Instructions', message: 'Giải thích tab Instructions và AGENTS.md' },
-  { id: 'sample-md', label: 'Mẫu AGENTS.md', message: 'Cho tôi mẫu AGENTS.md' },
-  { id: 'guide-capabilities', label: 'Sandbox & Capabilities', message: 'Giải thích tab Capabilities và sandbox' },
-  { id: 'review', label: 'Review hiện tại', message: 'Review AGENTS.md hiện tại' },
+  { id: 'guide-instructions', label: 'Instructions guide', message: 'Explain the Instructions tab and AGENTS.md' },
+  { id: 'sample-md', label: 'Sample AGENTS.md', message: 'Give me a sample AGENTS.md' },
+  { id: 'guide-capabilities', label: 'Sandbox & Capabilities', message: 'Explain the Capabilities tab and sandbox' },
+  { id: 'review', label: 'Review current', message: 'Review current AGENTS.md' },
 ] as const;

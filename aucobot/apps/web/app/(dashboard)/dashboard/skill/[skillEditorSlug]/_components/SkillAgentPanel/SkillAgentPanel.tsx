@@ -19,27 +19,27 @@ import barStyles from "./SkillAgentPanelModelBar.module.css";
 const QUICK_PROMPTS = [
   {
     id: "lookup",
-    label: "Viết hướng dẫn tra cứu",
+    label: "Write lookup guide",
     message:
-      "Viết skill hướng dẫn agent tra cứu thông tin sản phẩm hoặc dịch vụ.",
+      "Write a skill that guides the agent to look up product or service information.",
   },
   {
     id: "errors",
-    label: "Thêm bước xử lý lỗi",
+    label: "Add error handling",
     message:
-      "Thêm các bước xử lý lỗi và fallback khi không tìm thấy dữ liệu.",
+      "Add error-handling steps and fallbacks when data cannot be found.",
   },
   {
     id: "review",
-    label: "Review skill hiện tại",
+    label: "Review current skill",
     message:
-      "Review và cải thiện skill hiện tại: rõ ràng hơn, đủ bước, dễ agent thực thi.",
+      "Review and improve the current skill: clearer, complete steps, easier for the agent to execute.",
   },
   {
     id: "template",
-    label: "Mẫu skill mới",
+    label: "New skill template",
     message:
-      "Viết skill mới từ đầu với cấu trúc: mục tiêu, điều kiện kích hoạt, các bước thực hiện.",
+      "Write a new skill from scratch with: goal, trigger conditions, and execution steps.",
   },
 ] as const;
 
@@ -47,7 +47,7 @@ const WELCOME_MESSAGE = {
   id: "welcome",
   role: "assistant" as const,
   content:
-    "Xin chào! Tôi có thể **viết hoặc chỉnh skill** trực tiếp trong editor bên trái.\n\nMô tả skill bạn muốn — AI sẽ cập nhật nội dung và tự lưu.",
+    "Hi! I can **write or edit skills** directly in the editor on the left.\n\nDescribe the skill you want — AI will update the content and save automatically.",
 };
 
 type PanelChatMessage = {
@@ -67,7 +67,7 @@ function renderSimpleMarkdown(text: string): React.ReactNode {
 }
 
 function formatApiError(err: unknown, providerId?: string): React.ReactNode {
-  const msg = err instanceof Error ? err.message : "AI không phản hồi";
+  const msg = err instanceof Error ? err.message : "AI did not respond";
   const needsKey =
     msg.includes("NO_PROVIDER_KEY") ||
     msg.includes("PROVIDER_DISABLED") ||
@@ -78,7 +78,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
       <>
         {msg}{" "}
         <Link href={`/dashboard/ai-model/${providerId}`}>
-          Mở cài đặt provider
+          Open provider settings
         </Link>
       </>
     );
@@ -87,7 +87,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
     return (
       <>
         {msg}{" "}
-        <Link href="/dashboard/ai-model">Kết nối AI Model</Link>
+        <Link href="/dashboard/ai-model">Connect AI Model</Link>
       </>
     );
   }
@@ -144,15 +144,15 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
       if (!hasProviders || !providerId || !modelId || !projectId) {
         setApiError(
           <>
-            Chọn provider và model trước.{" "}
-            <Link href="/dashboard/ai-model">Kết nối AI Model</Link>
+            Select a provider and model first.{" "}
+            <Link href="/dashboard/ai-model">Connect AI Model</Link>
           </>,
         );
         return;
       }
 
       if (!skillSnapshot) {
-        setApiError("Chưa có dữ liệu skill để AI tham chiếu.");
+        setApiError("No skill data available for AI to reference.");
         return;
       }
 
@@ -191,7 +191,7 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
             id: `a-${Date.now()}`,
             role: "assistant",
             content:
-              "Đã cập nhật editor. Bạn có thể chỉnh tiếp bên trái trước khi bật skill.",
+              "Editor updated. You can keep editing on the left before enabling the skill.",
           },
         ]);
       } catch (err) {
@@ -239,8 +239,8 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
             </Typography>
             <Typography variant="xs" color="muted">
               {skillSnapshot?.name
-                ? `Đang soạn: ${skillSnapshot.name}`
-                : "AI viết skill trực tiếp vào editor"}
+                ? `Editing: ${skillSnapshot.name}`
+                : "AI writes skills directly into the editor"}
             </Typography>
           </Flex>
         </Flex>
@@ -315,7 +315,7 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
                 <Flex align="center" gap={8}>
                   <Spinner size="sm" />
                   <Typography variant="small" color="muted">
-                    AI đang viết skill…
+                    AI is writing the skill…
                   </Typography>
                 </Flex>
               </Box>
@@ -335,7 +335,7 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
           onSend={() => void sendMessage(input)}
           sending={isTyping}
           disabled={inputDisabled}
-          placeholder="Nhờ AI viết hoặc chỉnh skill…"
+          placeholder="Ask AI to write or edit the skill…"
           providerId={providerId}
           providerOptions={providerSelectOptions}
           onProviderChange={handleProviderChange}
@@ -346,7 +346,7 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
           inputId="skill-panel-message-input"
           composerId="skill-panel-composer"
           ariaLabel="Skill assistant message input"
-          hint="Mỗi lần gửi, AI thay nội dung editor và tự lưu. Xem lại trước khi bật skill."
+          hint="Each message replaces the editor content and saves automatically. Review before enabling the skill."
         />
       </div>
     </Flex>

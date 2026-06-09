@@ -141,15 +141,15 @@ export function BlockNoteEditor({
           <Flex align="center" className={styles.saveStatus} aria-live="polite">
             {saveStatus === "saving" ? (
               <Typography variant="small" color="muted">
-                Đang lưu...
+                Saving...
               </Typography>
             ) : null}
             {saveStatus === "saved" ? (
               <Flex align="center" gap={4} className={styles.saveSuccess}>
                 <Check size={14} strokeWidth={2.5} aria-hidden />
                 <Typography variant="small" as="span">
-                  Đã lưu
-                  {skillEnabled ? " · đã sync OpenClaw" : ""}
+                  Saved
+                  {skillEnabled ? " · synced to OpenClaw" : ""}
                 </Typography>
               </Flex>
             ) : null}

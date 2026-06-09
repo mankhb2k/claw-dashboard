@@ -25,7 +25,7 @@ export function OptimizeResultCard({
       <Flex justify="between" align="start" gap={8}>
         <Box>
           <Typography variant="p" weight="bold">
-            AGENTS.md đã tối ưu
+            Optimized AGENTS.md
           </Typography>
           {summary ? (
             <Typography variant="small" color="muted" className={styles.summary}>
@@ -38,7 +38,7 @@ export function OptimizeResultCard({
           variant="ghost"
           size="sm"
           iconOnly
-          title="Bỏ qua"
+          title="Dismiss"
           onClick={onDismiss}
           disabled={applying}
         >
@@ -51,7 +51,7 @@ export function OptimizeResultCard({
       <Flex gap={8} className={styles.actions}>
         <Button type="button" size="sm" onClick={onApply} disabled={applying}>
           <FileText size={14} aria-hidden />
-          {applying ? "Đang áp dụng…" : "Áp dụng vào Instructions"}
+          {applying ? "Applying…" : "Apply to Instructions"}
         </Button>
         <Button
           type="button"
@@ -60,12 +60,12 @@ export function OptimizeResultCard({
           onClick={onDismiss}
           disabled={applying}
         >
-          Bỏ qua
+          Dismiss
         </Button>
       </Flex>
 
       <Typography variant="xs" color="muted">
-        Áp dụng ghi đè tab Instructions (Markdown nâng cao). Nhớ Save agent sau đó.
+        Applying overwrites the Instructions tab (Advanced markdown). Remember to save the agent afterward.
       </Typography>
     </Card>
   );

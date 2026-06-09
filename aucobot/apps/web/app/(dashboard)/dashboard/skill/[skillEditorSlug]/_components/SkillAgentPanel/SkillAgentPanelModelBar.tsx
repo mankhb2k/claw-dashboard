@@ -7,11 +7,11 @@ export function SkillAgentPanelNoModelBanner() {
   return (
     <div className={styles.noModelBanner} role="status">
       <p className={styles.noModelText}>
-        Chưa có API key LLM.{" "}
+        No LLM API key yet.{" "}
         <Link href="/dashboard/ai-model" className={styles.noModelLink}>
-          Kết nối AI Model
+          Connect AI Model
         </Link>{" "}
-        để dùng AI viết skill.
+        to use AI for writing skills.
       </p>
     </div>
   );

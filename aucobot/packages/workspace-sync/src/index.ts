@@ -7,6 +7,7 @@ export {
 
 export {
   mergeAgentsIntoConfig,
+  mergeSharedSkillsLoadIntoConfig,
   mergeAgentCollaborationToolsIntoConfig,
   mergeProviderKeysIntoConfig,
   readOpenClawConfigJson,

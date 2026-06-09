@@ -26,6 +26,8 @@ export type AgentFormInput = {
   askPolicy: AgentAskPolicy;
   safeBins: string[];
   timeoutSec: number;
+  /** OpenClaw skill allowlist (`agents.list[].skills`) — SKILL.md frontmatter `name` values. */
+  skillNames: string[];
 };
 
 export const LEGACY_TEAM_FORM_KEYS = ['teamEnabled', 'allowedAgentSlugs'] as const;
@@ -90,6 +92,9 @@ export function parseAgentFormData(raw: unknown): AgentFormInput {
       ? o.safeBins.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
       : [],
     timeoutSec: typeof o.timeoutSec === 'number' ? o.timeoutSec : 60,
+    skillNames: Array.isArray(o.skillNames)
+      ? o.skillNames.map((t) => String(t).trim()).filter(Boolean)
+      : [],
   };
 }
 

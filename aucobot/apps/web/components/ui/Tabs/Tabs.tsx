@@ -27,6 +27,7 @@ export type TabsProps = {
   showIndicator?: boolean;
   variant?: TabsVariant;
   className?: string;
+  style?: React.CSSProperties;
   trailing?: React.ReactNode;
   trailingClassName?: string;
   "aria-label"?: string;
@@ -44,6 +45,7 @@ export function Tabs({
   showIndicator = true,
   variant = "section",
   className = "",
+  style,
   trailing,
   trailingClassName = "",
   "aria-label": ariaLabel = "Tabs",
@@ -206,7 +208,7 @@ export function Tabs({
 
   if (variant === "panel") {
     return (
-      <div className={rootClass}>
+      <div className={rootClass} style={style}>
         <div className={styles.listWrapPanel}>{listInner}</div>
         {trailing ? (
           <div
@@ -221,5 +223,9 @@ export function Tabs({
     );
   }
 
-  return <nav className={rootClass}>{listInner}</nav>;
+  return (
+    <nav className={rootClass} style={style}>
+      {listInner}
+    </nav>
+  );
 }

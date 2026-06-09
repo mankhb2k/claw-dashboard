@@ -39,6 +39,9 @@ jest.mock('@aucobot/workspace-sync', () => {
       askPolicy: 'on-miss',
       safeBins: [] as string[],
       timeoutSec: 60,
+      skillNames: Array.isArray(o.skillNames)
+        ? o.skillNames.map((t) => String(t).trim()).filter(Boolean)
+        : [],
     };
   }
 

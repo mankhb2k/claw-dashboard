@@ -1,4 +1,4 @@
-/* Khung bọc danh sách Agent */
+/* Agent list page shell */
 .root {
   display: flex;
   flex-direction: column;
@@ -7,7 +7,7 @@
   padding-top: 0;
 }
 
-/* Thanh công cụ tìm kiếm và hành động */
+/* Search and action toolbar */
 .toolbar {
   gap: var(--space-4);
   margin-bottom: var(--space-6);
@@ -61,12 +61,12 @@
   text-decoration: underline;
 }
 
-/* Lưới danh sách Agent */
+/* Agent list grid */
 .grid {
   margin-bottom: var(--space-6);
 }
 
-/* Giao diện trống (Empty state) */
+/* Empty state */
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -80,19 +80,19 @@
   margin-top: var(--space-4);
 }
 
-/* Icon trống của robot */
+/* Empty state robot icon */
 .emptyIcon {
   font-size: 48px;
   color: var(--color-muted-foreground);
   margin-bottom: var(--space-4);
 }
 
-/* Tiêu đề trống */
+/* Empty state title */
 .emptyTitle {
   margin-bottom: var(--space-2);
 }
 
-/* Mô tả trống */
+/* Empty state description */
 .emptyDesc {
   max-width: 420px;
   margin-bottom: var(--space-6);

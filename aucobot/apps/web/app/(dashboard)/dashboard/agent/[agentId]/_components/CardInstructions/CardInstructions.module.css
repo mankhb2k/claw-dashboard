@@ -35,7 +35,7 @@
 }
 
 /* Section switch — Rules / Constraints / … (ButtonGroup + outline Button).
-   Active: aria-pressed; chỉ đổi màu chữ primary, không đổi nền. */
+   Active: aria-pressed; primary text color only, background unchanged. */
 .sectionGroup {
   flex-shrink: 0;
   align-self: flex-start;
@@ -76,7 +76,7 @@
   cursor: default;
 }
 
-/* Vùng form Editor — textarea fill chiếm phần còn lại trong card */
+/* Editor form area — textarea fills remaining card height */
 .simpleFields,
 .markdownFields {
   flex: 1 1 0;

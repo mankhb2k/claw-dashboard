@@ -43,6 +43,7 @@ export const agentFormSchema = z
     askPolicy: agentAskPolicySchema,
     safeBins: z.array(z.string()),
     timeoutSec: z.number().min(5, 'Minimum 5 seconds').max(3600, 'Maximum 3600 seconds'),
+    skillNames: z.array(z.string().min(1)).max(100, 'At most 100 skills per agent'),
   })
   .superRefine((data, ctx) => {
     if (data.instructionsMode === 'simple' && !data.instructionsRole.trim()) {
@@ -135,6 +136,7 @@ export function buildAgentFormDefaults(
         ? ['python', 'node', 'git', 'npm', 'gcc']
         : ['python', 'node', 'git'],
     timeoutSec: 60,
+    skillNames: [],
   }
 }
 

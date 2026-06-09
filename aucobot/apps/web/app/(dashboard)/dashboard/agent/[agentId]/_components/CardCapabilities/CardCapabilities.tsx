@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -12,13 +12,8 @@ import {
   ToggleGroupItem,
 } from "@/components/ui";
 import { Globe, FileText, Code, Settings2, X } from "lucide-react";
+import { useModelCatalog } from "@/lib/chat/use-model-catalog";
 import styles from "./CardCapabilities.module.css";
-
-const MODEL_OPTIONS = [
-  { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet (Recommended)" },
-  { value: "gpt-4o", label: "GPT-4o" },
-  { value: "gemini-1-5-pro", label: "Gemini 1.5 Pro" },
-];
 
 const SANDBOX_MODE_OPTIONS = [
   { value: "all", label: "All agents (full isolation)" },
@@ -41,6 +36,7 @@ type SandboxScope = "agent" | "session";
 type SandboxWorkspaceAccess = "none" | "ro" | "rw";
 
 interface CardCapabilitiesProps {
+  projectId: string;
   model: string;
   setModel: (val: string) => void;
   sandboxEnabled: boolean;
@@ -103,6 +99,7 @@ function ToolRow({
 }
 
 export function CardCapabilities({
+  projectId,
   model,
   setModel,
   sandboxEnabled,
@@ -123,6 +120,32 @@ export function CardCapabilities({
   handleAddTag,
   handleRemoveTag,
 }: CardCapabilitiesProps) {
+  const {
+    modelsLoading,
+    loadError,
+    providerId,
+    modelId,
+    providerSelectOptions,
+    modelSelectOptions,
+    hasProviders,
+    handleProviderChange,
+    handleModelChange,
+  } = useModelCatalog(projectId, model);
+
+  useEffect(() => {
+    if (modelId?.trim() && modelId !== model) {
+      setModel(modelId);
+    }
+  }, [modelId, model, setModel]);
+
+  const onModelChange = useCallback(
+    (nextModelId: string) => {
+      handleModelChange(nextModelId);
+      setModel(nextModelId);
+    },
+    [handleModelChange, setModel],
+  );
+
   const policyHint =
     askPolicy === "always"
       ? "The agent must request your approval before running any command."
@@ -142,13 +165,36 @@ export function CardCapabilities({
         </Typography>
       </div>
 
-      <Select
-        id="agent-model"
-        label="AI model"
-        options={MODEL_OPTIONS}
-        value={model}
-        onValueChange={setModel}
-      />
+      <div className={styles.modelFields}>
+        <Select
+          id="agent-model-provider"
+          label="Provider"
+          options={providerSelectOptions}
+          value={providerId}
+          onValueChange={handleProviderChange}
+          disabled={modelsLoading || !hasProviders}
+          placeholder={modelsLoading ? "Loading…" : "No API key"}
+        />
+        <Select
+          id="agent-model"
+          label="Default model"
+          options={modelSelectOptions}
+          value={modelId ?? model}
+          onValueChange={onModelChange}
+          disabled={
+            modelsLoading || !hasProviders || modelSelectOptions.length === 0
+          }
+          placeholder={modelsLoading ? "Loading…" : "Model"}
+        />
+      </div>
+      <Typography variant="small" color="muted">
+        Used on Telegram, Discord, and as the Chat default for this agent.
+      </Typography>
+      {loadError ? (
+        <Typography variant="small" color="muted">
+          {loadError}
+        </Typography>
+      ) : null}
 
       <hr className={styles.divider} />
 

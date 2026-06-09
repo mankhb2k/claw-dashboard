@@ -7,11 +7,11 @@ export function AgentPanelNoModelBanner() {
   return (
     <div className={styles.noModelBanner} role="status">
       <p className={styles.noModelText}>
-        Chưa có API key LLM.{" "}
+        No LLM API key yet.{" "}
         <Link href="/dashboard/ai-model" className={styles.noModelLink}>
-          Kết nối AI Model
+          Connect AI Model
         </Link>{" "}
-        để dùng Optimize with AI và chat AI.
+        to use Optimize with AI and AI chat.
       </p>
     </div>
   );

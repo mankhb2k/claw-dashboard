@@ -105,7 +105,7 @@ export function ClientSkillEditorPage() {
       })
       .catch((err) => {
         setSkill(null);
-        setLoadError(err instanceof Error ? err.message : "Không tải skill");
+        setLoadError(err instanceof Error ? err.message : "Failed to load skill");
       })
       .finally(() => setSkillLoading(false));
   }, [projectId, skillSlug]);
@@ -150,10 +150,10 @@ export function ClientSkillEditorPage() {
       } catch (err) {
         if (seq !== saveSeqRef.current) return;
 
-        const message = err instanceof Error ? err.message : "Lưu thất bại";
+        const message = err instanceof Error ? err.message : "Save failed";
         scheduleSaveStatus(seq, "error", () => {
           setSaveError(message);
-          toast.error("Lưu skill thất bại", message);
+          toast.error("Failed to save skill", message);
         });
       }
     },
@@ -179,7 +179,7 @@ export function ClientSkillEditorPage() {
   const handleApplyAiMarkdown = useCallback(async (markdown: string) => {
     await editorRef.current?.applyMarkdown(markdown);
     setBodyMarkdown(markdown);
-    toast.success("AI đã cập nhật editor", "Đang lưu vào skill…");
+    toast.success("AI updated the editor", "Saving to skill…");
   }, []);
 
   const handleCopy = useCallback(async () => {
@@ -196,9 +196,9 @@ export function ClientSkillEditorPage() {
     if (!preview.trim()) return;
     try {
       await navigator.clipboard.writeText(preview);
-      toast.success("Đã sao chép SKILL.md");
+      toast.success("Copied SKILL.md");
     } catch {
-      toast.error("Không thể sao chép");
+      toast.error("Could not copy to clipboard");
     }
   }, []);
 
@@ -212,7 +212,7 @@ export function ClientSkillEditorPage() {
         className={pageStyles.state}
       >
         <Spinner size="md" />
-        <Typography variant="p">Đang tải dữ liệu...</Typography>
+        <Typography variant="p">Loading data...</Typography>
       </Flex>
     );
   }
@@ -220,7 +220,7 @@ export function ClientSkillEditorPage() {
   if (!projectId) {
     return (
       <Typography variant="p" className={pageStyles.error}>
-        Chưa có dự án. Hãy tạo dự án trước khi chỉnh sửa skill.
+        No project yet. Create a project before editing a skill.
       </Typography>
     );
   }
@@ -228,9 +228,9 @@ export function ClientSkillEditorPage() {
   if (loadError || (!skill && !skillLoading && bootstrapped)) {
     return (
       <Flex direction="column" gap={12} className={pageStyles.state}>
-        <BackButton href="/dashboard/skill">Quay lại danh sách</BackButton>
+        <BackButton href="/dashboard/skill">Back to list</BackButton>
         <Typography variant="p" className={pageStyles.error}>
-          {loadError ?? "Không tìm thấy skill."}
+          {loadError ?? "Skill not found."}
         </Typography>
       </Flex>
     );
@@ -246,7 +246,7 @@ export function ClientSkillEditorPage() {
         className={pageStyles.state}
       >
         <Spinner size="md" />
-        <Typography variant="p">Đang tải skill...</Typography>
+        <Typography variant="p">Loading skill...</Typography>
       </Flex>
     );
   }

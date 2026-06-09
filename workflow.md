@@ -528,7 +528,16 @@ sequenceDiagram
   GW-->>UI: event:chat
 ```
 
-**RPC whitelist** (`packages/control-plane-core/chat/chat-rpc-whitelist.ts`): `chat.history`, `chat.send`, `chat.abort`, `agents.list`. `connect` do proxy xử lý; `config.patch` **không** từ browser (Phase 1 REST + sync).
+**RPC whitelist** (`packages/control-plane-core/chat/chat-rpc-whitelist.ts`): `chat.history`, `chat.send`, `chat.abort`, `agents.list`, `sessions.patch`, … `connect` do proxy xử lý; `config.patch` **không** từ browser (Phase 1 REST + sync).
+
+**Model policy vs session override (Dashboard Chat):**
+
+| Lớp | Cơ chế | Ảnh hưởng kênh |
+| ----- | ------ | -------------- |
+| Agent primary | `formData.model` → `agents.list[].model.primary` (Capabilities Save) | Telegram, Discord, cron dùng primary |
+| Session override | `sessions.patch({ key, model })` — `model: null` xóa override | Chỉ phiên Dashboard Chat |
+
+OpenClaw gateway field: `model` trên `sessions.patch` (`openclaw-worker/src/gateway/sessions-patch.ts`). Chat UI **không** gọi `PUT /chat/model` (deprecated) khi đổi model trong composer.
 
 | Thành phần | Path |
 | ---------- | ---- |
