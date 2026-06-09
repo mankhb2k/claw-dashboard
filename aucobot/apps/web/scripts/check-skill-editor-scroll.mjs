@@ -26,7 +26,9 @@ async function measureScroll(page) {
     const docHeader = document.querySelector('[class*="docHeader"]');
     const bnContainer = document.querySelector(".bn-container");
     const bnEditor = document.querySelector(".bn-editor");
-    const root = document.querySelector('[class*="SkillEditPanel"][class*="root"]');
+    const root = document.querySelector(
+      '[class*="SkillEditPanel"][class*="root"]',
+    );
 
     if (!editorScroll) {
       return { error: "editorScroll not found" };
@@ -43,7 +45,10 @@ async function measureScroll(page) {
 
     return {
       root: rr
-        ? { height: rr.height, computedAlign: getComputedStyle(root).alignItems }
+        ? {
+            height: rr.height,
+            computedAlign: getComputedStyle(root).alignItems,
+          }
         : null,
       editorScroll: {
         clientHeight: editorScroll.clientHeight,
@@ -123,7 +128,9 @@ async function testTableNearTop(page) {
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const context = await browser.newContext({
+    viewport: { width: 1400, height: 900 },
+  });
   const page = await context.newPage();
 
   try {
@@ -165,7 +172,8 @@ async function main() {
 
     const bnContainerClipped =
       before.bnContainer?.overflow === "hidden" &&
-      (before.bnContainer?.height ?? 0) <= (before.editorScroll?.height ?? 0) + 4;
+      (before.bnContainer?.height ?? 0) <=
+        (before.editorScroll?.height ?? 0) + 4;
 
     const ok =
       before.editorScroll?.canScroll &&

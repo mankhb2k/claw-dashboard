@@ -9,10 +9,8 @@ import {
   type RefObject,
 } from "react";
 import { useCreateBlockNote } from "@blocknote/react";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { Flex, Container } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
-import { Button, Typography } from "@/components/ui";
 import { resolveThemeAppearance } from "@/lib/theme-resolve";
 import { useThemeStore } from "@/stores/theme.store";
 import type { ProjectSkillDetail } from "@/schemas/project.schema";
@@ -33,7 +31,6 @@ export type SkillEditPanelProps = {
   onToggleSkillPanel: () => void;
   saveStatus: "idle" | "saving" | "saved" | "error";
   saveError: string | null;
-  onToggleEnabled: () => void;
   editorRef: RefObject<SkillEditorHandle | null>;
   initialBodyMarkdown: string;
   onBodyChange: (markdown: string) => void;
@@ -47,7 +44,6 @@ export function SkillEditPanel({
   onToggleSkillPanel,
   saveStatus,
   saveError,
-  onToggleEnabled,
   editorRef,
   initialBodyMarkdown,
   onBodyChange,
@@ -140,49 +136,8 @@ export function SkillEditPanel({
         display="flex"
         className={styles.shell}
       >
-        <Flex justify="between" align="center" className={styles.topBar}>
+        <Flex align="center" className={styles.topBar}>
           <BackButton href="/dashboard/skill">Back to Skills</BackButton>
-          <Flex align="center" gap={12}>
-            {saveStatus === "saving" ? (
-              <Typography variant="small" color="muted">
-                Đang lưu...
-              </Typography>
-            ) : null}
-            {saveStatus === "saved" ? (
-              <Typography variant="small" color="muted">
-                Đã lưu
-                {skill.enabled ? " · đã sync OpenClaw" : ""}
-              </Typography>
-            ) : null}
-            {saveStatus === "error" && saveError ? (
-              <Typography variant="small" className={styles.error}>
-                {saveError}
-              </Typography>
-            ) : null}
-            <Button variant="outline" size="sm" onClick={onToggleEnabled}>
-              {skill.enabled ? "Tắt skill" : "Bật & sync"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              iconOnly
-              onClick={onToggleSkillPanel}
-              aria-label={
-                skillPanelOpen ? "Hide skill assistant" : "Show skill assistant"
-              }
-              aria-pressed={skillPanelOpen}
-              title={
-                skillPanelOpen ? "Hide skill assistant" : "Show skill assistant"
-              }
-            >
-              {skillPanelOpen ? (
-                <PanelRightClose size={18} />
-              ) : (
-                <PanelRightOpen size={18} />
-              )}
-            </Button>
-          </Flex>
         </Flex>
 
         <div className={styles.editorBody}>
@@ -194,6 +149,11 @@ export function SkillEditPanel({
             onViewModeChange={(mode) => void handleViewModeChange(mode)}
             markdownPreview={markdownContent}
             onCopy={onCopy}
+            saveStatus={saveStatus}
+            saveError={saveError}
+            skillEnabled={skill.enabled}
+            assistantPanelOpen={skillPanelOpen}
+            onToggleAssistantPanel={onToggleSkillPanel}
           />
         </div>
       </Container>

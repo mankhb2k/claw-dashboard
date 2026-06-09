@@ -16,6 +16,9 @@ import { SkillAgentPanel } from "../SkillAgentPanel/SkillAgentPanel";
 import pageStyles from "../../skillEditorSlug.module.css";
 import styles from "./ClientSkillEditorPage.module.css";
 
+const MIN_SAVING_DISPLAY_MS = 2000;
+const SAVED_DISPLAY_MS = 3000;
+
 export function ClientSkillEditorPage() {
   const params = useParams();
   const skillSlug =
@@ -44,6 +47,47 @@ export function ClientSkillEditorPage() {
   const skillRef = useRef(skill);
   skillRef.current = skill;
   const editorRef = useRef<SkillEditorHandle>(null);
+  const saveStartedAtRef = useRef<number | null>(null);
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSeqRef = useRef(0);
+
+  const clearSaveStatusTimer = useCallback(() => {
+    if (saveStatusTimerRef.current) {
+      clearTimeout(saveStatusTimerRef.current);
+      saveStatusTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleSaveStatus = useCallback(
+    (seq: number, next: "saved" | "error", onShow?: () => void) => {
+      const startedAt = saveStartedAtRef.current ?? Date.now();
+      const delay = Math.max(
+        0,
+        MIN_SAVING_DISPLAY_MS - (Date.now() - startedAt),
+      );
+
+      clearSaveStatusTimer();
+      saveStatusTimerRef.current = setTimeout(() => {
+        saveStatusTimerRef.current = null;
+        if (seq !== saveSeqRef.current) return;
+        onShow?.();
+        setSaveStatus(next);
+
+        if (next === "saved") {
+          saveStatusTimerRef.current = setTimeout(() => {
+            saveStatusTimerRef.current = null;
+            if (seq !== saveSeqRef.current) return;
+            setSaveStatus("idle");
+          }, SAVED_DISPLAY_MS);
+        }
+      }, delay);
+    },
+    [clearSaveStatusTimer],
+  );
+
+  useEffect(() => {
+    return () => clearSaveStatusTimer();
+  }, [clearSaveStatusTimer]);
 
   useEffect(() => {
     void fetchProjects({ silent: true }).finally(() => setBootstrapped(true));
@@ -84,33 +128,46 @@ export function ClientSkillEditorPage() {
     async (markdown: string) => {
       const current = skillRef.current;
       if (!projectId || !current) return;
+
+      const seq = ++saveSeqRef.current;
+      saveStartedAtRef.current = Date.now();
+      clearSaveStatusTimer();
       setSaveStatus("saving");
       setSaveError(null);
+
       try {
         const updated = await projectApi.updateSkill(projectId, current.slug, {
           bodyMarkdown: markdown,
         });
+        if (seq !== saveSeqRef.current) return;
+
         setSkill(updated);
-        setSaveStatus("saved");
-        if (updated.lastSyncError && updated.enabled) {
-          setSaveError(updated.lastSyncError);
-        }
+        scheduleSaveStatus(seq, "saved", () => {
+          if (updated.lastSyncError && updated.enabled) {
+            setSaveError(updated.lastSyncError);
+          }
+        });
       } catch (err) {
-        setSaveStatus("error");
-        setSaveError(err instanceof Error ? err.message : "Lưu thất bại");
-        toast.error(
-          "Lưu skill thất bại",
-          err instanceof Error ? err.message : undefined,
-        );
+        if (seq !== saveSeqRef.current) return;
+
+        const message = err instanceof Error ? err.message : "Lưu thất bại";
+        scheduleSaveStatus(seq, "error", () => {
+          setSaveError(message);
+          toast.error("Lưu skill thất bại", message);
+        });
       }
     },
-    [projectId],
+    [clearSaveStatusTimer, projectId, scheduleSaveStatus],
   );
 
-  const handleBodyChange = useCallback((markdown: string) => {
-    setBodyMarkdown(markdown);
-    setSaveStatus("idle");
-  }, []);
+  const handleBodyChange = useCallback(
+    (markdown: string) => {
+      setBodyMarkdown(markdown);
+      clearSaveStatusTimer();
+      setSaveStatus("idle");
+    },
+    [clearSaveStatusTimer],
+  );
 
   const handleDebouncedSave = useCallback(
     (markdown: string) => {
@@ -144,29 +201,6 @@ export function ClientSkillEditorPage() {
       toast.error("Không thể sao chép");
     }
   }, []);
-
-  const handleToggleEnabled = useCallback(() => {
-    const current = skillRef.current;
-    if (!projectId || !current) return;
-    void projectApi
-      .setSkillEnabled(projectId, current.slug, !current.enabled)
-      .then((updated) => {
-        setSkill(updated);
-        if (updated.enabled && !updated.lastSyncError) {
-          toast.success("Đã bật và sync skill");
-        } else if (!updated.enabled) {
-          toast.success("Đã tắt skill");
-        } else if (updated.lastSyncError) {
-          toast.error("Sync thất bại", updated.lastSyncError);
-        }
-      })
-      .catch((err) =>
-        toast.error(
-          "Không đổi trạng thái",
-          err instanceof Error ? err.message : undefined,
-        ),
-      );
-  }, [projectId]);
 
   if (!bootstrapped || (projectsLoading && !projectId)) {
     return (
@@ -225,7 +259,6 @@ export function ClientSkillEditorPage() {
         onToggleSkillPanel={toggleSkillPanel}
         saveStatus={saveStatus}
         saveError={saveError}
-        onToggleEnabled={handleToggleEnabled}
         editorRef={editorRef}
         initialBodyMarkdown={skill.bodyMarkdown}
         onBodyChange={handleBodyChange}

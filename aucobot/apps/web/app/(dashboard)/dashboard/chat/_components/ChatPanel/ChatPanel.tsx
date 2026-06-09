@@ -12,8 +12,10 @@ import { isOssRuntime } from "@/lib/runtime-mode";
 import { ChatMessageBubble } from "../ChatMessageBubble";
 import { ChatTypingIndicator } from "../ChatTypingIndicator";
 import { ContentArea } from "../ContentArea/ContentArea";
-import { MessageBox } from "../MessageBox/MessageBox";
-import type { ComposerSendPayload } from "../MessageBox/MessageBox";
+import {
+  MessageBox,
+  type ComposerSendPayload,
+} from "@/components/dashboard/MessageBox";
 import styles from "./ChatPanel.module.css";
 
 export type ChatPanelMessage = {
@@ -242,6 +244,7 @@ export function ChatPanel({
         }
         footer={
           <MessageBox
+            enableAttachments
             value={input}
             onChange={onInputChange}
             onSend={onSend}
@@ -249,6 +252,9 @@ export function ChatPanel({
             sending={sending}
             canSend={canSend}
             disabled={!ready || connectionState !== "connected"}
+            inputId="chat-message-input"
+            composerId="chat-composer"
+            ariaLabel="Chat message input"
             placeholder={
               ready && connectionState === "connected"
                 ? "Nhập tin nhắn…"

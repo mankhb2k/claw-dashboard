@@ -50,7 +50,7 @@ import {
   type ChatPanelConnectionState,
   type ChatPanelMessage,
 } from "./ChatPanel/ChatPanel";
-import type { ComposerSendPayload } from "./MessageBox/MessageBox";
+import type { ComposerSendPayload } from "@/components/dashboard/MessageBox";
 import { ChatSidebar } from "./ChatSidebar/ChatSidebar";
 import styles from "./ClientChatPage.module.css";
 

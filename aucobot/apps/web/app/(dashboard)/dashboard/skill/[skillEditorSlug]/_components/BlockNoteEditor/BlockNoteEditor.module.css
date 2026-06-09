@@ -15,9 +15,41 @@
   flex-shrink: 0;
   position: relative;
   z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
+}
+
+.headerStart {
+  justify-self: start;
+}
+
+.headerCenter {
+  justify-self: center;
+}
+
+.headerEnd {
+  justify-self: end;
+}
+
+.saveStatus {
+  min-height: 1.25rem;
+}
+
+.saveSuccess {
+  color: var(--color-success);
+}
+
+.saveSuccess :global(span) {
+  color: inherit;
+}
+
+.saveError {
+  color: var(--color-danger);
 }
 
 /* Body — scroll trong .editorScroll */

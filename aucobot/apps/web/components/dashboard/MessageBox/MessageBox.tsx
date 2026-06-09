@@ -47,13 +47,10 @@ type SelectOption = {
   label: string;
 };
 
-export type MessageBoxProps = {
+type MessageBoxBaseProps = {
   value: string;
   onChange: (value: string) => void;
-  onSend: (payload: ComposerSendPayload) => void;
-  onAbort: () => void;
   sending: boolean;
-  canSend: boolean;
   disabled?: boolean;
   placeholder?: string;
   providerId?: string;
@@ -63,6 +60,17 @@ export type MessageBoxProps = {
   modelOptions: SelectOption[];
   onModelChange: (model: string) => void;
   modelsLoading?: boolean;
+  hint?: string;
+  inputId?: string;
+  ariaLabel?: string;
+  composerId?: string;
+};
+
+export type MessageBoxChatProps = MessageBoxBaseProps & {
+  enableAttachments: true;
+  onSend: (payload: ComposerSendPayload) => void;
+  onAbort: () => void;
+  canSend: boolean;
   modelSaving?: boolean;
   modelLabel?: string;
   contextUsage?: ContextUsageSnapshot;
@@ -70,6 +78,13 @@ export type MessageBoxProps = {
   sandboxActive?: boolean;
   stagingMaxBytes?: number;
 };
+
+export type MessageBoxSimpleProps = MessageBoxBaseProps & {
+  enableAttachments?: false;
+  onSend: () => void;
+};
+
+export type MessageBoxProps = MessageBoxChatProps | MessageBoxSimpleProps;
 
 function syncComposerHeight(
   element: HTMLTextAreaElement,
@@ -129,29 +144,36 @@ async function uploadComposerAttachment(
   }
 }
 
-export function MessageBox({
-  value,
-  onChange,
-  onSend,
-  onAbort,
-  sending,
-  canSend,
-  disabled = false,
-  placeholder = "Nhập tin nhắn…",
-  providerId,
-  providerOptions,
-  onProviderChange,
-  modelId,
-  modelOptions,
-  onModelChange,
-  modelsLoading = false,
-  modelSaving = false,
-  modelLabel,
-  contextUsage,
-  projectId,
-  sandboxActive = false,
-  stagingMaxBytes,
-}: MessageBoxProps) {
+export function MessageBox(props: MessageBoxProps) {
+  const {
+    value,
+    onChange,
+    onSend,
+    sending,
+    disabled = false,
+    placeholder = "Nhập tin nhắn…",
+    providerId,
+    providerOptions,
+    onProviderChange,
+    modelId,
+    modelOptions,
+    onModelChange,
+    modelsLoading = false,
+    hint,
+    inputId = "message-box-input",
+    ariaLabel = "Message input",
+    composerId = "message-box",
+  } = props;
+
+  const enableAttachments = props.enableAttachments === true;
+  const onAbort = enableAttachments ? props.onAbort : undefined;
+  const canSend = enableAttachments ? props.canSend : undefined;
+  const modelSaving = enableAttachments ? (props.modelSaving ?? false) : false;
+  const modelLabel = enableAttachments ? props.modelLabel : undefined;
+  const contextUsage = enableAttachments ? props.contextUsage : undefined;
+  const projectId = enableAttachments ? props.projectId : undefined;
+  const sandboxActive = enableAttachments ? (props.sandboxActive ?? false) : false;
+  const stagingMaxBytes = enableAttachments ? props.stagingMaxBytes : undefined;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
@@ -183,11 +205,12 @@ export function MessageBox({
       (item.sandboxBlocked ||
         isFileOverSandboxStagingLimit(item.file.size, sandboxActive)),
   );
-  const canSendNow =
-    canSend &&
-    !hasUploadingAttachments &&
-    !hasSandboxOversized &&
-    (value.trim().length > 0 || hasReadyAttachments);
+  const canSendNow = enableAttachments
+    ? Boolean(canSend) &&
+      !hasUploadingAttachments &&
+      !hasSandboxOversized &&
+      (value.trim().length > 0 || hasReadyAttachments)
+    : (canSend ?? value.trim().length > 0) && !inputDisabled;
 
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
@@ -344,18 +367,35 @@ export function MessageBox({
   const handleSendClick = useCallback(() => {
     if (!canSendNow) return;
 
-    const readyAttachments = attachments.filter(
-      (item) =>
-        item.status === "ready" &&
-        !item.sandboxBlocked &&
-        item.serverId &&
-        !isFileOverSandboxStagingLimit(item.file.size, sandboxActive),
-    );
-    onSend({ text: value.trim(), attachments: readyAttachments });
-    onChange("");
-    clearAttachments();
-    setAttachmentErrors([]);
-  }, [attachments, canSendNow, clearAttachments, onChange, onSend, sandboxActive, value]);
+    if (enableAttachments) {
+      const readyAttachments = attachments.filter(
+        (item) =>
+          item.status === "ready" &&
+          !item.sandboxBlocked &&
+          item.serverId &&
+          !isFileOverSandboxStagingLimit(item.file.size, sandboxActive),
+      );
+      (props as MessageBoxChatProps).onSend({
+        text: value.trim(),
+        attachments: readyAttachments,
+      });
+      onChange("");
+      clearAttachments();
+      setAttachmentErrors([]);
+      return;
+    }
+
+    (props as MessageBoxSimpleProps).onSend();
+  }, [
+    attachments,
+    canSendNow,
+    clearAttachments,
+    enableAttachments,
+    onChange,
+    onSend,
+    sandboxActive,
+    value,
+  ]);
 
   useEffect(() => {
     if (!sandboxActive) {
@@ -397,33 +437,37 @@ export function MessageBox({
       : "Model";
 
   return (
-    <Box as="footer" className={styles.root} aria-label="Chat message input">
+    <Box as="footer" className={styles.root} aria-label={ariaLabel}>
       <div
-        className={`${styles.card} ${dragOver ? styles.cardDragOver : ""}`}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        className={`${styles.card} ${enableAttachments && dragOver ? styles.cardDragOver : ""}`}
+        onDragEnter={enableAttachments ? handleDragEnter : undefined}
+        onDragOver={enableAttachments ? handleDragOver : undefined}
+        onDragLeave={enableAttachments ? handleDragLeave : undefined}
+        onDrop={enableAttachments ? handleDrop : undefined}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          className={styles.hiddenFileInput}
-          accept={FILE_INPUT_ACCEPT}
-          multiple
-          onChange={handleFileInputChange}
-          disabled={inputDisabled}
-          tabIndex={-1}
-          aria-hidden
-        />
+        {enableAttachments ? (
+          <input
+            ref={fileInputRef}
+            type="file"
+            className={styles.hiddenFileInput}
+            accept={FILE_INPUT_ACCEPT}
+            multiple
+            onChange={handleFileInputChange}
+            disabled={inputDisabled}
+            tabIndex={-1}
+            aria-hidden
+          />
+        ) : null}
 
-        <AttachmentPreviewRow
-          attachments={attachments}
-          onRemove={removeAttachment}
-          disabled={inputDisabled}
-        />
+        {enableAttachments ? (
+          <AttachmentPreviewRow
+            attachments={attachments}
+            onRemove={removeAttachment}
+            disabled={inputDisabled}
+          />
+        ) : null}
 
-        {sandboxActive ? (
+        {enableAttachments && sandboxActive ? (
           <div className={styles.sandboxCallout} role="status">
             <AlertTriangle size={14} aria-hidden />
             <span>
@@ -434,7 +478,7 @@ export function MessageBox({
           </div>
         ) : null}
 
-        {attachmentErrors.length > 0 ? (
+        {enableAttachments && attachmentErrors.length > 0 ? (
           <div className={styles.attachmentErrors} role="alert">
             {attachmentErrors.map((message, index) => (
               <p key={`${index}-${message}`}>{message}</p>
@@ -445,7 +489,7 @@ export function MessageBox({
         <div className={styles.inputArea}>
           <Textarea
             ref={textareaRef}
-            id="chat-message-input"
+            id={inputId}
             rows={1}
             className={styles.input}
             placeholder={placeholder}
@@ -454,7 +498,7 @@ export function MessageBox({
               onChange(event.target.value);
               syncComposerHeight(event.target, MAX_INPUT_LINES);
             }}
-            onPaste={handlePaste}
+            onPaste={enableAttachments ? handlePaste : undefined}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
@@ -470,7 +514,7 @@ export function MessageBox({
           <div className={styles.toolbarLeft}>
             <div className={styles.toolbarSelect}>
               <Select
-                id="chat-composer-provider"
+                id={`${composerId}-provider`}
                 labelPosition="none"
                 value={providerId || undefined}
                 onValueChange={onProviderChange}
@@ -481,7 +525,7 @@ export function MessageBox({
             </div>
             <div className={styles.toolbarSelect}>
               <Select
-                id="chat-composer-model"
+                id={`${composerId}-model`}
                 labelPosition="none"
                 value={modelId || undefined}
                 onValueChange={onModelChange}
@@ -495,23 +539,27 @@ export function MessageBox({
           </div>
 
           <div className={styles.toolbarRight}>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={() => fileInputRef.current?.click()}
-              disabled={inputDisabled}
-              aria-label="Đính kèm tài liệu hoặc hình ảnh"
-              title="Đính kèm tài liệu hoặc hình ảnh"
-            >
-              <Paperclip size={16} strokeWidth={1.75} />
-            </button>
+            {enableAttachments ? (
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={inputDisabled}
+                aria-label="Đính kèm tài liệu hoặc hình ảnh"
+                title="Đính kèm tài liệu hoặc hình ảnh"
+              >
+                <Paperclip size={16} strokeWidth={1.75} />
+              </button>
+            ) : null}
 
-            <ContextUsageRing
-              {...contextUsage}
-              modelLabel={modelLabel ?? modelId}
-            />
+            {contextUsage ? (
+              <ContextUsageRing
+                {...contextUsage}
+                modelLabel={modelLabel ?? modelId}
+              />
+            ) : null}
 
-            {sending ? (
+            {sending && onAbort ? (
               <button
                 type="button"
                 className={`${styles.sendBtn} ${styles.sendBtnStop}`}
@@ -540,6 +588,7 @@ export function MessageBox({
           </div>
         </div>
       </div>
+      {hint ? <p className={styles.hint}>{hint}</p> : null}
     </Box>
   );
 }

@@ -20,7 +20,7 @@ import {
   OPTIMIZE_SEED_USER_MESSAGE,
 } from "@/lib/agent-editor/agent-panel-context";
 import { dispatchApplyAgentsMd } from "@/lib/agent-editor/agent-panel-events";
-import { AgentPanelComposer } from "./AgentPanelComposer";
+import { MessageBox } from "@/components/dashboard/MessageBox";
 import { AgentPanelNoModelBanner } from "./AgentPanelModelBar";
 import { OptimizeResultCard } from "./OptimizeResultCard";
 import styles from "./AgentPanel.module.css";
@@ -404,7 +404,7 @@ export function AgentPanel() {
 
       <div className={panelStyles.composerFooter}>
         {!modelsLoading && !hasProviders ? <AgentPanelNoModelBanner /> : null}
-        <AgentPanelComposer
+        <MessageBox
           value={input}
           onChange={setInput}
           onSend={() => sendMessage(input)}
@@ -422,6 +422,9 @@ export function AgentPanel() {
           modelOptions={modelSelectOptions}
           onModelChange={handleModelChange}
           modelsLoading={modelsLoading}
+          inputId="agent-panel-message-input"
+          composerId="agent-panel-composer"
+          ariaLabel="Agent assistant message input"
           hint={`Tab trái: ${activeEditTab}. ${
             hasProviders
               ? "Optimize with AI dùng model đã chọn."

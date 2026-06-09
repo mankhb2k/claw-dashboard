@@ -10,7 +10,7 @@ import { useSkillEditorUiStore } from "@/stores/skill-editor-ui.store";
 import { useProjectStore } from "@/stores/project.store";
 import { useSkillModelSelect } from "@/lib/skill/use-skill-model-select";
 import { projectApi } from "@/lib/api/project";
-import { SkillAgentPanelComposer } from "./SkillAgentPanelComposer";
+import { MessageBox } from "@/components/dashboard/MessageBox";
 import { SkillAgentPanelNoModelBanner } from "./SkillAgentPanelModelBar";
 import styles from "./SkillAgentPanel.module.css";
 import panelStyles from "./SkillAgentPanelLayout.module.css";
@@ -329,7 +329,7 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
         {!modelsLoading && !hasProviders ? (
           <SkillAgentPanelNoModelBanner />
         ) : null}
-        <SkillAgentPanelComposer
+        <MessageBox
           value={input}
           onChange={setInput}
           onSend={() => void sendMessage(input)}
@@ -343,6 +343,9 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
           modelOptions={modelSelectOptions}
           onModelChange={handleModelChange}
           modelsLoading={modelsLoading}
+          inputId="skill-panel-message-input"
+          composerId="skill-panel-composer"
+          ariaLabel="Skill assistant message input"
           hint="Mỗi lần gửi, AI thay nội dung editor và tự lưu. Xem lại trước khi bật skill."
         />
       </div>
