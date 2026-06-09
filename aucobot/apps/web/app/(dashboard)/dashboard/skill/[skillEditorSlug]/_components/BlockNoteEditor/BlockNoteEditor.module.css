@@ -1,0 +1,134 @@
+/* Document card shell — flex chain + shadow (border/radius qua Flex props) */
+
+.documentArea {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Header — mac dots, toggle, copy (cố định, không scroll) */
+
+.docHeader {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Body — scroll trong .editorScroll */
+
+.editorPane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 0;
+}
+
+.bnShell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  /* Contain BlockNote position:fixed handles inside the editor shell */
+  transform: translateZ(0);
+  --bn-ui-base-z-index: 1;
+}
+
+/* Portal reparented here — out of flex flow so it does not shrink the editor */
+.bnShell > :global(.bn-root) {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bnShell > :global(.bn-root) > * {
+  pointer-events: auto;
+}
+
+.bnView {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editorScroll {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 var(--space-4) var(--space-12);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-foreground), transparent)
+    transparent;
+}
+
+.editorScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.editorScroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-border) 80%, transparent);
+  border-radius: 3px;
+}
+
+/* Limit the width of the content (Notion-style), center in the scroll area */
+.contentWrap {
+  margin-inline: auto;
+  max-width: 850px;
+  padding-bottom: 8px;
+}
+
+.markdownPreview {
+  margin: 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Body — BlockNote theme overrides (scoped to scroll region) */
+
+.editorScroll :global(.bn-container),
+.editorScroll :global(.bn-mantine),
+.editorScroll :global(.bn-editor),
+.editorScroll :global(.bn-default-styles) {
+  background: var(--color-background) !important;
+}
+
+.editorScroll :global(.bn-editor) {
+  border-radius: 0;
+}
+
+.editorScroll :global(.bn-editor [data-content-type="table"] .tableWrapper) {
+  max-width: 100%;
+}
+
+.editorScroll :global(.ProseMirror .tableWrapper) {
+  overflow-x: auto;
+}
+
+/* Footer — gợi ý khi xem markdown (chỉ hiện ở viewMode markdown) */
+
+.markdownHint {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}

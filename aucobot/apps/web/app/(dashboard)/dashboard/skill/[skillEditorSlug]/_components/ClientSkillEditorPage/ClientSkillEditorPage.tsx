@@ -10,7 +10,7 @@ import { projectApi } from "@/lib/api/project";
 import type { ProjectSkillDetail } from "@/schemas/project.schema";
 import { useProjectStore } from "@/stores/project.store";
 import { useSkillEditorUiStore } from "@/stores/skill-editor-ui.store";
-import type { SkillEditorHandle } from "../SkillEditor";
+import type { SkillEditorHandle } from "../SkillEditPanel/SkillEditPanel";
 import { SkillEditPanel } from "../SkillEditPanel/SkillEditPanel";
 import { SkillAgentPanel } from "../SkillAgentPanel/SkillAgentPanel";
 import pageStyles from "../../skillEditorSlug.module.css";
