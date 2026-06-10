@@ -57,7 +57,12 @@ model Project {
   heartbeatEvery           String  @default("30m") @map("heartbeat_every")
   heartbeatMd              String? @map("heartbeat_md") @db.Text
   sandboxDefaultEnabled    Boolean @default(false) @map("sandbox_default_enabled")
-  sandboxDefaultMode       String  @default("non-main") @map("sandbox_default_mode")
+  sandboxDefaultMode       String  @default("all") @map("sandbox_default_mode")
+  sandboxExemptAgentSlugs  Json    @default("[]") @map("sandbox_exempt_agent_slugs")
+  sandboxAppliedAgentSlugs Json    @default("[]") @map("sandbox_applied_agent_slugs")
+  execAskPolicy            String  @default("on-miss") @map("exec_ask_policy")
+  execSafeBins             Json    @default("[]") @map("exec_safe_bins")
+  execTimeoutSec           Int     @default(1800) @map("exec_timeout_sec")
   status       ProjectStatus @default(CREATING)
   errorMessage String?       @map("error_message")
   lastActiveAt DateTime      @default(now()) @map("last_active_at")

@@ -16,7 +16,7 @@ import {
   type ChatAttachmentKind,
   type ChatAttachmentStorage,
 } from '@aucobot/runtime-contracts';
-import { parseAgentFormData } from '@aucobot/workspace-sync';
+import { parseCollaborationMemberSlugs } from '@aucobot/workspace-sync';
 import {
   ChatAttachmentKind as DbAttachmentKind,
   ChatAttachmentStatus,
@@ -145,28 +145,29 @@ export class ChatAttachmentsService {
     const agentSlug = agentSlugFromSessionKey(sessionKey);
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { sandboxDefaultEnabled: true, sandboxDefaultMode: true },
+      select: {
+        sandboxDefaultEnabled: true,
+        sandboxDefaultMode: true,
+        sandboxExemptAgentSlugs: true,
+        sandboxAppliedAgentSlugs: true,
+      },
     });
     if (!project) return false;
 
-    if (agentSlug === 'main') {
-      return resolveEffectiveSandboxActive({
-        agentSlug,
-        projectSandboxDefaultEnabled: project.sandboxDefaultEnabled,
-        projectSandboxDefaultMode: project.sandboxDefaultMode,
-      });
-    }
+    const exemptSlugs = parseCollaborationMemberSlugs(project.sandboxExemptAgentSlugs);
+    const appliedSlugs = parseCollaborationMemberSlugs(project.sandboxAppliedAgentSlugs);
+    const mode =
+      project.sandboxDefaultMode === 'selected' ||
+      project.sandboxDefaultMode === 'non-main'
+        ? 'selected'
+        : 'all';
 
-    const agent = await this.prisma.projectAgent.findUnique({
-      where: { projectId_slug: { projectId, slug: agentSlug } },
-      select: { formData: true },
-    });
-    const form = agent ? parseAgentFormData(agent.formData) : null;
     return resolveEffectiveSandboxActive({
       agentSlug,
-      agentSandboxEnabled: form?.sandboxEnabled,
+      sandboxExempt: exemptSlugs.includes(agentSlug),
+      sandboxApplied: appliedSlugs.includes(agentSlug),
       projectSandboxDefaultEnabled: project.sandboxDefaultEnabled,
-      projectSandboxDefaultMode: project.sandboxDefaultMode,
+      projectSandboxDefaultMode: mode,
     });
   }
 

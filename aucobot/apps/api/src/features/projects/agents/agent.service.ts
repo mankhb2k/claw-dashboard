@@ -18,6 +18,12 @@ import {
 } from '@aucobot/workspace-sync';
 import { slugifyAgentName, validateAgentSlug } from './agent-slug';
 import { CollaborationService } from './collaboration.service';
+import {
+  isModelInProviderCatalog,
+  modelIdsEquivalent,
+  resolveEffectiveAgentModel,
+} from './agent-model.resolve';
+import { loadProjectModelCatalog } from '../chat/project-model-catalog';
 
 export type ProjectAgentListRow = {
   slug: string;
@@ -25,6 +31,7 @@ export type ProjectAgentListRow = {
   description: string;
   avatar: string;
   model: string;
+  skillsCount: number;
   enabled: boolean;
   isDefault: boolean;
   inCollaboration: boolean;
@@ -96,7 +103,7 @@ export class AgentService {
       lastSyncError: string | null;
       updatedAt: Date;
     },
-    extras?: { inCollaboration?: boolean },
+    extras?: { inCollaboration?: boolean; model?: string },
   ): ProjectAgentListRow {
     const form = parseAgentFormData(row.formData);
     return {
@@ -104,7 +111,8 @@ export class AgentService {
       name: row.name,
       description: row.description,
       avatar: row.avatar,
-      model: form.model,
+      model: extras?.model ?? form.model,
+      skillsCount: form.skillNames.length,
       enabled: row.enabled,
       isDefault: row.isDefault,
       inCollaboration: extras?.inCollaboration ?? false,
@@ -112,6 +120,56 @@ export class AgentService {
       lastSyncError: row.lastSyncError,
       updatedAt: row.updatedAt.toISOString(),
     };
+  }
+
+  private async resolveRowModel(
+    projectId: string,
+    formModel: string,
+  ): Promise<string> {
+    const catalog = await loadProjectModelCatalog({
+      prisma: this.prisma,
+      workspace: this.workspace,
+      projectId,
+    });
+    return resolveEffectiveAgentModel({
+      formModel,
+      projectPrimary: catalog.primaryModel,
+      providers: catalog.providers,
+    });
+  }
+
+  private async maybeMigrateStaleAgentModel(
+    projectId: string,
+    slug: string,
+    form: AgentFormInput,
+  ): Promise<AgentFormInput> {
+    const catalog = await loadProjectModelCatalog({
+      prisma: this.prisma,
+      workspace: this.workspace,
+      projectId,
+    });
+    const effective = resolveEffectiveAgentModel({
+      formModel: form.model,
+      projectPrimary: catalog.primaryModel,
+      providers: catalog.providers,
+    });
+
+    if (
+      !effective ||
+      catalog.providers.length === 0 ||
+      modelIdsEquivalent(form.model, effective) ||
+      isModelInProviderCatalog(catalog.providers, form.model)
+    ) {
+      return form;
+    }
+
+    const next = { ...form, model: effective };
+    await this.prisma.projectAgent.update({
+      where: { projectId_slug: { projectId, slug } },
+      data: { formData: toStoredAgentFormData(next) as object },
+    });
+    await this.workspace.syncProjectRuntime(projectId);
+    return next;
   }
 
   async listTemplates(): Promise<AgentTemplateRow[]> {
@@ -161,7 +219,7 @@ export class AgentService {
   }
 
   async list(projectId: string): Promise<ProjectAgentListRow[]> {
-    const [rows, project] = await Promise.all([
+    const [rows, project, catalog] = await Promise.all([
       this.prisma.projectAgent.findMany({
         where: { projectId },
         orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
@@ -173,6 +231,11 @@ export class AgentService {
           collaborationMemberSlugs: true,
         },
       }),
+      loadProjectModelCatalog({
+        prisma: this.prisma,
+        workspace: this.workspace,
+        projectId,
+      }),
     ]);
 
     const collaborationEnabled = project?.collaborationEnabled ?? false;
@@ -180,16 +243,25 @@ export class AgentService {
       parseCollaborationMemberSlugs(project?.collaborationMemberSlugs),
     );
 
-    return rows.map((r) =>
-      this.toListRow(r, {
+    return rows.map((r) => {
+      const form = parseAgentFormData(r.formData);
+      const model = resolveEffectiveAgentModel({
+        formModel: form.model,
+        projectPrimary: catalog.primaryModel,
+        providers: catalog.providers,
+      });
+      return this.toListRow(r, {
         inCollaboration: collaborationEnabled && memberSlugs.has(r.slug),
-      }),
-    );
+        model,
+      });
+    });
   }
 
   async get(projectId: string, slug: string): Promise<ProjectAgentDetail> {
     const row = await this.findRow(projectId, slug);
-    const form = parseAgentFormData(row.formData);
+    let form = parseAgentFormData(row.formData);
+    form = await this.maybeMigrateStaleAgentModel(projectId, slug, form);
+    const model = await this.resolveRowModel(projectId, form.model);
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
@@ -204,6 +276,7 @@ export class AgentService {
     return {
       ...this.toListRow(row, {
         inCollaboration: collaborationEnabled && memberSlugs.includes(row.slug),
+        model,
       }),
       formData: form,
       createdAt: row.createdAt.toISOString(),

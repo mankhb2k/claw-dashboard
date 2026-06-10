@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import styles from "./CardAgent.module.css";
 import { AgentItem } from "../../agentMockData";
+import { NO_MODEL_LABEL } from "@/lib/chat/model-catalog";
 
 interface CardAgentProps {
   agent: AgentItem;
@@ -36,6 +37,7 @@ export function CardAgent({
 }: CardAgentProps) {
   // Model chip color by provider family
   const getModelClass = (modelName: string) => {
+    if (modelName === NO_MODEL_LABEL) return styles.tagSecondary;
     const name = modelName.toLowerCase();
     if (name.includes("gpt")) return styles.tagOpenAI;
     if (name.includes("claude")) return styles.tagClaude;

@@ -155,32 +155,117 @@ export function mergeAgentCollaborationToolsIntoConfig(
   return config;
 }
 
+export type ProjectExecPolicy = {
+  ask: string;
+  safeBins: string[];
+  timeoutSec: number;
+};
+
+/** OpenClaw 2026.5+ — exec policy lives under `tools.exec`, not `agents.list[].exec`. */
+export function mergeExecToolsIntoConfig(
+  config: Record<string, unknown>,
+  exec: ProjectExecPolicy | undefined,
+): Record<string, unknown> {
+  if (!exec) {
+    return config;
+  }
+  const tools = (config.tools as Record<string, unknown> | undefined) ?? {};
+  tools.exec = {
+    ask: exec.ask,
+    safeBins: exec.safeBins,
+    timeoutSec: exec.timeoutSec,
+  };
+  config.tools = tools;
+  return config;
+}
+
+function applyAgentShellDeny(entry: Record<string, unknown>, shellExecEnabled: boolean): void {
+  if (shellExecEnabled) {
+    return;
+  }
+  const tools = (entry.tools as Record<string, unknown> | undefined) ?? {};
+  tools.deny = ['exec', 'process'];
+  entry.tools = tools;
+}
+
+export type ProjectSandboxPolicy = {
+  enabled: boolean;
+  mode: 'all' | 'selected';
+  exemptSlugs: string[];
+  appliedSlugs: string[];
+};
+
+const DEFAULT_SANDBOX_BLOCK: OpenClawAgentSandbox = {
+  mode: 'all',
+  scope: 'agent',
+  workspaceAccess: 'none',
+};
+
+function normalizeSlugSet(slugs: string[]): Set<string> {
+  return new Set(
+    slugs.map((slug) => String(slug).trim().toLowerCase()).filter(Boolean),
+  );
+}
+
+function applyProjectSandboxToEntry(
+  entry: Record<string, unknown>,
+  slug: string,
+  policy: ProjectSandboxPolicy,
+  exemptSet: ReadonlySet<string>,
+  appliedSet: ReadonlySet<string>,
+): void {
+  if (!policy.enabled) {
+    return;
+  }
+
+  if (policy.mode === 'all') {
+    if (exemptSet.has(slug)) {
+      entry.sandbox = { mode: 'off' };
+    }
+    return;
+  }
+
+  if (appliedSet.has(slug)) {
+    entry.sandbox = DEFAULT_SANDBOX_BLOCK;
+  } else {
+    entry.sandbox = { mode: 'off' };
+  }
+}
+
 /** Merge user agents into `agents.list`; keep `env` and `agents.defaults.model` from provider step. */
 export function mergeAgentsIntoConfig(
   config: Record<string, unknown>,
   enabledAgents: ProjectAgentMergeRow[],
   collaboration: ProjectCollaborationSettings,
-  projectSandboxDefault?: OpenClawAgentSandbox,
+  projectSandboxPolicy?: ProjectSandboxPolicy,
+  projectExecPolicy?: ProjectExecPolicy,
 ): Record<string, unknown> {
+  const policy: ProjectSandboxPolicy = projectSandboxPolicy ?? {
+    enabled: false,
+    mode: 'all',
+    exemptSlugs: [],
+    appliedSlugs: [],
+  };
+  const exemptSet = normalizeSlugSet(policy.exemptSlugs);
+  const appliedSet = normalizeSlugSet(policy.appliedSlugs);
   const agents = (config.agents as Record<string, unknown> | undefined) ?? {};
   const defaults = (agents.defaults as Record<string, unknown> | undefined) ?? {};
   defaults.workspace = CONTAINER_WORKSPACE_DIR;
 
-  // Project-level sandbox default applies to every agent (incl. main) unless a
-  // per-agent entry overrides it via agents.list[].sandbox.
-  if (projectSandboxDefault) {
-    defaults.sandbox = projectSandboxDefault;
+  if (policy.enabled && policy.mode === 'all') {
+    defaults.sandbox = DEFAULT_SANDBOX_BLOCK;
   } else {
     delete defaults.sandbox;
   }
 
-  const list: Record<string, unknown>[] = [
-    {
-      id: 'main',
-      name: 'Main',
-      workspace: CONTAINER_WORKSPACE_DIR,
-    },
-  ];
+  const mainEntry: Record<string, unknown> = {
+    id: 'main',
+    name: 'Main',
+    workspace: CONTAINER_WORKSPACE_DIR,
+  };
+  applyProjectSandboxToEntry(mainEntry, 'main', policy, exemptSet, appliedSet);
+
+  const list: Record<string, unknown>[] = [mainEntry];
 
   const sorted = [...enabledAgents].sort((a, b) => {
     if (a.isDefault !== b.isDefault) {
@@ -196,12 +281,10 @@ export function mergeAgentsIntoConfig(
       name: row.name.trim() || row.slug,
       workspace: `${CONTAINER_STATE_DIR}/workspace-${row.slug}`,
       model: patch.model,
-      exec: patch.exec,
     };
-    if (patch.sandbox) {
-      entry.sandbox = patch.sandbox;
-    }
+    applyProjectSandboxToEntry(entry, row.slug, policy, exemptSet, appliedSet);
     entry.skills = normalizeAgentSkillAllowlist(row.formData);
+    applyAgentShellDeny(entry, row.formData.shellExecEnabled);
     list.push(entry);
   }
 
@@ -216,6 +299,8 @@ export function mergeAgentsIntoConfig(
     collaboration,
     enabledAgents.map((row) => row.slug),
   );
+
+  mergeExecToolsIntoConfig(config, projectExecPolicy);
 
   return config;
 }

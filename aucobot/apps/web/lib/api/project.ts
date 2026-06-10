@@ -13,6 +13,8 @@ import {
   updateAgentHeartbeatBodySchema,
   projectSandboxResponseSchema,
   updateProjectSandboxBodySchema,
+  projectExecPolicyResponseSchema,
+  updateProjectExecPolicyBodySchema,
   providerDefinitionSchema,
   gatewayTokenResponseSchema,
   connectorDefinitionSchema,
@@ -77,6 +79,7 @@ import {
   type ProjectHeartbeatResponse,
   type AgentHeartbeatResponse,
   type ProjectSandboxResponse,
+  type ProjectExecPolicyResponse,
 } from '@/schemas/project.schema'
 import {
   createCronJobInputSchema,
@@ -609,11 +612,30 @@ export const projectApi = {
 
   updateProjectSandbox: async (
     id: string,
-    body: { enabled: boolean; mode: 'non-main' | 'all' },
+    body: {
+      enabled: boolean;
+      mode: 'all' | 'selected';
+      exemptAgentSlugs: string[];
+      appliedAgentSlugs: string[];
+    },
   ): Promise<ProjectSandboxResponse> => {
     const payload = updateProjectSandboxBodySchema.parse(body)
     const res = await api.patch(`/api/projects/${id}/sandbox`, payload)
     return projectSandboxResponseSchema.parse(res.data)
+  },
+
+  getProjectExecPolicy: async (id: string): Promise<ProjectExecPolicyResponse> => {
+    const res = await api.get(`/api/projects/${id}/exec-policy`)
+    return projectExecPolicyResponseSchema.parse(res.data)
+  },
+
+  updateProjectExecPolicy: async (
+    id: string,
+    body: { askPolicy: 'always' | 'on-miss' | 'off'; safeBins: string[]; timeoutSec: number },
+  ): Promise<ProjectExecPolicyResponse> => {
+    const payload = updateProjectExecPolicyBodySchema.parse(body)
+    const res = await api.patch(`/api/projects/${id}/exec-policy`, payload)
+    return projectExecPolicyResponseSchema.parse(res.data)
   },
 
   getAgentHeartbeat: async (

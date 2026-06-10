@@ -6,7 +6,12 @@ TOKEN="${OPENCLAW_GATEWAY_TOKEN:?OPENCLAW_GATEWAY_TOKEN is required}"
 
 resolve_state_dir() {
   if [ -n "${OSS_PROJECT_ID:-}" ]; then
-    echo "${ROOT}/${OSS_PROJECT_ID}"
+    candidate="${ROOT}/${OSS_PROJECT_ID}"
+    if [ -f "${candidate}/openclaw.json" ]; then
+      echo "${candidate}"
+      return
+    fi
+    echo ""
     return
   fi
   for dir in "${ROOT}"/*/; do

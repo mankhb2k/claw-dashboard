@@ -1,0 +1,90 @@
+.cardRow {
+  gap: var(--space-8);
+}
+
+.rowInfo {
+  gap: var(--space-1);
+}
+
+.rowAction {
+  max-width: 400px;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.fieldError {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.policyGroup {
+  width: 100%;
+}
+
+.tagContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  min-height: 42px;
+  align-items: center;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background: var(--color-primary-dim);
+  color: var(--color-primary);
+}
+
+.tagDeleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-primary);
+}
+
+.tagDeleteBtn:hover {
+  color: var(--color-danger);
+}
+
+.tagInput {
+  flex: 1;
+  min-width: 60px;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-foreground);
+}
+
+.tagInput::placeholder {
+  color: var(--color-muted-foreground);
+}
+
+.timeoutField {
+  max-width: 12rem;
+}
+
+.warning {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.hint {
+  margin: 0;
+}

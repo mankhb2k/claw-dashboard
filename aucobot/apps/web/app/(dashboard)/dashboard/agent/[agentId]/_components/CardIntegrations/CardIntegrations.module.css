@@ -83,8 +83,9 @@
 .emptyTable {
   padding: var(--space-6);
   text-align: center;
-  background: var(--color-muted);
+  border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
+  background: transparent;
 }
 
 .dialogForm {

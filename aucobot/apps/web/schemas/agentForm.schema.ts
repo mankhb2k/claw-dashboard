@@ -2,17 +2,11 @@ import { z } from 'zod'
 
 export const agentVibeSchema = z.enum(['professional', 'friendly', 'strict'])
 
-export const agentAskPolicySchema = z.enum(['always', 'on-miss', 'off'])
-
 export const agentInstructionsModeSchema = z.enum(['simple', 'advanced'])
 
-export const agentSandboxModeSchema = z.enum(['non-main', 'all'])
-
-export const agentSandboxScopeSchema = z.enum(['agent', 'session'])
-
-export const agentSandboxWorkspaceAccessSchema = z.enum(['none', 'ro', 'rw'])
-
 const instructionsFieldMax = 12_000
+
+const INTERPRETER_SAFE_BINS = new Set(['python', 'python3', 'node', 'nodejs', 'ruby', 'bash', 'sh', 'zsh'])
 
 /** Agent form schema — UI view model; compiled to OpenClaw bootstrap on save */
 export const agentFormSchema = z
@@ -36,13 +30,7 @@ export const agentFormSchema = z
     toolsNotes: z.string().max(instructionsFieldMax),
 
     model: z.string(),
-    sandboxEnabled: z.boolean(),
-    sandboxMode: agentSandboxModeSchema,
-    sandboxScope: agentSandboxScopeSchema,
-    sandboxWorkspaceAccess: agentSandboxWorkspaceAccessSchema,
-    askPolicy: agentAskPolicySchema,
-    safeBins: z.array(z.string()),
-    timeoutSec: z.number().min(5, 'Minimum 5 seconds').max(3600, 'Maximum 3600 seconds'),
+    shellExecEnabled: z.boolean(),
     skillNames: z.array(z.string().min(1)).max(100, 'At most 100 skills per agent'),
   })
   .superRefine((data, ctx) => {
@@ -96,12 +84,7 @@ export function buildAgentFormDefaults(
     return existing
   }
 
-  const modelFromTemplate =
-    template?.model === 'gemini-1-5-pro'
-      ? 'gemini-1-5-pro'
-      : template?.model === 'gpt-4o'
-        ? 'gpt-4o'
-        : (template?.model ?? 'claude-3-5-sonnet')
+  const modelFromTemplate = template?.model?.trim() ?? ''
 
   const agentsBootstrap = template?.bootstrapFiles?.agents?.trim() ?? ''
   const useAdvancedFromTemplate =
@@ -126,16 +109,7 @@ export function buildAgentFormDefaults(
     toolsNotes: '',
 
     model: modelFromTemplate,
-    sandboxEnabled: template?.sandboxEnabled ?? false,
-    sandboxMode: 'all',
-    sandboxScope: 'agent',
-    sandboxWorkspaceAccess: 'none',
-    askPolicy: 'on-miss',
-    safeBins:
-      templateSlug === 'coding-assistant'
-        ? ['python', 'node', 'git', 'npm', 'gcc']
-        : ['python', 'node', 'git'],
-    timeoutSec: 60,
+    shellExecEnabled: true,
     skillNames: [],
   }
 }
@@ -161,3 +135,5 @@ export function agentTemplateToDefaults(template: {
     bootstrapFiles: template.bootstrapFiles,
   }
 }
+
+export { INTERPRETER_SAFE_BINS }

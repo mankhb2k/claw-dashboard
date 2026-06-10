@@ -35,6 +35,9 @@ function createService() {
       findMany: jest.fn(),
       findUnique: jest.fn(),
     },
+    projectAgent: {
+      findUnique: jest.fn(),
+    },
   };
   const workspace = {
     resolveProjectDataDir: jest.fn().mockReturnValue(DATA_DIR),
@@ -124,7 +127,7 @@ describe('ChatModelService', () => {
     });
 
     it('returns agentPrimaryModel from custom agent formData', async () => {
-      const { service, prisma, agents } = createService();
+      const { service, prisma } = createService();
       prisma.projectProviderKey.findMany.mockResolvedValue([
         {
           providerId: 'openai',
@@ -133,8 +136,7 @@ describe('ChatModelService', () => {
           updatedAt: new Date(),
         },
       ]);
-      agents.get.mockResolvedValue({
-        slug: 'support',
+      prisma.projectAgent.findUnique.mockResolvedValue({
         formData: { model: 'openai/gpt-5.4-mini' },
       });
 

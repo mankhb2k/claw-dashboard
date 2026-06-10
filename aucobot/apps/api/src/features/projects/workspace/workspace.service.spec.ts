@@ -41,6 +41,23 @@ jest.mock('@aucobot/workspace-sync', () => ({
   removeLegacyDotEnv: jest.fn().mockResolvedValue(undefined),
   resolveProjectDataDir: jest.fn((projectId: string) => `/data/${projectId}`),
   parseAgentFormData: jest.fn((formData: unknown) => formData),
+  parseCollaborationMemberSlugs: jest.fn((raw: unknown) =>
+    Array.isArray(raw)
+      ? raw.map((v) => String(v).trim().toLowerCase()).filter(Boolean)
+      : [],
+  ),
+  stripLegacyTeamKeysFromRawFormData: jest.fn(() => null),
+  stripLegacyExecKeysFromRawFormData: jest.fn(() => null),
+  stripLegacyAgentSandboxKeysFromRawFormData: jest.fn(() => null),
+  readLegacySandboxExemptFromRawFormData: jest.fn(() => false),
+  normalizeCollaborationSettings: jest.fn((input: { enabled: boolean; memberSlugs: string[] }) => input),
+  resolveProjectCollaborationSettings: jest.fn(
+    ({ stored }: { stored: { enabled: boolean; memberSlugs: string[] } }) => stored,
+  ),
+  shouldPersistDerivedCollaboration: jest.fn(() => false),
+  legacyTeamFormSlice: jest.fn(() => ({})),
+  mergeHeartbeatIntoConfig: jest.fn(),
+  writeHeartbeatFiles: jest.fn().mockResolvedValue(undefined),
   writeOpenClawConfigJson: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -111,7 +128,7 @@ function createService() {
   const prisma = {
     project: { findUnique: jest.fn() },
     projectProviderKey: { findMany: jest.fn() },
-    projectAgent: { findMany: jest.fn() },
+    projectAgent: { findMany: jest.fn(), update: jest.fn() },
     projectConnector: { findMany: jest.fn() },
     projectChannel: { findMany: jest.fn() },
   };
@@ -278,6 +295,16 @@ describe('WorkspaceService', () => {
           gatewayToken: true,
           collaborationEnabled: true,
           collaborationMemberSlugs: true,
+          heartbeatEnabled: true,
+          heartbeatEvery: true,
+          heartbeatMd: true,
+          sandboxDefaultEnabled: true,
+          sandboxDefaultMode: true,
+          sandboxExemptAgentSlugs: true,
+          sandboxAppliedAgentSlugs: true,
+          execAskPolicy: true,
+          execSafeBins: true,
+          execTimeoutSec: true,
         },
       });
       expect(resolveOssGatewayTokenMock).toHaveBeenCalledWith('db-token');

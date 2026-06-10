@@ -148,16 +148,42 @@ export const updateAgentHeartbeatBodySchema = z.object({
   heartbeatMd: z.string().max(12000).nullable().optional(),
 })
 
+export const projectSandboxAgentRowSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  avatar: z.string(),
+  enabled: z.boolean(),
+})
+
 export const projectSandboxResponseSchema = z.object({
   enabled: z.boolean(),
-  mode: z.enum(['non-main', 'all']),
+  mode: z.enum(['all', 'selected']),
+  exemptAgentSlugs: z.array(z.string()),
+  appliedAgentSlugs: z.array(z.string()),
+  agents: z.array(projectSandboxAgentRowSchema),
 })
 
 export type ProjectSandboxResponse = z.infer<typeof projectSandboxResponseSchema>
 
 export const updateProjectSandboxBodySchema = z.object({
   enabled: z.boolean(),
-  mode: z.enum(['non-main', 'all']),
+  mode: z.enum(['all', 'selected']),
+  exemptAgentSlugs: z.array(z.string()),
+  appliedAgentSlugs: z.array(z.string()),
+})
+
+export const projectExecPolicyResponseSchema = z.object({
+  askPolicy: z.enum(['always', 'on-miss', 'off']),
+  safeBins: z.array(z.string()),
+  timeoutSec: z.number(),
+})
+
+export type ProjectExecPolicyResponse = z.infer<typeof projectExecPolicyResponseSchema>
+
+export const updateProjectExecPolicyBodySchema = z.object({
+  askPolicy: z.enum(['always', 'on-miss', 'off']),
+  safeBins: z.array(z.string()),
+  timeoutSec: z.number().min(5).max(86400),
 })
 
 /** GET /api/projects/providers/definitions */
@@ -485,6 +511,7 @@ export const projectAgentListRowSchema = z.object({
   description: z.string(),
   avatar: z.string(),
   model: z.string(),
+  skillsCount: z.number().int().nonnegative(),
   enabled: z.boolean(),
   isDefault: z.boolean(),
   inCollaboration: z.boolean().default(false),
@@ -507,10 +534,7 @@ export const agentFormInputSchema = z.object({
   instructionsAdvanced: z.string(),
   toolsNotes: z.string(),
   model: z.string(),
-  sandboxEnabled: z.boolean(),
-  askPolicy: z.enum(['always', 'on-miss', 'off']),
-  safeBins: z.array(z.string()),
-  timeoutSec: z.number(),
+  shellExecEnabled: z.boolean(),
   skillNames: z.array(z.string()).default([]),
 })
 

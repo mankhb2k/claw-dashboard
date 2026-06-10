@@ -22,8 +22,12 @@ import {
   parseCollaborationMemberSlugs,
   resolveProjectCollaborationSettings,
   shouldPersistDerivedCollaboration,
+  stripLegacyExecKeysFromRawFormData,
+  stripLegacyAgentSandboxKeysFromRawFormData,
   stripLegacyTeamKeysFromRawFormData,
+  readLegacySandboxExemptFromRawFormData,
   writeOpenClawConfigJson,
+  type ProjectExecPolicy,
 } from '@aucobot/workspace-sync';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { decryptSecret } from '@aucobot/control-plane-core';
@@ -94,6 +98,11 @@ export class WorkspaceService {
         heartbeatMd: true,
         sandboxDefaultEnabled: true,
         sandboxDefaultMode: true,
+        sandboxExemptAgentSlugs: true,
+        sandboxAppliedAgentSlugs: true,
+        execAskPolicy: true,
+        execSafeBins: true,
+        execTimeoutSec: true,
       },
     });
     syncGatewayAuthToken(config, resolveOssGatewayToken(project?.gatewayToken));
@@ -111,15 +120,46 @@ export class WorkspaceService {
       select: { id: true, slug: true, formData: true },
     });
 
+    const legacyExemptCandidates = new Set<string>(
+      parseCollaborationMemberSlugs(project?.sandboxExemptAgentSlugs),
+    );
+
     for (const row of allAgentRows) {
-      const cleaned = stripLegacyTeamKeysFromRawFormData(row.formData);
-      if (cleaned) {
+      let nextForm = row.formData;
+      if (readLegacySandboxExemptFromRawFormData(nextForm)) {
+        legacyExemptCandidates.add(row.slug.trim().toLowerCase());
+      }
+      const cleanedTeam = stripLegacyTeamKeysFromRawFormData(nextForm);
+      if (cleanedTeam) {
+        nextForm = cleanedTeam as typeof nextForm;
+      }
+      const cleanedExec = stripLegacyExecKeysFromRawFormData(nextForm);
+      if (cleanedExec) {
+        nextForm = cleanedExec as typeof nextForm;
+      }
+      const cleanedSandbox = stripLegacyAgentSandboxKeysFromRawFormData(nextForm);
+      if (cleanedSandbox) {
+        nextForm = cleanedSandbox as typeof nextForm;
+      }
+      if (nextForm !== row.formData) {
         await this.prisma.projectAgent.update({
           where: { id: row.id },
-          data: { formData: cleaned as object },
+          data: { formData: nextForm as object },
         });
-        row.formData = cleaned as object;
+        row.formData = nextForm as object;
       }
+    }
+
+    const normalizedExemptSlugs = [...legacyExemptCandidates].sort();
+    const storedExemptSlugs = parseCollaborationMemberSlugs(project?.sandboxExemptAgentSlugs).sort();
+    if (
+      project &&
+      normalizedExemptSlugs.join(',') !== storedExemptSlugs.join(',')
+    ) {
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: { sandboxExemptAgentSlugs: normalizedExemptSlugs },
+      });
     }
 
     const storedCollaboration = normalizeCollaborationSettings({
@@ -144,13 +184,29 @@ export class WorkspaceService {
       });
     }
 
-    const projectSandboxDefault = project?.sandboxDefaultEnabled
-      ? ({
-          mode: project.sandboxDefaultMode === 'all' ? 'all' : 'non-main',
-          scope: 'agent',
-          workspaceAccess: 'none',
-        } as const)
-      : undefined;
+    const projectExecPolicy: ProjectExecPolicy = {
+      ask:
+        project?.execAskPolicy === 'always' ||
+        project?.execAskPolicy === 'off' ||
+        project?.execAskPolicy === 'on-miss'
+          ? project.execAskPolicy
+          : 'on-miss',
+      safeBins: Array.isArray(project?.execSafeBins)
+        ? project.execSafeBins.map((v) => String(v).trim().toLowerCase()).filter(Boolean)
+        : [],
+      timeoutSec: project?.execTimeoutSec ?? 1800,
+    };
+
+    const projectSandboxPolicy = {
+      enabled: project?.sandboxDefaultEnabled ?? false,
+      mode:
+        project?.sandboxDefaultMode === 'selected' ||
+        project?.sandboxDefaultMode === 'non-main'
+          ? ('selected' as const)
+          : ('all' as const),
+      exemptSlugs: normalizedExemptSlugs,
+      appliedSlugs: parseCollaborationMemberSlugs(project?.sandboxAppliedAgentSlugs),
+    };
 
     mergeAgentsIntoConfig(
       config,
@@ -161,7 +217,8 @@ export class WorkspaceService {
         isDefault: row.isDefault,
       })),
       collaboration,
-      projectSandboxDefault,
+      projectSandboxPolicy,
+      projectExecPolicy,
     );
 
     const heartbeatAgentRows = await this.prisma.projectAgent.findMany({

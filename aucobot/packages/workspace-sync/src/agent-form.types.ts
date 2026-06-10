@@ -1,9 +1,5 @@
 export type AgentVibe = 'professional' | 'friendly' | 'strict';
-export type AgentAskPolicy = 'always' | 'on-miss' | 'off';
 export type AgentInstructionsMode = 'simple' | 'advanced';
-export type AgentSandboxMode = 'non-main' | 'all';
-export type AgentSandboxScope = 'agent' | 'session';
-export type AgentSandboxWorkspaceAccess = 'none' | 'ro' | 'rw';
 
 export type AgentFormInput = {
   name: string;
@@ -19,18 +15,21 @@ export type AgentFormInput = {
   instructionsAdvanced: string;
   toolsNotes: string;
   model: string;
-  sandboxEnabled: boolean;
-  sandboxMode: AgentSandboxMode;
-  sandboxScope: AgentSandboxScope;
-  sandboxWorkspaceAccess: AgentSandboxWorkspaceAccess;
-  askPolicy: AgentAskPolicy;
-  safeBins: string[];
-  timeoutSec: number;
+  /** When false → agents.list[].tools.deny includes exec/process */
+  shellExecEnabled: boolean;
   /** OpenClaw skill allowlist (`agents.list[].skills`) — SKILL.md frontmatter `name` values. */
   skillNames: string[];
 };
 
 export const LEGACY_TEAM_FORM_KEYS = ['teamEnabled', 'allowedAgentSlugs'] as const;
+export const LEGACY_EXEC_FORM_KEYS = ['askPolicy', 'safeBins', 'timeoutSec'] as const;
+export const LEGACY_SANDBOX_FORM_KEYS = ['sandboxEnabled'] as const;
+export const LEGACY_AGENT_SANDBOX_FORM_KEYS = [
+  'sandboxPlacement',
+  'sandboxMode',
+  'sandboxScope',
+  'sandboxWorkspaceAccess',
+] as const;
 
 export function formDataHasLegacyTeamKeys(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') {
@@ -38,6 +37,37 @@ export function formDataHasLegacyTeamKeys(raw: unknown): boolean {
   }
   const o = raw as Record<string, unknown>;
   return LEGACY_TEAM_FORM_KEYS.some((key) => key in o);
+}
+
+export function formDataHasLegacyExecKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') {
+    return false;
+  }
+  const o = raw as Record<string, unknown>;
+  return LEGACY_EXEC_FORM_KEYS.some((key) => key in o);
+}
+
+export function formDataHasLegacyAgentSandboxKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') {
+    return false;
+  }
+  const o = raw as Record<string, unknown>;
+  return (
+    LEGACY_SANDBOX_FORM_KEYS.some((key) => key in o) ||
+    LEGACY_AGENT_SANDBOX_FORM_KEYS.some((key) => key in o)
+  );
+}
+
+/** True when legacy per-agent form opted out of sandbox (migrate to project exempt list). */
+export function readLegacySandboxExemptFromRawFormData(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') {
+    return false;
+  }
+  const o = raw as Record<string, unknown>;
+  if (o.sandboxPlacement === 'off') {
+    return true;
+  }
+  return false;
 }
 
 /** Returns cleaned JSON when legacy keys were present; otherwise null. */
@@ -49,6 +79,38 @@ export function stripLegacyTeamKeysFromRawFormData(
   }
   const o = { ...(raw as Record<string, unknown>) };
   for (const key of LEGACY_TEAM_FORM_KEYS) {
+    delete o[key];
+  }
+  return o;
+}
+
+/** Strip deprecated per-agent exec fields and legacy sandboxEnabled boolean. */
+export function stripLegacyExecKeysFromRawFormData(
+  raw: unknown,
+): Record<string, unknown> | null {
+  if (!formDataHasLegacyExecKeys(raw)) {
+    return null;
+  }
+  const o = { ...(raw as Record<string, unknown>) };
+  for (const key of LEGACY_EXEC_FORM_KEYS) {
+    delete o[key];
+  }
+  delete o.sandboxEnabled;
+  return o;
+}
+
+/** Strip deprecated per-agent sandbox fields (now configured in project Settings). */
+export function stripLegacyAgentSandboxKeysFromRawFormData(
+  raw: unknown,
+): Record<string, unknown> | null {
+  if (!formDataHasLegacyAgentSandboxKeys(raw)) {
+    return null;
+  }
+  const o = { ...(raw as Record<string, unknown>) };
+  for (const key of LEGACY_SANDBOX_FORM_KEYS) {
+    delete o[key];
+  }
+  for (const key of LEGACY_AGENT_SANDBOX_FORM_KEYS) {
     delete o[key];
   }
   return o;
@@ -75,34 +137,14 @@ export function parseAgentFormData(raw: unknown): AgentFormInput {
     instructionsAdvanced: String(o.instructionsAdvanced ?? ''),
     toolsNotes: String(o.toolsNotes ?? ''),
     model: String(o.model ?? 'claude-3-5-sonnet'),
-    sandboxEnabled: Boolean(o.sandboxEnabled),
-    sandboxMode: (['non-main', 'all'].includes(String(o.sandboxMode))
-      ? o.sandboxMode
-      : 'all') as AgentSandboxMode,
-    sandboxScope: (['agent', 'session'].includes(String(o.sandboxScope))
-      ? o.sandboxScope
-      : 'agent') as AgentSandboxScope,
-    sandboxWorkspaceAccess: (['none', 'ro', 'rw'].includes(String(o.sandboxWorkspaceAccess))
-      ? o.sandboxWorkspaceAccess
-      : 'none') as AgentSandboxWorkspaceAccess,
-    askPolicy: (['always', 'on-miss', 'off'].includes(String(o.askPolicy))
-      ? o.askPolicy
-      : 'on-miss') as AgentAskPolicy,
-    safeBins: Array.isArray(o.safeBins)
-      ? o.safeBins.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
-      : [],
-    timeoutSec: typeof o.timeoutSec === 'number' ? o.timeoutSec : 60,
+    shellExecEnabled: o.shellExecEnabled !== false,
     skillNames: Array.isArray(o.skillNames)
       ? o.skillNames.map((t) => String(t).trim()).filter(Boolean)
       : [],
   };
 }
 
-/** Persisted JSON — omits legacy per-agent team keys (collaboration is project-level). */
+/** Persisted JSON — omits legacy per-agent team, exec, and sandbox keys. */
 export function toStoredAgentFormData(form: AgentFormInput): Record<string, unknown> {
-  const stored: Record<string, unknown> = { ...form };
-  for (const key of LEGACY_TEAM_FORM_KEYS) {
-    delete stored[key];
-  }
-  return stored;
+  return { ...form };
 }

@@ -25,18 +25,24 @@ import styles from "./ClientAgentPage.module.css";
 import type { AgentItem } from "../../agentMockData";
 import { ModalTemplate } from "../ModalTemplate/ModalTemplate";
 import { projectApi } from "@/lib/api/project";
+import { chatApi } from "@/lib/api/chat";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
+import type { ChatModelsResponse } from "@/lib/api/chat";
+import { resolveModelDisplayName } from "@/lib/chat/model-catalog";
 import { COLLABORATION_UPDATED_EVENT } from "@/lib/collaboration-events";
 
-function toAgentItem(row: ProjectAgentListRow): AgentItem {
+function toAgentItem(
+  row: ProjectAgentListRow,
+  modelCatalog: ChatModelsResponse | null,
+): AgentItem {
   return {
     id: row.slug,
     name: row.name,
     avatar: row.avatar,
     description: row.description,
-    model: row.model,
-    skillsCount: 0,
+    model: resolveModelDisplayName(modelCatalog, row.model),
+    skillsCount: row.skillsCount,
     isActive: row.enabled,
     inCollaboration: row.inCollaboration,
   };
@@ -65,12 +71,13 @@ export default function ClientAgentPage() {
       setCollaborationEnabled(false);
       return;
     }
-    const [rows, collaboration] = await Promise.all([
+    const [rows, collaboration, modelCatalog] = await Promise.all([
       projectApi.listAgents(projectId),
       projectApi.getCollaboration(projectId),
+      chatApi.listModels(projectId).catch(() => null),
     ]);
     setCollaborationEnabled(collaboration.enabled);
-    setAgents(rows.map(toAgentItem));
+    setAgents(rows.map((row) => toAgentItem(row, modelCatalog)));
   }, [projectId]);
 
   useEffect(() => {

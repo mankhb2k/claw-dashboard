@@ -15,6 +15,27 @@ jest.mock('node:fs/promises', () => ({
   writeFile: jest.fn(),
 }));
 
+jest.mock('../chat/project-model-catalog', () => ({
+  loadProjectModelCatalog: jest.fn().mockResolvedValue({
+    primaryModel: 'google/gemini-2.5-flash',
+    providers: [
+      {
+        providerId: 'gemini',
+        displayName: 'Google Gemini',
+        defaultModel: 'google/gemini-2.5-flash',
+        tested: true,
+        models: [
+          {
+            id: 'gemini-2.5-flash',
+            name: 'Gemini 2.5 Flash',
+            openclawId: 'google/gemini-2.5-flash',
+          },
+        ],
+      },
+    ],
+  }),
+}));
+
 jest.mock('@aucobot/workspace-sync', () => {
   function parseAgentFormData(raw: unknown) {
     if (!raw || typeof raw !== 'object') {
@@ -35,10 +56,7 @@ jest.mock('@aucobot/workspace-sync', () => {
       instructionsAdvanced: String(o.instructionsAdvanced ?? ''),
       toolsNotes: String(o.toolsNotes ?? ''),
       model: String(o.model ?? 'google/gemini-2.5-flash'),
-      sandboxEnabled: Boolean(o.sandboxEnabled),
-      askPolicy: 'on-miss',
-      safeBins: [] as string[],
-      timeoutSec: 60,
+      shellExecEnabled: o.shellExecEnabled !== false,
       skillNames: Array.isArray(o.skillNames)
         ? o.skillNames.map((t) => String(t).trim()).filter(Boolean)
         : [],
@@ -97,10 +115,8 @@ function validFormData(overrides: Record<string, unknown> = {}) {
     instructionsAdvanced: '',
     toolsNotes: '',
     model: 'google/gemini-2.5-flash',
-    sandboxEnabled: false,
-    askPolicy: 'on-miss',
-    safeBins: [] as string[],
-    timeoutSec: 60,
+    shellExecEnabled: true,
+    skillNames: [] as string[],
     ...overrides,
   };
 }
@@ -254,9 +270,25 @@ describe('AgentService', () => {
         slug: AGENT_SLUG,
         name: 'Test Agent',
         model: 'google/gemini-2.5-flash',
+        skillsCount: 0,
         isDefault: true,
         inCollaboration: true,
       });
+    });
+
+    it('resolves legacy form model to project primary when not in catalog', async () => {
+      const { service, prisma } = createService();
+      prisma.projectAgent.findMany.mockResolvedValue([
+        buildAgentRow({ formData: { model: 'claude-3-5-sonnet' } }),
+      ]);
+      prisma.project.findUnique.mockResolvedValue({
+        collaborationEnabled: false,
+        collaborationMemberSlugs: [],
+      });
+
+      const rows = await service.list(PROJECT_ID);
+
+      expect(rows[0]?.model).toBe('google/gemini-2.5-flash');
     });
   });
 

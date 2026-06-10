@@ -1,33 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { AgentService } from '../agents/agent.service';
-import { parseAgentFormData, readOpenClawConfigJson } from '@aucobot/workspace-sync';
-import {
-  GEMINI_CHAT_MODELS,
-  resolveGeminiSkillDefaultModel,
-} from '../ai-providers/gemini/gemini-models';
-import {
-  OPENAI_CHAT_MODELS,
-  resolveOpenAiSkillDefaultModel,
-} from '../ai-providers/openai/openai-models';
+import { resolveEffectiveAgentModel } from '../agents/agent-model.resolve';
+import { parseAgentFormData } from '@aucobot/workspace-sync';
 import { ProviderKeysService } from '../ai-providers/provider-keys.service';
-import { PROVIDER_REGISTRY, resolveProvider } from '../ai-providers/provider-registry';
+import { resolveProvider } from '../ai-providers/provider-registry';
 import { WorkspaceService } from '../workspace/workspace.service';
-import path from 'node:path';
+import {
+  loadProjectModelCatalog,
+  type ChatModelOption,
+  type ChatModelProviderGroup,
+} from './project-model-catalog';
 
-export type ChatModelOption = {
-  id: string;
-  name: string;
-  openclawId: string;
-};
-
-export type ChatModelProviderGroup = {
-  providerId: string;
-  displayName: string;
-  defaultModel: string | null;
-  tested: boolean;
-  models: ChatModelOption[];
-};
+export type { ChatModelOption, ChatModelProviderGroup };
 
 const OPENCLAW_PREFIX_TO_PROVIDER: Record<string, string> = {
   google: 'gemini',
@@ -58,47 +43,6 @@ export class ChatModelService {
     throw new BadRequestException(`Cannot resolve provider for model: ${openclawId}`);
   }
 
-  private catalogForProvider(providerId: string): ChatModelOption[] {
-    const def = resolveProvider(providerId);
-    if (!def) return [];
-    if (providerId === 'openai') {
-      return OPENAI_CHAT_MODELS.map((m) => ({
-        id: m.id,
-        name: m.name,
-        openclawId: m.openclawId,
-      }));
-    }
-    if (providerId === 'gemini') {
-      return GEMINI_CHAT_MODELS.map((m) => ({
-        id: m.id,
-        name: m.name,
-        openclawId: m.openclawId,
-      }));
-    }
-    return (def.models ?? []).map((m) => ({
-      id: m.id,
-      name: m.name,
-      openclawId: m.openclawId,
-    }));
-  }
-
-  private resolveDefaultModel(providerId: string, stored: string | null): string | null {
-    if (providerId === 'openai') return resolveOpenAiSkillDefaultModel(stored);
-    if (providerId === 'gemini') return resolveGeminiSkillDefaultModel(stored);
-    return stored?.trim() || resolveProvider(providerId)?.defaultModel || null;
-  }
-
-  private isModelInCatalog(
-    providers: ChatModelProviderGroup[],
-    openclawId: string,
-  ): boolean {
-    const trimmed = openclawId.trim();
-    if (!trimmed) return false;
-    return providers.some((provider) =>
-      provider.models.some((model) => model.openclawId === trimmed),
-    );
-  }
-
   private async resolveAgentPrimaryModel(
     projectId: string,
     agentId: string,
@@ -110,16 +54,19 @@ export class ChatModelService {
     }
 
     try {
-      const agent = await this.agents.get(projectId, agentId);
-      const form = parseAgentFormData(agent.formData);
-      const raw = typeof form.model === 'string' ? form.model.trim() : '';
-      if (!raw) {
+      const row = await this.prisma.projectAgent.findUnique({
+        where: { projectId_slug: { projectId, slug: agentId } },
+        select: { formData: true },
+      });
+      if (!row) {
         return projectPrimary;
       }
-      if (this.isModelInCatalog(providers, raw)) {
-        return raw;
-      }
-      return projectPrimary;
+      const form = parseAgentFormData(row.formData);
+      return resolveEffectiveAgentModel({
+        formModel: form.model,
+        projectPrimary,
+        providers,
+      });
     } catch {
       return projectPrimary;
     }
@@ -133,49 +80,11 @@ export class ChatModelService {
     agentPrimaryModel: string | null;
     providers: ChatModelProviderGroup[];
   }> {
-    const rows = await this.prisma.projectProviderKey.findMany({
-      where: { projectId, enabled: true },
-      orderBy: { updatedAt: 'desc' },
+    const { primaryModel, providers } = await loadProjectModelCatalog({
+      prisma: this.prisma,
+      workspace: this.workspace,
+      projectId,
     });
-
-    const dataDir = this.workspace.resolveProjectDataDir(projectId);
-    const config = await readOpenClawConfigJson(path.join(dataDir, 'openclaw.json'));
-    const defaults = (config?.agents as Record<string, unknown> | undefined)?.defaults as
-      | Record<string, unknown>
-      | undefined;
-    const modelBlock = defaults?.model as Record<string, unknown> | undefined;
-    const primaryModel =
-      typeof modelBlock?.primary === 'string' ? modelBlock.primary.trim() : null;
-
-    const providers: ChatModelProviderGroup[] = [];
-    for (const row of rows) {
-      const def = resolveProvider(row.providerId);
-      if (!def) continue;
-      let models = this.catalogForProvider(row.providerId);
-      const defaultModel = this.resolveDefaultModel(row.providerId, row.defaultModel);
-      if (defaultModel && !models.some((m) => m.openclawId === defaultModel)) {
-        models = [
-          { id: defaultModel, name: defaultModel, openclawId: defaultModel },
-          ...models,
-        ];
-      }
-      if (models.length === 0 && def.defaultModel) {
-        models = [
-          {
-            id: def.defaultModel,
-            name: def.defaultModel,
-            openclawId: def.defaultModel,
-          },
-        ];
-      }
-      providers.push({
-        providerId: row.providerId,
-        displayName: def.displayName,
-        defaultModel,
-        tested: row.lastTestOk === true,
-        models,
-      });
-    }
 
     const trimmedAgentId = agentId?.trim();
     const agentPrimaryModel = trimmedAgentId
@@ -221,7 +130,7 @@ export class ChatModelService {
       );
     }
 
-  if (params.agentId === 'main') {
+    if (params.agentId === 'main') {
       await this.providerKeys.setDefaultModel(params.projectId, providerId, openclawId);
     } else {
       const agent = await this.agents.get(params.projectId, params.agentId).catch(() => null);

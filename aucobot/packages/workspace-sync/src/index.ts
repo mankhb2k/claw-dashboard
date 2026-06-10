@@ -7,6 +7,7 @@ export {
 
 export {
   mergeAgentsIntoConfig,
+  mergeExecToolsIntoConfig,
   mergeSharedSkillsLoadIntoConfig,
   mergeAgentCollaborationToolsIntoConfig,
   mergeProviderKeysIntoConfig,
@@ -14,6 +15,8 @@ export {
   removeLegacyDotEnv,
   writeOpenClawConfigJson,
   type ProjectAgentMergeRow,
+  type ProjectExecPolicy,
+  type ProjectSandboxPolicy,
   type ProviderKeyRow,
 } from './openclaw-config-merge.js';
 
@@ -51,13 +54,19 @@ export {
 } from './agent-collaboration.js';
 
 export {
+  formDataHasLegacyExecKeys,
   formDataHasLegacyTeamKeys,
+  LEGACY_EXEC_FORM_KEYS,
   LEGACY_TEAM_FORM_KEYS,
+  LEGACY_AGENT_SANDBOX_FORM_KEYS,
   parseAgentFormData,
+  stripLegacyExecKeysFromRawFormData,
+  stripLegacyAgentSandboxKeysFromRawFormData,
   stripLegacyTeamKeysFromRawFormData,
+  readLegacySandboxExemptFromRawFormData,
+  formDataHasLegacyAgentSandboxKeys,
   toStoredAgentFormData,
   type AgentFormInput,
-  type AgentAskPolicy,
   type AgentInstructionsMode,
   type AgentVibe,
 } from './agent-form.types.js';

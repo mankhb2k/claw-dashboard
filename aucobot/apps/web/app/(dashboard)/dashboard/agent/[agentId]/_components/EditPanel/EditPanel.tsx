@@ -232,38 +232,10 @@ export function EditPanel({
   }, [activeTab, setActiveEditTab]);
 
   const model = watch("model");
-  const sandboxEnabled = watch("sandboxEnabled");
-  const sandboxMode = watch("sandboxMode");
-  const sandboxScope = watch("sandboxScope");
-  const sandboxWorkspaceAccess = watch("sandboxWorkspaceAccess");
-  const askPolicy = watch("askPolicy");
-  const safeBins = watch("safeBins");
-  const timeoutSec = watch("timeoutSec");
+  const shellExecEnabled = watch("shellExecEnabled");
 
-  const [newTagInput, setNewTagInput] = useState("");
   const [joinCollaborationOnCreate, setJoinCollaborationOnCreate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
-
-  /* ── Handlers: add / remove command in allowlist sandbox ──────────────── */
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      const val = newTagInput.trim().toLowerCase();
-      if (val && !safeBins.includes(val)) {
-        setValue("safeBins", [...safeBins, val], { shouldDirty: true });
-      }
-      setNewTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setValue(
-      "safeBins",
-      safeBins.filter((t) => t !== tag),
-      { shouldDirty: true },
-    );
-  };
 
   const onSubmit = async (data: AgentFormInput) => {
     if (!projectId) {
@@ -336,35 +308,10 @@ export function EditPanel({
             projectId={projectId}
             model={model}
             setModel={(val) => setValue("model", val, { shouldDirty: true })}
-            sandboxEnabled={sandboxEnabled}
-            setSandboxEnabled={(val) =>
-              setValue("sandboxEnabled", val, { shouldDirty: true })
+            shellExecEnabled={shellExecEnabled}
+            setShellExecEnabled={(val) =>
+              setValue("shellExecEnabled", val, { shouldDirty: true })
             }
-            sandboxMode={sandboxMode}
-            setSandboxMode={(val) =>
-              setValue("sandboxMode", val, { shouldDirty: true })
-            }
-            sandboxScope={sandboxScope}
-            setSandboxScope={(val) =>
-              setValue("sandboxScope", val, { shouldDirty: true })
-            }
-            sandboxWorkspaceAccess={sandboxWorkspaceAccess}
-            setSandboxWorkspaceAccess={(val) =>
-              setValue("sandboxWorkspaceAccess", val, { shouldDirty: true })
-            }
-            askPolicy={askPolicy}
-            setAskPolicy={(val) =>
-              setValue("askPolicy", val, { shouldDirty: true })
-            }
-            safeBins={safeBins}
-            newTagInput={newTagInput}
-            setNewTagInput={setNewTagInput}
-            timeoutSec={timeoutSec}
-            setTimeoutSec={(val) =>
-              setValue("timeoutSec", val, { shouldDirty: true })
-            }
-            handleAddTag={handleAddTag}
-            handleRemoveTag={handleRemoveTag}
           />
           <CardSkill />
         </>

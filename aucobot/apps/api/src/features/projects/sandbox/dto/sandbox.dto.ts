@@ -1,9 +1,17 @@
-import { IsBoolean, IsIn } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsString } from 'class-validator';
 
 export class UpdateProjectSandboxDto {
   @IsBoolean()
   enabled!: boolean;
 
-  @IsIn(['non-main', 'all'])
-  mode!: 'non-main' | 'all';
+  @IsIn(['all', 'selected'])
+  mode!: 'all' | 'selected';
+
+  @IsArray()
+  @IsString({ each: true })
+  exemptAgentSlugs!: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  appliedAgentSlugs!: string[];
 }

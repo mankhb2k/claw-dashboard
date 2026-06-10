@@ -29,26 +29,23 @@ export function useChatSandboxContext(
 
     void (async () => {
       try {
-        const [projectSandbox, agentDetail] = await Promise.all([
-          projectApi.getProjectSandbox(projectId).catch(() => ({
-            enabled: false,
-            mode: 'non-main' as const,
-          })),
-          agentId && agentId !== 'main'
-            ? projectApi.getAgent(projectId, agentId).catch(() => null)
-            : Promise.resolve(null),
-        ]);
+        const projectSandbox = await projectApi.getProjectSandbox(projectId).catch(() => ({
+          enabled: false,
+          mode: 'all' as const,
+          exemptAgentSlugs: [] as string[],
+          appliedAgentSlugs: [] as string[],
+          agents: [],
+        }));
 
         if (!active) return;
 
-        const agentSandboxEnabled =
-          agentDetail?.formData?.sandboxEnabled ??
-          (agentId === 'main' ? false : undefined);
+        const agentSlug = agentId || 'main';
 
         setSandboxActive(
           resolveEffectiveSandboxActive({
-            agentSlug: agentId || 'main',
-            agentSandboxEnabled,
+            agentSlug,
+            sandboxExempt: projectSandbox.exemptAgentSlugs.includes(agentSlug),
+            sandboxApplied: projectSandbox.appliedAgentSlugs.includes(agentSlug),
             projectSandboxDefaultEnabled: projectSandbox.enabled,
             projectSandboxDefaultMode: projectSandbox.mode,
           }),

@@ -712,6 +712,8 @@ flowchart LR
 
 **Nguyên tắc:** `deny` luôn thắng `allow`.
 
+**Tắt `exec` cho một agent cụ thể:** dùng `tools.deny: ["exec"]` ở global, hoặc per-agent qua `agents.list[].tools.profile` / profile kế thừa (ví dụ `minimal` không có `group:runtime`). Đây là **bật/tắt tool**, khác hẳn `tools.exec` (policy khi tool đã được phép).
+
 ### 8.4 Plugin-Provided Tools (Ví dụ)
 
 | Tool         | Plugin     | Mô tả                                    |
@@ -720,6 +722,132 @@ flowchart LR
 | `lobster`    | Lobster    | Typed workflow vá»›i resumable approvals |
 | `diff`       | Diffs      | Diff viewer và renderer                  |
 | `tokenjuice` | Tokenjuice | Compact exec output                      |
+
+### 8.5 Exec Tool Policy (`tools.exec`) — OpenClaw ≥ 2026.5
+
+> **Nguồn:** `openclaw-worker` tag `v2026.6.5` — `docs/tools/exec.md`, `docs/tools/exec-approvals.md`, `docs/tools/exec-approvals-advanced.md`, schema `runtime-schema`.
+
+#### Hai lớp cấu hình khác nhau (hay nhầm)
+
+| Lớp | Config path | Câu hỏi trả lời |
+| --- | ----------- | --------------- |
+| **Tool availability** | `tools.deny` / `tools.allow` / `tools.profile`, `agents.list[].tools.profile` | Agent **có được gọi** tool `exec` không? |
+| **Exec runtime policy** | `tools.exec.*` (+ host `~/.openclaw/exec-approvals.json`) | Khi `exec` **đã được phép**, chạy ở đâu, hỏi duyệt thế nào, timeout bao lâu? |
+
+**`tools.exec` không phải nút “bật exec cho agent A”.** Nó là policy **mặc định cả gateway/project** cho mọi agent đang được phép dùng `exec`.
+
+#### Schema mới (đã bỏ `agents.list[].exec`)
+
+OpenClaw **≥ 2026.5** **không còn** chấp nhận:
+
+```json5
+// ❌ Deprecated — gateway reject: agents.list.N: Invalid input
+agents: {
+  list: [
+    { id: "agent-a", exec: { ask: "on-miss", safeBins: ["git"] } },
+  ],
+}
+```
+
+Thay vào đó, policy exec nằm ở **`tools.exec`** (global):
+
+```json5
+{
+  tools: {
+    exec: {
+      ask: "off",              // "off" | "on-miss" | "always"
+      safeBins: ["cut", "head"], // stdin-only fast-path (xem cảnh báo bên dưới)
+      timeoutSec: 1800,        // default per-command timeout (override per-call: param timeout)
+      host: "auto",            // "auto" | "sandbox" | "gateway" | "node"
+      security: "full",        // sandbox default "deny"; gateway/node default "full" khi unset
+      mode: "auto",            // "deny" | "allowlist" | "ask" | "auto" | "full"
+      pathPrepend: [],
+      safeBinTrustedDirs: [],
+      safeBinProfiles: {},
+      node: "node-id-or-name",
+      strictInlineEval: false,
+      commandHighlighting: false,
+    },
+  },
+}
+```
+
+**Effective policy** = merge **stricter** giữa `tools.exec.*` và `~/.openclaw/exec-approvals.json` trên host thực thi (gateway hoặc node). Field approvals bị omit → fallback `tools.exec`.
+
+#### Phạm vi áp dụng: global vs per-agent vs per-session
+
+```mermaid
+flowchart TB
+  subgraph GLOBAL["Project / openclaw.json"]
+    TD["tools.exec.*\n(ask, safeBins, host, timeoutSec, …)"]
+    TPOL["tools.deny / tools.allow / tools.profile"]
+    APOL["agents.list[].tools.profile\nagents.list[].tools.alsoAllow"]
+  end
+
+  subgraph PERAGENT["Per-agent (hạn chế)"]
+    NODE["agents.list[n].tools.exec.node\n(bind exec sang node cụ thể)"]
+    HIGHLIGHT["tools.exec.commandHighlighting\n(có thể set per-agent)"]
+  end
+
+  subgraph SESSION["Per-session (runtime)"]
+    SLASH["/exec host=… security=… ask=…\n(session state, không ghi config)"]
+  end
+
+  subgraph HOST["Host-local"]
+    APP["~/.openclaw/exec-approvals.json"]
+  end
+
+  TPOL --> AVAIL{"Agent được phép\ntool exec?"}
+  APOL --> AVAIL
+  AVAIL -->|có| TD
+  AVAIL -->|deny exec| BLOCK["Tool exec bị ẩn / chặn"]
+  TD --> APP
+  NODE --> RUN["Thực thi lệnh"]
+  SLASH --> RUN
+  APP --> RUN
+```
+
+| Phạm vi | Có override `tools.exec.ask` / `safeBins` riêng? | Ghi chú |
+| ------- | ------------------------------------------------ | ------- |
+| **Toàn project** | `tools.exec` | Mặc định cho mọi agent được phép `exec` |
+| **Từng agent** | **Không** (trừ `agents.list[n].tools.exec.node`, `commandHighlighting`) | Muốn agent B không `exec` → `tools.deny` hoặc `agents.list[].tools.profile` |
+| **Từng session chat** | `/exec ask=…` | Chỉ session state; sender phải authorized |
+| **Từng lệnh (tool call)** | param `ask`, `host`, `timeout` | Channel có thể ignore `ask` nếu effective host ask = `off` |
+
+#### Câu hỏi thường gặp: “Agent A bật exec thì Agent B cũng bị áp dụng?”
+
+**Tách ba khái niệm:**
+
+1. **Tool `exec` có sẵn cho agent không?**  
+   Mặc định **có** (profile `full` / `coding` gồm `group:runtime`) cho **mọi** agent, trừ khi bị `tools.deny: ["exec"]` hoặc profile hẹp.  
+   → **Không** phụ thuộc UI “Runtime configuration” của agent khác.
+
+2. **`tools.exec` (ask / safeBins / timeoutSec)?**  
+   **Có — dùng chung cả project.** Agent A cấu hình `ask: on-miss` → Agent B cũng `on-miss` khi chạy `exec`, dù B không chỉnh trong UI.  
+   → Đây là thay đổi lớn so với schema cũ `agents.list[].exec`.
+
+3. **Sandbox (Docker) trong AucoBot UI?**  
+   **Vẫn per-agent** qua `agents.list[].sandbox` (+ `agents.defaults.sandbox`).  
+   Toggle “Code execution (Sandbox)” **không** tắt tool `exec` — chỉ quyết định lệnh chạy **trong container sandbox** hay trên **gateway host** (`host=auto`).
+
+#### `safeBins` — cảnh báo quan trọng (v2026.6+)
+
+Docs upstream khuyên **không** đưa interpreter vào `safeBins`: `python`, `node`, `ruby`, `bash`, `sh`, `zsh`.  
+`safeBins` chỉ cho **stdin-only stream filters** (`cut`, `head`, `tail`, `tr`, `wc`, `uniq` mặc định).  
+Interpreter cần **explicit allowlist** + approval (`exec-approvals.json`), không fast-path qua `safeBins`.
+
+#### AucoBot sync (`workspace-sync`) — hành vi hiện tại
+
+| UI field (per agent) | Ghi vào `openclaw.json` (2026.6+) |
+| -------------------- | --------------------------------- |
+| `model` | `agents.list[].model.primary` ✅ per-agent |
+| `sandboxEnabled` + mode/scope | `agents.list[].sandbox` ✅ per-agent |
+| `skillNames` | `agents.list[].skills` ✅ per-agent |
+| `askPolicy`, `safeBins`, `timeoutSec` | `tools.exec` ⚠️ **chỉ từ agent default** (`isDefault`) — **không** per-agent |
+
+Hệ quả: nếu Agent A `ask: always` và Agent B `ask: off`, sau sync chỉ còn **một** `tools.exec` (từ agent default). Muốn policy khác nhau → cần `agents.list[].tools.profile` + deny `exec` ở agent hạn chế, hoặc mở rộng compiler AucoBot sau.
+
+**Tham chiếu code:** `aucobot/packages/workspace-sync/src/openclaw-config-merge.ts` → `mergeExecToolsIntoConfig()`.
 
 ---
 
@@ -3071,16 +3199,25 @@ curl "https://graph.facebook.com/v20.0/me/messages" \
 
 #### Bảo Mật exec
 
+Xem **§8.5** (`tools.exec`) để phân biệt **tắt tool** (`tools.deny`) vs **policy thực thi** (`tools.exec.*`).
+
 ```json5
 {
   tools: {
+    deny: ["exec"], // Hard-disable exec cho mọi agent (trừ khi per-agent alsoAllow override — hiếm)
     exec: {
-      ask: true, // Hỏi approval trước khi chạy lệnh mới
-      security: "high", // Không cho thay đổi setting này qua gateway tool
+      ask: "on-miss",       // "off" | "on-miss" | "always" — baseline approval
+      security: "allowlist", // "deny" | "allowlist" | "full"
+      host: "auto",
+      timeoutSec: 1800,
+      safeBins: ["cut", "head"], // Không đặt python/node vào đây (upstream cảnh báo)
     },
   },
 }
 ```
+
+Host approvals (`~/.openclaw/exec-approvals.json`) stack **trên** `tools.exec`; effective = **stricter** của hai phía.  
+Per-session: `/exec host=auto security=allowlist ask=on-miss` (không persist vào `openclaw.json`).
 
 ---
 

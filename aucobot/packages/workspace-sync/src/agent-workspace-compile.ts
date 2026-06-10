@@ -25,12 +25,7 @@ export type OpenClawAgentSandbox = {
 
 export interface OpenClawAgentConfigPatch {
   model: { primary: string };
-  sandbox?: OpenClawAgentSandbox;
-  exec: {
-    ask: 'always' | 'on-miss' | 'off';
-    safeBins: string[];
-    timeoutSec: number;
-  };
+  sandbox?: OpenClawAgentSandbox | { mode: 'off' };
 }
 
 export interface AgentWorkspaceBundle {
@@ -163,34 +158,11 @@ function normalizeModelPrimary(model: string): string {
 }
 
 export function compileOpenClawAgentConfig(
-  input: Pick<
-    AgentFormInput,
-    | 'model'
-    | 'sandboxEnabled'
-    | 'sandboxMode'
-    | 'sandboxScope'
-    | 'sandboxWorkspaceAccess'
-    | 'askPolicy'
-    | 'safeBins'
-    | 'timeoutSec'
-  >,
+  input: Pick<AgentFormInput, 'model'>,
 ): OpenClawAgentConfigPatch {
-  const patch: OpenClawAgentConfigPatch = {
+  return {
     model: { primary: normalizeModelPrimary(input.model) },
-    exec: {
-      ask: input.askPolicy,
-      safeBins: input.safeBins,
-      timeoutSec: input.timeoutSec,
-    },
   };
-  if (input.sandboxEnabled) {
-    patch.sandbox = {
-      mode: input.sandboxMode,
-      scope: input.sandboxScope,
-      workspaceAccess: input.sandboxWorkspaceAccess,
-    };
-  }
-  return patch;
 }
 
 export function compileAgentBootstrap(input: AgentFormInput): AgentBootstrapBundle {

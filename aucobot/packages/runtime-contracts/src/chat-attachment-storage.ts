@@ -130,14 +130,25 @@ export function chatAttachmentRelativePath(
 /** Effective sandbox for chat attachment staging limits. */
 export function resolveEffectiveSandboxActive(input: {
   agentSlug: string;
-  agentSandboxEnabled?: boolean;
+  sandboxExempt?: boolean;
+  sandboxApplied?: boolean;
   projectSandboxDefaultEnabled?: boolean;
   projectSandboxDefaultMode?: string;
 }): boolean {
-  if (input.agentSandboxEnabled) return true;
   if (!input.projectSandboxDefaultEnabled) return false;
-  if (input.projectSandboxDefaultMode === 'all') return true;
-  return input.agentSlug !== 'main';
+
+  const mode =
+    input.projectSandboxDefaultMode === 'selected' ||
+    input.projectSandboxDefaultMode === 'non-main'
+      ? 'selected'
+      : 'all';
+
+  if (mode === 'selected') {
+    return input.sandboxApplied === true;
+  }
+
+  if (input.sandboxExempt === true) return false;
+  return true;
 }
 
 export function agentSlugFromSessionKey(sessionKey: string): string {
