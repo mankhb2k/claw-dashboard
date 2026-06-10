@@ -29,6 +29,7 @@ import type {
   ProjectSkillListRow,
 } from "@/schemas/project.schema";
 import { useProjectStore } from "@/stores/project.store";
+import { SearchItem } from "@/components/dashboard";
 import { CardSkill } from "../CardSkill/CardSkill";
 import { ModalCreateSkill } from "../ModalCreateSkill/ModalCreateSkill";
 import { ModalSkillStore } from "../ModalSkillStore/ModalSkillStore";
@@ -43,6 +44,7 @@ export function ClientSkillPage() {
 
   const [loading, setLoading] = useState(true);
   const [skills, setSkills] = useState<ProjectSkillListRow[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
@@ -255,6 +257,18 @@ export function ClientSkillPage() {
     [projectId, loadSkills, router],
   );
 
+  const filteredSkills = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return skills;
+    return skills.filter(
+      (skill) =>
+        skill.name.toLowerCase().includes(q) ||
+        skill.description.toLowerCase().includes(q) ||
+        skill.slug.toLowerCase().includes(q) ||
+        (skill.heading?.toLowerCase().includes(q) ?? false),
+    );
+  }, [skills, searchQuery]);
+
   const activeSkillForEdit = useMemo(() => {
     if (!editingSlug) return undefined;
     const skill = skills.find((s) => s.slug === editingSlug);
@@ -293,7 +307,20 @@ export function ClientSkillPage() {
 
   return (
     <>
-      <div className={styles.toolbar}>
+      <Flex
+        justify="between"
+        align="center"
+        wrap="wrap"
+        className={styles.toolbar}
+      >
+        <Flex align="center" gap={3} className={styles.toolbarStart}>
+          <SearchItem
+            id="skill-search"
+            placeholder="Search skill..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+        </Flex>
         <div className={styles.toolbarActions}>
           <Button variant="secondary" onClick={() => setIsStoreModalOpen(true)}>
             <Store size={16} style={{ marginRight: 8 }} />
@@ -304,7 +331,7 @@ export function ClientSkillPage() {
             Create new skill
           </Button>
         </div>
-      </div>
+      </Flex>
 
       <div className={styles.scrollArea}>
         {loadError ? (
@@ -313,7 +340,7 @@ export function ClientSkillPage() {
           </Typography>
         ) : null}
         <Grid columns={4} gap="1rem" fullWidth className={styles.skillGrid}>
-          {skills.map((skill) => (
+          {filteredSkills.map((skill) => (
             <CardSkill
               key={skill.slug}
               title={skill.name}
@@ -335,6 +362,24 @@ export function ClientSkillPage() {
             <Typography variant="p" color="muted" className={styles.emptyText}>
               No skills yet. Please create the first skill!
             </Typography>
+          ) : filteredSkills.length === 0 ? (
+            <Flex
+              direction="column"
+              align="center"
+              gap={3}
+              className={styles.emptyText}
+            >
+              <Typography variant="p" color="muted">
+                No matching skills. Try a different search query.
+              </Typography>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setSearchQuery("")}
+              >
+                Clear search
+              </Button>
+            </Flex>
           ) : null}
         </Grid>
       </div>

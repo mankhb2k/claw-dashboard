@@ -1,0 +1,55 @@
+/* General section */
+
+.cardRow {
+  gap: var(--space-8);
+}
+
+.rowInfo {
+  gap: var(--space-1);
+}
+
+.rowAction {
+  max-width: 400px;
+  gap: var(--space-2);
+}
+
+.input {
+  width: 100%;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.monoField {
+  width: 100%;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.valueWithCopy {
+  min-width: 0;
+  width: 100%;
+  align-items: center;
+}
+
+.valueWithCopy > :first-child {
+  flex: 1;
+  min-width: 0;
+  width: 0;
+}
+
+.valueWithCopy .monoField {
+  height: 36px;
+  min-height: 36px;
+}
+
+.valueWithCopy .copyBtn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+}

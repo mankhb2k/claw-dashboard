@@ -1,19 +1,19 @@
 import { Flex, Container } from "@/components/layout";
 import { projectApi } from "@/lib/api/project";
 import { getCurrentProject } from "@/lib/current-project";
-import { SettingGeneralSection } from "./_components/SettingGeneralSection/SettingGeneralSection";
-import { SettingRuntimeSection } from "./_components/SettingRuntimeSection/SettingRuntimeSection";
-import { SettingSandboxSection } from "./_components/SettingSandboxSection/SettingSandboxSection";
-import { SettingExecSection } from "./_components/SettingExecSection/SettingExecSection";
-import { SettingGatewaySection } from "./_components/SettingGatewaySection/SettingGatewaySection";
-import { SettingDangerZone } from "./_components/SettingDangerZone/SettingDangerZone";
+import { GeneralSection } from "./_components/GeneralSection/GeneralSection";
+import { GatewayStatusSection } from "./_components/GatewayStatusSection/GatewayStatusSection";
+import { SandboxSection } from "./_components/SandboxSection/SandboxSection";
+import { ShellExecSection } from "./_components/ShellExecSection/ShellExecSection";
+import { DangerZone } from "./_components/DangerZone/DangerZone";
 import styles from "./setting.module.css";
 
 export default async function ProjectSettingPage() {
   const project = await getCurrentProject();
   const id = project?.id ?? "";
 
-  let initialHealth: Awaited<ReturnType<typeof projectApi.health>> | null = null;
+  let initialHealth: Awaited<ReturnType<typeof projectApi.health>> | null =
+    null;
   if (id) {
     try {
       initialHealth = await projectApi.health(id);
@@ -36,12 +36,16 @@ export default async function ProjectSettingPage() {
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="sm" display="flex" className={styles.content}>
         <div className={styles.sections}>
-          <SettingGeneralSection project={project} />
-          <SettingRuntimeSection projectId={id} initialHealth={initialHealth} />
-          <SettingSandboxSection projectId={id} />
-          <SettingExecSection projectId={id} />
-          <SettingGatewaySection projectId={id} subdomain={project.subdomain} />
-          <SettingDangerZone project={project} />
+          <GeneralSection project={project} />
+
+          <SandboxSection projectId={id} />
+          <ShellExecSection projectId={id} />
+          <GatewayStatusSection
+            projectId={id}
+            subdomain={project.subdomain}
+            initialHealth={initialHealth}
+          />
+          <DangerZone project={project} />
         </div>
       </Container>
     </Flex>

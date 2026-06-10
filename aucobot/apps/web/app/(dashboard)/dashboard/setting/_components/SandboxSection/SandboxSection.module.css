@@ -1,4 +1,4 @@
-/* Sandbox Section Specific Styles */
+/* Sandbox section */
 
 .cardRow {
   gap: var(--space-8);
@@ -15,9 +15,9 @@
 }
 
 .fieldError {
+  margin: 0;
   font-size: var(--font-size-sm);
   color: var(--color-danger);
-  margin: 0;
 }
 
 .configError {
@@ -30,11 +30,8 @@
 }
 
 .callout {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  margin: var(--space-4) var(--space-4) 0;
+  margin: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-accent);
@@ -52,55 +49,22 @@
   padding-top: var(--space-4);
 }
 
-.agentPicker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
 .agentPickerSearch {
   max-width: none;
 }
 
 .agentPickerState {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
   min-height: 72px;
   justify-content: center;
 }
 
-.agentPickerFooter {
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--color-border);
-}
-
-.createAgentLink {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.createAgentLink:hover {
-  text-decoration: underline;
-}
-
 .agentList {
   list-style: none;
-  margin: 0;
+  margin: 4px 0 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
 }
 
 .agentRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -108,9 +72,6 @@
 }
 
 .agentRowMain {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
   min-width: 0;
   flex: 1;
 }
@@ -121,21 +82,10 @@
 
 .agentMeta {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 .allModeHint {
   padding: 0 var(--space-4) var(--space-2);
-}
-
-.agentRowActions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
-  flex-shrink: 0;
 }
 
 .toggleHint {

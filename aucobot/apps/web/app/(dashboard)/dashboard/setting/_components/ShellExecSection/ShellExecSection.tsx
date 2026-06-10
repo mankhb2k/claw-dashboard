@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, Input, ToggleGroup, ToggleGroupItem, Typography } from "@/components/ui";
+import {
+  Button,
+  Input,
+  ToggleGroup,
+  ToggleGroupItem,
+  Typography,
+} from "@/components/ui";
 import { Flex } from "@/components/layout";
 import { X } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
 import { INTERPRETER_SAFE_BINS } from "@/schemas/agentForm.schema";
-import styles from "./SettingExecSection.module.css";
+import styles from "./ShellExecSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
 import { TitleSection } from "../TitleSection/TitleSection";
 
@@ -22,13 +28,13 @@ const POLICY_HINT: Record<AskPolicy, string> = {
   off: "Commands may run without approval. Use only with trusted workloads.",
 };
 
-function formatPolicyLabel(policy: AskPolicy): string {
+export function formatPolicyLabel(policy: AskPolicy): string {
   if (policy === "always") return "Always ask";
   if (policy === "on-miss") return "Standard";
   return "Automatic";
 }
 
-export function SettingExecSection({ projectId }: Props) {
+export function ShellExecSection({ projectId }: Props) {
   const [askPolicy, setAskPolicy] = useState<AskPolicy>("on-miss");
   const [safeBins, setSafeBins] = useState<string[]>([]);
   const [timeoutSec, setTimeoutSec] = useState(1800);
@@ -112,7 +118,7 @@ export function SettingExecSection({ projectId }: Props) {
               to all agents that are allowed to run shell commands.
             </Typography>
           </CardSection.Info>
-          <CardSection.Action className={styles.rowAction}>
+          <CardSection.Action className={`${styles.rowAction} ${styles.policyAction}`}>
             <ToggleGroup
               type="single"
               value={askPolicy}
@@ -146,38 +152,47 @@ export function SettingExecSection({ projectId }: Props) {
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
-            <div className={styles.tagContainer}>
+            <Flex wrap="wrap" align="center" gap={2} className={styles.tagContainer}>
               {safeBins.map((bin) => (
-                <span key={bin} className={styles.tag}>
+                <Flex
+                  key={bin}
+                  as="span"
+                  align="center"
+                  gap={2}
+                  className={styles.tag}
+                >
                   {bin}
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="xs"
+                    iconOnly
                     className={styles.tagDeleteBtn}
                     onClick={() => handleRemoveBin(bin)}
                     aria-label={`Remove ${bin}`}
                   >
-                    <X size={13} />
-                  </button>
-                </span>
+                    <X size={13} aria-hidden />
+                  </Button>
+                </Flex>
               ))}
               <input
                 type="text"
                 className={styles.tagInput}
                 placeholder={
                   safeBins.length === 0
-                    ? "Enter a command and press Enter…"
-                    : "Add command…"
+                    ? "Enter a command and press Enter..."
+                    : "Add command..."
                 }
                 value={newBinInput}
                 onChange={(e) => setNewBinInput(e.target.value)}
                 onKeyDown={handleAddBin}
                 disabled={!loaded}
               />
-            </div>
+            </Flex>
             {interpreterWarnings.length > 0 ? (
-              <p className={styles.warning}>
+              <Typography variant="small" className={styles.warning}>
                 Avoid interpreters in fast-path: {interpreterWarnings.join(", ")}
-              </p>
+              </Typography>
             ) : null}
           </CardSection.Action>
         </CardSection.Row>
@@ -195,6 +210,7 @@ export function SettingExecSection({ projectId }: Props) {
             <Input
               id="exec-timeout"
               type="number"
+              labelPosition="none"
               className={styles.timeoutField}
               value={timeoutSec}
               onChange={(e) => {
@@ -210,7 +226,9 @@ export function SettingExecSection({ projectId }: Props) {
 
         <CardSection.Footer>
           {saveStatus === "error" && (
-            <p className={styles.fieldError}>Something went wrong. Try again.</p>
+            <Typography variant="small" className={styles.fieldError}>
+              Something went wrong. Try again.
+            </Typography>
           )}
           <Button
             type="button"
@@ -220,9 +238,9 @@ export function SettingExecSection({ projectId }: Props) {
             size="sm"
           >
             {saveStatus === "saving"
-              ? "Saving…"
+              ? "Saving..."
               : saveStatus === "saved"
-                ? "✓ Saved"
+                ? "Saved"
                 : "Save changes"}
           </Button>
         </CardSection.Footer>
@@ -230,5 +248,3 @@ export function SettingExecSection({ projectId }: Props) {
     </Flex>
   );
 }
-
-export { formatPolicyLabel };

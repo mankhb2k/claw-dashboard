@@ -7,14 +7,14 @@ import { Button, Input, Typography } from "@/components/ui";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useProjectStore } from "@/stores/project.store";
 import type { Project } from "@/schemas/project.schema";
-import styles from "./SettingDangerZone.module.css";
+import styles from "./DangerZone.module.css";
 import { TitleSection } from "../TitleSection/TitleSection";
 
 interface Props {
   project: Project;
 }
 
-export function SettingDangerZone({ project }: Props) {
+export function DangerZone({ project }: Props) {
   /* 1. STATE & HOOKS */
   const router = useRouter();
   const destroyProject = useProjectStore((s) => s.destroyProject);

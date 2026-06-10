@@ -14,7 +14,7 @@ import { SearchItem } from "@/components/dashboard";
 import { AlertTriangle } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
-import styles from "./SettingSandboxSection.module.css";
+import styles from "./SandboxSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
 import { TitleSection } from "../TitleSection/TitleSection";
 
@@ -50,71 +50,103 @@ function AgentSandboxPicker({
   selectedSlugs: string[];
   onToggle: (slug: string, checked: boolean) => void;
 }) {
-  const selectedCount = selectedSlugs.length;
-
   return (
-    <div className={styles.agentPicker}>
+    <Flex direction="column" gap={3} className={styles.agentPicker}>
       <Typography variant="small" color="muted">
         {summary}
       </Typography>
 
       <SearchItem
         id="sandbox-applied-search"
-        placeholder="Search agents…"
+        placeholder="Search agents..."
         value={searchQuery}
         onChange={onSearchChange}
         className={styles.agentPickerSearch}
       />
 
       {!agentsLoaded ? (
-        <Typography variant="small" color="muted" className={styles.agentPickerState}>
-          Loading agents…
+        <Typography
+          variant="small"
+          color="muted"
+          className={styles.agentPickerState}
+        >
+          Loading agents...
         </Typography>
       ) : agentsError ? (
         <Typography variant="small" className={styles.fieldError}>
           {agentsError}
         </Typography>
       ) : agents.length === 0 ? (
-        <div className={styles.agentPickerState}>
+        <Flex
+          direction="column"
+          align="start"
+          gap={2}
+          className={styles.agentPickerState}
+        >
           <Typography variant="small" color="muted">
             No agents found for this project.
           </Typography>
-          <Link href="/dashboard/agent/create" className={styles.createAgentLink}>
-            Create an agent
-          </Link>
-        </div>
+          <Button variant="link" size="sm" asChild>
+            <Link href="/dashboard/agent/create">Create an agent</Link>
+          </Button>
+        </Flex>
       ) : filteredAgents.length === 0 ? (
-        <Typography variant="small" color="muted" className={styles.agentPickerState}>
+        <Typography
+          variant="small"
+          color="muted"
+          className={styles.agentPickerState}
+        >
           No agents match your search.
         </Typography>
       ) : (
-        <ul className={styles.agentList}>
+        <Flex
+          as="ul"
+          direction="column"
+          gap={3}
+          className={styles.agentList}
+        >
           {filteredAgents.map((agent) => {
             const selected = selectedSlugs.includes(agent.slug);
             const switchId = `sandbox-applied-${agent.slug}`;
             const rowDisabled = !agent.enabled;
 
             return (
-              <li key={agent.slug} className={styles.agentRow}>
-                <div className={styles.agentRowMain}>
+              <Flex
+                as="li"
+                key={agent.slug}
+                justify="between"
+                align="center"
+                gap={4}
+                className={styles.agentRow}
+              >
+                <Flex align="start" gap={3} className={styles.agentRowMain}>
                   <Avatar
                     src=""
                     fallback={agent.avatar}
                     size="sm"
                     className={styles.agentAvatar}
                   />
-                  <div className={styles.agentMeta}>
+                  <Flex direction="column" gap={2} className={styles.agentMeta}>
                     <Typography variant="p" weight="medium">
                       {agent.name}
                     </Typography>
                     <Typography variant="small" color="muted">
                       {agent.slug}
                     </Typography>
-                  </div>
-                </div>
+                  </Flex>
+                </Flex>
 
-                <div className={styles.agentRowActions}>
-                  <Typography variant="small" color="muted" className={styles.toggleHint}>
+                <Flex
+                  direction="column"
+                  align="end"
+                  gap={2}
+                  className={styles.agentRowActions}
+                >
+                  <Typography
+                    variant="small"
+                    color="muted"
+                    className={styles.toggleHint}
+                  >
                     Use Docker sandbox
                   </Typography>
                   <Switch
@@ -124,23 +156,17 @@ function AgentSandboxPicker({
                     onCheckedChange={(val) => onToggle(agent.slug, val)}
                     aria-label={`Use Docker sandbox for ${agent.name}`}
                   />
-                </div>
-              </li>
+                </Flex>
+              </Flex>
             );
           })}
-        </ul>
+        </Flex>
       )}
-
-      {agentsLoaded && agents.length > 0 ? (
-        <Typography variant="small" color="muted" className={styles.agentPickerFooter}>
-          {selectedCount} of {agents.length} agent{agents.length === 1 ? "" : "s"} selected
-        </Typography>
-      ) : null}
-    </div>
+    </Flex>
   );
 }
 
-export function SettingSandboxSection({ projectId }: Props) {
+export function SandboxSection({ projectId }: Props) {
   const [enabled, setEnabled] = useState(false);
   const [mode, setMode] = useState<SandboxMode>("all");
   const [exemptAgentSlugs, setExemptAgentSlugs] = useState<string[]>([]);
@@ -176,7 +202,9 @@ export function SettingSandboxSection({ projectId }: Props) {
       .catch((err) => {
         if (!active) return;
         setAgents([]);
-        setAgentsError(err instanceof Error ? err.message : "Cannot load agents");
+        setAgentsError(
+          err instanceof Error ? err.message : "Cannot load agents",
+        );
         setAgentsLoaded(true);
       });
 
@@ -220,8 +248,8 @@ export function SettingSandboxSection({ projectId }: Props) {
     appliedCount === 0
       ? "Turn on Docker sandbox per agent. Agents left off run on the gateway host."
       : `${appliedCount} of ${agents.length || appliedCount} agent${
-          appliedCount === 1 ? "" : "s"
-        } use Docker sandbox.`;
+          (agents.length || appliedCount) === 1 ? "" : "s"
+        } use Sandbox.`;
 
   const handleToggle = (val: boolean) => {
     setEnabled(val);
@@ -271,7 +299,7 @@ export function SettingSandboxSection({ projectId }: Props) {
 
   return (
     <Flex direction="column" gap={24}>
-      <TitleSection title="Default sandbox" />
+      <TitleSection title="Sandbox" />
 
       <CardSection>
         {configError ? (
@@ -328,7 +356,7 @@ export function SettingSandboxSection({ projectId }: Props) {
         ) : null}
 
         {enabled && mode === "selected" ? (
-          <div className={styles.agentPickerSection}>
+          <Flex direction="column" className={styles.agentPickerSection}>
             <AgentSandboxPicker
               summary={selectedModeSummary}
               agents={agents}
@@ -340,7 +368,7 @@ export function SettingSandboxSection({ projectId }: Props) {
               selectedSlugs={appliedAgentSlugs}
               onToggle={handleAppliedToggle}
             />
-          </div>
+          </Flex>
         ) : null}
 
         {!enabled ? (
@@ -349,18 +377,20 @@ export function SettingSandboxSection({ projectId }: Props) {
           </Typography>
         ) : null}
 
-        <div className={styles.callout}>
+        <Flex align="start" gap={2} className={styles.callout}>
           <AlertTriangle size={16} aria-hidden />
           <Typography variant="small" color="muted">
             The <code>docker</code> backend requires the gateway to reach Docker
-            (socket or DinD). Sandbox changes where commands run, not whether agents
-            can use shell tools.
+            (socket or DinD). Sandbox changes where commands run, not whether
+            agents can use shell tools.
           </Typography>
-        </div>
+        </Flex>
 
         <CardSection.Footer>
           {saveStatus === "error" && (
-            <p className={styles.fieldError}>Something went wrong. Try again.</p>
+            <Typography variant="small" className={styles.fieldError}>
+              Something went wrong. Try again.
+            </Typography>
           )}
           <Button
             type="button"
@@ -370,9 +400,9 @@ export function SettingSandboxSection({ projectId }: Props) {
             size="sm"
           >
             {saveStatus === "saving"
-              ? "Saving…"
+              ? "Saving..."
               : saveStatus === "saved"
-                ? "✓ Saved"
+                ? "Saved"
                 : "Save changes"}
           </Button>
         </CardSection.Footer>

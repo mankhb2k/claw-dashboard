@@ -9,7 +9,7 @@ import { Copy, Check } from "lucide-react";
 import { Flex } from "@/components/layout";
 import { projectApi } from "@/lib/api/project";
 import type { Project } from "@/schemas/project.schema";
-import styles from "./SettingGeneralSection.module.css";
+import styles from "./GeneralSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
 import { TitleSection } from "../TitleSection/TitleSection";
 
@@ -18,19 +18,26 @@ interface Props {
 }
 
 const formSchema = z.object({
-  displayName: z.string().min(3, "Tên dự án phải từ 3 ký tự").max(50, "Tên dự án tối đa 50 ký tự"),
+  displayName: z
+    .string()
+    .min(3, "Project name must be at least 3 characters")
+    .max(50, "Project name must be at most 50 characters"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function SettingGeneralSection({ project }: Props) {
+export function GeneralSection({ project }: Props) {
   const [copied, setCopied] = useState<"subdomain" | "id" | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
-  const formattedDate = new Intl.DateTimeFormat("vi-VN", {
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(project.createdAt));
+
+  const subdomainValue = `${project.subdomain}.openclaw.ai`;
 
   const {
     register,
@@ -49,7 +56,7 @@ export function SettingGeneralSection({ project }: Props) {
     try {
       await projectApi.updateDisplayName(project.id, data.displayName);
       setSaveStatus("saved");
-      reset(data); // Đặt lại trạng thái isDirty với giá trị mới
+      reset(data);
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
       setSaveStatus("error");
@@ -57,10 +64,41 @@ export function SettingGeneralSection({ project }: Props) {
   };
 
   const copyToClipboard = (text: string, type: "subdomain" | "id") => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     setCopied(type);
     setTimeout(() => setCopied(null), 2000);
   };
+
+  const renderCopyField = (
+    value: string,
+    type: "subdomain" | "id",
+    ariaLabel: string,
+  ) => (
+    <Flex align="center" gap={2} fullWidth className={styles.valueWithCopy}>
+      <Input
+        labelPosition="none"
+        size="md"
+        readOnly
+        value={value}
+        className={styles.monoField}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="md"
+        iconOnly
+        className={styles.copyBtn}
+        aria-label={ariaLabel}
+        onClick={() => copyToClipboard(value, type)}
+      >
+        {copied === type ? (
+          <Check size={14} aria-hidden />
+        ) : (
+          <Copy size={14} aria-hidden />
+        )}
+      </Button>
+    </Flex>
+  );
 
   return (
     <Flex direction="column" gap={24}>
@@ -68,19 +106,20 @@ export function SettingGeneralSection({ project }: Props) {
 
       <CardSection>
         <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Tên hiển thị */}
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
-              <Typography variant="p" weight="medium">Project name</Typography>
+              <Typography variant="p" weight="medium">
+                Project name
+              </Typography>
               <Typography variant="small" color="muted">
-                Tên hiển thị của dự án trên toàn hệ thống.
+                Display name used across the system.
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
               <Input
                 id="displayName"
                 type="text"
-                placeholder="Nhập tên dự án..."
+                placeholder="Enter project name..."
                 className={styles.input}
                 error={errors.displayName?.message}
                 {...register("displayName")}
@@ -88,54 +127,43 @@ export function SettingGeneralSection({ project }: Props) {
             </CardSection.Action>
           </CardSection.Row>
 
-          {/* Project ID */}
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
-              <Typography variant="p" weight="medium">Project ID</Typography>
+              <Typography variant="p" weight="medium">
+                Project ID
+              </Typography>
               <Typography variant="small" color="muted">
-                Mã định danh duy nhất của dự án.
+                Unique identifier for this project.
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
-              <div className={styles.valueWithCopy}>
-                <code className={styles.code}>{project.id}</code>
-                <button
-                  type="button"
-                  className={styles.copyBtn}
-                  onClick={() => copyToClipboard(project.id, "id")}
-                >
-                  {copied === "id" ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-              </div>
+              {renderCopyField(project.id, "id", "Copy project ID")}
             </CardSection.Action>
           </CardSection.Row>
 
-          {/* Subdomain */}
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
-              <Typography variant="p" weight="medium">Subdomain</Typography>
+              <Typography variant="p" weight="medium">
+                Subdomain
+              </Typography>
               <Typography variant="small" color="muted">
-                Tên miền phụ dành riêng cho dự án này.
+                Subdomain dedicated to this project.
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
-              <div className={styles.valueWithCopy}>
-                <code className={styles.code}>{project.subdomain}.openclaw.ai</code>
-                <button
-                  type="button"
-                  className={styles.copyBtn}
-                  onClick={() => copyToClipboard(`${project.subdomain}.openclaw.ai`, "subdomain")}
-                >
-                  {copied === "subdomain" ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-              </div>
+              {renderCopyField(
+                subdomainValue,
+                "subdomain",
+                "Copy subdomain",
+              )}
             </CardSection.Action>
           </CardSection.Row>
 
-          {/* Ngày tạo */}
           <CardSection.Row noBorder className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
-              <Typography variant="p" weight="medium">Ngày tạo</Typography>
+              <Typography variant="p" weight="medium">
+                Created at
+              </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
               <Typography variant="p">{formattedDate}</Typography>
@@ -144,7 +172,9 @@ export function SettingGeneralSection({ project }: Props) {
 
           <CardSection.Footer>
             {saveStatus === "error" && (
-              <p className={styles.fieldError}>Có lỗi xảy ra, vui lòng thử lại.</p>
+              <Typography variant="small" className={styles.fieldError}>
+                Something went wrong. Please try again.
+              </Typography>
             )}
             <Button
               type="submit"
@@ -152,7 +182,11 @@ export function SettingGeneralSection({ project }: Props) {
               disabled={!isDirty || saveStatus === "saving"}
               size="sm"
             >
-              {saveStatus === "saving" ? "Đang lưu..." : saveStatus === "saved" ? "✓ Đã lưu" : "Lưu thay đổi"}
+              {saveStatus === "saving"
+                ? "Saving..."
+                : saveStatus === "saved"
+                  ? "Saved"
+                  : "Save changes"}
             </Button>
           </CardSection.Footer>
         </form>
@@ -160,4 +194,3 @@ export function SettingGeneralSection({ project }: Props) {
     </Flex>
   );
 }
-
