@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
-import { OSS_GATEWAY_DEV_URL } from "@/lib/oss-gateway";
+import { OSS_GATEWAY_DEV_URL } from "@/lib/runtime/oss-gateway";
 import { setupFormSchema, type SetupFormInput } from "@/schemas/setup.schema";
 import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
 

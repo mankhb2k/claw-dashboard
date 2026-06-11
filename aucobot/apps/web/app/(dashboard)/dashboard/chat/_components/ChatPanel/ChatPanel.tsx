@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
-import { isOssRuntime } from "@/lib/runtime-mode";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import { ChatMessageBubble } from "../ChatMessageBubble";
 import { ChatTypingIndicator } from "../ChatTypingIndicator";
 import { ContentArea } from "../ContentArea/ContentArea";

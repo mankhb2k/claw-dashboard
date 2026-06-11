@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAgentEditorUiStore } from "@/stores/agent-editor-ui.store";
+import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
 import { EditPanel } from "../EditPanel/EditPanel";
 import { AgentPanel } from "../AgentPanel/AgentPanel";
 import styles from "./ClientAgentIdPage.module.css";
@@ -11,8 +11,8 @@ interface ClientAgentIdPageProps {
 }
 
 export function ClientAgentIdPage({ agentId }: ClientAgentIdPageProps) {
-  const agentPanelOpen = useAgentEditorUiStore((s) => s.agentPanelOpen);
-  const toggleAgentPanel = useAgentEditorUiStore((s) => s.toggleAgentPanel);
+  const agentPanelOpen = useAgentEditorStore((s) => s.agentPanelOpen);
+  const toggleAgentPanel = useAgentEditorStore((s) => s.toggleAgentPanel);
 
   return (
     <div className={styles.root}>

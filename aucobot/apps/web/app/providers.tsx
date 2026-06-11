@@ -3,7 +3,7 @@
 import { useLayoutEffect, useSyncExternalStore } from 'react'
 import { I18nProvider } from '@/lib/i18n'
 import type { Locale } from '@/lib/i18n'
-import { readThemeAppearance, subscribeThemeAppearance } from '@/lib/theme-sync'
+import { readThemeAppearance, subscribeThemeAppearance } from '@/lib/theme/theme-sync'
 import { ToastProvider } from '@/components/ui'
 
 /** Đồng bộ `data-theme` với theme store / localStorage. */

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveSession } from "@/lib/auth/session-middleware";
-import { getServerApiBaseUrl } from "@/lib/api-base-url";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
-import { SETUP_PATH } from "@/lib/entry-route";
+import { getServerApiBaseUrl } from "@/lib/http/api-base-url";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+import { SETUP_PATH } from "@/lib/routing/entry-route";
 
 const PUBLIC_ROUTES = ["/login", "/register"];
 const MOCK_AUTH_BYPASS = process.env.NEXT_PUBLIC_MOCK_API === "true";

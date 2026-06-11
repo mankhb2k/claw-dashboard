@@ -5,8 +5,8 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
 import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from "@/lib/i18n";
-import { THEME_APPEARANCE_COOKIE } from "@/lib/theme-constants";
-import { getThemeBootstrapInlineScript } from "@/lib/theme-bootstrap";
+import { THEME_APPEARANCE_COOKIE } from "@/lib/theme/theme-constants";
+import { getThemeBootstrapInlineScript } from "@/lib/theme/theme-bootstrap";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",

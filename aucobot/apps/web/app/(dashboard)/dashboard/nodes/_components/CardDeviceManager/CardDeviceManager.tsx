@@ -7,7 +7,7 @@ import type {
   NodePairingPending,
 } from "@/schemas/nodes.schema";
 import { Button, Card, Typography } from "@/components/ui";
-import type { ApprovalGroup } from "../ClientNodesPage/nodes-utils";
+import type { ApprovalGroup } from "@/utils/nodes/nodes-utils";
 import { PendingApprovalCard } from "./PendingApprovalCard";
 import { NodeDeviceCard } from "./NodeDeviceCard";
 import pageStyles from "../../nodes.module.css";

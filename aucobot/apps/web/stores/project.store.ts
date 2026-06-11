@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { projectApi } from '@/lib/api/project'
-import { GATEWAY_READY_TIMEOUT_MS, spawnTimeoutMessage } from '@/lib/project-spawn'
-import { gatewayTimeoutMessage } from '@/lib/oss-gateway'
-import { isOssRuntime } from '@/lib/runtime-mode'
+import { GATEWAY_READY_TIMEOUT_MS, spawnTimeoutMessage } from '@/lib/runtime/project-spawn'
+import { gatewayTimeoutMessage } from '@/lib/runtime/oss-gateway'
+import { isOssRuntime } from '@/lib/runtime/runtime-mode'
 import type { Project, CreateProjectInput } from '@/schemas/project.schema'
 
 interface ProjectState {

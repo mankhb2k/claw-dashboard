@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { dashboardPath } from "@/lib/dashboard-route";
+import { dashboardPath } from "@/lib/routing/dashboard-route";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -21,7 +21,7 @@ import {
   formatCronSchedule,
   formatNextRun,
   lastRunStatus,
-} from "@/lib/cron-format";
+} from "@/utils/agent/cron-format";
 import type { CronJob } from "@/schemas/cron.schema";
 import { CalendarClock, Play, Trash2, Plus } from "lucide-react";
 import styles from "./CardSchedules.module.css";

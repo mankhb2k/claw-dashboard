@@ -2,7 +2,7 @@ import {
   isContainerMissing,
   isProjectBusy,
   isProjectReady,
-} from "@/lib/entry-route";
+} from "@/lib/routing/entry-route";
 import type { Project, ProjectStatus } from "@/schemas/project.schema";
 
 export type CloudSetupMode = "create" | "resume" | "recreate" | "ready";

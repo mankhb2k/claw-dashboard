@@ -10,10 +10,10 @@ import {
   isProjectBusy,
   isProjectReady,
   shouldRedirectToSetup,
-} from "@/lib/entry-route";
-import { getDashboardPath } from "@/lib/dashboard-route";
-import { gatewayTimeoutMessage } from "@/lib/oss-gateway";
-import { spawnTimeoutMessage } from "@/lib/project-spawn";
+} from "@/lib/routing/entry-route";
+import { getDashboardPath } from "@/lib/routing/dashboard-route";
+import { gatewayTimeoutMessage } from "@/lib/runtime/oss-gateway";
+import { spawnTimeoutMessage } from "@/lib/runtime/project-spawn";
 import type { SetupFormInput } from "@/schemas/setup.schema";
 import { resolveCloudMode, resolveOssMode } from "../setup-utils";
 import { SetupCreateForm } from "../SetupCreateForm/SetupCreateForm";

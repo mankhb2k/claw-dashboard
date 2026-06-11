@@ -1,4 +1,4 @@
-import { api } from '@/lib/axios'
+import { api } from '@/lib/http/axios'
 import { uploadMultipart } from '@/lib/api/multipart-upload'
 import {
   changePasswordSchema,

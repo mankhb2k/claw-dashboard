@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import styles from "./CardAgent.module.css";
 import { AgentItem } from "../../agentMockData";
-import { NO_MODEL_LABEL } from "@/lib/chat/model-catalog";
+import { NO_MODEL_LABEL } from "@/utils/chat/model-catalog";
 
 interface CardAgentProps {
   agent: AgentItem;

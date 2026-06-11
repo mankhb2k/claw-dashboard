@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Box, Flex } from "@/components/layout";
 import { Button, Card, Spinner, Typography } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
-import { dashboardPath } from "@/lib/dashboard-route";
+import { dashboardPath } from "@/lib/routing/dashboard-route";
 import type { CronSummary } from "@/schemas/cron.schema";
 import { useProjectStore } from "@/stores/project.store";
 import styles from "./ScheduleCard.module.css";

@@ -20,8 +20,8 @@ import type { ProjectHealth, ProjectStatus } from "@/schemas/project.schema";
 import {
   buildGatewayControlUiUrl,
   resolveOssGatewayHttpBase,
-} from "@/lib/gateway-control-ui";
-import { isCloudRuntime } from "@/lib/runtime-mode";
+} from "@/lib/runtime/gateway-control-ui";
+import { isCloudRuntime } from "@/lib/runtime/runtime-mode";
 import styles from "./GatewayStatusSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
 import { TitleSection } from "../TitleSection/TitleSection";

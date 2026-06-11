@@ -12,7 +12,7 @@ import {
   Bot,
 } from "lucide-react";
 import type { NavItem } from "@/components/dashboard/Sidebar/Sidebar";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 
 const DASHBOARD_ROUTE =
   /^\/dashboard(?:\/(setting|ai-model|channel|skill|connect|agent)(?:\/[^/]+)*)?$/;

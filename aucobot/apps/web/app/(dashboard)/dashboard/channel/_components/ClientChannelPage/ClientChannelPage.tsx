@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useProjectStore } from "@/stores/project.store";
 import { projectApi } from "@/lib/api/project";
-import { mergeChannelCatalog, type ChannelCatalogCard } from "@/lib/channels/merge-channel-catalog";
+import { mergeChannelCatalog, type ChannelCatalogCard } from "@/utils/channels/merge-channel-catalog";
 import { CardChannel } from "../CardChannel/CardChannel";
 import styles from "./ClientChannelPage.module.css";
 import { Flex, Grid } from "@/components/layout";

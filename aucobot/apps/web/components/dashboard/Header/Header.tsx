@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth.store";
-import { resolveThemeAppearance } from "@/lib/theme-resolve";
+import { resolveThemeAppearance } from "@/lib/theme/theme-resolve";
 import { useThemeStore } from "@/stores/theme.store";
 import type { NavItem } from "@/components/dashboard/Sidebar/Sidebar";
 import styles from "./Header.module.css";

@@ -1,5 +1,5 @@
 import { Flex } from "@/components/layout";
-import { isOssRuntime } from "@/lib/runtime-mode";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import { ClientSetupPage } from "./_components/ClientSetupPage/ClientSetupPage";
 
 export default function SetupPage() {

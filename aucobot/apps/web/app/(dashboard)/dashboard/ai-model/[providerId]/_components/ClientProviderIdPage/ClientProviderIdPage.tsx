@@ -6,11 +6,11 @@ import { Button, Card, Typography, toast } from "@/components/ui";
 import { Box, Flex } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
 import { projectApi } from "@/lib/api/project";
-import { PROVIDER_TEST_TIMEOUT_MS } from "@/lib/provider-test";
+import { PROVIDER_TEST_TIMEOUT_MS } from "@/utils/ai-model/provider-test";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectEnvMaskedRow } from "@/schemas/project.schema";
-import { GEMINI_DEFAULT_OPENCLAW_MODEL } from "@/lib/ai-models/gemini-models";
-import { OPENAI_DEFAULT_OPENCLAW_MODEL } from "@/lib/ai-models/openai-models";
+import { GEMINI_DEFAULT_OPENCLAW_MODEL } from "@/utils/ai-model/gemini-models";
+import { OPENAI_DEFAULT_OPENCLAW_MODEL } from "@/utils/ai-model/openai-models";
 import {
   getCatalogSource,
   APIKEY_PROVIDERS,

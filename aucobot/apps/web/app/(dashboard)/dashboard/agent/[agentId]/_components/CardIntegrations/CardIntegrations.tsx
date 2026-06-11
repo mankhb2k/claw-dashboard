@@ -23,7 +23,7 @@ import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import { toServiceConnectData } from "../../../../connect/connect-display";
 import type { ServiceConnectData } from "../../../../connect/projectConnectData";
-import { isProjectConnectorConnected } from "@/lib/connectors/project-connector-status";
+import { isProjectConnectorConnected } from "@/utils/connectors/project-connector-status";
 import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
 import {
   Copy,
@@ -41,8 +41,8 @@ import type { AgentApiKeyListItem } from "@/schemas/project.schema";
 import {
   mergeChannelCatalog,
   type ChannelCatalogCard,
-} from "@/lib/channels/merge-channel-catalog";
-import { isChannelReadyForAgent } from "@/lib/channels/channel-agent-status";
+} from "@/utils/channels/merge-channel-catalog";
+import { isChannelReadyForAgent } from "@/utils/channels/channel-agent-status";
 import styles from "./CardIntegrations.module.css";
 
 interface CardIntegrationsProps {

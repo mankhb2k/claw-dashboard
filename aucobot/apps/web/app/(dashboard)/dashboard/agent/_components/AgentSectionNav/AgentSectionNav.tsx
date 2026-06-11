@@ -3,9 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Tabs, type TabItem } from "@/components/ui";
-import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-route";
 import { projectApi } from "@/lib/api/project";
-import { COLLABORATION_UPDATED_EVENT } from "@/lib/collaboration-events";
+import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
 import { useProjectStore } from "@/stores/project.store";
 
 const AGENTS_HREF = `${DASHBOARD_BASE_PATH}/agent`;

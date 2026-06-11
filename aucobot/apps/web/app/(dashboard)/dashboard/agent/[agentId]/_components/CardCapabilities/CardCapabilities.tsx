@@ -9,7 +9,7 @@ import {
   Card,
 } from "@/components/ui";
 import { Globe, FileText, Terminal } from "lucide-react";
-import { useModelCatalog } from "@/lib/chat/use-model-catalog";
+import { useModelCatalog } from "@/hooks/chat/use-model-catalog";
 import styles from "./CardCapabilities.module.css";
 
 interface CardCapabilitiesProps {

@@ -12,7 +12,7 @@ export type GatewayResponseFrame = {
   error?: { code?: string; message?: string }
 }
 
-import { getPublicApiBaseUrl } from '@/lib/api-base-url'
+import { getPublicApiBaseUrl } from '@/lib/http/api-base-url'
 
 export class ProjectChatClient {
   private ws: WebSocket | null = null

@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui";
 import type { ThemePreference } from "@/schemas/theme.schema";
-import { resolveUserAvatarSrc } from "@/lib/user-avatar";
+import { resolveUserAvatarSrc } from "@/utils/profile/user-avatar";
 import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/stores/theme.store";
 import styles from "./SidebarFooter.module.css";

@@ -20,7 +20,7 @@ import {
 import {
   isFileOverSandboxStagingLimit,
   sandboxStagingLimitError,
-} from "@/lib/chat/sandbox-staging-limit";
+} from "@/utils/chat/sandbox-staging-limit";
 import { ContextUsageRing } from "./ContextUsageRing/ContextUsageRing";
 import type { ContextUsageSnapshot } from "./ContextUsageRing/context-usage.utils";
 import { AttachmentPreviewRow } from "./AttachmentPreviewRow/AttachmentPreviewRow";

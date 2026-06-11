@@ -1,6 +1,6 @@
-import { api } from '@/lib/axios'
-import { SPAWN_API_TIMEOUT_MS } from '@/lib/project-spawn'
-import { PROVIDER_TEST_TIMEOUT_MS } from '@/lib/provider-test'
+import { api } from '@/lib/http/axios'
+import { SPAWN_API_TIMEOUT_MS } from '@/lib/runtime/project-spawn'
+import { PROVIDER_TEST_TIMEOUT_MS } from '@/utils/ai-model/provider-test'
 import {
   projectSchema,
   projectHealthSchema,

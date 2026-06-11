@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import { Typography, Card } from "@/components/ui";
 import type { HeartbeatSummaryEntry } from "@/schemas/project.schema";
-import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-route";
 import styles from "./CardHeartbeatAgents.module.css";
 
 function agentHeartbeatHref(agentId: string): string {

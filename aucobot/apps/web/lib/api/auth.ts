@@ -1,4 +1,4 @@
-import { api } from '@/lib/axios'
+import { api } from '@/lib/http/axios'
 import type { LoginInput, RegisterInput, User } from '@/schemas/auth.schema'
 
 export const authApi = {

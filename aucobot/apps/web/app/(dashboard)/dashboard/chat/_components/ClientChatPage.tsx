@@ -2,29 +2,29 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SETUP_PATH, shouldRedirectToSetup } from "@/lib/entry-route";
-import { isOssRuntime } from "@/lib/runtime-mode";
+import { SETUP_PATH, shouldRedirectToSetup } from "@/lib/routing/entry-route";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import { useProjectStore } from "@/stores/project.store";
 import { chatApi, type ChatModelsResponse } from "@/lib/api/chat";
 import {
   resolveAgentPrimaryOpenClawId,
   resolveModelSelection,
-} from "@/lib/chat/model-catalog";
+} from "@/utils/chat/model-catalog";
 import {
   ProjectChatClient,
   type GatewayEventFrame,
 } from "@/lib/chat/project-chat-client";
-import { patchSessionModel } from "@/lib/chat/session-model-patch";
+import { patchSessionModel } from "@/utils/chat/session-model-patch";
 import {
   clearSessionModelSelection,
   loadSessionModelSelection,
   saveSessionModelSelection,
-} from "@/lib/chat/session-model-storage";
+} from "@/utils/chat/session-model-storage";
 import {
   extractText,
   roleOf,
   stableMessageId,
-} from "@/lib/chat/message-extract";
+} from "@/utils/chat/message-extract";
 import {
   loadLastAgentId,
   loadLastSessionKey,
@@ -32,29 +32,29 @@ import {
   saveLastAgentId,
   saveLastSessionKey,
   saveSidebarCollapsed,
-} from "@/lib/chat/last-session-key";
+} from "@/utils/chat/last-session-key";
 import {
   deriveAutoTitleFromMessage,
   isAutoTitleCandidate,
-} from "@/lib/chat/session-auto-title";
+} from "@/utils/chat/session-auto-title";
 import {
   DEFAULT_NEW_SESSION_LABEL,
   filterSessionsForChatSidebar,
   isBrowsableChatSession,
   isMainSessionKey,
   reconcilePatchedSessionLabels,
-} from "@/lib/chat/session-display";
+} from "@/utils/chat/session-display";
 import type {
   GatewaySessionRow,
   SessionsCreateResult,
   SessionsListResult,
-} from "@/lib/chat/session-types";
-import { matchesSessionKey, sessionKeyForAgent } from "@/lib/chat/session-key";
+} from "@/utils/chat/session-types";
+import { matchesSessionKey, sessionKeyForAgent } from "@/utils/chat/session-key";
 import {
   isFileOverSandboxStagingLimit,
   SANDBOX_STAGING_MAX_BYTES,
-} from "@/lib/chat/sandbox-staging-limit";
-import { useChatSandboxContext } from "@/lib/chat/use-chat-sandbox-context";
+} from "@/utils/chat/sandbox-staging-limit";
+import { useChatSandboxContext } from "@/hooks/chat/use-chat-sandbox-context";
 import {
   ChatPanel,
   type ChatPanelConnectionState,

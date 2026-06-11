@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { THEME_LS_STORAGE_KEY } from '@/lib/theme-constants'
-import { syncAppearanceCookie } from '@/lib/theme-cookie'
+import { THEME_LS_STORAGE_KEY } from '@/lib/theme/theme-constants'
+import { syncAppearanceCookie } from '@/lib/theme/theme-cookie'
 import {
   themePreferenceSchema,
   type ThemePreference,
 } from '@/schemas/theme.schema'
-import { resolveThemeAppearance } from '@/lib/theme-resolve'
+import { resolveThemeAppearance } from '@/lib/theme/theme-resolve'
 
 export const THEME_STORAGE_KEY = THEME_LS_STORAGE_KEY
 

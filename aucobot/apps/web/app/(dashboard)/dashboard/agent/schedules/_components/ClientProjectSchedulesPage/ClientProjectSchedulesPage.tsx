@@ -7,7 +7,7 @@ import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import type { CronJob } from "@/schemas/cron.schema";
-import { cronJobMessage, formatCronSchedule } from "@/lib/cron-format";
+import { cronJobMessage, formatCronSchedule } from "@/utils/agent/cron-format";
 import { CardSchedulesOverview } from "../CardSchedulesOverview/CardSchedulesOverview";
 import { CardSchedulesFilters } from "../CardSchedulesFilters/CardSchedulesFilters";
 import { CardSchedulesJobs } from "../CardSchedulesJobs/CardSchedulesJobs";

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { projectApi } from '@/lib/api/project'
-import { serverGet } from '@/lib/server-api'
+import { serverGet } from '@/lib/http/server-api'
 import { projectSchema, type Project } from '@/schemas/project.schema'
 
 const projectListSchema = z.array(projectSchema)

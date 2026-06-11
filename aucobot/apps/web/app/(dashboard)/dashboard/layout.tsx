@@ -7,7 +7,7 @@ import {
   getPrimaryProject,
   shouldRedirectToSetup,
   SETUP_PATH,
-} from "@/lib/entry-route";
+} from "@/lib/routing/entry-route";
 import { Sidebar, NavItem } from "@/components/dashboard/Sidebar/Sidebar";
 import { Header } from "@/components/dashboard/Header/Header";
 import {
@@ -21,7 +21,7 @@ import {
   Bot,
   MonitorSmartphone,
 } from "lucide-react";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import styles from "./layout.module.css";
 
 function isDashboardCanvasRoute(pathname: string): boolean {

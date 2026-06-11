@@ -1,6 +1,6 @@
 import { loadMonorepoEnv } from "../../scripts/load-monorepo-env.mjs";
 import type { NextConfig } from "next";
-import { getServerApiBaseUrl } from "./lib/api-base-url";
+import { getServerApiBaseUrl } from "./lib/http/api-base-url";
 
 loadMonorepoEnv();
 

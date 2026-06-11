@@ -13,11 +13,11 @@ import {
 } from "@/schemas/agentForm.schema";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
-import { useAgentEditorUiStore, type AgentEditTab } from "@/stores/agent-editor-ui.store";
+import { useAgentEditorStore, type AgentEditTab } from "@/stores/agent/agent-editor.store";
 import {
   AGENT_PANEL_APPLY_AGENTS_MD,
   type AgentPanelApplyAgentsMdDetail,
-} from "@/lib/agent-editor/agent-panel-events";
+} from "@/utils/agent/agent-panel-events";
 import {
   PanelRightClose,
   PanelRightOpen,
@@ -33,7 +33,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BackButton } from "@/components/dashboard";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { Users } from "lucide-react";
 import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
@@ -43,7 +43,7 @@ import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
 import { CardSchedules } from "../CardSchedules/CardSchedules";
 import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
 import { JoinCollaborationOnCreate } from "../JoinCollaborationOnCreate/JoinCollaborationOnCreate";
-import { addAgentToProjectCollaboration } from "@/lib/agent-collaboration";
+import { addAgentToProjectCollaboration } from "@/utils/agent/agent-collaboration";
 import styles from "./EditPanel.module.css";
 
 interface EditPanelProps {
@@ -111,8 +111,8 @@ export function EditPanel({
   const templateId = searchParams.get("template");
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
-  const setFormSnapshot = useAgentEditorUiStore((s) => s.setFormSnapshot);
-  const setActiveEditTab = useAgentEditorUiStore((s) => s.setActiveEditTab);
+  const setFormSnapshot = useAgentEditorStore((s) => s.setFormSnapshot);
+  const setActiveEditTab = useAgentEditorStore((s) => s.setActiveEditTab);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(!isEditing && !templateId);
 

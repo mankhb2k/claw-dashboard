@@ -24,7 +24,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { useAgentEditorUiStore } from "@/stores/agent-editor-ui.store";
+import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
 import type { AgentFormInput } from "@/schemas/agentForm.schema";
 import styles from "./CardInstructions.module.css";
 
@@ -44,7 +44,7 @@ const SIMPLE_SECTIONS: {
 ];
 
 export function CardInstructions() {
-  const requestOptimizeFlow = useAgentEditorUiStore(
+  const requestOptimizeFlow = useAgentEditorStore(
     (s) => s.requestOptimizeFlow,
   );
   const {

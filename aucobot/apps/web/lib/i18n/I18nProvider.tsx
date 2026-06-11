@@ -16,7 +16,7 @@ import {
   subscribeLocale,
   writeLocale,
 } from './locale-storage'
-import { resolveOpenClawChannels, type OpenClawChannel } from '@/lib/openclaw-channels'
+import { resolveOpenClawChannels, type OpenClawChannel } from '@/utils/channels/openclaw-channels'
 
 type I18nContextValue = {
   locale: Locale

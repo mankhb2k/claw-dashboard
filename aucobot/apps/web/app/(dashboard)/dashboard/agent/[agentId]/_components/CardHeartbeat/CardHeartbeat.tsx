@@ -13,13 +13,13 @@ import {
 } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
-import { dashboardPath } from "@/lib/dashboard-route";
+import { dashboardPath } from "@/lib/routing/dashboard-route";
 import {
   HEARTBEAT_MD_PLACEHOLDER,
   intervalFromPreset,
   presetFromInterval,
   type HeartbeatIntervalPreset,
-} from "@/lib/heartbeat-interval";
+} from "@/utils/agent/heartbeat-interval";
 import styles from "./CardHeartbeat.module.css";
 
 interface CardHeartbeatProps {

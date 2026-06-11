@@ -10,7 +10,7 @@ import {
   intervalFromPreset,
   presetFromInterval,
   type HeartbeatIntervalPreset,
-} from "@/lib/heartbeat-interval";
+} from "@/utils/agent/heartbeat-interval";
 import { CardHeartbeatOverview } from "../CardHeartbeatOverview/CardHeartbeatOverview";
 import { CardHeartbeatConfig } from "../CardHeartbeatConfig/CardHeartbeatConfig";
 import { CardHeartbeatAgents } from "../CardHeartbeatAgents/CardHeartbeatAgents";

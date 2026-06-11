@@ -18,7 +18,7 @@ import {
 } from "@/components/ui";
 import Link from "next/link";
 import { Plus, Bot, Users } from "lucide-react";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { SearchItem } from "@/components/dashboard";
 import { CardAgent } from "../CardAgent/CardAgent";
 import styles from "./ClientAgentPage.module.css";
@@ -29,8 +29,8 @@ import { chatApi } from "@/lib/api/chat";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import type { ChatModelsResponse } from "@/lib/api/chat";
-import { resolveModelDisplayName } from "@/lib/chat/model-catalog";
-import { COLLABORATION_UPDATED_EVENT } from "@/lib/collaboration-events";
+import { resolveModelDisplayName } from "@/utils/chat/model-catalog";
+import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
 
 function toAgentItem(
   row: ProjectAgentListRow,

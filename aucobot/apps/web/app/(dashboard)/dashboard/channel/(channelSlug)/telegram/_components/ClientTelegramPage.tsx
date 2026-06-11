@@ -11,7 +11,7 @@ import {
   TELEGRAM_DM_POLICY_OPTIONS,
   validateTelegramAccessForm,
   type TelegramDmPolicy,
-} from "@/lib/telegram-access";
+} from "@aucobot/shared";
 import styles from "../telegram.module.css";
 
 interface Props {

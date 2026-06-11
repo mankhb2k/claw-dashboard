@@ -11,8 +11,8 @@ import {
   formatNextRun,
   isCronJobFailed,
   lastRunStatus,
-} from "@/lib/cron-format";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+} from "@/utils/agent/cron-format";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { CalendarClock, Play, Trash2 } from "lucide-react";
 import styles from "./CardSchedulesJobs.module.css";
 

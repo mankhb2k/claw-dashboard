@@ -6,9 +6,9 @@ import { Box, Flex } from "@/components/layout";
 import { Typography, Button, Spinner } from "@/components/ui";
 import { RotateCcw, Sparkles } from "lucide-react";
 import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble";
-import { useSkillEditorUiStore } from "@/stores/skill-editor-ui.store";
+import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
 import { useProjectStore } from "@/stores/project.store";
-import { useSkillModelSelect } from "@/lib/skill/use-skill-model-select";
+import { useSkillModelSelect } from "@/hooks/skill/use-skill-model-select";
 import { projectApi } from "@/lib/api/project";
 import { MessageBox } from "@/components/dashboard/MessageBox";
 import { SkillAgentPanelNoModelBanner } from "./SkillAgentPanelModelBar";
@@ -100,11 +100,11 @@ export type SkillAgentPanelProps = {
 
 export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
-  const skillSnapshot = useSkillEditorUiStore((s) => s.skillSnapshot);
-  const pendingPanelMessage = useSkillEditorUiStore(
+  const skillSnapshot = useSkillEditorStore((s) => s.skillSnapshot);
+  const pendingPanelMessage = useSkillEditorStore(
     (s) => s.pendingPanelMessage,
   );
-  const clearPendingPanelMessage = useSkillEditorUiStore(
+  const clearPendingPanelMessage = useSkillEditorStore(
     (s) => s.clearPendingPanelMessage,
   );
 

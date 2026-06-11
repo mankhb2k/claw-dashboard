@@ -22,7 +22,7 @@ import {
   buildSkillMetaJson,
   buildSkillMarkdown,
   type SkillDraft,
-} from "@/lib/skill-markdown";
+} from "@/utils/skill/skill-markdown";
 import { projectApi } from "@/lib/api/project";
 import type {
   ProjectSkillDetail,

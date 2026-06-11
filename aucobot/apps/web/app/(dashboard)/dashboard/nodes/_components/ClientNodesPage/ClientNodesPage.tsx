@@ -27,7 +27,7 @@ import {
   buildApprovalGroups,
   errorMessage,
   isNodeDeviceRequest,
-} from "./nodes-utils";
+} from "@/utils/nodes/nodes-utils";
 import { CardCreateInvite } from "../CardCreateInvite/CardCreateInvite";
 import { CardInviteHistory } from "../CardInviteHistory/CardInviteHistory";
 import { CardGuide } from "../CardGuide/CardGuide";

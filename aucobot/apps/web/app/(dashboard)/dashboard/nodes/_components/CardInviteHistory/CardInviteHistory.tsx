@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { NodeInviteListItem } from "@/schemas/nodes.schema";
 import { Button, Typography } from "@/components/ui";
-import { inviteStatusLabel } from "../ClientNodesPage/nodes-utils";
+import { inviteStatusLabel } from "@/utils/nodes/nodes-utils";
 import pageStyles from "../../nodes.module.css";
 import styles from "./CardInviteHistory.module.css";
 

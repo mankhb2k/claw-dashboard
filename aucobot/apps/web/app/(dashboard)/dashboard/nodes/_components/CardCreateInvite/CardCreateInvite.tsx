@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button, Card, Typography } from "@/components/ui";
-import { formatCountdownMs } from "../ClientNodesPage/nodes-utils";
+import { formatCountdownMs } from "@/utils/nodes/nodes-utils";
 import pageStyles from "../../nodes.module.css";
 import styles from "./CardCreateInvite.module.css";
 

@@ -11,7 +11,7 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import { skillDraftSchema, type SkillDraft } from "@/lib/skill-markdown";
+import { skillDraftSchema, type SkillDraft } from "@/utils/skill/skill-markdown";
 import styles from "./ModalCreateSkill.module.css";
 
 interface ModalCreateSkillProps {

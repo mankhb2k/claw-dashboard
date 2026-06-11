@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { loginSchema, type LoginInput } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/stores/auth.store";
-import { resolveDashboardPath } from "@/lib/resolve-dashboard-path";
+import { resolveDashboardPath } from "@/lib/routing/resolve-dashboard-path";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import styles from "./login.module.css";

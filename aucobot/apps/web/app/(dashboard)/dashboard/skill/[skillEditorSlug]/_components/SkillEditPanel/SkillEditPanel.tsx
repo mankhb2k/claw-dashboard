@@ -11,7 +11,7 @@ import {
 import { useCreateBlockNote } from "@blocknote/react";
 import { Flex, Container } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
-import { resolveThemeAppearance } from "@/lib/theme-resolve";
+import { resolveThemeAppearance } from "@/lib/theme/theme-resolve";
 import { useThemeStore } from "@/stores/theme.store";
 import type { ProjectSkillDetail } from "@/schemas/project.schema";
 import {

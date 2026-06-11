@@ -3,7 +3,7 @@
 import { Laptop, Monitor } from "lucide-react";
 import type { NodeEntry } from "@/schemas/nodes.schema";
 import { Button, Input, Typography } from "@/components/ui";
-import { formatCaps, getNodeTitle } from "../ClientNodesPage/nodes-utils";
+import { formatCaps, getNodeTitle } from "@/utils/nodes/nodes-utils";
 import pageStyles from "../../nodes.module.css";
 import styles from "./NodeDeviceCard.module.css";
 

@@ -5,11 +5,11 @@ import { useParams } from "next/navigation";
 import { Flex } from "@/components/layout";
 import { Typography, Spinner, toast } from "@/components/ui";
 import { BackButton } from "@/components/dashboard";
-import { buildSkillMarkdown } from "@/lib/skill-markdown";
+import { buildSkillMarkdown } from "@/utils/skill/skill-markdown";
 import { projectApi } from "@/lib/api/project";
 import type { ProjectSkillDetail } from "@/schemas/project.schema";
 import { useProjectStore } from "@/stores/project.store";
-import { useSkillEditorUiStore } from "@/stores/skill-editor-ui.store";
+import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
 import type { SkillEditorHandle } from "../SkillEditPanel/SkillEditPanel";
 import { SkillEditPanel } from "../SkillEditPanel/SkillEditPanel";
 import { SkillAgentPanel } from "../SkillAgentPanel/SkillAgentPanel";
@@ -28,9 +28,9 @@ export function ClientSkillEditorPage() {
   const projectsLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
 
-  const skillPanelOpen = useSkillEditorUiStore((s) => s.skillPanelOpen);
-  const toggleSkillPanel = useSkillEditorUiStore((s) => s.toggleSkillPanel);
-  const setSkillSnapshot = useSkillEditorUiStore((s) => s.setSkillSnapshot);
+  const skillPanelOpen = useSkillEditorStore((s) => s.skillPanelOpen);
+  const toggleSkillPanel = useSkillEditorStore((s) => s.toggleSkillPanel);
+  const setSkillSnapshot = useSkillEditorStore((s) => s.setSkillSnapshot);
 
   const [bootstrapped, setBootstrapped] = useState(false);
   const [skillLoading, setSkillLoading] = useState(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ApprovalGroup } from "../ClientNodesPage/nodes-utils";
+import type { ApprovalGroup } from "@/utils/nodes/nodes-utils";
 import type {
   DevicePairingPending,
   NodePairingPending,

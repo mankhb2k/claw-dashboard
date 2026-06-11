@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Flex } from "@/components/layout";
 import { Typography, Card, Spinner } from "@/components/ui";
 import { Users, ExternalLink } from "lucide-react";
-import { DASHBOARD_BASE_PATH } from "@/lib/dashboard-route";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectCollaboration } from "@/schemas/project.schema";

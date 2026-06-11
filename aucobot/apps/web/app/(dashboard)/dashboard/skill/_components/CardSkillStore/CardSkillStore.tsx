@@ -3,7 +3,7 @@
 import { Button, Card, Typography } from "@/components/ui";
 import { Skeleton } from "@/components/ui/Skeleton/Skeleton";
 import { Flex } from "@/components/layout";
-import { formatCompactCount } from "@/lib/format-compact-count";
+import { formatCompactCount } from "@/utils/common/format-compact-count";
 import type { SkillStoreItem } from "@/schemas/project.schema";
 import styles from "./CardSkillStore.module.css";
 

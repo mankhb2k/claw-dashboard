@@ -6,20 +6,20 @@ import { Box, Flex } from "@/components/layout";
 import { Typography, Button, Spinner } from "@/components/ui";
 import { RotateCcw, Sparkles } from "lucide-react";
 import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble";
-import { useAgentEditorUiStore } from "@/stores/agent-editor-ui.store";
+import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
 import { useProjectStore } from "@/stores/project.store";
-import { useChatModelSelect } from "@/lib/chat/use-chat-model-select";
+import { useChatModelSelect } from "@/hooks/chat/use-chat-model-select";
 import { projectApi } from "@/lib/api/project";
 import {
   getWelcomeMessage,
   QUICK_PROMPTS,
   respondToUserMessage,
-} from "@/lib/agent-editor/agent-panel-assistant";
+} from "@/utils/agent/agent-panel-assistant";
 import {
   buildAgentContextFromForm,
   OPTIMIZE_SEED_USER_MESSAGE,
-} from "@/lib/agent-editor/agent-panel-context";
-import { dispatchApplyAgentsMd } from "@/lib/agent-editor/agent-panel-events";
+} from "@/utils/agent/agent-panel-context";
+import { dispatchApplyAgentsMd } from "@/utils/agent/agent-panel-events";
 import { MessageBox } from "@/components/dashboard/MessageBox";
 import { AgentPanelNoModelBanner } from "./AgentPanelModelBar";
 import { OptimizeResultCard } from "./OptimizeResultCard";
@@ -76,14 +76,14 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
 
 export function AgentPanel() {
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
-  const formSnapshot = useAgentEditorUiStore((s) => s.formSnapshot);
-  const activeEditTab = useAgentEditorUiStore((s) => s.activeEditTab);
-  const pendingPanelMessage = useAgentEditorUiStore((s) => s.pendingPanelMessage);
-  const clearPendingPanelMessage = useAgentEditorUiStore(
+  const formSnapshot = useAgentEditorStore((s) => s.formSnapshot);
+  const activeEditTab = useAgentEditorStore((s) => s.activeEditTab);
+  const pendingPanelMessage = useAgentEditorStore((s) => s.pendingPanelMessage);
+  const clearPendingPanelMessage = useAgentEditorStore(
     (s) => s.clearPendingPanelMessage,
   );
-  const optimizeMode = useAgentEditorUiStore((s) => s.optimizeMode);
-  const clearOptimizeMode = useAgentEditorUiStore((s) => s.clearOptimizeMode);
+  const optimizeMode = useAgentEditorStore((s) => s.optimizeMode);
+  const clearOptimizeMode = useAgentEditorStore((s) => s.clearOptimizeMode);
 
   const {
     modelsLoading,

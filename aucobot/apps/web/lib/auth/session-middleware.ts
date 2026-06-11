@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { AUTH_COOKIES } from '@aucobot/shared'
-import { getServerApiBaseUrl } from '@/lib/api-base-url'
+import { getServerApiBaseUrl } from '@/lib/http/api-base-url'
 
 export type SessionResolveResult = {
   valid: boolean

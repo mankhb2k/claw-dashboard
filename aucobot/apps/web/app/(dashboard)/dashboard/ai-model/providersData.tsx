@@ -1,8 +1,8 @@
 import {
   GEMINI_OPENCLAW_PROVIDER,
   geminiModelsToProviderModels,
-} from "@/lib/ai-models/gemini-models";
-import { openAiModelsToProviderModels } from "@/lib/ai-models/openai-models";
+} from "@/utils/ai-model/gemini-models";
+import { openAiModelsToProviderModels } from "@/utils/ai-model/openai-models";
 
 export type ModelTier = "stable" | "preview" | "deprecated";
 

@@ -6,7 +6,7 @@ import { Typography, Button, Card, Input, Select } from "@/components/ui";
 import {
   HEARTBEAT_MD_PLACEHOLDER,
   type HeartbeatIntervalPreset,
-} from "@/lib/heartbeat-interval";
+} from "@/utils/agent/heartbeat-interval";
 import styles from "./CardHeartbeatConfig.module.css";
 
 const PRESET_OPTIONS: { value: HeartbeatIntervalPreset; label: string }[] = [

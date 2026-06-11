@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Flex } from "@/components/layout";
 import { Typography, Card } from "@/components/ui";
-import { dashboardPath } from "@/lib/dashboard-route";
+import { dashboardPath } from "@/lib/routing/dashboard-route";
 import styles from "./CardSchedulesOverview.module.css";
 
 type CardSchedulesOverviewProps = {
