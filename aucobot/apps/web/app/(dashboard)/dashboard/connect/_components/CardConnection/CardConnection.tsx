@@ -22,14 +22,12 @@ type Props = {
 }
 
 export function CardConnection({ service, onViewDetails, onDisconnect, onRemove, onRefreshTools }: Props) {
-  /* --- 1. PREPARE DATA --- */
   const label = service.name
   const desc = service.description
 
   return (
     <Flex align="center" justify="between" gap={4} className={styles.listItem} role="group" aria-label={label}>
 
-      {/* --- 2. SERVICE INFO BLOCK (Icon + Name + Desc) --- */}
       <Flex align="center" gap={18} className={styles.itemMain}>
         <IconProvider
           src={service.iconSrc}
@@ -51,10 +49,8 @@ export function CardConnection({ service, onViewDetails, onDisconnect, onRemove,
         </Flex>
       </Flex>
 
-      {/* --- 3. ACTIONS BLOCK (Quick Config + More Menu) --- */}
       <div className={styles.itemActions}>
         <div className={styles.actionsGroup}>
-          {/* Nút Cấu hình nhanh */}
           <Button
             type="button"
             variant="ghost"
@@ -62,29 +58,28 @@ export function CardConnection({ service, onViewDetails, onDisconnect, onRemove,
             className={`${styles.actionBtn} ${styles.configBtn}`}
             onClick={onViewDetails}
           >
-            Cấu hình
+            Configure
           </Button>
 
           <div className={styles.divider} />
 
-          {/* Menu Dropdown cho các thao tác khác */}
           <DropdownMenu>
             <DropdownMenuTrigger variant="kebab" className={styles.menuTrigger}>
               <Ellipsis size={18} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onViewDetails}>
-                Xem chi tiết
+                View details
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onRefreshTools}>
-                Làm mới danh sách công cụ
+                Refresh tool list
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="danger" onClick={onDisconnect}>
-                Ngắt kết nối
+                Disconnect
               </DropdownMenuItem>
               <DropdownMenuItem variant="danger" onClick={onRemove}>
-                Xóa
+                Remove
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

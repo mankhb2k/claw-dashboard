@@ -9,7 +9,7 @@ import styles from "./CardChannel.module.css";
 
 export interface CardChannelProps {
   title: string;
-  status: string; // Ví dụ: "Disconnected", "Connected"
+  status: string; // e.g. "Disconnected", "Connected"
   iconSrc?: string;
   iconLabel?: string;
 }

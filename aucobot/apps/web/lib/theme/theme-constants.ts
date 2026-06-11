@@ -1,10 +1,6 @@
-/** Khóa zustand persist trong localStorage (shape { state: { theme } }). */
-export const THEME_LS_STORAGE_KEY = 'openclaw-theme'
+/* Key Local Storage zustand persist save light | dark | system */
+export const THEME_LS_STORAGE_KEY = "aucobot-theme";
 
-/**
- * Cookie chỉ chứa `light` | `dark` để RootLayout SSR đọc — Radix `<Theme appearance>`
- * khớp ngay khi hydrate, tránh một khung hiển thị appearance="light".
- */
-export const THEME_APPEARANCE_COOKIE = 'openclaw-appearance'
+export const THEME_APPEARANCE_COOKIE = "aucobot-appearance"; // cookie name, Nextjs to set data-theme attribute on <html>
 
-export const THEME_COOKIE_MAX_AGE = 31536000
+export const THEME_COOKIE_MAX_AGE = 31536000; // 1 year

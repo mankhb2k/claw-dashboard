@@ -1,7 +1,7 @@
 .card {
-  padding: 12px 12px;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
+  padding: var(--space-3);
+  background-color: var(--color-card-background);
+  border: 1px solid var(--color-card-border);
   border-radius: var(--radius-md);
   transition:
     border-color var(--transition-fast) ease,
@@ -23,8 +23,7 @@
 }
 
 .connected {
-  color: #22c55e;
-  /* Màu xanh lá cho trạng thái Connected */
+  color: var(--color-success);
   font-weight: 500;
 }
 
@@ -32,8 +31,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   border-radius: var(--radius-md);
   background: var(--color-background);
   border: 1px solid var(--color-border);

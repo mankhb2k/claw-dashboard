@@ -17,6 +17,7 @@ export type CodeBlockTabsProps<T extends string = string> = {
   /** Nội dung bên phải hàng tab (vd. nhãn Terminal) */
   trailing?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   "aria-label"?: string;
 };
 
@@ -31,6 +32,7 @@ export function CodeBlockTabs<T extends string>({
   onValueChange,
   trailing,
   className = "",
+  style,
   "aria-label": ariaLabel = "Code snippet language",
 }: CodeBlockTabsProps<T>) {
   const tabListRef = useRef<HTMLDivElement>(null);
@@ -71,7 +73,7 @@ export function CodeBlockTabs<T extends string>({
   const rootClass = [styles.root, className].filter(Boolean).join(" ");
 
   return (
-    <div className={rootClass}>
+    <div className={rootClass} style={style}>
       <div
         ref={tabListRef}
         className={styles.tabList}

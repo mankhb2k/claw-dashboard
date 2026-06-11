@@ -15,8 +15,8 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "OpenClaw",
-  description: "Run your bots without managing servers",
+  title: "AucoBot",
+  description: "AI-powered automation platform",
 };
 
 export const viewport = {

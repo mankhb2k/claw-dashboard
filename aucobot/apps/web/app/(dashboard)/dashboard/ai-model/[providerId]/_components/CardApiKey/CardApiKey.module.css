@@ -1,49 +1,40 @@
 /* =============================================================================
-   ModelApiKey.module.css — Style cho component ModelApiKey
+   CardApiKey — API key connection list
    ============================================================================= */
 
-/* =============================================================================
-   1. VỎ NGOÀI
-   ============================================================================= */
 .mainWrapper {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  padding: 1.5rem;
-  border-radius: 12px;
+  background: var(--color-card-background);
+  border: 1px solid var(--color-card-border);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
 }
 
 .row1 {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
-/* =============================================================================
-   2. ICON WRAPPERS
-   ============================================================================= */
 .iconWrapper {
-  background: var(--color-bg-subtle);
+  background: var(--color-muted);
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .iconWrapperSuccess {
-  background: var(--color-success-subtle);
+  background: var(--color-success-dim);
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* =============================================================================
-   3. ICONS
-   ============================================================================= */
 .iconLock {
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   font-size: 20px;
 }
 
@@ -52,23 +43,20 @@
   font-size: 20px;
 }
 
-/* =============================================================================
-   4. NÚT & CONTENT
-   ============================================================================= */
 .btnContent {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 6px;
 }
 
-/* Nút kebab 3 chấm — chuẩn Dropdown Menu Standard (rule.md) */
+/* Kebab menu trigger (rule.md dropdown standard) */
 .kebabBtn {
   width: 34px;
   height: 34px;
   border-radius: var(--radius-sm);
   border: none;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,7 +68,7 @@
 
 .kebabBtn:hover:not(:disabled) {
   background: var(--color-primary-dim);
-  color: var(--color-text);
+  color: var(--color-foreground);
 }
 
 .kebabBtn:focus-visible {
@@ -91,7 +79,7 @@
 .eyeBtn {
   background: transparent;
   border: none;
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -102,7 +90,7 @@
 }
 
 .eyeBtn:hover:not(:disabled) {
-  color: var(--color-text);
+  color: var(--color-foreground);
 }
 
 .eyeBtn:disabled {
@@ -110,11 +98,8 @@
   cursor: not-allowed;
 }
 
-/* =============================================================================
-   5. CONNECTIONS LIST
-   ============================================================================= */
 .connectionsWrapper {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 
 .connectionsGrid {
@@ -124,16 +109,15 @@
 }
 
 .connectionCard {
-  padding: 1rem;
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  padding: var(--space-4);
+  background: var(--color-card-background);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
   transition:
     opacity var(--transition-md) ease,
     border-color var(--transition-md) ease;
 }
 
-/* Trạng thái tắt kết nối */
 .connectionCardDisabled {
   opacity: 0.55;
   border-color: var(--color-border);

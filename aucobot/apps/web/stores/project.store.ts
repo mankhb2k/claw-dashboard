@@ -10,7 +10,8 @@ interface ProjectState {
   isLoading: boolean
   error: string | null
   fetchProjects: (opts?: { silent?: boolean }) => Promise<void>
-  createProject: (input: CreateProjectInput) => Promise<Project>
+  createProject: (input?: CreateProjectInput) => Promise<Project>
+  syncProjectHealth: (id: string) => Promise<void>
   startProject: (id: string) => Promise<void>
   respawnProject: (id: string) => Promise<Project>
   stopProject: (id: string) => Promise<void>
@@ -51,10 +52,30 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }
   },
 
-  createProject: async (input) => {
+  createProject: async (input = {}) => {
     const project = await projectApi.create(input)
     set((s) => ({ projects: [project, ...s.projects.filter((p) => p.id !== project.id)] }))
     return project
+  },
+
+  syncProjectHealth: async (id) => {
+    const health = await projectApi.health(id)
+    set((s) => ({
+      projects: s.projects.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              status: health.status,
+              displayName: health.displayName ?? p.displayName,
+              publicUrl: health.publicUrl ?? p.publicUrl,
+              subdomain: health.subdomain ?? p.subdomain,
+              containerMissing: health.containerMissing ?? false,
+              errorMessage: health.errorMessage ?? null,
+              lastActiveAt: health.lastActiveAt ?? p.lastActiveAt,
+            }
+          : p,
+      ),
+    }))
   },
 
   startProject: async (id) => {

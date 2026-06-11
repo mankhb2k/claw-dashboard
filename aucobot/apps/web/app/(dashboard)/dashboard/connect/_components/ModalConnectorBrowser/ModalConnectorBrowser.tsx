@@ -38,7 +38,7 @@ export function ModalConnectorBrowser({
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={styles.modal}>
         <DialogHeader className={styles.header}>
-          <DialogTitle>Trung tâm Kết nối</DialogTitle>
+          <DialogTitle>Connect Center</DialogTitle>
         </DialogHeader>
 
         <div className={styles.searchWrap}>
@@ -47,8 +47,8 @@ export function ModalConnectorBrowser({
             className={styles.search}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm kiếm dịch vụ..."
-            aria-label="Tìm kiếm dịch vụ"
+            placeholder="Search services..."
+            aria-label="Search services"
           />
         </div>
 
@@ -65,8 +65,8 @@ export function ModalConnectorBrowser({
                     shape="square"
                     withBackground={true}
                   />
-                  <div style={{ minWidth: 0 }}>
-                    <Typography variant="p" weight="bold" as="h3" style={{ margin: 0 }}>
+                  <div className={styles.cardTextCol}>
+                    <Typography variant="p" weight="bold" as="h3" className={styles.cardTitle}>
                       {svc.name}
                     </Typography>
                     <Typography variant="xs" color="muted" className={styles.cardDesc}>
@@ -80,7 +80,7 @@ export function ModalConnectorBrowser({
                     variant="outline"
                     size="sm"
                     iconOnly
-                    aria-label="Cài đặt"
+                    aria-label="Settings"
                     onClick={() => onOpenDetails(svc)}
                   >
                     <Settings size={16} />
@@ -91,7 +91,7 @@ export function ModalConnectorBrowser({
                     variant="outline"
                     size="sm"
                     iconOnly
-                    aria-label="Kết nối"
+                    aria-label="Connect"
                     onClick={() => onConnect(svc.id)}
                   >
                     <Plus size={16} />
@@ -101,7 +101,7 @@ export function ModalConnectorBrowser({
             )
           })}
           {visibleServices.length === 0 && (
-            <div className={styles.empty}>Không tìm thấy dịch vụ nào phù hợp.</div>
+            <div className={styles.empty}>No matching services found.</div>
           )}
         </Grid>
       </DialogContent>

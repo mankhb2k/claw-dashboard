@@ -8,7 +8,7 @@ import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectEnvMaskedRow } from "@/schemas/project.schema";
 import { CardProvider } from "../CardProvider/CardProvider";
-import { APIKEY_PROVIDERS } from "../../providersData";
+import { APIKEY_PROVIDERS } from "@/utils/ai-model/providers-data";
 import styles from "./ClientAIModelPage.module.css";
 
 function providerConnectionStatus(

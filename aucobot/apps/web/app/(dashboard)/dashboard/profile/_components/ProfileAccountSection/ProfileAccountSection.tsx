@@ -30,7 +30,7 @@ export function ProfileAccountSection({
     "idle",
   );
 
-  const memberSince = new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(
+  const memberSince = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
     new Date(user.createdAt),
   );
 

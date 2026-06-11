@@ -3,10 +3,10 @@ import type { GatewaySessionRow } from './session-types'
 export type SessionDateGroup = 'today' | 'yesterday' | 'thisWeek' | 'older'
 
 export const SESSION_GROUP_LABELS: Record<SessionDateGroup, string> = {
-  today: 'Hôm nay',
-  yesterday: 'Hôm qua',
-  thisWeek: 'Tuần này',
-  older: 'Trước đó',
+  today: 'Today',
+  yesterday: 'Yesterday',
+  thisWeek: 'This week',
+  older: 'Older',
 }
 
 const GROUP_ORDER: SessionDateGroup[] = ['today', 'yesterday', 'thisWeek', 'older']
@@ -60,16 +60,16 @@ export function formatRelativeSessionTime(
   const diffMs = Math.max(0, now - updatedAt)
   const diffMin = Math.floor(diffMs / 60_000)
 
-  if (diffMin < 1) return 'Vừa xong'
-  if (diffMin < 60) return `${diffMin} phút`
+  if (diffMin < 1) return 'Just now'
+  if (diffMin < 60) return `${diffMin}m`
 
   const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr} giờ`
+  if (diffHr < 24) return `${diffHr}h`
 
   const diffDay = Math.floor(diffHr / 24)
-  if (diffDay < 7) return `${diffDay} ngày`
+  if (diffDay < 7) return `${diffDay}d`
 
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat('en-US', {
     day: 'numeric',
     month: 'short',
   }).format(new Date(updatedAt))

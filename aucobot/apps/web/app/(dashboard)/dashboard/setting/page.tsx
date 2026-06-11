@@ -1,11 +1,7 @@
 import { Flex, Container } from "@/components/layout";
 import { projectApi } from "@/lib/api/project";
 import { getCurrentProject } from "@/lib/current-project";
-import { GeneralSection } from "./_components/GeneralSection/GeneralSection";
-import { GatewayStatusSection } from "./_components/GatewayStatusSection/GatewayStatusSection";
-import { SandboxSection } from "./_components/SandboxSection/SandboxSection";
-import { ShellExecSection } from "./_components/ShellExecSection/ShellExecSection";
-import { DangerZone } from "./_components/DangerZone/DangerZone";
+import { ClientSettingPage } from "./_components/ClientSettingPage/ClientSettingPage";
 import styles from "./setting.module.css";
 
 export default async function ProjectSettingPage() {
@@ -26,7 +22,7 @@ export default async function ProjectSettingPage() {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
         <Container size="sm" className={styles.content}>
-          <p className={styles.error}>Không tìm thấy dự án.</p>
+          <p className={styles.error}>Project not found.</p>
         </Container>
       </Flex>
     );
@@ -35,18 +31,7 @@ export default async function ProjectSettingPage() {
   return (
     <Flex direction="column" align="stretch" className={styles.page}>
       <Container size="sm" display="flex" className={styles.content}>
-        <div className={styles.sections}>
-          <GeneralSection project={project} />
-
-          <SandboxSection projectId={id} />
-          <ShellExecSection projectId={id} />
-          <GatewayStatusSection
-            projectId={id}
-            subdomain={project.subdomain}
-            initialHealth={initialHealth}
-          />
-          <DangerZone project={project} />
-        </div>
+        <ClientSettingPage project={project} initialHealth={initialHealth} />
       </Container>
     </Flex>
   );

@@ -65,7 +65,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
     if (!projectId) return;
     setIsLoading(true);
     reload()
-      .catch((err) => setError(err instanceof Error ? err.message : "Lỗi tải connectors"))
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load connectors"))
       .finally(() => setIsLoading(false));
   }, [projectId]);
 
@@ -93,7 +93,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
       const { url } = await projectApi.startConnectorOAuth(projectId, service.slug);
       window.location.href = url;
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Kết nối thất bại");
+      alert(err instanceof Error ? err.message : "Connection failed");
       setIsConnecting(false);
     }
   };
@@ -104,7 +104,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
       await projectApi.deleteConnector(projectId, activeConnector.id);
       router.push("/dashboard/connect");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gỡ kết nối thất bại");
+      alert(err instanceof Error ? err.message : "Failed to disconnect");
     }
   };
 
@@ -126,7 +126,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
         <Container size="md">
           <Flex center fullHeight direction="column" gap={4} p={8}>
             <Spinner size="lg" />
-            <Typography color="muted">Đang tải dữ liệu...</Typography>
+            <Typography color="muted">Loading...</Typography>
           </Flex>
         </Container>
       </div>
@@ -140,16 +140,16 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
           <Flex center fullHeight direction="column" gap={24} py={80}>
             <Flex direction="column" center gap={8}>
               <Typography variant="h2" weight="bold" className={styles.error}>
-                {error ? "Đã có lỗi xảy ra" : "Không tìm thấy dữ liệu"}
+                {error ? "Something went wrong" : "Not found"}
               </Typography>
               <Typography color="muted" className={styles.errorText}>
                 {!project
-                  ? "Dự án bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập."
-                  : "Dịch vụ kết nối này không khả dụng hoặc chưa được hỗ trợ trên backend."}
+                  ? "The project does not exist or you do not have access."
+                  : "This connector is unavailable or not supported on the backend."}
               </Typography>
             </Flex>
             <BackButton href="/dashboard/connect">
-              Quay lại danh sách kết nối
+              Back to connections
             </BackButton>
           </Flex>
         </Container>

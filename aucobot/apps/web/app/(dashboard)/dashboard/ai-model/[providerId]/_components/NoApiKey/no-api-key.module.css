@@ -1,8 +1,8 @@
 .notConnectedBorder {
   border-style: dashed;
-  background-color: var(--color-surface-1);
+  background-color: var(--color-muted);
 }
 
 .loadingBox {
-  min-height: 120px;
+  min-height: var(--agent-template-loading-min-height);
 }

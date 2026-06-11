@@ -6,12 +6,24 @@ import { Button } from '../Button/Button'
 export const AlertDialog = AlertDialogPrimitive.Root
 export const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 
+export const AlertDialogOverlay = React.forwardRef<
+  HTMLDivElement,
+  AlertDialogPrimitive.AlertDialogOverlayProps
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Overlay
+    ref={ref}
+    className={`${styles.overlay} ${className || ''}`}
+    {...props}
+  />
+))
+AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
+
 export const AlertDialogContent = React.forwardRef<
   HTMLDivElement,
   AlertDialogPrimitive.AlertDialogContentProps
 >(({ className, children, ...props }, ref) => (
   <AlertDialogPrimitive.Portal>
-    <AlertDialogPrimitive.Overlay className={styles.overlay} />
+    <AlertDialogOverlay />
     <div className={styles.container}>
       <AlertDialogPrimitive.Content
         ref={ref}

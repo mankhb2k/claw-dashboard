@@ -7,12 +7,19 @@
   padding: var(--space-6) !important;
 }
 
+.dialogHeader {
+  gap: 10px;
+  margin-bottom: var(--space-6);
+}
 
+.loadingArea {
+  min-height: var(--agent-template-loading-min-height);
+}
 
-/* Template List Container */
+/* Template list container */
 .templateList {
   overflow-y: hidden;
-  padding-right: 4px;
+  padding-right: var(--space-1);
   flex: 1;
   min-height: 0;
   animation: allowScroll 0s linear 0.6s forwards;
@@ -29,7 +36,7 @@
   }
 }
 
-/* Custom Scrollbar for list */
+/* List scrollbar */
 .templateList::-webkit-scrollbar {
   width: 6px;
 }
@@ -43,32 +50,32 @@
   border-radius: 3px;
 }
 
-/* Card Styling */
+/* Template card */
 .templateCard {
   background-color: var(--color-card-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   cursor: pointer;
-  transition: border-color var(--transition-md) ease, box-shadow var(--transition-md) ease, background-color var(--transition-md) ease;
+  transition:
+    border-color var(--transition-md) ease,
+    box-shadow var(--transition-md) ease,
+    background-color var(--transition-md) ease;
   opacity: 0;
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-
 
 .emptyCard {
   border-style: dashed;
 }
 
-
-/* Icons */
+/* Template icons */
 .iconContainer {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: var(--agent-icon-size);
+  height: var(--agent-icon-size);
   border-radius: var(--radius-md);
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
@@ -76,47 +83,47 @@
 }
 
 .iconBot {
-  color: #3b82f6;
+  color: var(--color-overview-output);
 }
 
 .iconCode {
-  color: #10b981;
+  color: var(--color-provider-openai);
 }
 
 .iconAnalyst {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .iconOrchestrator {
-  color: #8b5cf6;
+  color: var(--color-overview-chart-secondary);
 }
 
 .iconDefault {
   color: var(--color-muted-foreground);
 }
 
-/* Content Area */
+.templateTitle {
+  margin-bottom: var(--space-1);
+}
+
+/* Card text block */
 .cardContent {
   flex: 1;
   min-width: 0;
 }
 
-
-
-
-
-/* Responsive Grid */
+/* Responsive grid */
 @media (max-width: 40rem) {
   .templateList {
     grid-template-columns: 1fr !important;
   }
 }
 
-/* Staggered Animations */
+/* Staggered entrance */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(var(--space-3));
   }
 
   to {

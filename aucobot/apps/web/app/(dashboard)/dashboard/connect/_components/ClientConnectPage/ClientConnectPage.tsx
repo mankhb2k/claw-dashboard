@@ -51,7 +51,7 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
     void fetchProjects()
       .then(() => loadConnectData())
       .catch((err) =>
-        setLoadError(err instanceof Error ? err.message : "Không tải được dữ liệu"),
+        setLoadError(err instanceof Error ? err.message : "Failed to load data"),
       )
       .finally(() => setFetched(true));
   }, [projectId, fetchProjects, loadConnectData]);
@@ -85,19 +85,19 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
       await projectApi.deleteConnector(projectId, row.id);
       await loadConnectData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gỡ kết nối thất bại");
+      alert(err instanceof Error ? err.message : "Failed to disconnect");
     }
   };
 
   if (!projectId || (fetched && !project)) {
-    return <p className={styles.error}>Không tìm thấy dự án.</p>;
+    return <p className={styles.error}>Project not found.</p>;
   }
 
   if (!project && !fetched) {
     return (
       <Flex direction="column" align="center" justify="center" gap={3} className={styles.loadingContainer}>
         <Spinner size="md" />
-        <Typography variant="p" color="muted">Đang tải dữ liệu...</Typography>
+        <Typography variant="p" color="muted">Loading...</Typography>
       </Flex>
     );
   }
@@ -110,21 +110,21 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
     <>
       {oauthError ? (
         <p className={styles.error} role="alert">
-          OAuth thất bại: {oauthError}
+          OAuth failed: {oauthError}
         </p>
       ) : null}
       <div className={styles.toolbar}>
         <Button variant="primary" onClick={() => setAppStoreOpen(true)}>
-          Thêm kết nối
+          Add connection
         </Button>
         <Button variant="primary" onClick={() => setCustomModalOpen(true)}>
-          Thêm kết nối tùy chỉnh
+          Add custom connection
         </Button>
       </div>
 
       <Flex direction="column" gap={2}>
         {!fetched ? (
-          <Flex justify="center" align="center" style={{ padding: "var(--space-10) 0" }}>
+          <Flex justify="center" align="center" className={styles.centeredPanel}>
             <Spinner size="md" />
           </Flex>
         ) : visibleServices.length > 0 ? (
@@ -138,9 +138,9 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
             />
           ))
         ) : (
-          <Flex justify="center" align="center" style={{ padding: "var(--space-10) 0" }}>
+          <Flex justify="center" align="center" className={styles.centeredPanel}>
             <Typography variant="small" color="muted">
-              Chưa có dịch vụ nào được kết nối.
+              No services connected yet.
             </Typography>
           </Flex>
         )}

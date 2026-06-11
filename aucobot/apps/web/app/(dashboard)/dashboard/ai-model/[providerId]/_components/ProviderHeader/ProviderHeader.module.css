@@ -1,21 +1,30 @@
-/* Hàng header provider */
+/* Provider header row */
 .row {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .meta {
   min-width: 0;
 }
 
-/* Dòng phụ: Manage API key · link lấy key */
+/* Subtitle: Manage API key · external link */
 .subtitle {
   row-gap: var(--space-1);
 }
 
-/* Link lấy API key: nhãn + icon cùng một hàng */
+/* API key link: label + icon on one line */
 .apiKeyLink {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+}
+
+.iconTintWrap {
+  flex-shrink: 0;
+}
+
+.iconTinted {
+  background: color-mix(in srgb, var(--provider-accent) 9%, transparent);
+  color: var(--provider-accent);
 }

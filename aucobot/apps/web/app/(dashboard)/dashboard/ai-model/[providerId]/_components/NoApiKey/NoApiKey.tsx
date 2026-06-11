@@ -25,12 +25,12 @@ export function NoApiKey({ isLoading = false, onAdd }: NoApiKeyProps) {
       {isLoading ? (
         <>
           <Spinner size="lg" />
-          <Typography color="muted">Đang tải...</Typography>
+          <Typography color="muted">Loading...</Typography>
         </>
       ) : (
         <Button size="lg" onClick={onAdd}>
           <Plus size={18} />
-          Thêm key
+          Add key
         </Button>
       )}
     </Flex>

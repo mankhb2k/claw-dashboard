@@ -9,10 +9,10 @@ const ALLOWED_TYPES = new Set([
 
 export function validateAvatarFile(file: File): string | null {
   if (!ALLOWED_TYPES.has(file.type)) {
-    return 'Chỉ hỗ trợ JPEG, PNG, WebP hoặc GIF'
+    return 'Only JPEG, PNG, WebP, or GIF images are supported'
   }
   if (file.size > MAX_BYTES) {
-    return 'Ảnh tối đa 512 KB (hãy chọn ảnh nhỏ hơn)'
+    return 'Image must be 512 KB or smaller'
   }
   return null
 }
@@ -51,7 +51,7 @@ export async function prepareAvatarFile(file: File): Promise<File> {
     return file
   }
   if (blob.size > MAX_BYTES) {
-    throw new Error('Ảnh sau khi nén vẫn quá 512 KB — hãy chọn ảnh khác')
+    throw new Error('Image is still over 512 KB after compression — choose a smaller file')
   }
   const ext = outputType === 'image/png' ? 'png' : 'jpg'
   return new File([blob], `avatar.${ext}`, { type: outputType })

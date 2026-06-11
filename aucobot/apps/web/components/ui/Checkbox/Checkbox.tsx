@@ -9,13 +9,14 @@ export interface CheckboxProps extends CheckboxPrimitive.CheckboxProps {
 }
 
 export const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
-  ({ label, id, size = 'md', className, ...props }, ref) => {
+  ({ label, id, size = 'md', className, style, ...props }, ref) => {
     return (
       <div className={styles.wrapper} data-size={size}>
         <CheckboxPrimitive.Root
           ref={ref}
           id={id}
           className={`${styles.root} ${styles[`size_${size}`]} ${className || ''}`}
+          style={style}
           {...props}
         >
           <CheckboxPrimitive.Indicator className={styles.indicator}>

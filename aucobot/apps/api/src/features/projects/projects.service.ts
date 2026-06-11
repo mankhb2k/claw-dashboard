@@ -48,16 +48,22 @@ export class ProjectsService {
       throw new BadRequestException(CLOUD_RUNTIME_MSG);
     }
 
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const existing = await this.prisma.project.findUnique({ where: { userId } });
     if (existing) {
       throw new ConflictException('User already has a project');
     }
 
+    const displayName = this.resolveProjectDisplayName(dto.displayName, user);
     const subdomain = `p-${subdomainId()}`;
     const project = await this.prisma.project.create({
       data: {
         userId,
-        displayName: dto.displayName.trim(),
+        displayName,
         subdomain,
         status: ProjectStatus.CREATING,
       },
@@ -152,7 +158,7 @@ export class ProjectsService {
     });
 
     const gatewayDownMsg =
-      'Shared gateway is not reachable on port 18789. Run `pnpm dev:runtime` and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.';
+      'Gateway is not reachable on port 18789. Run Openclaw and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.';
 
     let nextStatus = project.status;
     let errorMessage = project.errorMessage;
@@ -228,6 +234,19 @@ export class ProjectsService {
         reason: 'GATEWAY_NOT_CONFIGURED' as const,
       };
     }
+  }
+
+  private resolveProjectDisplayName(
+    input: string | undefined,
+    user: { name: string | null; username: string },
+  ): string {
+    const fromInput = input?.trim();
+    if (fromInput) return fromInput;
+    const fromName = user.name?.trim();
+    if (fromName) return fromName;
+    const fromUsername = user.username.trim();
+    if (fromUsername) return fromUsername;
+    return 'My workspace';
   }
 
   private async requireOwned(userId: string, projectId: string) {

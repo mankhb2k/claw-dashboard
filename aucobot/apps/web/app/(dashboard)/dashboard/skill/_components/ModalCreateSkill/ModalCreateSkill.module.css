@@ -12,6 +12,6 @@
 
 .hint {
   font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   margin-top: 4px;
 }

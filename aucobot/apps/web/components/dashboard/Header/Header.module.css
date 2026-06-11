@@ -1,5 +1,5 @@
 /* =============================================================================
-   1. THANH HEADER — chiều cao cố định, nền surface
+   1. HEADER BAR — fixed height, surface background
    ============================================================================= */
 .header {
   z-index: 40;
@@ -15,7 +15,7 @@
 .left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .title {
@@ -25,11 +25,11 @@
 }
 
 .middle {
-  flex: 1; /* Chiếm toàn bộ khoảng trống ở giữa */
+  flex: 1;
 }
 
 .mobileMenuBtn {
-  display: none; /* Ẩn mặc định trên desktop */
+  display: none;
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -48,12 +48,12 @@
 
 @media (max-width: 768px) {
   .mobileMenuBtn {
-    display: flex; /* Hiện trên mobile */
+    display: flex;
   }
 }
 
 .mobileDropdown {
-  background: var(--color-card);
+  background: var(--color-card-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: var(--space-2);
@@ -65,14 +65,14 @@
 .mobileNav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .mobileNavItem {
   display: flex;
   align-items: center;
   height: 40px;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   color: var(--color-foreground) !important;
   text-decoration: none;
   border-radius: var(--radius-sm);
@@ -84,17 +84,17 @@
 }
 
 .mobileNavItem:hover:not(.mobileNavItemActive) {
-  background: var(--color-sidebar-hover, #2c2d30);
-  color: var(--color-sidebar-active, #ffffff) !important;
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-active) !important;
 }
 
 .mobileNavItemActive {
-  background: var(--color-primary-dim, rgba(255, 95, 0, 0.14));
-  color: var(--color-primary, #ff5f00) !important;
+  background: var(--color-primary-dim);
+  color: var(--color-primary) !important;
 }
 
 /* =============================================================================
-   2. VÙNG PHẢI — hành động người dùng
+   2. RIGHT ACTIONS
    ============================================================================= */
 .right {
   display: flex;

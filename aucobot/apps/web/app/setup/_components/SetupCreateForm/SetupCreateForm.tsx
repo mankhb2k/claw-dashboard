@@ -1,78 +1,49 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Input, Typography } from "@/components/ui";
+import { Button, Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
 import { OSS_GATEWAY_DEV_URL } from "@/lib/runtime/oss-gateway";
-import { setupFormSchema, type SetupFormInput } from "@/schemas/setup.schema";
 import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
+import sharedStyles from "../setup-shared.module.css";
 
 interface SetupCreateFormProps {
   oss: boolean;
   busy: boolean;
   error: string | null;
-  defaultDisplayName: string;
-  onCreate: (data: SetupFormInput) => void;
+  onCreate: () => void;
 }
 
-export function SetupCreateForm({
-  oss,
-  busy,
-  error,
-  defaultDisplayName,
-  onCreate,
-}: SetupCreateFormProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SetupFormInput>({
-    resolver: zodResolver(setupFormSchema),
-    defaultValues: {
-      displayName: defaultDisplayName,
-    },
-  });
-
+export function SetupCreateForm({ oss, busy, error, onCreate }: SetupCreateFormProps) {
   return (
     <Flex direction="column" gap={24}>
       <SetupSectionHeader
         badge="Step 1 · One time"
-        title="Create workspace"
+        title="Get started"
         description={
           oss ? (
             <>
-              The API will save your workspace and verify the shared OpenClaw gateway at{" "}
-              <strong>{OSS_GATEWAY_DEV_URL}</strong>. No per-project Docker container is created.
+              We will create your workspace and verify the shared OpenClaw gateway at{" "}
+              <strong>{OSS_GATEWAY_DEV_URL}</strong>. If the gateway is not running, you will stay
+              on this page with steps to fix it before opening the dashboard.
             </>
           ) : (
             <>
-              The backend will create a project and spawn an OpenClaw Docker container. Next time
-              use <strong>Open dashboard</strong> to start it again.
+              The backend will create your workspace and start an OpenClaw Docker container. If
+              startup fails, you can retry from this page instead of landing on a broken dashboard.
             </>
           )
         }
       />
-      <form onSubmit={handleSubmit(onCreate)} noValidate>
-        <Flex direction="column" gap={16}>
-          <Input
-            id="displayName"
-            label="Workspace name"
-            placeholder="e.g. Admin"
-            error={errors.displayName?.message}
-            disabled={busy}
-            {...register("displayName")}
-          />
-          {error && (
-            <Typography variant="small" style={{ color: "var(--color-danger)" }}>
-              {error}
-            </Typography>
-          )}
-          <Button type="submit" loading={busy} fullWidth>
-            {oss ? "Create workspace" : "Create & start container"}
-          </Button>
-        </Flex>
-      </form>
+      <Flex direction="column" gap={16}>
+        {error && (
+          <Typography variant="small" className={sharedStyles.errorText}>
+            {error}
+          </Typography>
+        )}
+        <Button type="button" loading={busy} fullWidth onClick={onCreate}>
+          {oss ? "Create workspace" : "Create & start container"}
+        </Button>
+      </Flex>
     </Flex>
   );
 }

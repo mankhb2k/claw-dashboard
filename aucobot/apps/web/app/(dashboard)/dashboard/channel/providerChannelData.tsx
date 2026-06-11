@@ -17,7 +17,7 @@ export const CHANNEL_PROVIDERS: ChannelData[] = [
     color: "#229ED9",
     iconSrc: "/channel-icon/Telegram-icon.svg",
     envKey: "TELEGRAM_BOT_TOKEN",
-    description: "Chatbot qua Telegram Bot Token.",
+    description: "Chatbot via Telegram Bot Token.",
   },
   {
     id: "whatsapp",
@@ -26,7 +26,7 @@ export const CHANNEL_PROVIDERS: ChannelData[] = [
     color: "#25D366",
     iconSrc: "/channel-icon/WhatsApp-icon.svg",
     envKey: "WHATSAPP_API_KEY",
-    description: "Tự động trả lời tin nhắn WhatsApp Business.",
+    description: "Automated WhatsApp Business messaging.",
   },
   {
     id: "slack",
@@ -35,7 +35,7 @@ export const CHANNEL_PROVIDERS: ChannelData[] = [
     color: "#4A154B",
     iconSrc: "/channel-icon/Slack-icon.svg",
     envKey: "SLACK_BOT_TOKEN",
-    description: "Bot Slack cho nhóm nội bộ hoặc khách hàng.",
+    description: "Slack bot for internal teams or customers.",
   },
   {
     id: "discord",
@@ -44,7 +44,7 @@ export const CHANNEL_PROVIDERS: ChannelData[] = [
     color: "#5865F2",
     iconSrc: "/channel-icon/Discord-icon.svg",
     envKey: "DISCORD_BOT_TOKEN",
-    description: "Bot Discord cho cộng đồng và hỗ trợ.",
+    description: "Discord bot for communities and support.",
   },
   {
     id: "zalo",
@@ -53,7 +53,7 @@ export const CHANNEL_PROVIDERS: ChannelData[] = [
     color: "#0099FF",
     iconSrc: "/channel-icon/Zalo-icon.svg",
     envKey: "ZALO_API_KEY",
-    description: "Tự động trả lời tin nhắn Zalo OA.",
+    description: "Automated Zalo Official Account messaging.",
   },
   {
     id: "facebook-messenger",
@@ -62,6 +62,6 @@ export const CHANNEL_PROVIDERS: ChannelData[] = [
     color: "#0866FF",
     iconSrc: "/channel-icon/Messenger-icon.svg",
     envKey: "FACEBOOK_PAGE_ACCESS_TOKEN",
-    description: "Tự động trả lời tin nhắn Fanpage Facebook.",
+    description: "Automated Facebook Page Messenger replies.",
   },
 ];

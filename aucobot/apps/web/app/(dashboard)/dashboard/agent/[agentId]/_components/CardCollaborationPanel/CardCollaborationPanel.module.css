@@ -18,7 +18,7 @@
 }
 
 .loadingRow {
-  min-height: 32px;
+  min-height: var(--space-8);
 }
 
 .peersLabel {

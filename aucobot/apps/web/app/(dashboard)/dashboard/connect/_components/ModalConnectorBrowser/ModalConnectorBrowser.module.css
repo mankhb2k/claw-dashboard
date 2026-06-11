@@ -40,7 +40,7 @@
 
 .card {
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: var(--space-3);
   display: flex;
   align-items: center;
@@ -57,11 +57,17 @@
   flex: 1;
 }
 
+.cardTextCol {
+  min-width: 0;
+}
 
+.cardTitle {
+  margin: 0;
+}
 
 .cardDesc {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;

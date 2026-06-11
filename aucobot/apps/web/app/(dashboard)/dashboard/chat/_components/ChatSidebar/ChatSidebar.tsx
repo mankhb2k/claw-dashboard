@@ -457,7 +457,7 @@ export function ChatSidebar({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete chat?</AlertDialogTitle>
             <AlertDialogDescription>
-              Phiên &quot;
+              Chat &quot;
               {deleteTarget
                 ? resolveSessionDisplayName(deleteTarget.key, deleteTarget)
                 : ""}

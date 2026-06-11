@@ -3,8 +3,9 @@
 import { Box, Flex } from "@/components/layout";
 import { Button, Typography } from "@/components/ui";
 import type { Project, ProjectStatus } from "@/schemas/project.schema";
-import { statusLabel } from "../setup-utils";
+import { statusLabel } from "@/utils/setup/setup-utils";
 import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
+import sharedStyles from "../setup-shared.module.css";
 import styles from "./SetupResume.module.css";
 
 interface SetupResumeProps {
@@ -85,7 +86,7 @@ export function SetupResume({
         </Box>
       )}
       {error && (
-        <Typography variant="small" style={{ color: "var(--color-danger)" }}>
+        <Typography variant="small" className={sharedStyles.errorText}>
           {error}
         </Typography>
       )}

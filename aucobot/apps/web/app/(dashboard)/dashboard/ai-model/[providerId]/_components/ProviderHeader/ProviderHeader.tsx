@@ -21,23 +21,29 @@ export function ProviderHeader({
   apiKeyUrl,
   apiKeyLabel = "Get API key",
 }: ProviderHeaderProps) {
+  const icon = (
+    <IconProvider
+      src={iconSrc}
+      label={name}
+      size="xl"
+      shape="square"
+      withBackground
+      className={color ? styles.iconTinted : undefined}
+    />
+  );
+
   return (
     <Flex align="center" gap={16} className={styles.row}>
-      <IconProvider
-        src={iconSrc}
-        label={name}
-        size="xl"
-        shape="square"
-        withBackground
-        style={
-          color
-            ? ({
-                "--icon-bg": `${color}18`,
-                color,
-              } as CSSProperties)
-            : undefined
-        }
-      />
+      {color ? (
+        <div
+          className={styles.iconTintWrap}
+          style={{ "--provider-accent": color } as CSSProperties}
+        >
+          {icon}
+        </div>
+      ) : (
+        icon
+      )}
       <Flex direction="column" gap={4} className={styles.meta}>
         <Typography variant="h2" weight="bold">
           {name}

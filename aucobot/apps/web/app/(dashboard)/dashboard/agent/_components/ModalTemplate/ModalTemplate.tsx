@@ -75,7 +75,7 @@ export function ModalTemplate({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={styles.modalContent} showClose={true}>
-        <DialogHeader style={{ gap: 10, marginBottom: "var(--space-6)" }}>
+        <DialogHeader className={styles.dialogHeader}>
           <DialogTitle>Choose a template to start your project</DialogTitle>
           <DialogDescription>
             Start your project faster by choosing from the optimized templates
@@ -85,7 +85,7 @@ export function ModalTemplate({
         </DialogHeader>
 
         {loading ? (
-          <Flex align="center" justify="center" style={{ minHeight: 120 }}>
+          <Flex align="center" justify="center" className={styles.loadingArea}>
             <Spinner />
           </Flex>
         ) : loadError ? (
@@ -116,7 +116,7 @@ export function ModalTemplate({
                       as="h4"
                       variant="small"
                       weight="medium"
-                      style={{ marginBottom: 4 }}
+                      className={styles.templateTitle}
                     >
                       {template.name}
                     </Typography>

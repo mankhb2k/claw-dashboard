@@ -10,7 +10,7 @@
 
 .search {
   flex: 1;
-  min-width: 200px;
+  min-width: 12.5rem;
   max-width: none;
 }
 
@@ -35,7 +35,7 @@
 }
 
 .listState {
-  min-height: 72px;
+  min-height: 4.5rem;
 }
 
 .list {

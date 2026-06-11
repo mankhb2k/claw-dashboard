@@ -39,13 +39,13 @@ interface HeaderProps {
 export function Header({
   title,
   items = [],
-  logoutLabel = "Đăng xuất",
+  logoutLabel = "Log out",
   previewEmailLabel = "preview@example.com",
-  switchToLightLabel = "Chuyển sang chế độ sáng",
-  switchToDarkLabel = "Chuyển sang chế độ tối",
-  themeLightTitle = "Chế độ sáng",
-  themeDarkTitle = "Chế độ tối",
-  openUserMenuLabel = "Mở menu người dùng",
+  switchToLightLabel = "Switch to light mode",
+  switchToDarkLabel = "Switch to dark mode",
+  themeLightTitle = "Light mode",
+  themeDarkTitle = "Dark mode",
+  openUserMenuLabel = "Open user menu",
 }: HeaderProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -64,9 +64,7 @@ export function Header({
 
   return (
     <header className={styles.header}>
-      {/* Phần 1: Left */}
       <div className={styles.left}>
-        {/* Dropdown Menu cho Mobile (Chỉ hiện khi có items) */}
         {items.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -86,7 +84,6 @@ export function Header({
               align="start"
               sideOffset={8}
             >
-              {/* Tự render menu riêng cho Header */}
               <nav className={styles.mobileNav}>
                 {items.map((item) => {
                   const isActive = item.isActive(pathname);
@@ -108,10 +105,8 @@ export function Header({
         <h1 className={styles.title}>{title}</h1>
       </div>
 
-      {/* Phần 2: Middle (Chiếm khoảng trống ở giữa) */}
-      <div className={styles.middle}></div>
+      <div className={styles.middle} />
 
-      {/* Phần 3: Right */}
       <div className={styles.right}>
         <Button
           type="button"

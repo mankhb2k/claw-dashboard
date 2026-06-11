@@ -1,4 +1,4 @@
-/* Modal — ghi đè padding mặc định Dialog, chia vùng rõ */
+/* Modal — override default Dialog padding */
 .content {
   width: min(920px, 95vw) !important;
   height: min(640px, 85vh);
@@ -21,7 +21,7 @@
   min-height: 0;
 }
 
-/* Ô tìm kiếm + sort */
+/* Search + sort */
 .searchSection {
   flex-shrink: 0;
   padding: var(--space-4) var(--space-6) 0;
@@ -40,7 +40,7 @@
   width: auto;
 }
 
-/* Label "Sort" và dropdown cùng một hàng */
+/* Sort label and dropdown on one row */
 .sortField > div {
   flex-direction: row;
   align-items: center;
@@ -63,7 +63,7 @@
   font-size: var(--font-size-sm);
 }
 
-/* Vùng cuộn danh sách skill */
+/* Scrollable skill list */
 .listSection {
   flex: 1;
   min-height: 0;

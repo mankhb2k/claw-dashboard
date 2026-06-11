@@ -13,7 +13,7 @@ export default async function NodesPage() {
         <TitleHeader
           title="Companion Nodes"
           badge="BETA"
-          description="Create  invite, connect OpenClaw Node and approve companion devices with gateway."
+          description="Create invite codes, connect OpenClaw Node, and approve companion devices with the gateway."
           showBorder
         />
         <ClientNodesPage projectId={projectId} />

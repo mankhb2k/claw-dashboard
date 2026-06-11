@@ -67,20 +67,20 @@ export function CardSkill({
           <DropdownMenuContent align="end">
             {onEdit && (
               <DropdownMenuItem onClick={onEdit}>
-                <Edit2 size={14} style={{ marginRight: "8px" }} /> Edit Info
+                <Edit2 size={14} aria-hidden /> Edit Info
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => router.push(href)}>
-              <Code size={14} style={{ marginRight: "8px" }} /> Edit Skill
+              <Code size={14} aria-hidden /> Edit Skill
             </DropdownMenuItem>
             {onDownload && (
               <DropdownMenuItem onClick={onDownload}>
-                <Download size={14} style={{ marginRight: "8px" }} /> Download
+                <Download size={14} aria-hidden /> Download
               </DropdownMenuItem>
             )}
             {onDelete && (
               <DropdownMenuItem variant="danger" onClick={onDelete}>
-                <Trash2 size={14} style={{ marginRight: "8px" }} /> Delete
+                <Trash2 size={14} aria-hidden /> Delete
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

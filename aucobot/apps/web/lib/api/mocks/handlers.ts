@@ -135,7 +135,8 @@ export const projectHandlers = {
   create: (req: MockRequest): Project => {
     if (!currentUser) throw new Error('Not authenticated')
 
-    const { displayName } = req.data as CreateProjectInput
+    const { displayName: rawName } = req.data as CreateProjectInput
+    const displayName = rawName?.trim() || currentUser.name?.trim() || 'My workspace'
     const slugBase =
       displayName
         .toLowerCase()

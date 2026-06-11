@@ -17,7 +17,7 @@
   align-items: center;
 }
 
-/* Giữ full-height scroll chain khi căn giữa container md */
+/* Preserve full-height scroll chain when centering md container */
 .rootExpanded .shell {
   align-self: stretch;
   height: 100%;

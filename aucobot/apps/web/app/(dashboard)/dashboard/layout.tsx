@@ -8,8 +8,8 @@ import {
   shouldRedirectToSetup,
   SETUP_PATH,
 } from "@/lib/routing/entry-route";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import { Sidebar, NavItem } from "@/components/dashboard/Sidebar/Sidebar";
-import { Header } from "@/components/dashboard/Header/Header";
 import {
   Brain,
   LayoutDashboard,
@@ -37,9 +37,6 @@ function isDashboardCanvasRoute(pathname: string): boolean {
   return false;
 }
 
-const DASHBOARD_ROUTE =
-  /^\/dashboard(?:\/(setting|profile|ai-model|channel|chat|skill|connect|agent|nodes)(?:\/[^/]+)*)?$/;
-
 export default function DashboardLayout({
   children,
 }: {
@@ -50,30 +47,37 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
+  const syncProjectHealth = useProjectStore((s) => s.syncProjectHealth);
   const projects = useProjectStore((s) => s.projects);
   const gateDoneRef = useRef(false);
 
   useEffect(() => {
     if (gateDoneRef.current) return;
 
-    const cached = getPrimaryProject(useProjectStore.getState().projects);
-    if (cached && !shouldRedirectToSetup(cached)) {
-      gateDoneRef.current = true;
-      setWorkspaceChecked(true);
-      return;
-    }
+    void (async () => {
+      try {
+        const cached = getPrimaryProject(useProjectStore.getState().projects);
+        if (cached && !isOssRuntime() && !shouldRedirectToSetup(cached)) {
+          gateDoneRef.current = true;
+          setWorkspaceChecked(true);
+          return;
+        }
 
-    void fetchProjects()
-      .then(() => {
+        await fetchProjects();
+
+        let primary = getPrimaryProject(useProjectStore.getState().projects);
+        if (primary && isOssRuntime()) {
+          await syncProjectHealth(primary.id);
+          primary = getPrimaryProject(useProjectStore.getState().projects);
+        }
+
         gateDoneRef.current = true;
-        const primary = getPrimaryProject(useProjectStore.getState().projects);
         if (shouldRedirectToSetup(primary)) {
           router.replace(SETUP_PATH);
           return;
         }
         setWorkspaceChecked(true);
-      })
-      .catch(() => {
+      } catch {
         gateDoneRef.current = true;
         const primary = getPrimaryProject(useProjectStore.getState().projects);
         if (primary && !shouldRedirectToSetup(primary)) {
@@ -81,8 +85,9 @@ export default function DashboardLayout({
           return;
         }
         router.replace(SETUP_PATH);
-      });
-  }, [fetchProjects, router]);
+      }
+    })();
+  }, [fetchProjects, syncProjectHealth, router]);
 
   useEffect(() => {
     if (!workspaceChecked || !gateDoneRef.current) return;
@@ -107,23 +112,6 @@ export default function DashboardLayout({
     });
   };
 
-  const pathMatch = pathname.match(DASHBOARD_ROUTE);
-  const subSegment = pathMatch?.[1] ?? "overview";
-
-  const titleMap: Record<string, string> = {
-    overview: "Overview",
-    "ai-model": "Model & API keys",
-    agent: "Bot Agent",
-    channel: "Channels",
-    chat: "Chat",
-    connect: "Connect",
-    nodes: "Companion Nodes",
-    skill: "Skill Directory",
-    setting: "Settings",
-    profile: "Profile",
-  };
-
-  const title = titleMap[subSegment] || "Dashboard";
   const canvasRoute = isDashboardCanvasRoute(pathname);
 
   const nav: NavItem[] = [

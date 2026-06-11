@@ -30,25 +30,25 @@
   color: inherit;
 }
 
-/* Tiêu đề — tối đa 1 dòng */
+/* Title — single line clamp */
 .cardTitle {
   margin: 0;
   font-size: var(--font-size-md);
   font-weight: 600;
   line-height: 1.35;
-  color: var(--color-text);
+  color: var(--color-foreground);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
   overflow: hidden;
 }
 
-/* Mô tả — clamp từ dòng thứ 4 trở đi (tối đa 3 dòng hiển thị) */
+/* Description — up to 3 lines */
 .desc {
   margin: 0;
   font-size: var(--font-size-sm);
   line-height: 1.45;
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;

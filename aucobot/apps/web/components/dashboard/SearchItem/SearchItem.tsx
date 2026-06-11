@@ -6,19 +6,19 @@ import { X } from "lucide-react";
 import styles from "./SearchItem.module.css";
 
 interface SearchItemProps {
-  /** Giá trị text tìm kiếm hiện tại */
+  /** Current search text */
   value: string;
-  /** Callback sự kiện thay đổi giá trị nhập */
+  /** Called when the input value changes */
   onChange: (value: string) => void;
-  /** Gợi ý hiển thị trong ô input */
+  /** Input placeholder */
   placeholder?: string;
-  /** ID duy nhất cho thẻ input */
+  /** Input element id */
   id?: string;
-  /** Tên class bổ sung bên ngoài */
+  /** Extra wrapper class names */
   className?: string;
-  /** Độ rộng tối đa (ví dụ: '320px', 360) */
+  /** Max width (e.g. '320px', 360) */
   maxWidth?: string | number;
-  /** Kích thước input — mặc định `md` */
+  /** Input size — defaults to `md` */
   size?: InputSize;
 }
 
@@ -66,7 +66,7 @@ export function SearchItem({
           type="button"
           className={styles.clearButton}
           onClick={handleClear}
-          aria-label="Xóa tìm kiếm"
+          aria-label="Clear search"
         >
           <X size={16} />
         </button>

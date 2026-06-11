@@ -23,7 +23,7 @@ const meta: Meta<typeof Header> = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <I18nProvider defaultLocale="vi">
+      <I18nProvider defaultLocale="en">
         <div style={{ width: "100%", minHeight: "100px" }}>
           <Story />
         </div>
@@ -38,19 +38,19 @@ type Story = StoryObj<typeof Header>;
 const mockItems = [
   {
     href: "/dashboard",
-    label: "Tổng quan",
+    label: "Overview",
     icon: LayoutDashboard,
     isActive: (p: string) => p === "/dashboard",
   },
   {
     href: "/dashboard/model",
-    label: "Mô hình",
+    label: "AI Model",
     icon: Brain,
     isActive: (p: string) => p === "/dashboard/model",
   },
   {
     href: "/dashboard/channel",
-    label: "Kênh",
+    label: "Channels",
     icon: MessageSquareCodeIcon,
     isActive: (p: string) => p === "/dashboard/channel",
   },
@@ -62,13 +62,13 @@ const mockItems = [
   },
   {
     href: "/dashboard/connect",
-    label: "Kết nối",
+    label: "Connect",
     icon: Cable,
     isActive: (p: string) => p === "/dashboard/connect",
   },
   {
     href: "/dashboard/setting",
-    label: "Cài đặt",
+    label: "Settings",
     icon: SettingsIcon,
     isActive: (p: string) => p === "/dashboard/setting",
   },

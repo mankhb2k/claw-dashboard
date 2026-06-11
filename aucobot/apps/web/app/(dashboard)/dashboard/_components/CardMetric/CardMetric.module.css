@@ -1,0 +1,27 @@
+/* Card wrapper — room for bottom accent bar */
+.root {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: calc(var(--space-5) + var(--space-1));
+}
+
+/* Bottom accent bar */
+.accentBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0.8;
+  background: var(--metric-accent);
+}
+
+/* Positive trend */
+.trendUp {
+  color: var(--color-success);
+}
+
+/* Negative trend */
+.trendDown {
+  color: var(--color-danger);
+}

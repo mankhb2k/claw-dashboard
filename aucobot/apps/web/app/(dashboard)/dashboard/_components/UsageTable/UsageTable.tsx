@@ -13,20 +13,10 @@ import {
   TableRow,
   Typography,
 } from "@/components/ui";
+import type { UsageTableRow } from "@/utils/overview/overview-mappers";
 import styles from "./UsageTable.module.css";
 
-export type UsageTableRowStatus = "Success" | "Failed" | "Processing";
-
-export interface UsageTableRow {
-  model: string;
-  time: string;
-  user: string;
-  status: UsageTableRowStatus | string;
-  latency: number;
-  inputTokens: number;
-  outputTokens: number;
-  color: string;
-}
+export type { UsageTableRow };
 
 interface UsageTableProps {
   title: string;
@@ -82,13 +72,13 @@ export function UsageTable({ title, data }: UsageTableProps) {
               >
                 <TableCell>
                   <Flex align="center" gap={12}>
-                    <Box
-                      className={styles.modelIcon}
+                    <div
                       style={
                         { "--row-accent": row.color } as CSSProperties
                       }
-                      aria-hidden
-                    />
+                    >
+                      <Box className={styles.modelIcon} aria-hidden />
+                    </div>
                     <Flex direction="column" gap={2}>
                       <Typography variant="small" weight="medium">
                         {row.model}

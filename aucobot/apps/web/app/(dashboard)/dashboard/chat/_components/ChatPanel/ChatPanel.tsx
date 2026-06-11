@@ -9,8 +9,8 @@ import {
 import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
-import { ChatMessageBubble } from "../ChatMessageBubble";
-import { ChatTypingIndicator } from "../ChatTypingIndicator";
+import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
+import { ChatTypingIndicator } from "../ChatTypingIndicator/ChatTypingIndicator";
 import { ContentArea } from "../ContentArea/ContentArea";
 import {
   MessageBox,
@@ -36,10 +36,10 @@ type SelectOption = {
 };
 
 const STATUS_LABEL: Record<ChatPanelConnectionState, string> = {
-  idle: "Chờ kết nối",
-  connecting: "Đang kết nối…",
-  connected: "Đã kết nối",
-  error: "Lỗi kết nối",
+  idle: "Waiting to connect",
+  connecting: "Connecting…",
+  connected: "Connected",
+  error: "Connection error",
 };
 
 export type ChatPanelProps = {
@@ -174,7 +174,7 @@ export function ChatPanel({
                 : [{ value: "main", label: "main" }]
             }
             disabled={controlsDisabled}
-            placeholder="Chọn agent"
+            placeholder="Select agent"
           />
         </div>
 
@@ -184,13 +184,13 @@ export function ChatPanel({
             title={STATUS_LABEL[connectionState]}
           >
             <span className={styles.statusDot} />
-            {statusLoading ? "Đang kiểm tra…" : STATUS_LABEL[connectionState]}
+            {statusLoading ? "Checking…" : STATUS_LABEL[connectionState]}
           </span>
 
           {ready && connectionState === "error" && (
             <Button size="sm" variant="outline" onClick={onConnect}>
               <RefreshCw size={14} />
-              Kết nối lại
+              Reconnect
             </Button>
           )}
         </div>
@@ -198,9 +198,9 @@ export function ChatPanel({
 
       {!modelsLoading && !hasProviders && (
         <div className={styles.modelHint} role="status">
-          Chưa có API key LLM.{" "}
-          <Link href="/dashboard/ai-model/gemini">Thêm Gemini API key</Link> rồi
-          chọn model trong ô chat bên dưới.
+          No LLM API key yet.{" "}
+          <Link href="/dashboard/ai-model/gemini">Add a Gemini API key</Link>{" "}
+          and select a model in the composer below.
         </div>
       )}
 
@@ -208,17 +208,17 @@ export function ChatPanel({
         <div className={styles.alert} role="alert">
           <AlertCircle size={18} className={styles.alertIcon} />
           <div className={styles.alertBody}>
-            <span className={styles.alertTitle}>Không thể chat</span>
+            <span className={styles.alertTitle}>Cannot chat</span>
             {error}
           </div>
           {ready && (
             <Button size="sm" variant="outline" onClick={onConnect}>
-              Thử lại
+              Retry
             </Button>
           )}
           {!ready && (
             <Button size="sm" variant="outline" onClick={onOpenSetup}>
-              Mở setup
+              Open setup
             </Button>
           )}
         </div>
@@ -231,19 +231,19 @@ export function ChatPanel({
               <div className={styles.emptyIcon}>
                 <MessageSquare size={28} />
               </div>
-              <h2 className={styles.emptyTitle}>Bắt đầu hội thoại</h2>
+              <h2 className={styles.emptyTitle}>Start a conversation</h2>
               <p className={styles.emptyHint}>
                 {isOssRuntime()
                   ? "Send a message to chat with your OpenClaw agent via the shared gateway."
                   : "Send a message to chat with your OpenClaw agent on your container."}{" "}
-                Phím Enter gửi, Shift+Enter xuống dòng.
+                Press Enter to send, Shift+Enter for a new line.
               </p>
               <Button
                 size="sm"
                 onClick={onNewSession}
                 disabled={sessionActionsDisabled}
               >
-                Đoạn chat mới
+                New chat
               </Button>
             </div>
           ) : undefined
@@ -263,8 +263,8 @@ export function ChatPanel({
             ariaLabel="Chat message input"
             placeholder={
               ready && connectionState === "connected"
-                ? "Nhập tin nhắn…"
-                : "Kết nối gateway để chat…"
+                ? "Type a message…"
+                : "Connect to the gateway to chat…"
             }
             providerId={providerId}
             providerOptions={providerOptions}

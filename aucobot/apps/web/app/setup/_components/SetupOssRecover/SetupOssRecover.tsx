@@ -2,57 +2,64 @@
 
 import { Box, Flex } from "@/components/layout";
 import { Button, Typography } from "@/components/ui";
+import { isProjectReady } from "@/lib/routing/entry-route";
 import type { Project } from "@/schemas/project.schema";
-import { statusLabel } from "../setup-utils";
+import { OSS_GATEWAY_ERROR_BODY, statusLabel } from "@/utils/setup/setup-utils";
 import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
 
 interface SetupOssRecoverProps {
   primary: Project;
   busy: boolean;
   isLoading: boolean;
-  error: string | null;
   onContinue: () => void;
-  onRetryGateway?: () => void;
+  onCheckGateway: () => void;
 }
 
 export function SetupOssRecover({
   primary,
   busy,
   isLoading,
-  error,
   onContinue,
-  onRetryGateway,
+  onCheckGateway,
 }: SetupOssRecoverProps) {
+  const gatewayReady = isProjectReady(primary.status);
+
   return (
     <Flex direction="column" gap={24}>
       <SetupSectionHeader
         badge="OSS · Shared gateway"
-        title="Continue to dashboard"
+        title="Gateway check required"
         description={
           <>
-            Workspace <strong>{primary.displayName}</strong> —{" "}
-            {statusLabel(primary.status, false, true)}. Ensure the gateway container is running on
-            port <strong>18789</strong>, then continue.
+            Your workspace is saved ({statusLabel(primary.status, false, true)}). Start the
+            OpenClaw gateway on port <strong>18789</strong>, then continue to the dashboard.
           </>
         }
       />
-      {primary.errorMessage && (
+      {!gatewayReady && (
         <Box color="danger-dim" p={12} radius="md">
           <Typography variant="xs" color="muted">
-            {primary.errorMessage}
+            <strong>Error:</strong> {OSS_GATEWAY_ERROR_BODY}
           </Typography>
         </Box>
       )}
-      {error && (
-        <Typography variant="small" style={{ color: "var(--color-danger)" }}>
-          {error}
-        </Typography>
-      )}
-      <Button type="button" loading={busy || isLoading} fullWidth onClick={onContinue}>
+      <Button
+        type="button"
+        loading={busy || isLoading}
+        disabled={!gatewayReady}
+        fullWidth
+        onClick={onContinue}
+      >
         {busy ? "Checking gateway…" : "Continue to dashboard"}
       </Button>
-      {onRetryGateway && (
-        <Button type="button" variant="ghost" disabled={busy} fullWidth onClick={onRetryGateway}>
+      {!gatewayReady && (
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={busy || isLoading}
+          fullWidth
+          onClick={onCheckGateway}
+        >
           Check gateway again
         </Button>
       )}

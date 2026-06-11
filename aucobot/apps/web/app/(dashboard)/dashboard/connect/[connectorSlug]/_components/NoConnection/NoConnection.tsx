@@ -17,10 +17,8 @@ export function NoConnection({ service, isConnecting, onConnect }: Props) {
       <Container size="md">
         <Box py={48}>
           <Flex direction="column" gap={32}>
-            {/* --- ĐIỀU HƯỚNG --- */}
             <BackButton href="/dashboard/connect">{service.name}</BackButton>
 
-            {/* --- HERO SECTION: GIỚI THIỆU & NÚT KẾT NỐI --- */}
             <Flex
               direction="column"
               center
@@ -48,12 +46,11 @@ export function NoConnection({ service, isConnecting, onConnect }: Props) {
                 gap={12}
                 className={styles.serviceIntro}
               >
-
                 <Typography color="muted">{service.description}</Typography>
               </Flex>
 
               <Button size="lg" loading={isConnecting} onClick={onConnect}>
-                Kết nối {service.name}
+                Connect {service.name}
               </Button>
             </Flex>
           </Flex>

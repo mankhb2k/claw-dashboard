@@ -62,7 +62,7 @@ export function ProfileHeroAvatar({
       URL.revokeObjectURL(localPreview);
       setPreviewUrl(null);
       onUploadError?.(
-        err instanceof Error ? err.message : "Không tải lên được ảnh đại diện",
+        err instanceof Error ? err.message : "Failed to upload avatar",
       );
     } finally {
       setUploading(false);
@@ -85,7 +85,7 @@ export function ProfileHeroAvatar({
         className={styles.cameraBtn}
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
-        aria-label="Đổi ảnh đại diện"
+        aria-label="Change avatar"
       >
         <Camera size={14} aria-hidden />
       </button>

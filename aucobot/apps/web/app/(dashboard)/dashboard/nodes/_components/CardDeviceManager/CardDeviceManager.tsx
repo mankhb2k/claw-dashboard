@@ -8,8 +8,8 @@ import type {
 } from "@/schemas/nodes.schema";
 import { Button, Card, Typography } from "@/components/ui";
 import type { ApprovalGroup } from "@/utils/nodes/nodes-utils";
-import { PendingApprovalCard } from "./PendingApprovalCard";
-import { NodeDeviceCard } from "./NodeDeviceCard";
+import { CardNodeDevice } from "./CardNodeDevice/CardNodeDevice";
+import { CardPendingApproval } from "./CardPendingApproval/CardPendingApproval";
 import pageStyles from "../../nodes.module.css";
 import styles from "./CardDeviceManager.module.css";
 
@@ -58,17 +58,17 @@ export function CardDeviceManager({
         <div className={pageStyles.sectionHeader}>
           <div>
             <Typography variant="p" weight="medium">
-              Thiết bị companion
+              Companion devices
             </Typography>
             <Typography variant="small" color="muted">
               {showApproval
-                ? "Có thiết bị chờ ghép nối — duyệt yêu cầu và quản lý thiết bị đã kết nối."
-                : "Quản lý thiết bị companion đã kết nối với gateway."}
+                ? "Devices waiting to pair — approve requests and manage connected devices."
+                : "Manage companion devices connected to the gateway."}
             </Typography>
           </div>
           <Button variant="secondary" size="sm" disabled={actionBusy} onClick={onRefresh}>
             <RotateCw size={16} aria-hidden />
-            Làm mới
+            Refresh
           </Button>
         </div>
 
@@ -77,7 +77,7 @@ export function CardDeviceManager({
             <section className={styles.section} aria-labelledby="nodes-approval-heading">
               <div className={styles.sectionTitleRow}>
                 <Typography variant="p" weight="medium" id="nodes-approval-heading">
-                  Yêu cầu duyệt
+                  Approval requests
                 </Typography>
                 <span className={styles.badge}>{pendingCount}</span>
               </div>
@@ -116,19 +116,19 @@ export function CardDeviceManager({
                 <div className={styles.stepperLabels}>
                   <span>Device</span>
                   <span>Node</span>
-                  <span>Xong</span>
+                  <span>Done</span>
                 </div>
               </div>
 
               <div className={styles.alertBanner}>
                 <Typography variant="small" weight="medium">
-                  {pendingCount} yêu cầu đang chờ — duyệt device (WS) rồi node (capabilities).
+                  {pendingCount} request(s) pending — approve device (WS) then node (capabilities).
                 </Typography>
               </div>
 
               <div className={styles.groupList}>
                 {groups.map((group) => (
-                  <PendingApprovalCard
+                  <CardPendingApproval
                     key={group.id}
                     group={group}
                     actionBusy={actionBusy}
@@ -147,18 +147,18 @@ export function CardDeviceManager({
 
         <section className={styles.section} aria-labelledby="nodes-fleet-heading">
           <Typography variant="p" weight="medium" id="nodes-fleet-heading">
-            Thiết bị đã kết nối · {nodes.length}
+            Connected devices · {nodes.length}
           </Typography>
           <Typography variant="small" color="muted" className={styles.sectionHint}>
-            Trạng thái từ gateway (paired / connected).
+            Status from gateway (paired / connected).
           </Typography>
 
           {nodes.length === 0 ? (
             <div className={styles.inlineEmpty}>
               <Laptop size={20} className={styles.inlineEmptyIcon} />
               <Typography variant="small" color="muted">
-                Chưa có thiết bị companion. Tạo mã invite phía trên, kết nối app rồi duyệt
-                yêu cầu.
+                No companion devices yet. Create an invite code above, connect the app, then
+                approve the request.
               </Typography>
             </div>
           ) : (
@@ -171,7 +171,7 @@ export function CardDeviceManager({
                   "unknown";
 
                 return (
-                  <NodeDeviceCard
+                  <CardNodeDevice
                     key={nodeId || title}
                     node={node}
                     renameValue={

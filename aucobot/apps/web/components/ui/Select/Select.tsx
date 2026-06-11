@@ -14,7 +14,7 @@ interface SelectProps {
   id?: string;
   name?: string;
   label?: string;
-  /** Vị trí label: trên, trái, phải hoặc ẩn. Mặc định `top`. */
+  /** Label position: top, left, right, or hidden. Default `top`. */
   labelPosition?: SelectLabelPosition;
   error?: string;
   value?: string;
@@ -23,6 +23,8 @@ interface SelectProps {
   placeholder?: string;
   options: SelectOption[];
   disabled?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
@@ -39,10 +41,18 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       placeholder = "Select an option",
       options,
       disabled,
+      className,
+      style,
     },
     ref,
   ) => {
-    const triggerClass = `${styles.trigger} ${error ? styles.triggerError : ""}`;
+    const triggerClass = [
+      styles.trigger,
+      error ? styles.triggerError : "",
+      className ?? "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     const showLabel = Boolean(label) && labelPosition !== "none";
     const isHorizontalLabel =
       labelPosition === "left" || labelPosition === "right";
@@ -65,6 +75,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           id={id}
           ref={ref}
           className={triggerClass}
+          style={style}
           aria-invalid={!!error}
           data-slot="select-trigger"
         >

@@ -4,6 +4,7 @@ import { Box, Flex } from "@/components/layout";
 import { Button, Typography } from "@/components/ui";
 import type { Project } from "@/schemas/project.schema";
 import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
+import sharedStyles from "../setup-shared.module.css";
 
 interface SetupCloudRecreateProps {
   primary: Project;
@@ -44,7 +45,7 @@ export function SetupCloudRecreate({
         </Box>
       )}
       {error && (
-        <Typography variant="small" style={{ color: "var(--color-danger)" }}>
+        <Typography variant="small" className={sharedStyles.errorText}>
           {error}
         </Typography>
       )}

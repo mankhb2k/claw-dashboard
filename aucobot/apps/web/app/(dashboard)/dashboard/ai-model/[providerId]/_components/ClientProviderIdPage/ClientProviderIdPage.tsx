@@ -15,7 +15,7 @@ import {
   getCatalogSource,
   APIKEY_PROVIDERS,
   type ModelDef,
-} from "../../../providersData";
+} from "@/utils/ai-model/providers-data";
 import { CardApiKey } from "../CardApiKey/CardApiKey";
 import { CardChip } from "../CardChip/CardChip";
 import { ModalAddConnection } from "../ModalAddConnection/ModalAddConnection";
@@ -140,7 +140,7 @@ export function ClientProviderIdPage({
       .catch((err) => {
         closeModal();
         showError(
-          "Không tải được API key",
+          "Failed to load API key",
           err instanceof Error ? err.message : undefined,
         );
       })
@@ -166,7 +166,7 @@ export function ClientProviderIdPage({
         return apiKey;
       } catch (err) {
         showError(
-          "Không tải được API key",
+          "Failed to load API key",
           err instanceof Error ? err.message : undefined,
         );
         throw err;
@@ -195,7 +195,7 @@ export function ClientProviderIdPage({
     } catch (err) {
       setConnections([]);
       showError(
-        "Không tải API key",
+        "Failed to load API key",
         err instanceof Error ? err.message : undefined,
       );
     } finally {

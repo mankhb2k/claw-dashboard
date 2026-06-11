@@ -39,7 +39,7 @@ export function resolveSessionDisplayName(key: string, row?: GatewaySessionRow):
 
   const normalized = key.toLowerCase()
   if (normalized === 'main' || normalized === 'agent:main:main') {
-    return 'Phiên chính'
+    return 'Main session'
   }
 
   const dashboardMatch = normalized.match(/^agent:[^:]+:dashboard:/)

@@ -32,7 +32,7 @@
 }
 
 .chatScroll::-webkit-scrollbar {
-  width: 8px;
+  width: var(--space-2);
 }
 
 .chatScroll::-webkit-scrollbar-thumb {
@@ -74,7 +74,7 @@
   );
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .chatThread {
     padding: var(--space-4) var(--space-3) var(--space-2);
     gap: var(--space-5);

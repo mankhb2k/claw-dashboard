@@ -1,6 +1,6 @@
-/* Bước tiến trình — trạng thái chữ */
+/* Progress step text status */
 .stepActive {
-  color: var(--color-text);
+  color: var(--color-foreground);
   font-weight: 500;
 }
 
@@ -9,10 +9,10 @@
 }
 
 .stepIdle {
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
 }
 
-/* Chấm trạng thái */
+/* Dot status */
 .dot {
   flex-shrink: 0;
   width: 8px;

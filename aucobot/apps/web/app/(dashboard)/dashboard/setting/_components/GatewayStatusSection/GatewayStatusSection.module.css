@@ -35,12 +35,12 @@
 
 .dot_green {
   background: var(--color-success);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+  box-shadow: 0 0 0 3px var(--color-success-dim);
   animation: pulse-green 2s infinite;
 }
 .dot_yellow {
   background: var(--color-warning);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-warning) 20%, transparent);
   animation: pulse-yellow 1s infinite;
 }
 .dot_gray {
@@ -48,7 +48,7 @@
 }
 .dot_red {
   background: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.2);
+  box-shadow: 0 0 0 3px var(--color-danger-dim);
 }
 
 @keyframes pulse-green {

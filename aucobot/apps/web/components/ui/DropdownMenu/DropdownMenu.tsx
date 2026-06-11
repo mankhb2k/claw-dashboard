@@ -19,10 +19,11 @@ export const DropdownMenuTrigger = React.forwardRef<
     variant?: 'default' | 'kebab' | 'unstyled'
     children?: React.ReactNode
   }
->(({ className, variant = 'default', children, ...props }, ref) => (
+>(({ className, variant = 'default', children, style, ...props }, ref) => (
   <DropdownMenuPrimitive.Trigger
     ref={ref}
     className={`${variant === 'kebab' ? styles.kebabTrigger : variant === 'default' ? styles.defaultTrigger : ''} ${className || ''}`}
+    style={style}
     {...props}
   >
     {children}

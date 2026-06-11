@@ -37,6 +37,7 @@ export type CodeBlockProps<T extends string = string> = {
   maxHeight?: number | string;
   variant?: "default" | "compact";
   className?: string;
+  style?: React.CSSProperties;
 };
 
 async function copyTextToClipboard(text: string): Promise<boolean> {
@@ -81,6 +82,7 @@ export function CodeBlock<T extends string = string>({
   maxHeight,
   variant = "default",
   className = "",
+  style,
 }: CodeBlockProps<T>) {
   const [copied, setCopied] = useState(false);
   const compact = variant === "compact";
@@ -171,7 +173,7 @@ export function CodeBlock<T extends string = string>({
     .join(" ");
 
   return (
-    <div className={rootClass}>
+    <div className={rootClass} style={style}>
       {shouldShowHeader ? (
         <div className={headerClass}>
           {hasTabs && !title && !icon ? (

@@ -40,6 +40,7 @@ export function IconProvider({
   shape = "square",
   withBackground = true,
   className,
+  style,
   ...props
 }: IconProviderProps) {
   const fallbackLabel = fallbackText ?? getFallbackLabel(label ?? alt);
@@ -71,7 +72,7 @@ export function IconProvider({
   );
 
   return (
-    <span className={rootClasses} aria-label={ariaLabel} {...props}>
+    <span className={rootClasses} style={style} aria-label={ariaLabel} {...props}>
       {content}
     </span>
   );

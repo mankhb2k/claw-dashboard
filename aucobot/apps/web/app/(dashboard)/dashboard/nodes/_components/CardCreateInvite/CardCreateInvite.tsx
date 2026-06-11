@@ -55,7 +55,7 @@ export function CardCreateInvite({
       setCopied(true);
       onCopyError("");
     } catch {
-      onCopyError("Không copy được mã — hãy chọn và copy thủ công.");
+      onCopyError("Could not copy — select and copy the code manually.");
     }
   };
 
@@ -64,11 +64,10 @@ export function CardCreateInvite({
       <Card className={styles.card}>
         <div className={styles.inner}>
           <Typography variant="p" weight="medium">
-            Mã invite
+            Invite code
           </Typography>
           <Typography variant="small" color="muted">
-            Tạo mã ngắn hạn cho OpenClaw Node — hết hạn sau 15 phút, dùng một
-            lần.
+            Create a short-lived code for OpenClaw Node — expires in 15 minutes, single use.
           </Typography>
 
           {inviteError ? (
@@ -87,7 +86,7 @@ export function CardCreateInvite({
                   size="md"
                   iconOnly
                   className={`${styles.copyBtn} ${copied ? styles.copyBtnDone : ""}`}
-                  aria-label={copied ? "Đã sao chép" : "Sao chép mã invite"}
+                  aria-label={copied ? "Copied" : "Copy invite code"}
                   onClick={() => void handleCopy()}
                 >
                   {copied ? (
@@ -98,20 +97,22 @@ export function CardCreateInvite({
                 </Button>
               </div>
               {countdown ? (
-                <span className={styles.codeMeta}>⏱ Còn {countdown}</span>
+                <span className={styles.codeMeta}>
+                  {countdown === "Expired" ? countdown : `Time left ${countdown}`}
+                </span>
               ) : null}
             </div>
           ) : (
             <div className={styles.codePlaceholder}>
               <Typography variant="small" color="muted">
-                Chưa có mã — nhấn tạo mã invite để bắt đầu
+                No code yet — click create invite to get started
               </Typography>
             </div>
           )}
 
           <div className={styles.actions}>
             <Button size="sm" disabled={actionBusy} onClick={onCreateInvite}>
-              {latestInviteCode ? "Tạo mã mới" : "Tạo mã invite"}
+              {latestInviteCode ? "Create new code" : "Create invite code"}
             </Button>
           </div>
         </div>

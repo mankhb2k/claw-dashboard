@@ -153,7 +153,7 @@ export function MessageBox(props: MessageBoxProps) {
     onSend,
     sending,
     disabled = false,
-    placeholder = "Nhập tin nhắn…",
+    placeholder = "Type a message…",
     providerId,
     providerOptions,
     onProviderChange,
@@ -261,7 +261,7 @@ export function MessageBox(props: MessageBoxProps) {
 
       for (const file of files) {
         if (slotCount >= MAX_ATTACHMENTS) {
-          errors.push(`Tối đa ${MAX_ATTACHMENTS} file.`);
+          errors.push(`Maximum ${MAX_ATTACHMENTS} files.`);
           break;
         }
 
@@ -296,7 +296,7 @@ export function MessageBox(props: MessageBoxProps) {
           void uploadComposerAttachment(projectId, item.id, item.file, setAttachments);
         }
       } else {
-        setAttachmentErrors((prev) => [...prev, "Chưa chọn dự án để upload file."]);
+        setAttachmentErrors((prev) => [...prev, "No project selected for file upload."]);
       }
     },
     [inputDisabled, projectId, sandboxActive],
@@ -435,13 +435,13 @@ export function MessageBox(props: MessageBoxProps) {
   }, []);
 
   const providerPlaceholder = modelsLoading
-    ? "Đang tải…"
+    ? "Loading…"
     : providerOptions.length === 0
-      ? "Chưa có API key"
+      ? "No API key"
       : "Provider";
 
   const modelPlaceholder = modelsLoading
-    ? "Đang tải…"
+    ? "Loading…"
     : modelOptions.length === 0
       ? "Model"
       : "Model";
@@ -481,9 +481,9 @@ export function MessageBox(props: MessageBoxProps) {
           <div className={styles.sandboxCallout} role="status">
             <AlertTriangle size={14} aria-hidden />
             <span>
-              Sandbox đang bật — file đính kèm tối đa{" "}
+              Sandbox is enabled — attachments are limited to{" "}
               {Math.round((stagingMaxBytes ?? 5 * 1024 * 1024) / (1024 * 1024))} MB.
-              File lớn hơn sẽ không gửi được.
+              Larger files cannot be sent.
             </span>
           </div>
         ) : null}
@@ -566,8 +566,8 @@ export function MessageBox(props: MessageBoxProps) {
                 className={styles.iconBtn}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={inputDisabled}
-                aria-label="Đính kèm tài liệu hoặc hình ảnh"
-                title="Đính kèm tài liệu hoặc hình ảnh"
+                aria-label="Attach a document or image"
+                title="Attach a document or image"
               >
                 <Paperclip size={16} strokeWidth={1.75} />
               </button>
@@ -585,8 +585,8 @@ export function MessageBox(props: MessageBoxProps) {
                 type="button"
                 className={`${styles.sendBtn} ${styles.sendBtnStop}`}
                 onClick={onAbort}
-                aria-label="Dừng phản hồi"
-                title="Dừng phản hồi"
+                aria-label="Stop response"
+                title="Stop response"
               >
                 <Square size={16} fill="currentColor" strokeWidth={0} />
               </button>
@@ -596,11 +596,11 @@ export function MessageBox(props: MessageBoxProps) {
                 className={`${styles.sendBtn} ${canSendNow ? styles.sendBtnActive : ""}`}
                 onClick={handleSendClick}
                 disabled={!canSendNow}
-                aria-label="Gửi tin nhắn"
+                aria-label="Send message"
                 title={
                   hasSandboxOversized
-                    ? "Có file vượt 5 MB (sandbox)"
-                    : "Gửi tin nhắn"
+                    ? "A file exceeds 5 MB (sandbox)"
+                    : "Send message"
                 }
               >
                 <ArrowUp size={16} strokeWidth={2} />

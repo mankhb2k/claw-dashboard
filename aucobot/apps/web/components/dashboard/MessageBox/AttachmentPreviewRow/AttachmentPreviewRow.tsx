@@ -124,7 +124,7 @@ function FileAttachmentChip({
         </span>
         <span className={styles.fileKind}>
           {attachment.sandboxBlocked
-            ? "Vượt 5 MB (sandbox)"
+            ? "Over 5 MB (sandbox)"
             : attachment.error
               ? attachment.error
               : formatFileKindLabel(attachment.kind, attachment.file)}

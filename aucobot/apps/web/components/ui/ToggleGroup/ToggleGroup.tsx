@@ -5,20 +5,18 @@ import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group'
 import styles from './ToggleGroup.module.css'
 
 export type ToggleGroupProps = React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> & {
-  className?: string
   children?: React.ReactNode
   size?: 'sm' | 'md' | 'lg'
 }
 
 export type ToggleGroupItemProps = React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> & {
-  className?: string
   children?: React.ReactNode
 }
 
 export const ToggleGroup = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Root>,
   ToggleGroupProps
->(({ className, children, type, size = 'md', ...props }, ref) => {
+>(({ className, children, type, size = 'md', style, ...props }, ref) => {
   const rootRef = React.useRef<HTMLDivElement>(null)
   const [indicatorStyle, setIndicatorStyle] = React.useState<React.CSSProperties>({})
 
@@ -64,6 +62,7 @@ export const ToggleGroup = React.forwardRef<
       ref={rootRef}
       type={type as any}
       className={`${styles.root} ${styles[`root--${size}`]} ${isSingle ? styles.singleSelect : ''} ${className || ''}`}
+      style={style}
       {...props}
       onValueChange={handleValueChange}
     >
@@ -80,11 +79,12 @@ ToggleGroup.displayName = 'ToggleGroup'
 export const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,
   ToggleGroupItemProps
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <ToggleGroupPrimitive.Item
     ref={ref}
     className={`${styles.item} ${className || ''}`}
-    {...(props as any)}
+    style={style}
+    {...props}
   />
 ))
 

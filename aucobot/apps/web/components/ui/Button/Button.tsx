@@ -23,6 +23,7 @@ export function Button({
   disabled,
   children,
   className,
+  style,
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot : 'button'
@@ -41,6 +42,7 @@ export function Button({
     return (
       <Comp
         className={buttonClasses}
+        style={style}
         data-disabled={disabled || loading ? '' : undefined}
         data-loading={loading ? '' : undefined}
         {...props}
@@ -53,6 +55,7 @@ export function Button({
   return (
     <Comp
       className={buttonClasses}
+      style={style}
       disabled={disabled || loading}
       suppressHydrationWarning
       {...props}

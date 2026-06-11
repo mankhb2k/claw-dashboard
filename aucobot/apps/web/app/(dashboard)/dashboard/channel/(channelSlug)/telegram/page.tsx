@@ -1,7 +1,7 @@
 import { Container, Flex } from "@/components/layout";
 import { getCurrentProjectId } from "@/lib/current-project";
-import { ClientTelegramPage } from "./_components/ClientTelegramPage";
-import styles from "./telegram.module.css";
+import { ClientTelegramPage } from "./_components/ClientTelegramPage/ClientTelegramPage";
+import styles from "../channel-detail.module.css";
 
 export default async function TelegramSetupPage() {
   const projectId = await getCurrentProjectId();

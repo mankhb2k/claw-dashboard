@@ -11,10 +11,10 @@ export function CardGuide() {
           <span className={styles.stepNum}>1</span>
           <div>
             <Typography variant="small" weight="medium">
-              Cài OpenClaw Node
+              Install OpenClaw Node
             </Typography>
             <Typography variant="small" color="muted">
-              macOS hoặc Windows — app companion cho gateway.
+              macOS or Windows — companion app for the gateway.
             </Typography>
           </div>
         </li>
@@ -22,10 +22,10 @@ export function CardGuide() {
           <span className={styles.stepNum}>2</span>
           <div>
             <Typography variant="small" weight="medium">
-              Dán mã vào app → Connect
+              Paste code in app → Connect
             </Typography>
             <Typography variant="small" color="muted">
-              Chọn kết nối bằng mã invite trong app node-device.
+              Choose invite-code connection in the node-device app.
             </Typography>
           </div>
         </li>
@@ -33,11 +33,11 @@ export function CardGuide() {
           <span className={styles.stepNum}>3</span>
           <div>
             <Typography variant="small" weight="medium">
-              Duyệt thiết bị
+              Approve device
             </Typography>
             <Typography variant="small" color="muted">
-              Khi app báo chờ duyệt — phê duyệt device (WS) rồi node trong card
-              quản lý thiết bị bên dưới.
+              When the app shows pending approval — approve device (WS) then node in
+              the device manager card below.
             </Typography>
           </div>
         </li>

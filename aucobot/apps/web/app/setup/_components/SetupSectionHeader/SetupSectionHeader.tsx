@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Box, Flex } from "@/components/layout";
 import { Typography } from "@/components/ui";
+import styles from "./SetupSectionHeader.module.css";
 
 interface SetupSectionHeaderProps {
   badge: string;
@@ -11,7 +12,13 @@ interface SetupSectionHeaderProps {
 export function SetupSectionHeader({ badge, title, description }: SetupSectionHeaderProps) {
   return (
     <Flex direction="column" gap={16}>
-      <Box color="primary-dim" px={12} py={4} radius="full" style={{ width: "fit-content" }}>
+      <Box
+        color="primary-dim"
+        px={12}
+        py={4}
+        radius="full"
+        className={styles.badge}
+      >
         <Typography variant="xs" color="primary" weight="medium">
           {badge}
         </Typography>

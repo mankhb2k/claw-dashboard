@@ -32,5 +32,5 @@ export function isFileOverSandboxStagingLimit(
 }
 
 export function sandboxStagingLimitError(fileName: string): string {
-  return `"${fileName}" vượt 5 MB (giới hạn sandbox). Gỡ sandbox hoặc dùng file nhỏ hơn.`;
+  return `"${fileName}" exceeds 5 MB (sandbox limit). Disable sandbox or use a smaller file.`;
 }

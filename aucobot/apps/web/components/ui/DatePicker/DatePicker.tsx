@@ -31,6 +31,7 @@ export interface DatePickerProps {
   disabled?: boolean
   size?: DatePickerSize
   className?: string
+  style?: React.CSSProperties
 }
 
 interface CalendarPanelProps {
@@ -146,6 +147,7 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       disabled = false,
       size = 'md',
       className,
+      style,
     },
     ref,
   ) => {
@@ -179,6 +181,7 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             type="button"
             variant="unstyled"
             className={triggerClass}
+            style={style}
             disabled={disabled}
             aria-invalid={!!error}
           >

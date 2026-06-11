@@ -1,7 +1,7 @@
 import type { ConnectorDefinition } from '@/schemas/project.schema'
 import type { ServiceConnectData } from './projectConnectData'
 
-/** Icon & metadata UI — catalog tên/mô tả lấy từ API backend. */
+/** Icon and metadata UI — catalog name/description come from the API. */
 const CONNECTOR_UI: Record<string, Pick<ServiceConnectData, 'iconSrc' | 'author'>> = {
   'google-drive': {
     author: 'Google',

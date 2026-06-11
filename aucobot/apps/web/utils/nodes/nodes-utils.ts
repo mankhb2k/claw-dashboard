@@ -119,7 +119,7 @@ export function formatCountdownMs(expiresAt: string): string | null {
   const end = new Date(expiresAt).getTime();
   if (Number.isNaN(end)) return null;
   const diff = end - Date.now();
-  if (diff <= 0) return "Đã hết hạn";
+  if (diff <= 0) return "Expired";
   const totalSec = Math.floor(diff / 1000);
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -129,11 +129,11 @@ export function formatCountdownMs(expiresAt: string): string | null {
 export function inviteStatusLabel(status: string): string {
   switch (status) {
     case "active":
-      return "Đang hiệu lực";
+      return "Active";
     case "used":
-      return "Đã dùng";
+      return "Used";
     case "expired":
-      return "Hết hạn";
+      return "Expired";
     default:
       return status;
   }

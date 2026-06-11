@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getCurrentProjectId } from "@/lib/current-project";
 import { ClientConnectorPage } from "./_components/ClientConnectorPage/ClientConnectorPage";
 import { Spinner } from "@/components/ui";
+import styles from "../connect.module.css";
 
 interface PageProps {
   params: Promise<{
@@ -16,7 +17,7 @@ export default async function ProjectConnectorDetailPage({ params }: PageProps) 
   return (
     <Suspense
       fallback={
-        <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-10)" }}>
+        <div className={styles.suspenseFallback}>
           <Spinner size="md" />
         </div>
       }

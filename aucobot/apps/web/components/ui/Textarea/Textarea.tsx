@@ -10,7 +10,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, hint, fill = false, id, className, ...props }, ref) => {
+  ({ label, error, hint, fill = false, id, className, style, ...props }, ref) => {
     return (
       <div className={`${styles.field} ${fill ? styles.fieldFill : ''}`}>
         {label ? (
@@ -22,6 +22,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={id}
           className={`${styles.textarea} ${fill ? styles.textareaFill : ''} ${error ? styles.textareaError : ''} ${className || ''}`}
+          style={style}
           aria-invalid={error ? true : undefined}
           {...props}
         />

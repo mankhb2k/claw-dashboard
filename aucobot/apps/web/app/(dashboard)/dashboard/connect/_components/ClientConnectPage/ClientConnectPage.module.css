@@ -1,4 +1,4 @@
-/* Chỉ vùng chứa thanh công cụ và danh sách kết nối */
+/* Toolbar and connection list area */
 
 .toolbar {
   display: flex;
@@ -18,3 +18,6 @@
   padding: var(--space-10) var(--space-6);
 }
 
+.centeredPanel {
+  padding: var(--space-10) 0;
+}

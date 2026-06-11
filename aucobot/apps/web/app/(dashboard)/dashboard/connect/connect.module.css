@@ -1,5 +1,5 @@
 /* =============================================================================
-   1. KHUNG TRANG (PAGE SHELL) — Bố cục tổng thể cho trang Trung tâm kết nối
+   Connect Center page shell
    ============================================================================= */
 
 .page {
@@ -15,4 +15,10 @@
   min-height: 0;
   padding-top: var(--space-2);
   flex-direction: column;
+}
+
+.suspenseFallback {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-10);
 }

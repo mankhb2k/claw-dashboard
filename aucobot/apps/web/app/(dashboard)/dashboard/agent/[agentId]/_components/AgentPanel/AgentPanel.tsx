@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Box, Flex } from "@/components/layout";
 import { Typography, Button, Spinner } from "@/components/ui";
 import { RotateCcw, Sparkles } from "lucide-react";
-import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble";
+import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble";
 import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
 import { useProjectStore } from "@/stores/project.store";
 import { useChatModelSelect } from "@/hooks/chat/use-chat-model-select";
@@ -22,7 +22,7 @@ import {
 import { dispatchApplyAgentsMd } from "@/utils/agent/agent-panel-events";
 import { MessageBox } from "@/components/dashboard/MessageBox";
 import { AgentPanelNoModelBanner } from "./AgentPanelModelBar";
-import { OptimizeResultCard } from "./OptimizeResultCard";
+import { CardOptimizeResult } from "./CardOptimizeResult/CardOptimizeResult";
 import styles from "./AgentPanel.module.css";
 import panelStyles from "./AgentPanelLayout.module.css";
 import barStyles from "./AgentPanelModelBar.module.css";
@@ -374,7 +374,7 @@ export function AgentPanel() {
                   ) : null}
                 </Box>
                 {msg.optimizeMarkdown && !msg.optimizeDismissed ? (
-                  <OptimizeResultCard
+                  <CardOptimizeResult
                     markdown={msg.optimizeMarkdown}
                     summary={msg.content}
                     onApply={() =>

@@ -13,6 +13,7 @@ export interface DateRangePickerProps {
   size?: DatePickerSize
   disabled?: boolean
   className?: string
+  style?: React.CSSProperties
 }
 
 export function DateRangePicker({
@@ -25,12 +26,13 @@ export function DateRangePicker({
   size = 'md',
   disabled = false,
   className,
+  style,
 }: DateRangePickerProps) {
   const rangePickerClass =
     size === 'sm' ? styles.rangePickerSm : styles.rangePickerMd
 
   return (
-    <div className={`${styles.rangeRow} ${className ?? ''}`}>
+    <div className={`${styles.rangeRow} ${className ?? ''}`} style={style}>
       <div className={styles.rangeItem}>
         <span className={styles.rangeLabel}>{fromLabel}</span>
         <div className={rangePickerClass}>

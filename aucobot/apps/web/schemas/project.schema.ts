@@ -29,7 +29,8 @@ export const createProjectSchema = z.object({
   displayName: z
     .string()
     .min(1, 'Tên tối thiểu 1 ký tự')
-    .max(200, 'Tên tối đa 200 ký tự'),
+    .max(200, 'Tên tối đa 200 ký tự')
+    .optional(),
 })
 
 export const projectHealthSchema = z.object({

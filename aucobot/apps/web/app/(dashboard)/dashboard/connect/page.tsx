@@ -19,13 +19,7 @@ export default async function ProjectConnectPage() {
         />
         <Suspense
           fallback={
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                padding: "var(--space-10)",
-              }}
-            >
+            <div className={styles.suspenseFallback}>
               <Spinner size="md" />
             </div>
           }

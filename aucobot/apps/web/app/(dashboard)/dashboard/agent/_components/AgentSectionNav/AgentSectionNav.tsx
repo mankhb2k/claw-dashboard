@@ -7,6 +7,7 @@ import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-rout
 import { projectApi } from "@/lib/api/project";
 import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
 import { useProjectStore } from "@/stores/project.store";
+import styles from "./AgentSectionNav.module.css";
 
 const AGENTS_HREF = `${DASHBOARD_BASE_PATH}/agent`;
 const COLLABORATION_HREF = `${DASHBOARD_BASE_PATH}/agent/collaboration`;
@@ -99,7 +100,7 @@ export function AgentSectionNav() {
       value={activeValue}
       variant="section"
       showIndicator
-      style={{ paddingTop: "var(--space-6)" }}
+      className={styles.root}
       aria-label="Agent section"
     />
   );

@@ -38,7 +38,7 @@ export function DangerZone({ project }: Props) {
       await destroyProject(project.id);
       router.push("/projects");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Không thể xóa dự án. Vui lòng thử lại.");
+      setError(e instanceof Error ? e.message : "Could not delete project. Please try again.");
       setLoading(false);
     }
   };
@@ -70,7 +70,7 @@ export function DangerZone({ project }: Props) {
           {isRunning && (
             <p className={styles.blockHint}>
               <AlertTriangle size={14} />
-              Dừng container trước khi xóa.
+              Stop the container before deleting.
             </p>
           )}
           <Button
@@ -90,19 +90,19 @@ export function DangerZone({ project }: Props) {
         <div className={styles.overlay} onClick={() => { if (!loading) setDialogOpen(false); }}>
           <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
             <div className={styles.dialogHeader}>
-              <Typography variant="h3" weight="bold">Xác nhận xóa dự án?</Typography>
+              <Typography variant="h3" weight="bold">Delete project?</Typography>
             </div>
 
             <div className={styles.dialogBody}>
               <div className={styles.dialogWarning}>
                 <p>
-                  Hành động này <strong>không thể hoàn tác</strong>. Toàn bộ dữ liệu, channel kết nối, kỹ năng và cấu hình của dự án sẽ bị xóa vĩnh viễn.
+                  This action <strong>cannot be undone</strong>. All project data, channel connections, skills, and configuration will be permanently deleted.
                 </p>
               </div>
 
               <div className={styles.confirmField}>
                 <label htmlFor="confirmName" className={styles.confirmLabel}>
-                  Nhập tên dự án <strong>{project.displayName}</strong> để xác nhận:
+                  Type the project name <strong>{project.displayName}</strong> to confirm:
                 </label>
                 <Input
                   id="confirmName"
@@ -123,7 +123,7 @@ export function DangerZone({ project }: Props) {
                 onClick={() => { setDialogOpen(false); setConfirmName(""); setError(null); }}
                 disabled={loading}
               >
-                Huỷ
+                Cancel
               </Button>
               <Button
                 variant="danger"
@@ -131,7 +131,7 @@ export function DangerZone({ project }: Props) {
                 disabled={!confirmMatch || loading}
                 className={styles.actionBtnWithIcon}
               >
-                {loading ? "Đang xóa..." : <><Trash2 size={16} /> Xóa vĩnh viễn</>}
+                {loading ? "Deleting..." : <><Trash2 size={16} /> Delete permanently</>}
               </Button>
             </div>
           </div>

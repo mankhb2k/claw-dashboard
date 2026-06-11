@@ -64,7 +64,7 @@ export const Default: Story = {
   args: {
     value: "",
     onChange: () => {},
-    placeholder: "Tìm kiếm agent, kỹ năng...",
+    placeholder: "Search agents, skills...",
     size: "md",
   },
 };
@@ -107,7 +107,7 @@ export const WithText: Story = {
 export const Interactive: Story = {
   render: (args) => <SearchItemInteractive {...args} />,
   args: {
-    placeholder: "Gõ thử để trải nghiệm nút Clear...",
+    placeholder: "Type to try the clear button...",
     id: "search-interactive",
     size: "md",
   },
@@ -117,7 +117,7 @@ export const CustomPlaceholder: Story = {
   args: {
     value: "",
     onChange: () => {},
-    placeholder: "Tìm kiếm theo tên kênh kết nối...",
+    placeholder: "Search by connector name...",
     size: "md",
   },
 };
@@ -126,7 +126,7 @@ export const CustomMaxWidth: Story = {
   args: {
     value: "",
     onChange: () => {},
-    placeholder: "Rộng tối đa 200px...",
+    placeholder: "Max width 200px...",
     maxWidth: 200,
     size: "md",
   },

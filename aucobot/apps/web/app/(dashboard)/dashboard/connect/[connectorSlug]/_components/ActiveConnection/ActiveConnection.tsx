@@ -21,6 +21,7 @@ import { Container, Flex, Box } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
 import {
   MOCK_PERMISSION_GROUPS,
+  PERMISSION_GROUP_LABELS,
   type PermissionGroupData,
 } from "../../../projectConnectData";
 import { type PermissionMode } from "../ClientConnectorPage/ClientConnectorPage";
@@ -52,10 +53,8 @@ export function ActiveConnection({
       <Container size="md">
         <Box py={48}>
           <Flex direction="column" gap={32}>
-            {/* --- ĐIỀU HƯỚNG --- */}
             <BackButton href="/dashboard/connect">{service.name}</BackButton>
 
-            {/* --- HEADER: THÔNG TIN DỊCH VỤ & THAO TÁC CHÍNH --- */}
             <header>
               <Flex align="start" justify="between" gap={4}>
                 <Flex align="center" gap={16}>
@@ -83,7 +82,7 @@ export function ActiveConnection({
                       size="sm"
                       iconOnly
                       asChild
-                      title="Hỗ trợ"
+                      title="Support"
                     >
                       <a
                         href={service.supportUrl}
@@ -98,27 +97,26 @@ export function ActiveConnection({
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="danger" size="sm">
-                        Gỡ kết nối
+                        Disconnect
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          Gỡ bỏ kết nối {service.name}?
+                          Disconnect {service.name}?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          Hành động này sẽ ngắt kết nối giữa Agent và dịch vụ
-                          này. Các công cụ liên quan sẽ không khả dụng cho đến
-                          khi được kết nối lại.
+                          This will disconnect the agent from this service. Related
+                          tools will be unavailable until you connect again.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           variant="danger"
                           onClick={onDisconnect}
                         >
-                          Xác nhận gỡ bỏ
+                          Confirm disconnect
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -127,33 +125,28 @@ export function ActiveConnection({
               </Flex>
             </header>
 
-            {/* --- SECTION: PHÂN QUYỀN CÔNG CỤ --- */}
             <section>
               <Flex direction="column" gap={16}>
                 <Box>
                   <Typography variant="h4" weight="bold">
-                    Phân quyền công cụ
+                    Tool permissions
                   </Typography>
                   <Typography variant="small" color="muted">
-                    Thiết lập quyền hạn cho Agent khi sử dụng các công cụ từ
-                    dịch vụ này.
+                    Set what the agent may do with tools from this service.
                   </Typography>
                 </Box>
 
-                {/* --- DANH SÁCH CÁC NHÓM CÔNG CỤ (MOCK) --- */}
                 <Flex direction="column" gap={16}>
                   {MOCK_PERMISSION_GROUPS.map((group: PermissionGroupData) => {
                     const expanded = groupExpanded[group.id] ?? true;
                     return (
                       <Card key={group.id} className={styles.groupCard}>
                         <Flex direction="column">
-                          {/* 1. Group Header: Tên nhóm & Chọn quyền nhanh cho cả nhóm */}
                           <Flex
                             align="center"
                             justify="between"
                             p={16}
-                            color="surface"
-                            style={{ background: "var(--color-surface-1)" }}
+                            className={styles.groupHeader}
                           >
                             <button
                               type="button"
@@ -169,9 +162,7 @@ export function ActiveConnection({
                                 }`}
                               />
                               <span>
-                                {group.id === "read"
-                                  ? "Công cụ chỉ đọc"
-                                  : "Công cụ ghi/xóa"}
+                                {PERMISSION_GROUP_LABELS[group.id] ?? group.id}
                               </span>
                               <span className={styles.group__count}>
                                 {group.tools.length}
@@ -191,25 +182,19 @@ export function ActiveConnection({
                               }
                             >
                               <ToggleGroupItem value="allow">
-                                Luôn cho phép
+                                Always allow
                               </ToggleGroupItem>
                               <ToggleGroupItem value="ask">
-                                Cần phê duyệt
+                                Require approval
                               </ToggleGroupItem>
                               <ToggleGroupItem value="block">
-                                Bị chặn
+                                Blocked
                               </ToggleGroupItem>
                             </ToggleGroup>
                           </Flex>
 
-                          {/* 2. Group Content: Danh sách từng công cụ cụ thể */}
                           {expanded && (
-                            <Box
-                              px={16}
-                              style={{
-                                borderTop: "1px solid var(--color-border)",
-                              }}
-                            >
+                            <Box px={16} className={styles.groupContent}>
                               <Flex direction="column">
                                 {group.tools.map((tool: string) => (
                                   <Flex
@@ -217,10 +202,7 @@ export function ActiveConnection({
                                     align="center"
                                     justify="between"
                                     py={16}
-                                    style={{
-                                      borderBottom:
-                                        "1px solid var(--color-border-subtle)",
-                                    }}
+                                    className={styles.toolRow}
                                   >
                                     <Typography
                                       variant="small"
@@ -244,13 +226,13 @@ export function ActiveConnection({
                                       }
                                     >
                                       <ToggleGroupItem value="allow">
-                                        Cho phép
+                                        Allow
                                       </ToggleGroupItem>
                                       <ToggleGroupItem value="ask">
-                                        Hỏi
+                                        Ask
                                       </ToggleGroupItem>
                                       <ToggleGroupItem value="block">
-                                        Chặn
+                                        Block
                                       </ToggleGroupItem>
                                     </ToggleGroup>
                                   </Flex>

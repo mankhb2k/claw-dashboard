@@ -14,9 +14,8 @@ interface TitleHeaderProps {
 }
 
 /**
- * TitleHeader Component
- * Dùng để hiển thị tiêu đề trang, mô tả và các nút thao tác chính.
- * Thường dùng ở đầu các trang Dashboard.
+ * Page title block with optional description and primary actions.
+ * Used at the top of dashboard list pages.
  */
 export function TitleHeader({
   title,

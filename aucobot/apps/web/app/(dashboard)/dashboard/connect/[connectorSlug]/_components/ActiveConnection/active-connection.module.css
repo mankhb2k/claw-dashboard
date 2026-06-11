@@ -8,6 +8,22 @@
   overflow: hidden;
 }
 
+.groupHeader {
+  background: var(--color-muted);
+}
+
+.groupContent {
+  border-top: 1px solid var(--color-border);
+}
+
+.toolRow {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toolRow:last-child {
+  border-bottom: none;
+}
+
 .group__title {
   display: flex;
   align-items: center;
@@ -18,11 +34,11 @@
   padding: 0;
   font-size: var(--font-size-md);
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--color-foreground);
 }
 
 .group__chevron {
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   transition: transform var(--transition-fast) ease;
 }
 
@@ -36,26 +52,22 @@
 
 .group__count {
   font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   font-weight: normal;
-  background: var(--color-surface-2);
-  padding: 2px 8px;
+  background: var(--color-muted);
+  padding: 2px var(--space-2);
   border-radius: 10px;
 }
 
 .tool__name {
-  font-family: var(--font-mono);
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
   font-size: var(--font-size-sm);
-}
-
-@media (max-width: 768px) {
-  /* Responsive styles if needed */
 }
 
 .serviceIcon {
   width: 48px;
   height: 48px;
-  background-color: var(--color-white);
+  background-color: var(--color-card-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   display: flex;
@@ -74,7 +86,7 @@
 
 .serviceIconFallback {
   font-weight: 700;
-  color: var(--color-text-muted);
-  font-size: 18px;
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-xl);
   text-transform: uppercase;
 }

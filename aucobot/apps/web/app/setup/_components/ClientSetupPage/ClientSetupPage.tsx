@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/auth.store";
 import { useProjectStore } from "@/stores/project.store";
 import {
   getPrimaryProject,
@@ -14,8 +13,12 @@ import {
 import { getDashboardPath } from "@/lib/routing/dashboard-route";
 import { gatewayTimeoutMessage } from "@/lib/runtime/oss-gateway";
 import { spawnTimeoutMessage } from "@/lib/runtime/project-spawn";
-import type { SetupFormInput } from "@/schemas/setup.schema";
-import { resolveCloudMode, resolveOssMode } from "../setup-utils";
+import {
+  resolveCloudMode,
+  resolveOssMode,
+  resolveSetupError,
+} from "@/utils/setup/setup-utils";
+import styles from "./ClientSetupPage.module.css";
 import { SetupCreateForm } from "../SetupCreateForm/SetupCreateForm";
 import { SetupOssRecover } from "../SetupOssRecover/SetupOssRecover";
 import { SetupCloudRecreate } from "../SetupCloudRecreate/SetupCloudRecreate";
@@ -30,8 +33,8 @@ interface ClientSetupPageProps {
 
 export function ClientSetupPage({ oss }: ClientSetupPageProps) {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
+  const syncProjectHealth = useProjectStore((s) => s.syncProjectHealth);
   const createProject = useProjectStore((s) => s.createProject);
   const startProject = useProjectStore((s) => s.startProject);
   const respawnProject = useProjectStore((s) => s.respawnProject);
@@ -53,8 +56,20 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
     bootstrapped && primary !== null && !shouldRedirectToSetup(primary);
 
   useEffect(() => {
-    void fetchProjects().finally(() => setBootstrapped(true));
-  }, [fetchProjects]);
+    void (async () => {
+      try {
+        await fetchProjects();
+        if (oss) {
+          const current = getPrimaryProject(useProjectStore.getState().projects);
+          if (current) {
+            await syncProjectHealth(current.id);
+          }
+        }
+      } finally {
+        setBootstrapped(true);
+      }
+    })();
+  }, [fetchProjects, syncProjectHealth, oss]);
 
   useEffect(() => {
     if (!canEnterDashboard || autoEnterDoneRef.current || isProvisioning) return;
@@ -179,13 +194,11 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
     }
   }, [spawnAndEnter, isProvisioning]);
 
-  const onCreate = async (data: SetupFormInput) => {
+  const onCreate = async () => {
     setLocalError(null);
     setIsProvisioning(true);
     try {
-      const project = await createProject({
-        displayName: data.displayName.trim(),
-      });
+      const project = await createProject();
       const ok = await waitUntilRunning(project.id);
       if (ok) {
         router.push(getDashboardPath());
@@ -199,17 +212,18 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
       }
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : "Could not create workspace");
+      await fetchProjects({ silent: true });
     } finally {
       setIsProvisioning(false);
     }
   };
 
   const busy = isProvisioning || (primary ? isProjectBusy(primary.status) : false);
-  const error = localError ?? storeError;
+  const error = resolveSetupError(primary, localError ?? storeError);
 
   if (canEnterDashboard) {
     return (
-      <Typography variant="small" color="muted" style={{ textAlign: "center" }}>
+      <Typography variant="small" color="muted" className={styles.opening}>
         Opening dashboard…
       </Typography>
     );
@@ -222,8 +236,7 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
           oss={oss}
           busy={busy}
           error={error}
-          defaultDisplayName={user?.name?.trim() || "My Agent"}
-          onCreate={onCreate}
+          onCreate={() => void onCreate()}
         />
       )}
 
@@ -232,9 +245,8 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
           primary={primary}
           busy={busy}
           isLoading={isLoading}
-          error={error}
           onContinue={() => void goToDashboard()}
-          onRetryGateway={() => retryGatewayCheck()}
+          onCheckGateway={() => retryGatewayCheck()}
         />
       )}
 

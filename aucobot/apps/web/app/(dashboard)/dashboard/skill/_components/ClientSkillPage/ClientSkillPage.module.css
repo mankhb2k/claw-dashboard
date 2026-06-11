@@ -30,7 +30,7 @@
 }
 
 /* =============================================================================
-   NỘI DUNG CHÍNH & TRẠNG THÁI
+   MAIN CONTENT & STATES
    ============================================================================= */
 
 .scrollArea {
@@ -47,10 +47,10 @@
   padding: var(--space-3);
   margin-bottom: var(--space-4);
   font-size: var(--font-size-sm);
-  color: var(--color-warning-dark);
+  color: var(--color-warning);
 }
 
-/* Lưới skill — 4 cột, full width */
+/* Skill grid — 4 columns, full width */
 .skillGrid {
   width: 100%;
   align-items: stretch;

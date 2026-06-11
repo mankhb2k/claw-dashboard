@@ -36,7 +36,7 @@ export function CardInviteHistory({
         aria-expanded={historyOpen}
       >
         <Typography variant="small" weight="medium">
-          Mã invite đã tạo ({invites.length})
+          Created invite codes ({invites.length})
         </Typography>
         <ChevronDown
           size={18}
@@ -65,7 +65,7 @@ export function CardInviteHistory({
                   disabled={actionBusy}
                   onClick={() => onRevokeInvite(invite.id)}
                 >
-                  {invite.status === "active" ? "Thu hồi" : "Xóa"}
+                  {invite.status === "active" ? "Revoke" : "Delete"}
                 </Button>
               ) : null}
             </li>
@@ -74,7 +74,7 @@ export function CardInviteHistory({
       ) : null}
       {!historyOpen && historyInvites.length > 0 ? (
         <Typography variant="small" color="muted" className={styles.hint}>
-          {historyInvites.length} mã trước đó (mở để xem)
+          {historyInvites.length} previous code(s) (expand to view)
         </Typography>
       ) : null}
     </div>

@@ -11,11 +11,12 @@ export interface AvatarProps extends AvatarPrimitive.AvatarProps {
 }
 
 export const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
-  ({ src, alt, fallback, size = 'md', variant = 'circle', className, ...props }, ref) => {
+  ({ src, alt, fallback, size = 'md', variant = 'circle', className, style, ...props }, ref) => {
     return (
       <AvatarPrimitive.Root
         ref={ref}
         className={`${styles.root} ${styles[size]} ${styles[variant]} ${className || ''}`}
+        style={style}
         {...props}
       >
         {src && (

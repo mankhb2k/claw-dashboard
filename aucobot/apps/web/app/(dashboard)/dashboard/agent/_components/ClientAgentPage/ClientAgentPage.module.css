@@ -82,7 +82,7 @@
 
 /* Empty state robot icon */
 .emptyIcon {
-  font-size: 48px;
+  font-size: var(--space-12);
   color: var(--color-muted-foreground);
   margin-bottom: var(--space-4);
 }
@@ -94,7 +94,7 @@
 
 /* Empty state description */
 .emptyDesc {
-  max-width: 420px;
+  max-width: 26.25rem;
   margin-bottom: var(--space-6);
   line-height: 1.6;
 }

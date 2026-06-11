@@ -32,8 +32,13 @@ export type ServiceConnectData = {
   iconSrc?: string;
   description: string;
   supportUrl?: string;
-  /** true = platform này có cả chat API, sẽ xuất hiện ở phần Kênh nhắn tin trong tab Integrations */
+  /** When true, platform has a chat API and appears under messaging channels in Integrations. */
   hasChat?: boolean;
+};
+
+export const PERMISSION_GROUP_LABELS: Record<string, string> = {
+  read: "Read-only tools",
+  write: "Write/delete tools",
 };
 
 export const CONNECT_SERVICES: ServiceConnectData[] = [
@@ -43,7 +48,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "google-drive",
     type: "OAUTH",
     author: "Google",
-    description: "Kết nối với Google Drive để quản lý và chia sẻ file.",
+    description: "Connect Google Drive to manage and share files.",
     iconSrc: "/tools-provider-icon/GoogleDrive-icon.svg",
   },
   {
@@ -52,7 +57,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "notion",
     type: "MCP",
     author: "Notion",
-    description: "Kết nối với Notion để đọc/ghi database và trang tài liệu.",
+    description: "Connect Notion to read and write databases and pages.",
     iconSrc: "/tools-provider-icon/Notion-icon.svg",
   },
   {
@@ -61,7 +66,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "github",
     type: "OAUTH",
     author: "GitHub",
-    description: "Kết nối với GitHub để quản lý repository và code.",
+    description: "Connect GitHub to manage repositories and code.",
     iconSrc: "/tools-provider-icon/GitHub-icon.svg",
   },
   {
@@ -70,7 +75,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "slack",
     type: "MCP",
     author: "Slack",
-    description: "Kết nối với Slack để gửi tin nhắn và nhận thông báo.",
+    description: "Connect Slack to send messages and receive notifications.",
     iconSrc: "/icons/slack.svg",
   },
   {
@@ -79,7 +84,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "gmail",
     type: "OAUTH",
     author: "Google",
-    description: "Kết nối với Gmail để đọc và gửi email.",
+    description: "Connect Gmail to read and send email.",
     iconSrc: "/tools-provider-icon/Gmail-icon.svg",
   },
   {
@@ -88,7 +93,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "google-calendar",
     type: "OAUTH",
     author: "Google",
-    description: "Kết nối với Google Calendar để quản lý lịch trình.",
+    description: "Connect Google Calendar to manage schedules.",
     iconSrc: "/tools-provider-icon/GoogleCalendar-icon.svg",
   },
   {
@@ -97,7 +102,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "shopee",
     type: "OAUTH",
     author: "Sea Group",
-    description: "Kết nối Shopee Seller Center: trả lời chat mua hàng, tra cứu đơn hàng, quản lý sản phẩm và logistics.",
+    description: "Connect Shopee Seller Center: buyer chat, orders, products, and logistics.",
     iconSrc: "/tools-provider-icon/Shopee-icon.svg",
     hasChat: true,
   },
@@ -107,7 +112,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     slug: "tiktok-shop",
     type: "OAUTH",
     author: "ByteDance",
-    description: "Kết nối TikTok Shop: tự động trả lời bình luận/chat, quản lý đơn hàng và sản phẩm trên TikTok.",
+    description: "Connect TikTok Shop: auto-reply to comments/chat, orders, and product management.",
     iconSrc: "/tools-provider-icon/TikTok-icon.svg",
     hasChat: true,
   },

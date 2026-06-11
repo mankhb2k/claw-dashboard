@@ -55,14 +55,16 @@ export function ModalCreateSkill({
     if (!isSubmitted) return undefined;
     if (parsedDraft.success) return undefined;
     const fe = parsedDraft.error.flatten().fieldErrors;
-    return fe.name?.length ? "Tên chỉ gồm chữ cái, số, dấu gạch ngang." : undefined;
+    return fe.name?.length
+      ? "Use lowercase letters, numbers, and hyphens only."
+      : undefined;
   }, [parsedDraft, isSubmitted]);
 
   const descriptionError = useMemo(() => {
     if (!isSubmitted) return undefined;
     if (parsedDraft.success) return undefined;
     const fe = parsedDraft.error.flatten().fieldErrors;
-    return fe.description?.length ? "Mô tả không được để trống." : undefined;
+    return fe.description?.length ? "Description is required." : undefined;
   }, [parsedDraft, isSubmitted]);
 
   const handleSaveClick = () => {
@@ -77,7 +79,7 @@ export function ModalCreateSkill({
       <DialogContent className={styles.content}>
         <DialogHeader>
           <DialogTitle>
-            {editingSlug ? "Sửa thông tin Skill" : "Khởi tạo Skill mới"}
+            {editingSlug ? "Edit skill info" : "Create new skill"}
           </DialogTitle>
           <DialogDescription>
             {editingSlug
@@ -90,7 +92,7 @@ export function ModalCreateSkill({
           <div>
             <Input
               id="skill-name"
-              label="Tên định danh (Slug)"
+              label="Slug"
               value={draft.name}
               autoComplete="off"
               spellCheck={false}
@@ -100,13 +102,13 @@ export function ModalCreateSkill({
                 setDraft((prev) => ({ ...prev, name: e.target.value }))
               }
             />
-            <p className={styles.hint}>Tên duy nhất, ví dụ: "google-search"</p>
+            <p className={styles.hint}>Unique identifier, e.g. &quot;google-search&quot;</p>
           </div>
 
           <div>
             <Input
               id="skill-description"
-              label="Mô tả ngắn"
+              label="Short description"
               value={draft.description}
               autoComplete="off"
               spellCheck={false}
@@ -115,15 +117,13 @@ export function ModalCreateSkill({
                 setDraft((prev) => ({ ...prev, description: e.target.value }))
               }
             />
-            <p className={styles.hint}>
-              Mô tả vai trò của skill này.
-            </p>
+            <p className={styles.hint}>What this skill does for agents.</p>
           </div>
 
           <div>
             <Input
               id="skill-heading"
-              label="Tiêu đề hiển thị (Heading)"
+              label="Display heading"
               value={draft.heading ?? ""}
               autoComplete="off"
               spellCheck={false}
@@ -131,20 +131,20 @@ export function ModalCreateSkill({
                 setDraft((prev) => ({ ...prev, heading: e.target.value }))
               }
             />
-            <p className={styles.hint}>Tiêu đề thân thiện, ví dụ: "Tìm kiếm Google"</p>
+            <p className={styles.hint}>Friendly title, e.g. &quot;Google Search&quot;</p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            Hủy
+            Cancel
           </Button>
           <Button
             variant="primary"
             onClick={handleSaveClick}
             disabled={isSubmitted && !parsedDraft.success}
           >
-            {editingSlug ? "Cập nhật" : "Tạo & Tiếp tục"}
+            {editingSlug ? "Update" : "Create & continue"}
           </Button>
         </DialogFooter>
       </DialogContent>

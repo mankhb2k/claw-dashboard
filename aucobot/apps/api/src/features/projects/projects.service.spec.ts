@@ -72,6 +72,9 @@ function buildProject(overrides: Partial<Record<string, unknown>> = {}) {
 
 function createService() {
   const prisma = {
+    user: {
+      findUnique: jest.fn(),
+    },
     project: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -155,6 +158,7 @@ describe('ProjectsService', () => {
 
     it('rejects when user already has a project', async () => {
       const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({ id: USER_ID, name: 'Admin', username: 'admin' });
       prisma.project.findUnique.mockResolvedValue(buildProject());
 
       await expect(
@@ -167,6 +171,7 @@ describe('ProjectsService', () => {
       const creating = buildProject({ status: ProjectStatus.CREATING, gatewayToken: null });
       const running = buildProject({ status: ProjectStatus.RUNNING });
 
+      prisma.user.findUnique.mockResolvedValue({ id: USER_ID, name: 'Admin', username: 'admin' });
       prisma.project.findUnique.mockResolvedValue(null);
       prisma.project.create.mockResolvedValue(creating);
       prisma.project.update.mockResolvedValue(running);
@@ -203,10 +208,38 @@ describe('ProjectsService', () => {
       expect(dto.status).toBe('running');
     });
 
+    it('defaults displayName from user when omitted', async () => {
+      const { service, prisma } = createService();
+      const creating = buildProject({
+        status: ProjectStatus.CREATING,
+        gatewayToken: null,
+        displayName: 'Alice',
+      });
+      const running = buildProject({ displayName: 'Alice' });
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: USER_ID,
+        name: 'Alice',
+        username: 'alice',
+      });
+      prisma.project.findUnique.mockResolvedValue(null);
+      prisma.project.create.mockResolvedValue(creating);
+      prisma.project.update.mockResolvedValue(running);
+
+      await service.create(USER_ID, {});
+
+      expect(prisma.project.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ displayName: 'Alice' }),
+        }),
+      );
+    });
+
     it('marks project ERROR and throws when provision fails', async () => {
       const { service, prisma } = createService();
       const creating = buildProject({ status: ProjectStatus.CREATING });
 
+      prisma.user.findUnique.mockResolvedValue({ id: USER_ID, name: null, username: 'admin' });
       prisma.project.findUnique.mockResolvedValue(null);
       prisma.project.create.mockResolvedValue(creating);
       provisionMock.mockRejectedValue(new Error('gateway unhealthy'));
@@ -302,7 +335,7 @@ describe('ProjectsService', () => {
       const running = buildProject({ status: ProjectStatus.RUNNING });
       const errored = buildProject({
         status: ProjectStatus.ERROR,
-        errorMessage: 'Shared gateway is not reachable on port 18789. Run `pnpm dev:runtime` and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.',
+        errorMessage: 'Gateway is not reachable on port 18789. Run Openclaw and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.',
       });
       prisma.project.findFirst.mockResolvedValue(running);
       prisma.project.update.mockResolvedValue(errored);

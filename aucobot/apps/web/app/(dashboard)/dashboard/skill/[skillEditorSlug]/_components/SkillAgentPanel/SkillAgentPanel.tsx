@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Box, Flex } from "@/components/layout";
 import { Typography, Button, Spinner } from "@/components/ui";
 import { RotateCcw, Sparkles } from "lucide-react";
-import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble";
+import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble";
 import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
 import { useProjectStore } from "@/stores/project.store";
 import { useSkillModelSelect } from "@/hooks/skill/use-skill-model-select";

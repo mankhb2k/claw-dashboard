@@ -51,23 +51,23 @@ function nodesConfirmCopy(action: NodesConfirmAction): {
   switch (action.kind) {
     case "remove":
       return {
-        title: "Gỡ node khỏi gateway?",
-        description: `Bạn có chắc muốn gỡ node "${action.title}"? Thiết bị sẽ ngắt kết nối khỏi gateway.`,
-        confirmLabel: "Gỡ",
+        title: "Remove node from gateway?",
+        description: `Are you sure you want to remove "${action.title}"? The device will disconnect from the gateway.`,
+        confirmLabel: "Remove",
       };
     case "reject-device":
       return {
-        title: "Từ chối pairing device?",
+        title: "Reject device pairing?",
         description:
-          "Yêu cầu ghép device sẽ bị hủy. Thiết bị cần tạo yêu cầu mới để kết nối lại.",
-        confirmLabel: "Từ chối",
+          "The device pairing request will be cancelled. The device must submit a new request to connect again.",
+        confirmLabel: "Reject",
       };
     case "reject-node":
       return {
-        title: "Từ chối pairing node?",
+        title: "Reject node pairing?",
         description:
-          "Yêu cầu nâng cấp node sẽ bị hủy. Ứng dụng node cần ghép lại sau khi device đã được duyệt.",
-        confirmLabel: "Từ chối",
+          "The node upgrade request will be cancelled. The node app must pair again after the device is approved.",
+        confirmLabel: "Reject",
       };
   }
 }
@@ -124,7 +124,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       setInviteError(null);
     } else {
       setInviteError(
-        errorMessage(inviteRes.reason, "Không tải được danh sách mã invite."),
+        errorMessage(inviteRes.reason, "Failed to load invite codes."),
       );
     }
   }, [projectId]);
@@ -196,8 +196,8 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       !didNotifyPendingRef.current
     ) {
       toast.success(
-        "Có yêu cầu ghép nối mới",
-        "Duyệt device và node trong card quản lý thiết bị bên dưới.",
+        "New pairing request",
+        "Approve device and node in the device manager card below.",
       );
       didNotifyPendingRef.current = true;
     }
@@ -216,7 +216,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       await fn();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Thao tác thất bại");
+      setError(err instanceof Error ? err.message : "Action failed");
     } finally {
       setActionId(null);
     }
@@ -313,7 +313,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   if (!projectId) {
     return (
       <Typography variant="p" className={styles.error}>
-        Chưa có project. Tạo project tại mục Tổng quan trước.
+        No project yet. Create one on Overview first.
       </Typography>
     );
   }
@@ -329,7 +329,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       >
         <Spinner size="md" />
         <Typography variant="p" color="muted">
-          Đang tải companion nodes…
+          Loading companion nodes...
         </Typography>
       </Flex>
     );
@@ -391,7 +391,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionBusy}>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel disabled={actionBusy}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="danger"
               disabled={actionBusy}

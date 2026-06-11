@@ -70,10 +70,10 @@ export function buildContextUsageTooltip(
     lines.push(`Context: ${used} / ${max} (${percent}%)`);
   } else if (contextTokens != null) {
     lines.push(`Context: — / ${max}`);
-    lines.push("Chưa có dữ liệu usage từ lượt chat gần nhất");
+    lines.push("No usage data from the latest chat turn yet");
   } else {
     lines.push("Context: —");
-    lines.push("Chưa có dữ liệu context");
+    lines.push("No context data yet");
   }
 
   if (modelLabel?.trim()) {
@@ -81,7 +81,7 @@ export function buildContextUsageTooltip(
   }
 
   if (typeof compactionCount === "number" && compactionCount > 0) {
-    lines.push(`Đã nén ${compactionCount} lần`);
+    lines.push(`Compacted ${compactionCount} time${compactionCount === 1 ? "" : "s"}`);
   }
 
   return lines.join("\n");

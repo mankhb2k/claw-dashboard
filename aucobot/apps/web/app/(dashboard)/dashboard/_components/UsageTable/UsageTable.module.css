@@ -1,22 +1,22 @@
-/* Tiêu đề + bộ chọn kỳ */
+/* Table header row */
 .header {
   margin-bottom: var(--space-6);
 }
 
-/* Icon màu theo model */
+/* Model color swatch */
 .modelIcon {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   border-radius: var(--radius-sm);
   opacity: 0.8;
   background: var(--row-accent);
   flex-shrink: 0;
 }
 
-/* Badge trạng thái */
+/* Status badge */
 .badge {
   display: inline-block;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-full);
   text-transform: capitalize;
 }

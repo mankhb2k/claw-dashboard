@@ -106,19 +106,19 @@ export function validateFile(
   existingCount: number,
 ): { attachment?: Omit<ComposerAttachment, "id">; error?: string } {
   if (existingCount >= MAX_ATTACHMENTS) {
-    return { error: `Tối đa ${MAX_ATTACHMENTS} file.` };
+    return { error: `Maximum ${MAX_ATTACHMENTS} files.` };
   }
 
   if (!isAllowedFile(file)) {
-    return { error: `"${file.name}" không được hỗ trợ.` };
+    return { error: `"${file.name}" is not supported.` };
   }
 
   const kind = classifyFile(file);
   const maxBytes = getMaxBytesForKind(kind);
   if (file.size > maxBytes) {
-    const limitLabel = kind === "image" ? "ảnh" : "tài liệu";
+    const limitLabel = kind === "image" ? "image" : "document";
     return {
-      error: `"${file.name}" vượt ${formatBytes(maxBytes)} (${limitLabel}).`,
+      error: `"${file.name}" exceeds ${formatBytes(maxBytes)} (${limitLabel} limit).`,
     };
   }
 

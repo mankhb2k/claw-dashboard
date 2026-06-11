@@ -21,6 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       error,
       id,
       className,
+      style,
       size = 'md',
       ...props
     },
@@ -57,6 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         id={id}
         className={inputClass}
+        style={style}
         suppressHydrationWarning
         aria-invalid={!!error}
         {...props}

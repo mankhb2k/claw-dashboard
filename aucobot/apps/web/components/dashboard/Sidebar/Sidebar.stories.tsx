@@ -13,7 +13,7 @@ const meta: Meta<typeof Sidebar> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <I18nProvider defaultLocale="vi">
+      <I18nProvider defaultLocale="en">
         <div style={{ height: '100vh', display: 'flex' }}>
           <Story />
         </div>
@@ -28,19 +28,19 @@ type Story = StoryObj<typeof Sidebar>;
 const mockItems = [
   {
     href: '/dashboard',
-    label: 'Tổng quan',
+    label: 'Overview',
     icon: LayoutDashboard,
     isActive: (p: string) => p === '/dashboard',
   },
   {
     href: '/dashboard/model',
-    label: 'Mô hình',
+    label: 'AI Model',
     icon: Brain,
     isActive: (p: string) => p === '/dashboard/model',
   },
   {
     href: '/dashboard/channel',
-    label: 'Kênh',
+    label: 'Channels',
     icon: MessageSquareCodeIcon,
     isActive: (p: string) => p === '/dashboard/channel',
   },
@@ -52,13 +52,13 @@ const mockItems = [
   },
   {
     href: '/dashboard/connect',
-    label: 'Kết nối',
+    label: 'Connect',
     icon: Cable,
     isActive: (p: string) => p === '/dashboard/connect',
   },
   {
     href: '/dashboard/setting',
-    label: 'Cài đặt',
+    label: 'Settings',
     icon: SettingsIcon,
     isActive: (p: string) => p === '/dashboard/setting',
   },
@@ -80,7 +80,7 @@ export const Collapsed: Story = {
   },
 };
 
-// Tạo mảng nhiều item hơn để test scroll
+// Extra items to test scroll overflow
 const manyItems = [
   ...mockItems,
   ...mockItems.map(item => ({ ...item, href: item.href + '-2' })),

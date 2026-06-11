@@ -123,9 +123,10 @@ export const projectApi = {
     return parsed.data
   },
 
-  // Backend: POST /api/projects (displayName in body; slug/subdomain is server-generated)
-  create: async (input: CreateProjectInput): Promise<Project> => {
-    const res = await api.post('/api/projects', input, { timeout: SPAWN_API_TIMEOUT_MS })
+  // Backend: POST /api/projects (optional displayName; slug/subdomain is server-generated)
+  create: async (input: CreateProjectInput = {}): Promise<Project> => {
+    const body = input.displayName?.trim() ? { displayName: input.displayName.trim() } : {}
+    const res = await api.post('/api/projects', body, { timeout: SPAWN_API_TIMEOUT_MS })
     return projectSchema.parse(res.data)
   },
 

@@ -58,12 +58,23 @@
   --color-toast-error-bg: #fef2f2;
   --color-toast-error-border: #fca5a5;
 
-  /* Charts */
-  --color-chart-1: rgb(217, 217, 217);
-  --color-chart-2: rgb(115, 115, 115);
-  --color-chart-3: rgb(89, 89, 89);
-  --color-chart-4: rgb(74, 74, 74);
-  --color-chart-5: rgb(38, 38, 38);
+  /* Overview dashboard */
+  --color-overview-input: #10b981;
+  --color-overview-output: #3b82f6;
+  --color-overview-cost: #ec4899;
+  --color-overview-chart-secondary: #8b5cf6;
+  --overview-chart-height: 18.75rem;
+
+  /* Agent provider accents (model tags & template icons) */
+  --color-provider-openai: #10b981;
+  --color-provider-openai-emphasis: #059669;
+  --color-provider-anthropic: #d97706;
+  --color-provider-anthropic-emphasis: #b45309;
+  --color-provider-gemini: #3b82f6;
+  --color-provider-gemini-emphasis: #2563eb;
+  --agent-icon-size: 2.625rem;
+  --agent-template-loading-min-height: 7.5rem;
+  --agent-loading-min-height: 12.5rem;
 
   /* Shadows */
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -193,13 +204,6 @@
   --color-toast-success-border: #166534;
   --color-toast-error-bg: #450a0a;
   --color-toast-error-border: #991b1b;
-
-  /* Charts */
-  --color-chart-1: rgb(217, 217, 217);
-  --color-chart-2: rgb(115, 115, 115);
-  --color-chart-3: rgb(89, 89, 89);
-  --color-chart-4: rgb(74, 74, 74);
-  --color-chart-5: rgb(38, 38, 38);
 
   /* Shadows — sm, md, lg */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);

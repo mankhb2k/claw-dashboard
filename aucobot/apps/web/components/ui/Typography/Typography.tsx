@@ -21,7 +21,8 @@ export const Typography = React.forwardRef<HTMLElement, TypographyProps>(
     italic = false,
     asChild = false, 
     as,
-    className, 
+    className,
+    style,
     ...props 
   }, ref) => {
     const Comp = asChild ? Slot : (as || (['h1', 'h2', 'h3', 'h4'].includes(variant) ? variant : 'p')) as any
@@ -40,6 +41,7 @@ export const Typography = React.forwardRef<HTMLElement, TypographyProps>(
       <Comp
         ref={ref}
         className={classes}
+        style={style}
         {...props}
       />
     )

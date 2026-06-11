@@ -43,7 +43,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
       ]);
       setCatalog(mergeChannelCatalog(definitions, rows));
     } catch (err) {
-      setChannelsError(err instanceof Error ? err.message : "Không tải được danh sách kênh");
+      setChannelsError(err instanceof Error ? err.message : "Failed to load channel list");
       setCatalog([]);
     } finally {
       setChannelsLoading(false);
@@ -76,7 +76,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
       >
         <Spinner size="md" />
         <Typography variant="p" color="muted">
-          Đang tải dữ liệu...
+          Loading...
         </Typography>
       </Flex>
     );
@@ -85,7 +85,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
   if (!projectId) {
     return (
       <p className={styles.error}>
-        Chưa có project. Tạo project tại mục Tổng quan trước khi cấu hình kênh.
+        No project yet. Create a project on Overview before configuring channels.
       </p>
     );
   }
@@ -101,7 +101,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
       >
         <Spinner size="md" />
         <Typography variant="p" color="muted">
-          Đang tải dữ liệu...
+          Loading...
         </Typography>
       </Flex>
     );
@@ -110,8 +110,8 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
   if (projectsFetched && !project) {
     return (
       <div className={styles.errorWrap}>
-        <BackButton href="/dashboard">Về tổng quan</BackButton>
-        <p className={styles.error}>Không tìm thấy dự án.</p>
+        <BackButton href="/dashboard">Back to overview</BackButton>
+        <p className={styles.error}>Project not found.</p>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
     <>
       <SearchItem
         id="channel-search"
-        placeholder="Tìm kiếm kênh..."
+        placeholder="Search channels..."
         value={search}
         onChange={setSearch}
         maxWidth={360}
@@ -131,7 +131,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
         <Flex direction="column" align="center" gap={3} className={styles.errorBlock}>
           <p className={styles.error}>{channelsError}</p>
           <Button type="button" variant="secondary" onClick={() => void loadChannels()}>
-            Thử lại
+            Retry
           </Button>
         </Flex>
       ) : null}
@@ -141,17 +141,17 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
           <Flex direction="column" align="center" justify="center" gap={3} className={styles.loadingContainer}>
             <Spinner size="md" />
             <Typography variant="p" color="muted">
-              Đang tải kênh...
+              Loading channels...
             </Typography>
           </Flex>
         ) : filtered.length === 0 ? (
           <p className={styles.empty}>
             {catalog.length === 0
-              ? "Chưa có kênh nào khả dụng trên server."
-              : "Không tìm thấy kênh nào phù hợp."}
+              ? "No channels available on the server."
+              : "No matching channels found."}
           </p>
         ) : (
-          <Grid columns={4} gap="1rem">
+          <Grid columns={4} gap={16}>
             {filtered.map((ch) => {
               const card = (
                 <CardChannel
@@ -168,7 +168,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
                     key={ch.channelId}
                     className={styles.channelCardDisabled}
                     aria-disabled
-                    title="Kênh sắp được hỗ trợ"
+                    title="Coming soon"
                   >
                     {card}
                   </div>

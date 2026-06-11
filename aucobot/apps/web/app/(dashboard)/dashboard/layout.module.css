@@ -8,7 +8,7 @@
   background: var(--color-background);
 }
 
-/* Cột phải: header + nội dung */
+/* Main column: page content */
 .main {
   flex: 1;
   min-width: 0;
@@ -27,7 +27,7 @@
   overflow-y: auto;
 }
 
-/* Trang full-canvas (agent editor, skill editor) — scroll do component con */
+/* Full-canvas routes — child components manage scroll */
 .contentCanvas {
   flex: 1;
   min-height: 0;

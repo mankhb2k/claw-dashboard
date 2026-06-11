@@ -18,13 +18,13 @@ import {
   Typography,
 } from "@/components/ui";
 import type { OverviewChartPeriod } from "@/schemas/overview.schema";
-import { shouldShowChartTick } from "../overview-mappers";
+import {
+  shouldShowChartTick,
+  type OverviewChartDataPoint,
+} from "@/utils/overview/overview-mappers";
 import styles from "./OverviewChart.module.css";
 
-export interface OverviewChartDataPoint {
-  name: string;
-  value: number;
-}
+export type { OverviewChartDataPoint };
 
 interface OverviewChartProps {
   title: string;
@@ -40,7 +40,7 @@ const PERIOD_OPTIONS = [
   { value: "month", label: "Month" },
 ] as const;
 
-const CHART_HEIGHT_PX = 300;
+const CHART_HEIGHT_PX = 300; /* matches --overview-chart-height (18.75rem) */
 
 type ChartTooltipProps = {
   active?: boolean;
@@ -54,7 +54,7 @@ function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   }
 
   return (
-    <Box border radius="md" color="white" className={styles.tooltip}>
+    <Box border radius="md" color="var(--color-card-background)" className={styles.tooltip}>
       <Flex direction="column" gap={4}>
         <Typography variant="xs" color="muted">
           {label}

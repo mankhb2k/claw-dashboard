@@ -91,7 +91,7 @@ export function ModalAddConnection({
               className={styles.eyeBtn}
               onClick={() => setShowApiKey((prev) => !prev)}
               disabled={apiKeyDisabled || !apiKey}
-              aria-label={showApiKey ? "Ẩn key" : "Hiện key"}
+              aria-label={showApiKey ? "Hide key" : "Show key"}
             >
               {showApiKey ? <Eye size={16} /> : <EyeOff size={16} />}
             </button>
@@ -99,7 +99,7 @@ export function ModalAddConnection({
 
           <DialogFooter>
             <Button variant="ghost" size="sm" onClick={onClose} type="button">
-              Hủy
+              Cancel
             </Button>
             <Button
               variant="primary"

@@ -62,7 +62,7 @@ export function ClientSkillPage() {
     } catch (err) {
       setSkills([]);
       setLoadError(
-        err instanceof Error ? err.message : "Không tải được skills",
+        err instanceof Error ? err.message : "Could not load skills",
       );
     }
   }, [projectId]);
@@ -106,7 +106,7 @@ export function ClientSkillPage() {
             description: data.description,
             heading: data.heading || null,
           });
-          toast.success("Đã cập nhật skill");
+          toast.success("Skill updated");
         } else {
           const created = await projectApi.createSkill(projectId, {
             slug: data.name,
@@ -116,7 +116,7 @@ export function ClientSkillPage() {
             bodyMarkdown: "",
             enabled: false,
           });
-          toast.success("Đã tạo skill");
+          toast.success("Skill created");
           setIsModalOpen(false);
           await loadSkills();
           router.push(`/dashboard/skill/${created.slug}`);
@@ -126,7 +126,7 @@ export function ClientSkillPage() {
         await loadSkills();
       } catch (err) {
         toast.error(
-          "Lưu skill thất bại",
+          "Failed to save skill",
           err instanceof Error ? err.message : undefined,
         );
       }
@@ -167,7 +167,7 @@ export function ClientSkillPage() {
         URL.revokeObjectURL(url);
       } catch (err) {
         toast.error(
-          "Tải ZIP thất bại",
+          "ZIP download failed",
           err instanceof Error ? err.message : undefined,
         );
       }
@@ -193,7 +193,7 @@ export function ClientSkillPage() {
           prev.map((s) => (s.slug === skill.slug ? result : s)),
         );
         if (result.lastSyncError && nextEnabled) {
-          toast.error("Sync skill thất bại", result.lastSyncError);
+          toast.error("Skill sync failed", result.lastSyncError);
         } else if (nextEnabled) {
           toast.success(
             "Enabled skill",
@@ -323,11 +323,11 @@ export function ClientSkillPage() {
         </Flex>
         <div className={styles.toolbarActions}>
           <Button variant="secondary" onClick={() => setIsStoreModalOpen(true)}>
-            <Store size={16} style={{ marginRight: 8 }} />
+            <Store size={16} aria-hidden />
             Browser Store
           </Button>
           <Button onClick={openCreateModal}>
-            <Plus size={16} style={{ marginRight: 8 }} />
+            <Plus size={16} aria-hidden />
             Create new skill
           </Button>
         </div>
@@ -339,7 +339,7 @@ export function ClientSkillPage() {
             {loadError}
           </Typography>
         ) : null}
-        <Grid columns={4} gap="1rem" fullWidth className={styles.skillGrid}>
+        <Grid columns={4} gap="var(--space-4)" fullWidth className={styles.skillGrid}>
           {filteredSkills.map((skill) => (
             <CardSkill
               key={skill.slug}
@@ -412,7 +412,7 @@ export function ClientSkillPage() {
             <AlertDialogTitle>Confirm delete</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this skill? This action cannot be
-              hoàn tác.
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

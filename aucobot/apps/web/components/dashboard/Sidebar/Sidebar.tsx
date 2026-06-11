@@ -48,7 +48,7 @@ export function Sidebar({
         <button
           onClick={onToggle}
           className={styles.collapseBtn}
-          aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <ChevronsLeft
             size={14}

@@ -1,5 +1,5 @@
 /* =============================================================================
-   CLIENT AI MODEL PAGE — Bố cục vùng danh sách API Key Providers
+   CLIENT AI MODEL PAGE — API key provider list layout
    ============================================================================= */
 
 .container {
@@ -7,7 +7,7 @@
 }
 
 .title {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .providerLink {
@@ -24,6 +24,6 @@
 }
 
 .error {
-  color: var(--color-destructive, #dc2626);
+  color: var(--color-danger);
   margin-bottom: var(--space-4);
 }

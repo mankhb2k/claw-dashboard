@@ -37,7 +37,7 @@
 }
 
 .codeText {
-  font-family: var(--font-mono);
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
   font-size: clamp(1.1rem, 4vw, 1.5rem);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -78,14 +78,14 @@
 
 .codeMeta {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
 }
 
 .codePlaceholder {
   padding: var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  background: var(--color-surface-muted);
+  background: var(--color-muted);
   text-align: center;
 }
 

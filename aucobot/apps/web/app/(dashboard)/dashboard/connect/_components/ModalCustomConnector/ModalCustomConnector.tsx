@@ -11,8 +11,8 @@ type Props = {
 }
 
 const customConnectorSchema = z.object({
-  name: z.string().min(1, 'Tên không được để trống'),
-  serverUrl: z.string().url('URL không hợp lệ'),
+  name: z.string().min(1, 'Name is required'),
+  serverUrl: z.string().url('Invalid URL'),
   clientId: z.string().optional(),
   clientSecret: z.string().optional(),
 })
@@ -30,7 +30,6 @@ export function ModalCustomConnector({ onClose }: Props) {
 
   const onSubmit = (data: CustomConnectorInput) => {
     console.log('Submitted data:', data)
-    // Handle submission
   }
 
   return (
@@ -38,17 +37,17 @@ export function ModalCustomConnector({ onClose }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className={styles.title}>
-            Thêm Kết nối tùy chỉnh
+            Add custom connection
             <span className={styles.beta}>BETA</span>
           </DialogTitle>
         </DialogHeader>
 
-        <p className={styles.lead}>Kết nối với server MCP hoặc API riêng của bạn.</p>
+        <p className={styles.lead}>Connect to your own MCP server or private API.</p>
 
         <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
           <Input
             id="custom-connector-name"
-            label="Tên dịch vụ"
+            label="Service name"
             type="text"
             error={errors.name?.message}
             {...register('name')}
@@ -56,35 +55,35 @@ export function ModalCustomConnector({ onClose }: Props) {
 
           <Input
             type="text"
-            placeholder="URL của server (ví dụ: https://mcp.your-domain.com)"
+            placeholder="Server URL (e.g. https://mcp.your-domain.com)"
             error={errors.serverUrl?.message}
             {...register('serverUrl')}
           />
 
-          <p className={styles.advanced}>Cài đặt nâng cao (Tùy chọn)</p>
-          
+          <p className={styles.advanced}>Advanced settings (optional)</p>
+
           <Input
             type="text"
-            placeholder="Client ID (nếu có)"
+            placeholder="Client ID (if any)"
             error={errors.clientId?.message}
             {...register('clientId')}
           />
 
           <Input
             type="password"
-            placeholder="Client Secret (nếu có)"
+            placeholder="Client Secret (if any)"
             error={errors.clientSecret?.message}
             {...register('clientSecret')}
           />
 
-          <p className={styles.hint}>Mọi thông tin sẽ được mã hóa và lưu trữ an toàn.</p>
+          <p className={styles.hint}>All credentials are encrypted and stored securely.</p>
 
           <DialogFooter>
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" variant="primary" size="sm" disabled={isSubmitting}>
-              Thêm Kết nối
+              Add connection
             </Button>
           </DialogFooter>
         </form>

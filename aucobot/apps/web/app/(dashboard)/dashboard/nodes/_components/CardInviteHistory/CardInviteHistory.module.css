@@ -18,12 +18,12 @@
 
 .chevron {
   transition: transform var(--transition-fast) ease;
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
 }
 
 .chevronOpen {
   transition: transform var(--transition-fast) ease;
-  color: var(--color-text-muted);
+  color: var(--color-muted-foreground);
   transform: rotate(180deg);
 }
 

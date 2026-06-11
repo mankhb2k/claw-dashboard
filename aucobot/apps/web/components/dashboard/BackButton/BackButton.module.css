@@ -1,4 +1,4 @@
-/* Nút quay lại — luôn căn trái trong container cha */
+/* Back button — aligned to the start of the parent */
 .root {
   display: inline-flex;
   align-items: center;
@@ -33,26 +33,26 @@
   transform: translateY(1px);
 }
 
-/* Chỉ icon */
+/* Icon only */
 .iconOnly {
   width: 34px;
   height: 34px;
   justify-content: center;
 }
 
-/* Icon + nhãn */
+/* Icon + label */
 .withLabel {
   gap: var(--space-2);
   min-height: 34px;
 }
 
-/* Icon quay lại */
+/* Back icon */
 .icon {
   flex-shrink: 0;
   color: currentColor;
 }
 
-/* Nhãn cạnh icon */
+/* Label beside icon */
 .label {
   font-weight: 300;
   font-size: var(--font-size-md);

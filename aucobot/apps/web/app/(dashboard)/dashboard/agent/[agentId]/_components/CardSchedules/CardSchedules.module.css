@@ -129,7 +129,7 @@
   max-width: 100%;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .formGrid {
     grid-template-columns: 1fr;
   }

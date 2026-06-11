@@ -14,7 +14,7 @@
   height: 100%;
 }
 
-/* Khối title, mô tả, stats + tags */
+/* Title, description, stats, and tags */
 .main {
   flex: 1;
   min-width: 0;
@@ -65,7 +65,7 @@
   line-height: 1.4;
 }
 
-/* Nút Install / Open editor — cột riêng */
+/* Install / Open editor action column */
 .action {
   flex-shrink: 0;
   align-self: center;

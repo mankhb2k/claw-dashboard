@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-/** Chuẩn OpenClaw: name chỉ chữ thường, số, gạch ngang (hyphen-case). */
+/** OpenClaw convention: name is lowercase letters, numbers, and hyphens (hyphen-case). */
 export const SKILL_NAME_REGEX = /^[a-z0-9][a-z0-9-]{1,63}$/
 
 export const skillDraftSchema = z.object({
@@ -10,8 +10,7 @@ export const skillDraftSchema = z.object({
     .min(3)
     .max(64)
     .regex(SKILL_NAME_REGEX, {
-      message:
-        'name_invalid_format',
+      message: 'name_invalid_format',
     }),
   description: z.string().trim().min(1).max(500),
   heading: z.string().trim().max(120).optional(),
@@ -19,12 +18,12 @@ export const skillDraftSchema = z.object({
 
 export type SkillDraft = z.infer<typeof skillDraftSchema>
 
-/** Escape scalar YAML khi cần bọc trong ngoặc kép. */
+/** Escape a YAML scalar when it must be wrapped in double quotes. */
 export function escapeYamlDoubleQuoted(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, ' ')
 }
 
-/** Quyết định format một dòng YAML scalar cho name hoặc description. */
+/** Format a single YAML scalar line for name or description. */
 export function yamlScalarLine(key: string, value: string): string {
   const needsQuote =
     value.includes(':') ||
@@ -40,8 +39,6 @@ export function yamlScalarLine(key: string, value: string): string {
   return `${key}: "${escapeYamlDoubleQuoted(value.trim())}"`
 }
 
-
-
 export function humanizeSkillName(name: string): string {
   const parts = name.split('-').filter(Boolean)
   if (parts.length === 0) return name
@@ -54,8 +51,8 @@ export function humanizeSkillName(name: string): string {
 }
 
 /**
- * Sinh nội dung SKILL.md đầy đủ (YAML frontmatter + body) theo docs OpenClaw.
- * Gọi sau khi `skillDraftSchema.safeParse` thành công.
+ * Build full SKILL.md content (YAML frontmatter + body) per OpenClaw docs.
+ * Call after `skillDraftSchema.safeParse` succeeds.
  */
 export function buildSkillMarkdown(
   d: SkillDraft,
@@ -80,13 +77,11 @@ export function buildSkillMarkdown(
   return lines.join('\n').replace(/\n+$/, '\n')
 }
 
-/**
- * Sinh nội dung _meta.json cho Skill package.
- */
+/** Build _meta.json content for a skill package. */
 export function buildSkillMetaJson(d: SkillDraft): string {
   return JSON.stringify({
     name: d.name,
     description: d.description,
-    version: '1.0.0'
-  }, null, 2)
+    version: '1.0.0',
+  })
 }

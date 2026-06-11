@@ -7,13 +7,14 @@ export interface SwitchProps extends SwitchPrimitive.SwitchProps {
 }
 
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
-  ({ label, id, className, ...props }, ref) => {
+  ({ label, id, className, style, ...props }, ref) => {
     return (
       <div className={styles.wrapper}>
         <SwitchPrimitive.Root
           ref={ref}
           id={id}
           className={`${styles.root} ${className || ''}`}
+          style={style}
           {...props}
         >
           <SwitchPrimitive.Thumb className={styles.thumb} />

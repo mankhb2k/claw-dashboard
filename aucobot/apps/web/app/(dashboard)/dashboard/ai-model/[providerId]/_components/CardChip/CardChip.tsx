@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, Typography } from "@/components/ui";
-import type { ModelDef } from "../../../providersData";
+import type { ModelDef } from "@/utils/ai-model/providers-data";
 import styles from "./CardChip.module.css";
 
 interface CardChipProps {
@@ -44,7 +44,7 @@ export function CardChip({ model, openclawProviderId }: CardChipProps) {
 
       <div className={styles.badges}>
         {model.recommended && (
-          <span className={styles.badgeRecommended}>Đề xuất</span>
+          <span className={styles.badgeRecommended}>Recommended</span>
         )}
         {model.isFree && <span className={styles.badgeFree}>FREE</span>}
         {model.tier && model.tier !== "stable" && (

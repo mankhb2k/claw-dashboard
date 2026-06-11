@@ -1,8 +1,8 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .apiKeyField {
@@ -10,12 +10,12 @@
 }
 
 .apiKeyField input {
-  padding-right: 2.5rem;
+  padding-right: var(--space-10);
 }
 
 .eyeBtn {
   position: absolute;
-  right: 0.75rem;
+  right: var(--space-3);
   bottom: 0.65rem;
   background: transparent;
   border: none;

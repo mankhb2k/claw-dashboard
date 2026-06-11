@@ -23,7 +23,11 @@ import {
 } from "@/components/ui";
 import styles from "./BlockNoteEditor.module.css";
 
-const MAC_WINDOW_DOTS = ["#f87171", "#fbbf24", "#4ade80"] as const;
+const MAC_WINDOW_DOT_CLASSES = [
+  styles.macDotClose,
+  styles.macDotMinimize,
+  styles.macDotMaximize,
+] as const;
 
 export type BlockNoteViewMode = "editor" | "markdown";
 
@@ -101,18 +105,17 @@ export function BlockNoteEditor({
       radius="lg"
       fullWidth
       fullHeight
-      color="var(--color-card)"
+      color="var(--color-card-background)"
       className={styles.documentArea}
     >
       {/* Header */}
       <div className={styles.docHeader}>
         <Flex align="center" gap={4} className={styles.headerStart}>
-          {MAC_WINDOW_DOTS.map((color) => (
+          {MAC_WINDOW_DOT_CLASSES.map((dotClass) => (
             <Circle
-              key={color}
+              key={dotClass}
               size={12}
-              fill={color}
-              stroke={color}
+              className={dotClass}
               aria-hidden
             />
           ))}
@@ -161,7 +164,7 @@ export function BlockNoteEditor({
           </Flex>
 
           <Button variant="ghost" size="sm" onClick={onCopy}>
-            <Copy size={14} style={{ marginRight: 6 }} aria-hidden />
+            <Copy size={14} aria-hidden />
             Copy
           </Button>
 
@@ -194,7 +197,7 @@ export function BlockNoteEditor({
         </Flex>
       </div>
 
-      {/* Body — BlockNote editor hoặc markdown preview (scroll bên trong editorScroll) */}
+      {/* Body — BlockNote editor or markdown preview */}
       <div className={styles.editorPane}>
         {viewMode === "editor" ? (
           <div ref={bnShellRef} className={styles.bnShell}>

@@ -7,13 +7,14 @@ export interface SliderProps extends SliderPrimitive.SliderProps {
 }
 
 export const Slider = React.forwardRef<HTMLSpanElement, SliderProps>(
-  ({ label, className, ...props }, ref) => {
+  ({ label, className, style, ...props }, ref) => {
     return (
       <div className={styles.wrapper}>
         {label && <label className={styles.label}>{label}</label>}
         <SliderPrimitive.Root
           ref={ref}
           className={`${styles.root} ${className || ''}`}
+          style={style}
           {...props}
         >
           <SliderPrimitive.Track className={styles.track}>

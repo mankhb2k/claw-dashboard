@@ -1,6 +1,7 @@
 import { Flex } from "@/components/layout";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import { ClientSetupPage } from "./_components/ClientSetupPage/ClientSetupPage";
+import styles from "./setup.module.css";
 
 export default function SetupPage() {
   const oss = isOssRuntime();
@@ -11,13 +12,9 @@ export default function SetupPage() {
       align="center"
       justify="center"
       fullWidth
-      style={{
-        minHeight: "100vh",
-        padding: "var(--space-6)",
-        background: "var(--color-background)",
-      }}
+      className={styles.page}
     >
-      <Flex align="stretch" style={{ width: "100%", maxWidth: "440px" }}>
+      <Flex align="stretch" className={styles.content}>
         <ClientSetupPage oss={oss} />
       </Flex>
     </Flex>

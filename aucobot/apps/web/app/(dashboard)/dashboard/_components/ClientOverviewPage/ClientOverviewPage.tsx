@@ -9,16 +9,16 @@ import type {
   OverviewResponse,
 } from "@/schemas/overview.schema";
 import { useProjectStore } from "@/stores/project.store";
-import { MetricCard } from "../MetricCard/MetricCard";
+import { CardMetric } from "../CardMetric/CardMetric";
+import { CardSchedule } from "../CardSchedule/CardSchedule";
 import { OverviewChart } from "../OverviewChart/OverviewChart";
 import { UsageTable } from "../UsageTable/UsageTable";
-import { ScheduleCard } from "../ScheduleCard/ScheduleCard";
 import {
   chartPointsToRecharts,
   formatCostUsd,
   formatTokenCount,
   mapRecentCalls,
-} from "../overview-mappers";
+} from "@/utils/overview/overview-mappers";
 import styles from "./ClientOverviewPage.module.css";
 
 function formatMetricsRange(dateFrom: string, dateTo: string): string {
@@ -148,28 +148,28 @@ export function ClientOverviewPage() {
           </Flex>
 
           <Grid columns={3} gap={24}>
-            <MetricCard
+            <CardMetric
               title="Total Input"
               value={formatTokenCount(overview?.metrics.totalInput ?? 0)}
               subtitle={metricsRangeLabel || "Selected range"}
-              color="#10b981"
+              color="var(--color-overview-input)"
             />
-            <MetricCard
+            <CardMetric
               title="Total Output"
               value={formatTokenCount(overview?.metrics.totalOutput ?? 0)}
               subtitle={metricsRangeLabel || "Selected range"}
-              color="#3b82f6"
+              color="var(--color-overview-output)"
             />
-            <MetricCard
+            <CardMetric
               title="Total Cost"
               value={formatCostUsd(overview?.metrics.totalCostUsd ?? "0")}
               subtitle={metricsRangeLabel || "Selected range"}
-              color="#ec4899"
+              color="var(--color-overview-cost)"
             />
           </Grid>
         </Flex>
 
-        <ScheduleCard />
+        <CardSchedule />
 
         <Grid columns={2} gap={24}>
           <OverviewChart
@@ -184,7 +184,7 @@ export function ClientOverviewPage() {
             data={outputChartData}
             period={chartPeriod}
             onPeriodChange={setChartPeriod}
-            color="#8b5cf6"
+            color="var(--color-overview-chart-secondary)"
           />
         </Grid>
 

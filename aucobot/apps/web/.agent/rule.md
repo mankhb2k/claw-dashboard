@@ -592,12 +592,17 @@ State 1 component?           → useState
     }
     ```
 
-- **Dùng CSS Variables**: Sử dụng **CSS Custom Properties** (variables định nghĩa trong `globals.css`) cho color, spacing, radius, shadow — không hardcode giá trị thô.
+- **Dùng CSS Variables**: Sử dụng **CSS Custom Properties** (variables định nghĩa trong `globals.css`) cho color, spacing, radius, shadow — không hardcode giá trị thô (trừ ngoại lệ padding/margin nhỏ ở mục **Quy tắc Spacing** bên dưới).
 - **Thang size thống nhất (`xs` → `2xl`)** — định nghĩa tại `app/globals.css`, **không dùng `base`**:
   - Typography: `--font-size-xs` (11px), `--font-size-sm` (13px), **`--font-size-md` (14px, mặc định body)**, `--font-size-lg`, `--font-size-xl`, `--font-size-2xl`
   - Transition: `--transition-fast`, **`--transition-md`**, `--transition-slow`
   - Component props `size`: dùng cùng tên `xs | sm | md | lg | xl | 2xl` khi có (ví dụ `DatePicker size="sm"`)
   - **Button**: `size` = `xs | sm | md | lg` (mặc định `md`); nút chỉ icon dùng thêm `iconOnly` (ví dụ `<Button size="sm" iconOnly />`)
+- **Quy tắc Spacing (padding / margin)** — thang `--space-*` tại `globals.css` (`--space-1` = 4px, `--space-2` = 8px, `--space-3` = 12px, …) **không có** bước lẻ 1–3px hay 5–7px:
+  - **1–3px** (ví dụ `padding: 2px`, `gap: 1px`): **luôn ghi cố định `px`** — **không** dùng `var(--space-*)` hay `calc()` quanh token.
+  - **5–7px** (ví dụ `margin-top: 6px`): **luôn ghi cố định `px`** — cùng lý do.
+  - **Khớp thang spacing** (4, 8, 12, 16, 20, 24, 32, 40, 48px…): dùng `var(--space-1)` … `var(--space-12)` tương ứng.
+  - **Không** làm tròn 5px → `var(--space-1)` (4px) hoặc 6px → `var(--space-2)` (8px) nếu thiết kế cần đúng số lẻ.
 - **Quy tắc Radius (Bo góc)**:
   - **Button, Input, Alert, Menu**: Sử dụng `var(--radius-md)` (10px).
   - **Card, Modal, Large Containers**: Sử dụng `var(--radius-lg)` (14px).

@@ -8,7 +8,7 @@
 }
 
 .loading {
-  min-height: 200px;
+  min-height: var(--agent-loading-min-height);
 }
 
 .error {
