@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 export type SkillSnapshot = {
   slug: string;
@@ -9,8 +9,8 @@ export type SkillSnapshot = {
   bodyMarkdown: string;
 };
 
-/** localStorage key — giữ giá trị cũ để không mất persist sau refactor. */
-export const SKILL_EDITOR_LS_KEY = 'skill-editor-ui';
+export const SKILL_EDITOR_LS_KEY = 'aucobot:skill-editor';
+const LEGACY_SKILL_EDITOR_LS_KEY = 'skill-editor-ui';
 
 interface SkillEditorState {
   skillPanelOpen: boolean;
@@ -21,6 +21,23 @@ interface SkillEditorState {
   pendingPanelMessage: string | null;
   requestPanelMessage: (message: string) => void;
   clearPendingPanelMessage: () => void;
+}
+
+function readPersistedPanelOpen(): boolean | null {
+  if (typeof window === 'undefined') return null;
+  for (const key of [SKILL_EDITOR_LS_KEY, LEGACY_SKILL_EDITOR_LS_KEY]) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as { state?: { skillPanelOpen?: boolean } };
+      if (typeof parsed.state?.skillPanelOpen === 'boolean') {
+        return parsed.state.skillPanelOpen;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
 }
 
 export const useSkillEditorStore = create<SkillEditorState>()(
@@ -39,7 +56,14 @@ export const useSkillEditorStore = create<SkillEditorState>()(
     }),
     {
       name: SKILL_EDITOR_LS_KEY,
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ skillPanelOpen: state.skillPanelOpen }),
+      onRehydrateStorage: () => (state) => {
+        const legacyOpen = readPersistedPanelOpen();
+        if (legacyOpen !== null && state) {
+          state.setSkillPanelOpen(legacyOpen);
+        }
+      },
     },
   ),
 );

@@ -1,5 +1,5 @@
-import type { SkillAiEditorProviderId } from '../skill-ai-editor.constants';
-import type { SkillAiEditorProviderAdapter } from '../skill-ai-editor.types';
+import type { SkillAiEditorProviderId } from '../lib/skill-ai-editor.constants';
+import type { SkillAiEditorProviderAdapter } from '../lib/skill-ai-editor.types';
 import { GeminiAssistantProvider } from './gemini-assistant.provider';
 import { OpenAiAssistantProvider } from './openai-assistant.provider';
 

@@ -5,7 +5,7 @@ Packages proprietary cho hosted Cloud. **Không** import từ OSS public package
 | Package | Vai trò |
 | ------- | ------- |
 | `billing` | Stripe, plans — `docs/billing-plan.md` |
-| `fleet` | Docker per project — port `DockerService` hiện tại |
+| `fleet` | `@aucobot-cloud/fleet` — `DockerPerProjectProvisioner` (spawn/stop worker containers) |
 | `quota` | PlanGuard |
 | `ingress` | Traefik, worker callbacks |
 

@@ -14,10 +14,10 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
+import { ProjectsService } from '../services/projects/projects.service';
 import { RenameNodeDto, CreateNodeInviteDto } from './dto/nodes.dto';
-import { NodesService } from './nodes.service';
-import { NodeInvitesService } from './node-invites.service';
+import { NodesService } from './services/nodes/nodes.service';
+import { NodeInvitesService } from './services/node-invites/node-invites.service';
 
 @ApiTags('nodes')
 @ApiBearerAuth()

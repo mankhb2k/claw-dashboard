@@ -13,8 +13,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
 import { SaveKeyDto, SetEnabledDto } from './dto/key.dto';
-import { ProjectsService } from '../projects.service';
-import { ProviderKeysService } from './provider-keys.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { ProviderKeysService } from './services/provider-keys/provider-keys.service';
 
 @ApiTags('projects-provider-keys')
 @ApiBearerAuth()

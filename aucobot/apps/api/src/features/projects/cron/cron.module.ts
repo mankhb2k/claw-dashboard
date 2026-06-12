@@ -2,14 +2,21 @@ import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../../../core/auth/auth.module';
 import { WorkspaceModule } from '../workspace/workspace.module';
 import { ProjectsModule } from '../projects.module';
-import { GatewayRpcService } from '../gateway/gateway-rpc.service';
+import { GatewayModule } from '../gateway/gateway.module';
+import { UsageModule } from '../usage/usage.module';
 import { CronController } from './cron.controller';
-import { CronService } from './cron.service';
+import { CronService } from './services/cron/cron.service';
 
 @Module({
-  imports: [AuthModule, WorkspaceModule, forwardRef(() => ProjectsModule)],
+  imports: [
+    AuthModule,
+    WorkspaceModule,
+    GatewayModule,
+    UsageModule,
+    forwardRef(() => ProjectsModule),
+  ],
   controllers: [CronController],
-  providers: [GatewayRpcService, CronService],
-  exports: [CronService, GatewayRpcService],
+  providers: [CronService],
+  exports: [CronService],
 })
 export class CronModule {}

@@ -5,8 +5,8 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { SandboxService } from './sandbox.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { SandboxService } from './services/sandbox/sandbox.service';
 import { UpdateProjectSandboxDto } from './dto/sandbox.dto';
 
 @ApiTags('sandbox')

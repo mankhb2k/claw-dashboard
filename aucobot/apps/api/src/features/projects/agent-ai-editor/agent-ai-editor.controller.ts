@@ -5,8 +5,8 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { AgentAiEditorService } from './agent-ai-editor.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { AgentAiEditorService } from './services/agent-ai-editor/agent-ai-editor.service';
 import { AgentAiCompleteDto } from './dto/agent-ai-complete.dto';
 
 @ApiTags('agent-ai-editor')
@@ -27,6 +27,7 @@ export class AgentAiEditorController {
   ) {
     await this.projects.assertOwned(user.sub, id);
     return this.editor.complete({
+      userId: user.sub,
       projectId: id,
       providerId: dto.providerId,
       model: dto.model,

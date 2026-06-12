@@ -92,9 +92,11 @@ export {
 export {
   buildSkillMarkdown,
   MAX_SKILL_BODY_BYTES,
+  parseSkillMarkdown,
   SKILL_NAME_REGEX,
   validateSkillName,
   validateSkillSlug,
+  type ParsedSkillMarkdown,
   type SkillDraftInput,
 } from './skill-markdown.js';
 

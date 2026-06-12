@@ -24,10 +24,8 @@ import {
   type SkillDraft,
 } from "@/utils/skill/skill-markdown";
 import { projectApi } from "@/lib/api/project";
-import type {
-  ProjectSkillDetail,
-  ProjectSkillListRow,
-} from "@/schemas/project.schema";
+import type { ProjectSkillListRow } from "@/schemas/project.schema";
+import { useProjectSkills } from "@/hooks/skill/use-project-skills";
 import { useProjectStore } from "@/stores/project.store";
 import { SearchItem } from "@/components/dashboard";
 import { CardSkill } from "../CardSkill/CardSkill";
@@ -42,10 +40,20 @@ export function ClientSkillPage() {
   const projectsLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
 
-  const [loading, setLoading] = useState(true);
-  const [skills, setSkills] = useState<ProjectSkillListRow[]>([]);
+  const {
+    skills,
+    loading: skillsLoading,
+    error: loadError,
+    refresh: loadSkills,
+    create: createSkill,
+    update: updateSkill,
+    setEnabled: setSkillEnabledApi,
+    remove: removeSkill,
+    syncAll,
+    setSkills,
+  } = useProjectSkills(projectId, { enabled: Boolean(projectId) });
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
@@ -53,38 +61,11 @@ export function ClientSkillPage() {
   const [togglingSlug, setTogglingSlug] = useState<string | null>(null);
   const [installingStoreSlug, setInstallingStoreSlug] = useState<string | null>(null);
 
-  const loadSkills = useCallback(async () => {
-    if (!projectId) return;
-    setLoadError(null);
-    try {
-      const rows = await projectApi.listSkills(projectId);
-      setSkills(rows);
-    } catch (err) {
-      setSkills([]);
-      setLoadError(
-        err instanceof Error ? err.message : "Could not load skills",
-      );
-    }
-  }, [projectId]);
-
   useEffect(() => {
     void fetchProjects({ silent: true });
   }, [fetchProjects]);
 
-  useEffect(() => {
-    if (!projectId) {
-      setSkills([]);
-      setLoading(projectsLoading);
-      if (!projectsLoading) {
-        setLoadError(null);
-        setLoading(false);
-      }
-      return;
-    }
-    setLoading(true);
-    setLoadError(null);
-    void loadSkills().finally(() => setLoading(false));
-  }, [projectId, projectsLoading, loadSkills]);
+  const loading = projectsLoading || skillsLoading;
 
   const openCreateModal = useCallback(() => {
     setEditingSlug(null);
@@ -101,14 +82,14 @@ export function ClientSkillPage() {
       if (!projectId) return;
       try {
         if (editingSlug) {
-          await projectApi.updateSkill(projectId, editingSlug, {
+          await updateSkill(editingSlug, {
             name: data.name,
             description: data.description,
             heading: data.heading || null,
           });
           toast.success("Skill updated");
         } else {
-          const created = await projectApi.createSkill(projectId, {
+          const created = await createSkill({
             slug: data.name,
             name: data.name,
             description: data.description,
@@ -118,12 +99,10 @@ export function ClientSkillPage() {
           });
           toast.success("Skill created");
           setIsModalOpen(false);
-          await loadSkills();
           router.push(`/dashboard/skill/${created.slug}`);
           return;
         }
         setIsModalOpen(false);
-        await loadSkills();
       } catch (err) {
         toast.error(
           "Failed to save skill",
@@ -131,7 +110,7 @@ export function ClientSkillPage() {
         );
       }
     },
-    [projectId, editingSlug, loadSkills, router],
+    [editingSlug, createSkill, updateSkill, router],
   );
 
   const handleDownloadZip = useCallback(
@@ -184,11 +163,7 @@ export function ClientSkillPage() {
         ),
       );
       try {
-        const result = await projectApi.setSkillEnabled(
-          projectId,
-          skill.slug,
-          nextEnabled,
-        );
+        const result = await setSkillEnabledApi(skill.slug, nextEnabled);
         setSkills((prev) =>
           prev.map((s) => (s.slug === skill.slug ? result : s)),
         );
@@ -200,7 +175,6 @@ export function ClientSkillPage() {
             "Agent will apply at the next chat message (/new if old session).",
           );
         }
-        await loadSkills();
       } catch (err) {
         setSkills((prev) =>
           prev.map((s) =>
@@ -215,23 +189,41 @@ export function ClientSkillPage() {
         setTogglingSlug(null);
       }
     },
-    [projectId, loadSkills],
+    [setSkillEnabledApi, setSkills],
   );
 
   const confirmDeleteSkill = useCallback(async () => {
     if (!skillToDelete || !projectId) return;
     try {
-      await projectApi.deleteSkill(projectId, skillToDelete);
+      await removeSkill(skillToDelete);
       toast.success("Deleted skill successfully");
       setSkillToDelete(null);
-      await loadSkills();
     } catch (err) {
       toast.error(
         "Delete skill failed",
         err instanceof Error ? err.message : undefined,
       );
     }
-  }, [skillToDelete, projectId, loadSkills]);
+  }, [skillToDelete, projectId, removeSkill]);
+
+  const handleSyncAll = useCallback(async () => {
+    if (!projectId) return;
+    setSyncingAll(true);
+    try {
+      const result = await syncAll();
+      toast.success(
+        "Skills re-synced",
+        `${result.synced} synced${result.failed ? `, ${result.failed} failed` : ""}`,
+      );
+    } catch (err) {
+      toast.error(
+        "Re-sync failed",
+        err instanceof Error ? err.message : undefined,
+      );
+    } finally {
+      setSyncingAll(false);
+    }
+  }, [projectId, syncAll]);
 
   const handleInstallFromStore = useCallback(
     async (slug: string, openAfterInstall = false) => {
@@ -322,6 +314,13 @@ export function ClientSkillPage() {
           />
         </Flex>
         <div className={styles.toolbarActions}>
+          <Button
+            variant="ghost"
+            onClick={() => void handleSyncAll()}
+            disabled={syncingAll}
+          >
+            {syncingAll ? "Re-syncing…" : "Re-sync skills"}
+          </Button>
           <Button variant="secondary" onClick={() => setIsStoreModalOpen(true)}>
             <Store size={16} aria-hidden />
             Browser Store

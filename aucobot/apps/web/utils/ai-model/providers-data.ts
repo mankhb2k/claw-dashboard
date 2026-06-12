@@ -1,8 +1,10 @@
 import {
+  GEMINI_DEFAULT_OPENCLAW_MODEL,
   GEMINI_OPENCLAW_PROVIDER,
-  geminiModelsToProviderModels,
-} from '@/utils/ai-model/gemini-models'
-import { openAiModelsToProviderModels } from '@/utils/ai-model/openai-models'
+  toGeminiProviderModelEntries,
+  OPENAI_DEFAULT_OPENCLAW_MODEL,
+  toOpenAiProviderModelEntries,
+} from '@aucobot/shared'
 
 export type ModelTier = 'stable' | 'preview' | 'deprecated'
 
@@ -49,7 +51,7 @@ export const APIKEY_PROVIDERS: ProviderData[] = [
     iconSrc: '/models-provider-icon/ChatGPT-icon.svg',
     color: '#10A37F',
     envKey: 'OPENAI_API_KEY',
-    models: openAiModelsToProviderModels(),
+    models: toOpenAiProviderModelEntries(),
     catalogSource: {
       href: 'https://developers.openai.com/api/docs/models',
       label: 'OpenAI API',
@@ -80,7 +82,7 @@ export const APIKEY_PROVIDERS: ProviderData[] = [
     color: '#4285F4',
     envKey: 'GEMINI_API_KEY',
     openclawProviderId: GEMINI_OPENCLAW_PROVIDER,
-    models: geminiModelsToProviderModels(),
+    models: toGeminiProviderModelEntries(),
     catalogSource: {
       href: 'https://ai.google.dev/gemini-api/docs/models',
       label: 'Google Gemini API',
@@ -127,6 +129,8 @@ export const APIKEY_PROVIDERS: ProviderData[] = [
     apiKeyLabel: 'Get Mistral API key',
   },
 ]
+
+export { GEMINI_DEFAULT_OPENCLAW_MODEL, OPENAI_DEFAULT_OPENCLAW_MODEL }
 
 export function getProviderById(providerId: string): ProviderData | undefined {
   return APIKEY_PROVIDERS.find((p) => p.id === providerId)

@@ -1,54 +1,30 @@
 import type { ChatModelsResponse } from '@/lib/api/chat';
+import {
+  findCatalogModelInCatalog,
+  isOpenClawIdInCatalog,
+  NO_MODEL_LABEL,
+} from '@aucobot/shared';
 
 export type ModelSelection = {
   providerId?: string;
   modelId?: string;
 };
 
-function modelIdSuffix(id: string): string {
-  const trimmed = id.trim().toLowerCase();
-  const slash = trimmed.lastIndexOf('/');
-  return slash >= 0 ? trimmed.slice(slash + 1) : trimmed;
-}
-
-function modelIdsEquivalent(a: string, b: string): boolean {
-  const left = a.trim().toLowerCase();
-  const right = b.trim().toLowerCase();
-  if (!left || !right) return false;
-  if (left === right) return true;
-  return modelIdSuffix(left) === modelIdSuffix(right);
-}
+export { NO_MODEL_LABEL };
 
 export function findCatalogModel(
   catalog: ChatModelsResponse | null | undefined,
   openclawId: string,
-): { providerId: string; openclawId: string; name: string } | null {
-  const trimmed = openclawId.trim();
-  if (!trimmed || !catalog) return null;
-
-  for (const provider of catalog.providers) {
-    for (const model of provider.models) {
-      if (modelIdsEquivalent(model.openclawId, trimmed)) {
-        return {
-          providerId: provider.providerId,
-          openclawId: model.openclawId,
-          name: model.name,
-        };
-      }
-    }
-  }
-
-  return null;
+) {
+  return findCatalogModelInCatalog(catalog, openclawId);
 }
 
-export function isOpenClawIdInCatalog(
+export function isOpenClawIdInCatalogResponse(
   catalog: ChatModelsResponse | null | undefined,
   openclawId: string,
 ): boolean {
-  return findCatalogModel(catalog, openclawId) !== null;
+  return isOpenClawIdInCatalog(catalog, openclawId);
 }
-
-export const NO_MODEL_LABEL = 'No Model';
 
 export function resolveModelDisplayName(
   catalog: ChatModelsResponse | null | undefined,
@@ -110,7 +86,7 @@ export function resolveAgentPrimaryOpenClawId(
   const candidate =
     catalog.agentPrimaryModel?.trim() || catalog.primaryModel?.trim() || '';
   if (!candidate) return null;
-  if (isOpenClawIdInCatalog(catalog, candidate)) {
+  if (isOpenClawIdInCatalogResponse(catalog, candidate)) {
     const match = findCatalogModel(catalog, candidate);
     return match?.openclawId ?? candidate;
   }

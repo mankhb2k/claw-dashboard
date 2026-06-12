@@ -9,9 +9,9 @@ import { projectApi } from "@/lib/api/project";
 import { PROVIDER_TEST_TIMEOUT_MS } from "@/utils/ai-model/provider-test";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectEnvMaskedRow } from "@/schemas/project.schema";
-import { GEMINI_DEFAULT_OPENCLAW_MODEL } from "@/utils/ai-model/gemini-models";
-import { OPENAI_DEFAULT_OPENCLAW_MODEL } from "@/utils/ai-model/openai-models";
 import {
+  GEMINI_DEFAULT_OPENCLAW_MODEL,
+  OPENAI_DEFAULT_OPENCLAW_MODEL,
   getCatalogSource,
   APIKEY_PROVIDERS,
   type ModelDef,

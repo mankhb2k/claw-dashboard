@@ -29,6 +29,7 @@
     "@aucobot/runtime-oss": "workspace:*",
     "@aucobot/shared": "workspace:*",
     "@aucobot/workspace-sync": "workspace:*",
+    "@aucobot/clawhub-client": "workspace:*",
     "@aucobot-cloud/avatar-storage": "workspace:*",
     "@aucobot-cloud/chat-attachment-storage": "workspace:*",
     "@fastify/cookie": "^11.0.2",
@@ -44,7 +45,6 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "dockerode": "^5.0.0",
     "nanoid": "^5.1.9",
     "nestjs-pino": "^4.6.1",
     "pino": "^10.3.1",
@@ -60,7 +60,6 @@
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
     "@types/bcrypt": "^5.0.2",
-    "@types/dockerode": "^4.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.12.4",
     "@types/supertest": "^7.0.0",
@@ -87,7 +86,12 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
+    "roots": [
+      "<rootDir>/src",
+      "<rootDir>/../../packages/shared/src",
+      "<rootDir>/../../packages/workspace-sync/src"
+    ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -95,10 +99,17 @@
     "transformIgnorePatterns": [
       "node_modules/(?!(nanoid)/)"
     ],
+    "moduleNameMapper": {
+      "^@aucobot/workspace-sync$": "<rootDir>/../../packages/workspace-sync/src/index.ts",
+      "^@aucobot/clawhub-client$": "<rootDir>/../../packages/clawhub-client/src/index.ts",
+      "^@aucobot/shared$": "<rootDir>/../../packages/shared/src/index.ts",
+      "^@aucobot/runtime-contracts$": "<rootDir>/../../packages/runtime-contracts/src/index.ts",
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "./coverage",
     "testEnvironment": "node"
   }
 }

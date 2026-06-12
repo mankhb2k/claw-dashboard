@@ -17,8 +17,8 @@ import {
   UpdateChannelDto,
   UpsertChannelSecretDto,
 } from './dto/channel.dto';
-import { ProjectsService } from '../projects.service';
-import { ChannelsService } from './channels.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { ChannelsService } from './services/channels/channels.service';
 
 @ApiTags('channels')
 @ApiBearerAuth()

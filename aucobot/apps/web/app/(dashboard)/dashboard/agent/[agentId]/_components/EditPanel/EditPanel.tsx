@@ -38,7 +38,7 @@ import { Users } from "lucide-react";
 import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
 import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
-import { CardSkill } from "../CardSkill/CardSkill";
+import { AgentSkillAllowlistCard } from "../AgentSkillAllowlistCard/AgentSkillAllowlistCard";
 import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
 import { CardSchedules } from "../CardSchedules/CardSchedules";
 import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
@@ -313,7 +313,7 @@ export function EditPanel({
               setValue("shellExecEnabled", val, { shouldDirty: true })
             }
           />
-          <CardSkill />
+          <AgentSkillAllowlistCard />
         </>
       )}
       {activeTab === "integrations" && (

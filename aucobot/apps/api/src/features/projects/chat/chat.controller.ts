@@ -2,9 +2,9 @@ import { Controller, Get, Param, Put, Body, Query, UseGuards } from '@nestjs/com
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { ChatAgentsService } from './chat-agents.service';
-import { ChatModelService } from './chat-model.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { ChatAgentsService } from './services/chat-agents/chat-agents.service';
+import { ChatModelService } from './services/chat-model/chat-model.service';
 import { SetModelDto } from './dto/set-model.dto';
 import { sessionKeyForAgent } from '@aucobot/control-plane-core';
 

@@ -23,6 +23,9 @@ importers:
       '@aucobot-cloud/chat-attachment-storage':
         specifier: workspace:*
         version: link:../../cloud/packages/chat-attachment-storage
+      '@aucobot/clawhub-client':
+        specifier: workspace:*
+        version: link:../../packages/clawhub-client
       '@aucobot/control-plane-core':
         specifier: workspace:*
         version: link:../../packages/control-plane-core
@@ -80,9 +83,6 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
-      dockerode:
-        specifier: ^5.0.0
-        version: 5.0.0
       nanoid:
         specifier: ^5.1.9
         version: 5.1.11
@@ -123,9 +123,6 @@ importers:
       '@types/bcrypt':
         specifier: ^5.0.2
         version: 5.0.2
-      '@types/dockerode':
-        specifier: ^4.0.1
-        version: 4.0.1
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -374,13 +371,39 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  cloud/packages/fleet: {}
+  cloud/packages/fleet:
+    dependencies:
+      '@aucobot/workspace-sync':
+        specifier: workspace:*
+        version: link:../../../packages/workspace-sync
+      dockerode:
+        specifier: ^5.0.0
+        version: 5.0.0
+    devDependencies:
+      '@types/dockerode':
+        specifier: ^4.0.1
+        version: 4.0.1
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.12.4
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   cloud/packages/ingress: {}
 
   cloud/packages/quota: {}
 
   cloud/web: {}
+
+  packages/clawhub-client:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.12.4
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/control-plane-core:
     dependencies:
@@ -12159,7 +12182,7 @@ snapshots:
       eslint: 9.39.4(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
-      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.4(jiti@2.7.0))
@@ -12196,7 +12219,7 @@ snapshots:
       tinyglobby: 0.2.16
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -12210,7 +12233,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)):
+  eslint-plugin-import@2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9

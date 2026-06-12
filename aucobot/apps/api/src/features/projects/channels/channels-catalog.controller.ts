@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ChannelsService } from './channels.service';
+import { ChannelsService } from './services/channels/channels.service';
 
 @ApiTags('channels-catalog')
 @Controller('projects')

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { NodeInvitesService } from './node-invites.service';
+import { NodeInvitesService } from './services/node-invites/node-invites.service';
 import { RedeemNodeInviteDto } from './dto/nodes.dto';
 
 @ApiTags('nodes')

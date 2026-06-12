@@ -15,8 +15,8 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { CronService } from './cron.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { CronService } from './services/cron/cron.service';
 import {
   CreateCronJobDto,
   ListCronQueryDto,

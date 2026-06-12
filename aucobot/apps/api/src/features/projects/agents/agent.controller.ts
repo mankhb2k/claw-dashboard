@@ -18,8 +18,8 @@ import {
   SetAgentEnabledDto,
   UpdateAgentDto,
 } from './dto/agent.dto';
-import { ProjectsService } from '../projects.service';
-import { AgentService } from './agent.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { AgentService } from './services/agent/agent.service';
 
 @ApiTags('agents')
 @ApiBearerAuth()

@@ -3,7 +3,7 @@ import {
   mergeHeartbeatIntoConfig,
   resolveAgentHeartbeatEvery,
   validateHeartbeatEvery,
-} from '../../../../../../packages/workspace-sync/src/heartbeat-sync';
+} from '@aucobot/workspace-sync';
 
 describe('heartbeat-sync merge', () => {
   const project = {

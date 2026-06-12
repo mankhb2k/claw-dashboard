@@ -15,6 +15,8 @@ import { SandboxModule } from './features/projects/sandbox/sandbox.module';
 import { ExecPolicyModule } from './features/projects/exec-policy/exec-policy.module';
 import { NodesModule } from './features/projects/nodes/nodes.module';
 import { OverviewModule } from './features/projects/overview/overview.module';
+import { UsageModule } from './features/projects/usage/usage.module';
+import { SkillsModule } from './features/projects/skills/skills.module';
 import { DbHealthMiddleware } from './core/common/middleware/db-health.middleware';
 
 @Module({
@@ -38,6 +40,8 @@ import { DbHealthMiddleware } from './core/common/middleware/db-health.middlewar
     ExecPolicyModule,
     NodesModule,
     OverviewModule,
+    UsageModule,
+    SkillsModule,
   ],
   controllers: [AppController],
   providers: [AppService, DbHealthMiddleware],

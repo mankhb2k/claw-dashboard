@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -18,10 +17,8 @@ import {
   SetSkillEnabledDto,
   UpdateSkillDto,
 } from './dto/skill.dto';
-import { InstallSkillFromStoreDto, SkillStoreSearchQueryDto } from './dto/skill-store.dto';
-import { ProjectsService } from '../projects.service';
-import { ProjectSkillsService } from './project-skills.service';
-import { SkillStoreService } from './skill-store.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { ProjectSkillsService } from './services/project-skills/project-skills.service';
 
 @ApiTags('projects-skills')
 @ApiBearerAuth()
@@ -31,7 +28,6 @@ export class ProjectSkillsController {
   constructor(
     private readonly projects: ProjectsService,
     private readonly skills: ProjectSkillsService,
-    private readonly store: SkillStoreService,
   ) {}
 
   @Get(':id/skills')
@@ -62,41 +58,6 @@ export class ProjectSkillsController {
   async syncAll(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
     await this.projects.assertOwned(user.sub, id);
     return this.skills.syncAllEnabled(id);
-  }
-
-  @Get(':id/skills/store/search')
-  async searchStore(
-    @CurrentUser() user: JwtPayloadUser,
-    @Param('id') id: string,
-    @Query() query: SkillStoreSearchQueryDto,
-  ) {
-    await this.projects.assertOwned(user.sub, id);
-    return this.store.search(id, {
-      q: query.q,
-      cursor: query.cursor,
-      limit: query.limit,
-      sort: query.sort,
-    });
-  }
-
-  @Post(':id/skills/store/install')
-  async installFromStore(
-    @CurrentUser() user: JwtPayloadUser,
-    @Param('id') id: string,
-    @Body() dto: InstallSkillFromStoreDto,
-  ) {
-    await this.projects.assertOwned(user.sub, id);
-    return this.store.install(id, dto.slug);
-  }
-
-  @Get(':id/skills/store/:slug')
-  async getStoreDetail(
-    @CurrentUser() user: JwtPayloadUser,
-    @Param('id') id: string,
-    @Param('slug') slug: string,
-  ) {
-    await this.projects.assertOwned(user.sub, id);
-    return this.store.getDetail(id, slug);
   }
 
   @Get(':id/skills/:slug')

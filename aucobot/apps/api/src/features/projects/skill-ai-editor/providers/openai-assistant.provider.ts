@@ -1,13 +1,13 @@
 import {
   SKILL_AI_EDITOR_MAX_OUTPUT_TOKENS,
   SKILL_AI_EDITOR_TIMEOUT_MS,
-} from '../skill-ai-editor.constants';
+} from '../lib/skill-ai-editor.constants';
 import type {
   SkillAiEditorCompleteInput,
   SkillAiEditorCompleteResult,
   SkillAiEditorProviderAdapter,
-} from '../skill-ai-editor.types';
-import { normalizeAssistantMarkdown } from '../skill-ai-editor.prompt';
+} from '../lib/skill-ai-editor.types';
+import { normalizeAssistantMarkdown } from '../lib/skill-ai-editor.prompt';
 import { toNativeModelId } from './model-id.util';
 
 type OpenAiChatResponse = {
@@ -15,6 +15,7 @@ type OpenAiChatResponse = {
     message?: { content?: string | null };
     finish_reason?: string;
   }>;
+  usage?: { prompt_tokens?: number; completion_tokens?: number };
   error?: { message?: string };
 };
 
@@ -22,6 +23,7 @@ export class OpenAiAssistantProvider implements SkillAiEditorProviderAdapter {
   readonly id = 'openai';
 
   async complete(input: SkillAiEditorCompleteInput): Promise<SkillAiEditorCompleteResult> {
+    const startedAt = Date.now();
     const modelId = toNativeModelId(input.model, 'openai');
 
     const messages: Array<{ role: string; content: string }> = [
@@ -68,6 +70,11 @@ export class OpenAiAssistantProvider implements SkillAiEditorProviderAdapter {
       throw new Error('Empty response from OpenAI');
     }
 
-    return { markdown: normalizeAssistantMarkdown(reply) };
+    return {
+      markdown: normalizeAssistantMarkdown(reply),
+      inputTokens: parsed.usage?.prompt_tokens ?? 0,
+      outputTokens: parsed.usage?.completion_tokens ?? 0,
+      latencyMs: Date.now() - startedAt,
+    };
   }
 }

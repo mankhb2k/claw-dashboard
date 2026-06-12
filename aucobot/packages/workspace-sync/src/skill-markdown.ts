@@ -1,4 +1,4 @@
-/** Build SKILL.md for OpenClaw — mirrors frontend/lib/skill-markdown.ts */
+/** Build and parse SKILL.md for OpenClaw. */
 
 export const SKILL_NAME_REGEX = /^[a-z0-9][a-z0-9-]{1,63}$/;
 
@@ -72,4 +72,53 @@ export function buildSkillMarkdown(d: SkillDraftInput, bodyMarkdown: string): st
   }
 
   return lines.join('\n').replace(/\n+$/, '\n');
+}
+
+export type ParsedSkillMarkdown = {
+  name: string;
+  description: string;
+  heading: string | null;
+  bodyMarkdown: string;
+};
+
+function extractFrontmatterValue(frontmatter: string, key: string): string | null {
+  const line = frontmatter
+    .split(/\r?\n/)
+    .find((l) => l.trim().toLowerCase().startsWith(`${key.toLowerCase()}:`));
+  if (!line) return null;
+  const value = line.slice(line.indexOf(':') + 1).trim();
+  return value.replace(/^["']|["']$/g, '') || null;
+}
+
+export function parseSkillMarkdown(
+  markdown: string,
+  options?: {
+    fallbackSlug?: string;
+    fallbackDescription?: string;
+    fallbackHeading?: string;
+  },
+): ParsedSkillMarkdown {
+  const text = markdown.replace(/\r\n/g, '\n');
+  let bodyStart = text;
+  let frontmatter = '';
+  if (text.startsWith('---\n')) {
+    const end = text.indexOf('\n---\n', 4);
+    if (end > 0) {
+      frontmatter = text.slice(4, end);
+      bodyStart = text.slice(end + 5);
+    }
+  }
+
+  const headingMatch = bodyStart.match(/^#\s+(.+)$/m);
+  const heading =
+    headingMatch?.[1]?.trim() || options?.fallbackHeading?.trim() || null;
+  const name =
+    extractFrontmatterValue(frontmatter, 'name') ?? options?.fallbackSlug ?? '';
+  const description =
+    extractFrontmatterValue(frontmatter, 'description') ??
+    options?.fallbackDescription ??
+    '';
+  const bodyMarkdown = bodyStart.replace(/^#\s+.+$/m, '').trim();
+
+  return { name, description, heading, bodyMarkdown };
 }

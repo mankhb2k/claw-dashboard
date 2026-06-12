@@ -15,8 +15,8 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { ChatAttachmentsService } from './chat-attachments.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { ChatAttachmentsService } from './services/chat-attachments/chat-attachments.service';
 
 @ApiTags('chat-attachments')
 @ApiBearerAuth()

@@ -1,19 +1,23 @@
 import {
   SKILL_AI_EDITOR_MAX_OUTPUT_TOKENS,
   SKILL_AI_EDITOR_TIMEOUT_MS,
-} from '../skill-ai-editor.constants';
+} from '../lib/skill-ai-editor.constants';
 import type {
   SkillAiEditorCompleteInput,
   SkillAiEditorCompleteResult,
   SkillAiEditorProviderAdapter,
-} from '../skill-ai-editor.types';
-import { normalizeAssistantMarkdown } from '../skill-ai-editor.prompt';
+} from '../lib/skill-ai-editor.types';
+import { normalizeAssistantMarkdown } from '../lib/skill-ai-editor.prompt';
 import { toNativeModelId } from './model-id.util';
 
 type GeminiGenerateResponse = {
   candidates?: Array<{
     content?: { parts?: Array<{ text?: string }> };
   }>;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+  };
   promptFeedback?: { blockReason?: string };
 };
 
@@ -21,6 +25,7 @@ export class GeminiAssistantProvider implements SkillAiEditorProviderAdapter {
   readonly id = 'gemini';
 
   async complete(input: SkillAiEditorCompleteInput): Promise<SkillAiEditorCompleteResult> {
+    const startedAt = Date.now();
     const modelId = toNativeModelId(input.model, 'google');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(input.apiKey)}`;
 
@@ -71,6 +76,11 @@ export class GeminiAssistantProvider implements SkillAiEditorProviderAdapter {
       throw new Error('Empty response from Gemini');
     }
 
-    return { markdown: normalizeAssistantMarkdown(reply) };
+    return {
+      markdown: normalizeAssistantMarkdown(reply),
+      inputTokens: parsed.usageMetadata?.promptTokenCount ?? 0,
+      outputTokens: parsed.usageMetadata?.candidatesTokenCount ?? 0,
+      latencyMs: Date.now() - startedAt,
+    };
   }
 }

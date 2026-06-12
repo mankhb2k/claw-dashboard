@@ -14,6 +14,10 @@
     "./agent-workspace-compile": {
       "types": "./dist/agent-workspace-compile.d.ts",
       "default": "./dist/agent-workspace-compile.js"
+    },
+    "./skill-markdown": {
+      "types": "./dist/skill-markdown.d.ts",
+      "default": "./dist/skill-markdown.js"
     }
   },
   "scripts": {

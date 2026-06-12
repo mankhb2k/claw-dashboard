@@ -5,8 +5,8 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { HeartbeatService } from './heartbeat.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { HeartbeatService } from './services/heartbeat/heartbeat.service';
 import {
   UpdateAgentHeartbeatDto,
   UpdateProjectHeartbeatDto,

@@ -5,8 +5,8 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { ExecPolicyService } from './exec-policy.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { ExecPolicyService } from './services/exec-policy/exec-policy.service';
 import { UpdateProjectExecPolicyDto } from './dto/exec-policy.dto';
 
 @ApiTags('exec-policy')

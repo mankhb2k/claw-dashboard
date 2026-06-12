@@ -4,7 +4,7 @@ import { ProjectsModule } from '../projects.module';
 import { WorkspaceModule } from '../workspace/workspace.module';
 import { ProviderKeysController } from './provider-keys.controller';
 import { ProvidersCatalogController } from './providers-catalog.controller';
-import { ProviderKeysService } from './provider-keys.service';
+import { ProviderKeysService } from './services/provider-keys/provider-keys.service';
 
 @Module({
   imports: [AuthModule, WorkspaceModule, forwardRef(() => ProjectsModule)],

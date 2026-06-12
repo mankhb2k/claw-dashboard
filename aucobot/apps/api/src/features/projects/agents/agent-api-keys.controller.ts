@@ -2,8 +2,8 @@ import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/c
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
-import { AgentApiKeysService } from './agent-api-keys.service';
+import { ProjectsService } from '../services/projects/projects.service';
+import { AgentApiKeysService } from './services/agent-api-keys/agent-api-keys.service';
 import { CreateAgentApiKeyDto } from './dto/agent-api-key.dto';
 
 @ApiTags('agent-api-keys')

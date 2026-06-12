@@ -2,5 +2,27 @@
   "name": "@aucobot-cloud/fleet",
   "version": "0.0.0",
   "private": true,
-  "description": "Docker per-project provisioning — Phase 4 placeholder"
+  "description": "Docker per-project provisioning for Cloud runtime",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@aucobot/workspace-sync": "workspace:*",
+    "dockerode": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^4.0.1",
+    "@types/node": "^24.0.0",
+    "typescript": "^6.0.3"
+  }
 }

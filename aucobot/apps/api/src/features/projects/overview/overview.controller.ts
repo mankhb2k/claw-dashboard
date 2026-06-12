@@ -5,9 +5,9 @@ import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from '../projects.service';
+import { ProjectsService } from '../services/projects/projects.service';
 import { OverviewQueryDto } from './dto/overview.dto';
-import { OverviewService } from './overview.service';
+import { OverviewService } from './services/overview/overview.service';
 
 @ApiTags('overview')
 @ApiBearerAuth()
