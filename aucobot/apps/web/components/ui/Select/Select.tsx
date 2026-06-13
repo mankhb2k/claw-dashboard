@@ -9,6 +9,7 @@ type SelectOption = {
 };
 
 export type SelectLabelPosition = "top" | "left" | "right" | "none";
+export type SelectSize = "md" | "sm";
 
 interface SelectProps {
   id?: string;
@@ -23,6 +24,8 @@ interface SelectProps {
   placeholder?: string;
   options: SelectOption[];
   disabled?: boolean;
+  /** Default `md`. Use `sm` for compact toolbar/composer selects. */
+  size?: SelectSize;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -41,16 +44,25 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       placeholder = "Select an option",
       options,
       disabled,
+      size = "md",
       className,
       style,
     },
     ref,
   ) => {
+    const isSm = size === "sm";
     const triggerClass = [
       styles.trigger,
+      isSm ? styles.triggerSm : "",
       error ? styles.triggerError : "",
       className ?? "",
     ]
+      .filter(Boolean)
+      .join(" ");
+    const iconClass = [styles.icon, isSm ? styles.iconSm : ""]
+      .filter(Boolean)
+      .join(" ");
+    const itemClass = [styles.item, isSm ? styles.itemSm : ""]
       .filter(Boolean)
       .join(" ");
     const showLabel = Boolean(label) && labelPosition !== "none";
@@ -84,8 +96,11 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             placeholder={placeholder}
             data-slot="select-value"
           />
-          <SelectPrimitive.Icon className={styles.icon}>
-            <ChevronDown size={14} />
+          <SelectPrimitive.Icon
+            className={iconClass}
+            data-slot="select-icon"
+          >
+            <ChevronDown size={isSm ? 12 : 14} />
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
 
@@ -100,7 +115,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 <SelectPrimitive.Item
                   key={option.value}
                   value={option.value}
-                  className={styles.item}
+                  className={itemClass}
                 >
                   <SelectPrimitive.ItemText>
                     {option.label}

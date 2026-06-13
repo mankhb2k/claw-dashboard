@@ -63,8 +63,6 @@ export type ChatPanelProps = {
   modelsLoading: boolean;
   modelSaving: boolean;
   modelHint?: string;
-  modelIsOverride?: boolean;
-  onResetModel?: () => void;
   hasProviders: boolean;
   messages: ChatPanelMessage[];
   streamText: string;
@@ -107,8 +105,6 @@ export function ChatPanel({
   modelsLoading,
   modelSaving,
   modelHint,
-  modelIsOverride,
-  onResetModel,
   hasProviders,
   messages,
   streamText,
@@ -275,8 +271,6 @@ export function ChatPanel({
             modelsLoading={modelsLoading}
             modelSaving={modelSaving}
             hint={modelHint}
-            onResetModel={onResetModel}
-            modelIsOverride={modelIsOverride}
             modelLabel={
               modelOptions.find((m) => m.value === modelId)?.label ?? modelId
             }

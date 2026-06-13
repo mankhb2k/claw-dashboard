@@ -61,8 +61,6 @@ type MessageBoxBaseProps = {
   onModelChange: (model: string) => void;
   modelsLoading?: boolean;
   hint?: string;
-  onResetModel?: () => void;
-  modelIsOverride?: boolean;
   inputId?: string;
   ariaLabel?: string;
   composerId?: string;
@@ -162,8 +160,6 @@ export function MessageBox(props: MessageBoxProps) {
     onModelChange,
     modelsLoading = false,
     hint,
-    onResetModel,
-    modelIsOverride = false,
     inputId = "message-box-input",
     ariaLabel = "Message input",
     composerId = "message-box",
@@ -174,12 +170,6 @@ export function MessageBox(props: MessageBoxProps) {
   const canSend = enableAttachments ? props.canSend : undefined;
   const modelSaving = enableAttachments ? (props.modelSaving ?? false) : false;
   const modelLabel = enableAttachments ? props.modelLabel : undefined;
-  const resetModel =
-    enableAttachments && props.onResetModel ? props.onResetModel : onResetModel;
-  const isModelOverride =
-    enableAttachments && props.modelIsOverride
-      ? props.modelIsOverride
-      : modelIsOverride;
   const contextUsage = enableAttachments ? props.contextUsage : undefined;
   const projectId = enableAttachments ? props.projectId : undefined;
   const sandboxActive = enableAttachments ? (props.sandboxActive ?? false) : false;
@@ -526,6 +516,7 @@ export function MessageBox(props: MessageBoxProps) {
               <Select
                 id={`${composerId}-provider`}
                 labelPosition="none"
+                size="sm"
                 value={providerId || undefined}
                 onValueChange={onProviderChange}
                 options={providerOptions}
@@ -537,6 +528,7 @@ export function MessageBox(props: MessageBoxProps) {
               <Select
                 id={`${composerId}-model`}
                 labelPosition="none"
+                size="sm"
                 value={modelId || undefined}
                 onValueChange={onModelChange}
                 options={modelOptions}
@@ -546,17 +538,6 @@ export function MessageBox(props: MessageBoxProps) {
                 placeholder={modelPlaceholder}
               />
             </div>
-            {resetModel && isModelOverride ? (
-              <button
-                type="button"
-                className={styles.resetModelBtn}
-                onClick={resetModel}
-                disabled={selectsDisabled || modelSaving}
-                title="Reset to agent default model"
-              >
-                Reset default
-              </button>
-            ) : null}
           </div>
 
           <div className={styles.toolbarRight}>

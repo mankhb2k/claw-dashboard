@@ -266,3 +266,31 @@ export const InCard: Story = {
     </div>
   ),
 };
+
+export const SmallSize: Story = {
+  render: () => (
+    <DemoBox width="220px">
+      <DemoLabel>size=&quot;sm&quot; (composer / toolbar)</DemoLabel>
+      <Select
+        id="composer-provider"
+        labelPosition="none"
+        size="sm"
+        defaultValue="gemini"
+        options={[
+          { value: "gemini", label: "Google Gemini" },
+          { value: "openai", label: "OpenAI" },
+        ]}
+      />
+      <Select
+        id="composer-model"
+        labelPosition="none"
+        size="sm"
+        defaultValue="flash"
+        options={[
+          { value: "flash", label: "Gemini 2.5 Flash" },
+          { value: "pro", label: "Gemini 2.5 Pro" },
+        ]}
+      />
+    </DemoBox>
+  ),
+};

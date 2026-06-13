@@ -400,32 +400,6 @@ export function ClientChatPage() {
     [projectId, providerId],
   );
 
-  const resetSessionModelToAgentDefault = useCallback(async () => {
-    const primary = agentPrimaryModel?.trim();
-    if (!primary) return;
-    const selection = resolveModelSelection(modelOptions, primary);
-    if (projectId && sessionKeyRef.current) {
-      clearSessionModelSelection(
-        projectId,
-        agentIdRef.current,
-        sessionKeyRef.current,
-      );
-    }
-    setProviderId(selection.providerId);
-    setModelId(selection.modelId);
-    const client = clientRef.current;
-    if (!client?.connected || !sessionKeyRef.current) return;
-    setModelSaving(true);
-    setError(null);
-    try {
-      await patchSessionModel(client, sessionKeyRef.current, null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reset model");
-    } finally {
-      setModelSaving(false);
-    }
-  }, [agentPrimaryModel, modelOptions, projectId]);
-
   useEffect(() => {
     if (!projectId) {
       setModelsLoading(false);
@@ -911,15 +885,9 @@ export function ClientChatPage() {
           sandboxActive={sandboxActive}
           stagingMaxBytes={stagingMaxBytes}
           contextUsage={activeContextUsage}
-          modelIsOverride={modelIsOverride}
           modelHint={
             modelIsOverride
               ? "Session only — Telegram, Discord, and other channels still use the agent default model."
-              : undefined
-          }
-          onResetModel={
-            modelIsOverride
-              ? () => void resetSessionModelToAgentDefault()
               : undefined
           }
         />

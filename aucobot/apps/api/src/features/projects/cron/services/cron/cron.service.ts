@@ -8,6 +8,9 @@ import { parseCronRunRpcUsage } from '../../../usage/lib/parse-rpc-usage';
 import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
 import type { CreateCronJobDto, UpdateCronJobDto } from '../../dto/cron.dto';
 
+/** Gateway cron.list rejects limit > 200 */
+const CRON_LIST_PAGE_SIZE = 200;
+
 /** Align with billing-plan.md — enforce in API until PlanGuard exists. */
 const CRON_JOBS_PER_PROJECT_LIMIT =
   Number(process.env.CRON_JOBS_PER_PROJECT_LIMIT ?? 20) || 20;
@@ -107,7 +110,7 @@ export class CronService {
       this.gateway.call<CronStatus>(userId, projectId, 'cron.status', {}),
       this.gateway.call<CronListPage>(userId, projectId, 'cron.list', {
         includeDisabled: true,
-        limit: 500,
+        limit: CRON_LIST_PAGE_SIZE,
         offset: 0,
       }),
     ]);
@@ -136,7 +139,7 @@ export class CronService {
   ): Promise<CronListPage> {
     return this.gateway.call<CronListPage>(userId, projectId, 'cron.list', {
       includeDisabled: true,
-      limit: 200,
+      limit: CRON_LIST_PAGE_SIZE,
       offset: 0,
       sortBy: 'nextRunAtMs',
       sortDir: 'asc',

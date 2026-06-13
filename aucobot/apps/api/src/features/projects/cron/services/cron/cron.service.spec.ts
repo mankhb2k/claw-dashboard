@@ -66,7 +66,7 @@ describe('CronService', () => {
       );
       expect(gateway.call).toHaveBeenNthCalledWith(2, USER_ID, PROJECT_ID, 'cron.list', {
         includeDisabled: true,
-        limit: 500,
+        limit: 200,
         offset: 0,
       });
       expect(summary).toEqual({

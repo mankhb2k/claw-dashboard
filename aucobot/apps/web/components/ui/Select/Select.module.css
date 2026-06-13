@@ -136,7 +136,42 @@
   color: currentColor;
 }
 
-/* 7. ERROR STATE — Error state */
+/* 7. SIZE — Compact toolbar / composer */
+.triggerSm {
+  min-height: 28px;
+  padding: 6px 8px 6px 6px;
+  gap: 4px;
+  border-radius: var(--radius-full);
+  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--color-muted) 55%,
+    var(--color-background)
+  );
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.triggerSm:hover:not(:disabled) {
+  border-color: var(--color-border-focus);
+  background: color-mix(
+    in srgb,
+    var(--color-muted) 70%,
+    var(--color-background)
+  );
+}
+
+.iconSm svg {
+  width: 12px;
+  height: 12px;
+}
+
+.itemSm {
+  padding: 6px 32px 6px 6px;
+  font-size: var(--font-size-xs);
+}
+
+/* 8. ERROR STATE — Error state */
 .error {
   font-size: var(--font-size-xs);
   color: var(--color-danger);
