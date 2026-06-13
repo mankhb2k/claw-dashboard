@@ -295,7 +295,7 @@ export class ProjectConnectorsService {
     await this.syncOpenClawConfig(payload.projectId);
 
     const frontend = (process.env.FRONTEND_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-    const redirectUrl = `${frontend}/dashboard/connect/${adapter.slug}?connected=1`;
+    const redirectUrl = `${frontend}/dashboard/connector/${adapter.slug}?connected=1`;
     return { redirectUrl };
   }
 

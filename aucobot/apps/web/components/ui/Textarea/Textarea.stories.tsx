@@ -112,8 +112,8 @@ export const WithHint: Story = {
   args: {
     id: 'textarea-hint',
     label: 'Environment notes (optional)',
-    placeholder: 'VD: Tên camera, host SSH, giọng TTS ưa thích…',
-    hint: 'Ghi chú đặc thù setup — không thay thế cấu hình trong openclaw.json.',
+    placeholder: 'e.g. Camera name, SSH host, preferred TTS voice…',
+    hint: 'Setup-specific notes — does not replace configuration in openclaw.json.',
     rows: 4,
   },
 }
@@ -122,7 +122,7 @@ export const WithError: Story = {
   args: {
     id: 'textarea-error',
     label: 'AGENTS.md (Markdown)',
-    placeholder: '# Vai trò\n…',
+    placeholder: '# Role\n…',
     error: 'Markdown content is required.',
     defaultValue: '',
     rows: 6,
@@ -138,7 +138,7 @@ export const States: Story = {
           <Textarea
             id="state-default"
             label="Rules (one line per rule)"
-            placeholder={'Luôn xác nhận trước khi xóa dữ liệu\nƯu tiên trả lời ngắn gọn'}
+            placeholder={'Always confirm before deleting data\nPrefer concise replies'}
             rows={5}
           />
         </DemoBox>
@@ -150,7 +150,7 @@ export const States: Story = {
           <Textarea
             id="state-hint"
             label="Environment notes (optional)"
-            placeholder="VD: Tên camera, host SSH…"
+            placeholder="e.g. Camera name, SSH host…"
             hint="Shown only when there is no error."
             rows={4}
           />
@@ -232,13 +232,13 @@ export const AgentInstructions: Story = {
         id="agent-rules"
         label="Rules (one line per rule)"
         rows={5}
-        placeholder={'Luôn xác nhận trước khi xóa dữ liệu\nƯu tiên trả lời ngắn gọn'}
+        placeholder={'Always confirm before deleting data\nPrefer concise replies'}
       />
       <Textarea
         id="agent-markdown"
         label="AGENTS.md (Markdown)"
         rows={12}
-        placeholder={'# Vai trò\n\nAgent này làm gì? Phục vụ ai?'}
+        placeholder={'# Role\n\nWhat does this agent do? Who does it serve?'}
         style={{
           minHeight: 280,
           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
@@ -281,7 +281,7 @@ export const OverflowScroll: Story = {
         label="Long content (rows=4)"
         rows={4}
         defaultValue={LOREM}
-        hint="Cuộn bên trong ô — chiều cao khung không tăng theo nội dung."
+        hint="Scroll inside the field — the frame height does not grow with content."
       />
     </DemoBox>
   ),
@@ -292,7 +292,7 @@ export const FillRemainingSpace: Story = {
     docs: {
       description: {
         story:
-          'Use `fill` when the parent is a flex column with fixed height — textarea chiếm phần trống còn lại.',
+          'Use `fill` when the parent is a flex column with fixed height — the textarea fills the remaining space.',
       },
     },
   },
@@ -316,7 +316,7 @@ export const FillRemainingSpace: Story = {
         fill
         label="Notes"
         rows={3}
-        placeholder="Textarea giãn hết chiều cao còn lại…"
+        placeholder="Textarea expands to fill remaining height…"
         defaultValue={LOREM}
         hint="Parent: flex column, height 360px. Textarea: fill=true."
       />

@@ -124,7 +124,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
         value={search}
         onChange={setSearch}
         maxWidth={360}
-        className={styles.searchBar}
+        pageSpacing
       />
 
       {channelsError ? (

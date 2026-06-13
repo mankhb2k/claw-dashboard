@@ -102,7 +102,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
     if (!projectId || !activeConnector) return;
     try {
       await projectApi.deleteConnector(projectId, activeConnector.id);
-      router.push("/dashboard/connect");
+      router.push("/dashboard/connector");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to disconnect");
     }
@@ -148,7 +148,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
                   : "This connector is unavailable or not supported on the backend."}
               </Typography>
             </Flex>
-            <BackButton href="/dashboard/connect">
+            <BackButton href="/dashboard/connector">
               Back to connections
             </BackButton>
           </Flex>

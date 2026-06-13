@@ -6,8 +6,12 @@
   margin-bottom: var(--space-8);
 }
 
+.section + .section {
+  margin-top: var(--space-10);
+}
+
 .title {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 }
 
 .providerLink {
@@ -26,4 +30,9 @@
 .error {
   color: var(--color-danger);
   margin-bottom: var(--space-4);
+}
+
+.empty {
+  margin: var(--space-8) 0;
+  text-align: center;
 }

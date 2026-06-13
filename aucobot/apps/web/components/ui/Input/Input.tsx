@@ -6,10 +6,10 @@ export type InputLabelPosition = 'top' | 'left' | 'right' | 'none'
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string
-  /** Vị trí label: trên, trái, phải hoặc ẩn. Mặc định `top`. */
+  /** Label position: top, left, right, or hidden. Default `top`. */
   labelPosition?: InputLabelPosition
   error?: string
-  /** `md` giữ style hiện tại; `sm` dùng font nhỏ hơn và padding 4px. */
+  /** `md` keeps the current style; `sm` uses a smaller font and 4px padding. */
   size?: InputSize
 }
 

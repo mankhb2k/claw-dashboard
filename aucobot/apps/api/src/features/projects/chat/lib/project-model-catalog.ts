@@ -66,10 +66,28 @@ export async function loadProjectModelCatalog(params: {
     typeof modelBlock?.primary === 'string' ? modelBlock.primary.trim() : null;
 
   const providers: ChatModelProviderGroup[] = [];
+  const proxyModelRows = await params.prisma.projectProviderModel.findMany({
+    where: { projectId: params.projectId },
+  });
+  const proxyModelsByProvider = new Map<string, typeof proxyModelRows>();
+  for (const modelRow of proxyModelRows) {
+    const list = proxyModelsByProvider.get(modelRow.providerId) ?? [];
+    list.push(modelRow);
+    proxyModelsByProvider.set(modelRow.providerId, list);
+  }
+
   for (const row of rows) {
     const def = resolveProvider(row.providerId);
     if (!def) continue;
     let models = catalogForProvider(row.providerId);
+    if (def.uiGroup === 'ai-provider') {
+      const userModels = proxyModelsByProvider.get(row.providerId) ?? [];
+      models = userModels.map((m) => ({
+        id: m.openclawId,
+        name: m.displayName?.trim() || m.openclawId,
+        openclawId: m.openclawId,
+      }));
+    }
     const defaultModel = resolveDefaultModel(row.providerId, row.defaultModel);
     if (defaultModel && !models.some((m) => m.openclawId === defaultModel)) {
       models = [
@@ -89,6 +107,7 @@ export async function loadProjectModelCatalog(params: {
     providers.push({
       providerId: row.providerId,
       displayName: def.displayName,
+      uiGroup: def.uiGroup,
       defaultModel,
       tested: row.lastTestOk === true,
       models,

@@ -10,7 +10,7 @@
 /* Search and action toolbar */
 .toolbar {
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-block: var(--space-4);
 }
 
 .toolbarStart {

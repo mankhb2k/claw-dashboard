@@ -137,4 +137,47 @@ describe('api auth refresh interceptor', () => {
     expect(refreshCalls).toBe(0)
     expect(win.location.assign).not.toHaveBeenCalled()
   })
+
+  it('waits for peer tab refresh lock instead of calling refresh again', async () => {
+    const win = setWindow('/dashboard')
+    const storage = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value)
+      },
+      removeItem: (key: string) => {
+        storage.delete(key)
+      },
+    })
+    storage.set(
+      'oc_auth_refresh',
+      JSON.stringify({ at: Date.now(), tabId: 'other-tab' }),
+    )
+
+    let refreshCalls = 0
+    let projectCalls = 0
+
+    api.defaults.adapter = async (config) => {
+      if (config.url === '/api/auth/refresh') {
+        refreshCalls += 1
+        return ok(config, { ok: true })
+      }
+      if (config.url === '/api/projects/mine') {
+        projectCalls += 1
+        if (projectCalls === 1) {
+          throw unauthorized(config)
+        }
+        return ok(config, { success: true, data: [] })
+      }
+      throw new Error(`Unhandled URL: ${config.url}`)
+    }
+
+    const res = await api.get('/api/projects/mine')
+
+    expect(refreshCalls).toBe(0)
+    expect(projectCalls).toBe(2)
+    expect(res.data).toEqual([])
+    expect(win.location.assign).not.toHaveBeenCalled()
+  })
 })

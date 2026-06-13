@@ -1,24 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CircleAlert, Info } from "lucide-react";
+import { CircleAlert, Info, Star, Trash2 } from "lucide-react";
 import { Button, Card, Typography, toast } from "@/components/ui";
 import { Box, Flex } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
 import { projectApi } from "@/lib/api/project";
 import { PROVIDER_TEST_TIMEOUT_MS } from "@/utils/ai-model/provider-test";
 import { useProjectStore } from "@/stores/project.store";
-import type { ProjectEnvMaskedRow } from "@/schemas/project.schema";
+import type {
+  ProjectEnvMaskedRow,
+  ProviderDefinition,
+  ProviderModelRow,
+  ProviderStarterModel,
+} from "@/schemas/project.schema";
 import {
-  GEMINI_DEFAULT_OPENCLAW_MODEL,
-  OPENAI_DEFAULT_OPENCLAW_MODEL,
   getCatalogSource,
-  APIKEY_PROVIDERS,
+  getProviderUiMetadata,
+  isPhase1ProviderId,
   type ModelDef,
 } from "@/utils/ai-model/providers-data";
 import { CardApiKey } from "../CardApiKey/CardApiKey";
 import { CardChip } from "../CardChip/CardChip";
 import { ModalAddConnection } from "../ModalAddConnection/ModalAddConnection";
+import { ModalAddModel } from "../ModalAddModel/ModalAddModel";
 import { NoApiKey } from "../NoApiKey/NoApiKey";
 import { ProviderHeader } from "../ProviderHeader/ProviderHeader";
 import styles from "./ClientProviderIdPage.module.css";
@@ -78,29 +83,35 @@ function showError(title: string, description?: string) {
   toast.error(title, description);
 }
 
-function resolveDefaultModel(
-  providerId: string,
-  providerData: NonNullable<(typeof APIKEY_PROVIDERS)[number]>,
-) {
-  if (providerId === "gemini") return GEMINI_DEFAULT_OPENCLAW_MODEL;
-  if (providerId === "openai") return OPENAI_DEFAULT_OPENCLAW_MODEL;
-  return (
-    providerData.models?.find((m) => m.recommended)?.openclawId ??
-    providerData.models?.[0]?.openclawId
-  );
+function catalogModelsFromDefinition(
+  definition: ProviderDefinition,
+): ModelDef[] {
+  return (definition.models ?? []).map((m) => ({
+    id: m.id,
+    name: m.name,
+    openclawId: m.openclawId,
+    tier: m.tier,
+    description: m.description,
+    recommended: m.recommended,
+    isFree: m.isFree,
+  }));
 }
 
 export function ClientProviderIdPage({
   providerId,
 }: ClientProviderIdPageProps) {
-  const providerData = APIKEY_PROVIDERS.find((p) => p.id === providerId);
-  const defaultModel = providerData
-    ? resolveDefaultModel(providerId, providerData)
-    : undefined;
-
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
+  const [definition, setDefinition] = useState<ProviderDefinition | null>(
+    null,
+  );
+  const [definitionLoading, setDefinitionLoading] = useState(true);
   const [connections, setConnections] = useState<ProviderConnection[]>([]);
+  const [userModels, setUserModels] = useState<ProviderModelRow[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showAddModel, setShowAddModel] = useState(false);
+  const [addModelPreset, setAddModelPreset] = useState("");
+  const [addingModel, setAddingModel] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
   const [editingConnId, setEditingConnId] = useState<string | null>(null);
   const [editingConn, setEditingConn] = useState<{
@@ -111,6 +122,29 @@ export function ClientProviderIdPage({
   const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const [testingConnId, setTestingConnId] = useState<string | null>(null);
+  const [modelActionId, setModelActionId] = useState<string | null>(null);
+
+  const uiMeta = getProviderUiMetadata(providerId);
+  const isProxy = definition?.category === "proxy";
+  const defaultModel = definition?.defaultModel;
+
+  useEffect(() => {
+    setDefinitionLoading(true);
+    void projectApi
+      .listProviderDefinitions()
+      .then((defs) => {
+        const match = defs.find((d) => d.id === providerId) ?? null;
+        setDefinition(match);
+      })
+      .catch((err) => {
+        setDefinition(null);
+        showError(
+          "Failed to load provider",
+          err instanceof Error ? err.message : undefined,
+        );
+      })
+      .finally(() => setDefinitionLoading(false));
+  }, [providerId]);
 
   const openAddModal = () => {
     setFormMode("add");
@@ -203,16 +237,44 @@ export function ClientProviderIdPage({
     }
   }, [projectId, providerId]);
 
+  const loadUserModels = useCallback(async () => {
+    if (!projectId || !isProxy) {
+      setUserModels([]);
+      return;
+    }
+    setModelsLoading(true);
+    try {
+      const rows = await projectApi.listProviderModels(projectId, providerId);
+      setUserModels(rows);
+    } catch (err) {
+      setUserModels([]);
+      showError(
+        "Failed to load models",
+        err instanceof Error ? err.message : undefined,
+      );
+    } finally {
+      setModelsLoading(false);
+    }
+  }, [projectId, providerId, isProxy]);
+
   useEffect(() => {
     setIsLoaded(false);
     void loadConnections();
   }, [loadConnections]);
 
+  useEffect(() => {
+    if (isProxy && connections.length > 0) {
+      void loadUserModels();
+    } else {
+      setUserModels([]);
+    }
+  }, [isProxy, connections.length, loadUserModels]);
+
   const handleSaveAdd = async (data: { keyName: string; apiKey: string }) => {
-    if (!projectId || !providerData) return;
+    if (!projectId || !definition) return;
 
     const tempId = crypto.randomUUID();
-    const label = data.keyName.trim() || providerData.name;
+    const label = data.keyName.trim() || definition.displayName;
     const optimistic: ProviderConnection = {
       id: tempId,
       name: label,
@@ -257,9 +319,9 @@ export function ClientProviderIdPage({
   };
 
   const handleSaveEdit = async (data: { keyName: string; apiKey: string }) => {
-    if (!projectId || !editingConnId || !providerData) return;
+    if (!projectId || !editingConnId || !definition) return;
 
-    const label = data.keyName.trim() || providerData.name;
+    const label = data.keyName.trim() || definition.displayName;
     setConnections((prev) =>
       prev.map((c) =>
         c.id === editingConnId
@@ -361,6 +423,7 @@ export function ClientProviderIdPage({
     try {
       await projectApi.deleteProviderKey(projectId, providerId);
       setConnections((prev) => prev.filter((c) => c.id !== connId));
+      setUserModels([]);
       toast.success("Deleted API key successfully");
     } catch (err) {
       showError(
@@ -372,7 +435,78 @@ export function ClientProviderIdPage({
     }
   };
 
-  if (!providerData) {
+  const openAddModelModal = (presetOpenclawId = "") => {
+    setAddModelPreset(presetOpenclawId);
+    setShowAddModel(true);
+  };
+
+  const handleAddModel = async (data: {
+    openclawId: string;
+    displayName?: string;
+    setDefault: boolean;
+  }) => {
+    if (!projectId) return;
+    setAddingModel(true);
+    try {
+      await projectApi.addProviderModel(projectId, providerId, data);
+      toast.success("Model added");
+      setShowAddModel(false);
+      await loadUserModels();
+    } catch (err) {
+      showError(
+        "Add model failed",
+        err instanceof Error ? err.message : undefined,
+      );
+    } finally {
+      setAddingModel(false);
+    }
+  };
+
+  const handleSetDefaultModel = async (modelId: string) => {
+    if (!projectId) return;
+    setModelActionId(modelId);
+    try {
+      await projectApi.updateProviderModel(projectId, providerId, modelId, {
+        setDefault: true,
+      });
+      toast.success("Default model updated");
+      await loadUserModels();
+    } catch (err) {
+      showError(
+        "Update default model failed",
+        err instanceof Error ? err.message : undefined,
+      );
+    } finally {
+      setModelActionId(null);
+    }
+  };
+
+  const handleDeleteModel = async (modelId: string) => {
+    if (!projectId) return;
+    setModelActionId(modelId);
+    try {
+      await projectApi.deleteProviderModel(projectId, providerId, modelId);
+      toast.success("Model removed");
+      await loadUserModels();
+    } catch (err) {
+      showError(
+        "Delete model failed",
+        err instanceof Error ? err.message : undefined,
+      );
+    } finally {
+      setModelActionId(null);
+    }
+  };
+
+  if (definitionLoading) {
+    return (
+      <Flex direction="column" gap={24} className={styles.shell}>
+        <Typography color="muted">Loading provider...</Typography>
+      </Flex>
+    );
+  }
+
+  if (!definition || !isPhase1ProviderId(providerId)) {
     return (
       <Flex direction="column" gap={24} className={styles.shell}>
         <Flex
@@ -390,21 +524,31 @@ export function ClientProviderIdPage({
     );
   }
 
-  const models: ModelDef[] = providerData.models ?? [];
-  const openclawProviderId = providerData.openclawProviderId ?? providerData.id;
-  const catalogSource = getCatalogSource(providerId);
+  const models = catalogModelsFromDefinition(definition);
+  const openclawProviderId =
+    definition.openclawProviderId ?? definition.id;
+  const catalogSource =
+    getCatalogSource(providerId) ??
+    (definition.docsUrl
+      ? {
+          href: definition.docsUrl,
+          label: definition.displayName,
+          note: "Official model documentation.",
+        }
+      : undefined);
   const modelGroups = groupModelsByTier(models);
   const hasKey = connections.length > 0;
+  const starterModels: ProviderStarterModel[] =
+    definition.starterModels ?? [];
 
   return (
     <Flex direction="column" gap={24} className={styles.shell}>
       <BackButton href="/dashboard/ai-model">Back to Providers</BackButton>
       <ProviderHeader
-        name={providerData.name}
-        iconSrc={providerData.iconSrc}
-        color={providerData.color}
-        apiKeyUrl={providerData.apiKeyUrl}
-        apiKeyLabel={providerData.apiKeyLabel}
+        name={definition.displayName}
+        iconSrc={uiMeta?.iconSrc}
+        apiKeyUrl={definition.apiKeyUrl ?? uiMeta?.apiKeyUrl}
+        apiKeyLabel={uiMeta?.apiKeyLabel}
       />
 
       {!isLoaded || !hasKey ? (
@@ -442,75 +586,195 @@ export function ClientProviderIdPage({
       <ModalAddConnection
         isOpen={showForm}
         onClose={closeModal}
-        provider={{ name: providerData.name }}
+        provider={{ name: definition.displayName }}
         mode={formMode}
         editingConn={editingConn}
         editKeyLoading={editKeyLoading}
         onSubmit={handleSave}
       />
 
-      <Flex direction="column" gap={16} className={styles.modelsSection}>
-        <Typography variant="h3" weight="bold">
-          Available models
-        </Typography>
-        <Typography variant="small" color="muted">
-          {catalogSource ? (
-            <>
-              Reference list from{" "}
-              <a
-                href={catalogSource.href}
-                target="_blank"
-                rel="noopener noreferrer"
+      {isProxy ? (
+        <>
+          <Flex direction="column" gap={16} className={styles.modelsSection}>
+            <Flex align="center" justify="between" wrap="wrap" gap={12}>
+              <Typography variant="h3" weight="bold">
+                Your models
+              </Typography>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={!hasKey}
+                onClick={() => openAddModelModal()}
               >
-                {catalogSource.label}
-              </a>
-              . {catalogSource.note}
-            </>
-          ) : (
-            <>Model catalog reference for this provider.</>
-          )}
-        </Typography>
+                Add model
+              </Button>
+            </Flex>
+            <Typography variant="small" color="muted">
+              Add OpenClaw model refs for this proxy. They sync to{" "}
+              <code>openclaw.json</code> as the project allowlist.
+            </Typography>
 
-        <Card disableHover className={styles.modelsWrapper}>
-          {Array.from(modelGroups.entries()).map(([tier, tierModels]) => (
-            <Flex
-              as="section"
-              key={tier}
-              direction="column"
-              gap={12}
-              className={styles.modelTierSection}
-            >
-              <Typography
-                variant="small"
-                weight="bold"
-                className={styles.modelTierTitle}
-              >
-                {TIER_TITLE[tier as keyof typeof TIER_TITLE] ?? tier}
+            {modelsLoading ? (
+              <Typography variant="small" color="muted">
+                Loading models...
+              </Typography>
+            ) : userModels.length === 0 ? (
+              <Card disableHover className={styles.modelsWrapper}>
+                <Typography variant="small" color="muted">
+                  No models yet. Add one manually or pick a quick start below.
+                </Typography>
+              </Card>
+            ) : (
+              <Flex direction="column" gap={10}>
+                {userModels.map((model) => (
+                  <Card key={model.id} disableHover className={styles.userModelRow}>
+                    <Flex align="center" justify="between" gap={12} wrap="wrap">
+                      <Flex direction="column" gap={4}>
+                        <code className={styles.userModelCode}>
+                          {model.openclawId}
+                        </code>
+                        {model.displayName && (
+                          <Typography variant="small" color="muted">
+                            {model.displayName}
+                          </Typography>
+                        )}
+                      </Flex>
+                      <Flex align="center" gap={8}>
+                        {model.isDefault ? (
+                          <span className={styles.defaultBadge}>Default</span>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={modelActionId === model.id}
+                            onClick={() => void handleSetDefaultModel(model.id)}
+                          >
+                            <Star size={14} />
+                            Set default
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={modelActionId === model.id}
+                          onClick={() => void handleDeleteModel(model.id)}
+                          aria-label="Delete model"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </Flex>
+                    </Flex>
+                  </Card>
+                ))}
+              </Flex>
+            )}
+          </Flex>
+
+          {starterModels.length > 0 && (
+            <Flex direction="column" gap={16} className={styles.modelsSection}>
+              <Typography variant="h3" weight="bold">
+                Quick start
+              </Typography>
+              <Typography variant="small" color="muted">
+                Starter templates — click to pre-fill the add model form.
               </Typography>
               <Flex wrap="wrap" gap={10}>
-                {tierModels.map((model) => (
-                  <CardChip
-                    key={model.openclawId ?? model.id}
-                    model={model}
-                    openclawProviderId={openclawProviderId}
-                  />
+                {starterModels.map((starter) => (
+                  <Button
+                    key={starter.openclawId}
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasKey}
+                    onClick={() => openAddModelModal(starter.openclawId)}
+                  >
+                    {starter.name}
+                  </Button>
                 ))}
               </Flex>
             </Flex>
-          ))}
-        </Card>
-      </Flex>
+          )}
+
+          <ModalAddModel
+            isOpen={showAddModel}
+            onClose={() => setShowAddModel(false)}
+            providerName={definition.displayName}
+            modelRefHint={definition.modelRefHint}
+            defaultOpenclawId={addModelPreset}
+            onSubmit={(data) => void handleAddModel(data)}
+            submitting={addingModel}
+          />
+        </>
+      ) : (
+        <Flex direction="column" gap={16} className={styles.modelsSection}>
+          <Typography variant="h3" weight="bold">
+            Available models
+          </Typography>
+          <Typography variant="small" color="muted">
+            {catalogSource ? (
+              <>
+                Reference list from{" "}
+                <a
+                  href={catalogSource.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {catalogSource.label}
+                </a>
+                . {catalogSource.note}
+              </>
+            ) : (
+              <>Model catalog reference for this provider.</>
+            )}
+          </Typography>
+
+          <Card disableHover className={styles.modelsWrapper}>
+            {Array.from(modelGroups.entries()).map(([tier, tierModels]) => (
+              <Flex
+                as="section"
+                key={tier}
+                direction="column"
+                gap={12}
+                className={styles.modelTierSection}
+              >
+                <Typography
+                  variant="small"
+                  weight="bold"
+                  className={styles.modelTierTitle}
+                >
+                  {TIER_TITLE[tier as keyof typeof TIER_TITLE] ?? tier}
+                </Typography>
+                <Flex wrap="wrap" gap={10}>
+                  {tierModels.map((model) => (
+                    <CardChip
+                      key={model.openclawId ?? model.id}
+                      model={model}
+                      openclawProviderId={openclawProviderId}
+                    />
+                  ))}
+                </Flex>
+              </Flex>
+            ))}
+          </Card>
+        </Flex>
+      )}
 
       <Box radius="md" className={styles.noteBox}>
         <Flex align="start" gap={6}>
           <Info size={16} className={styles.noteIcon} />
           <Typography variant="small" color="muted">
-            <strong>Model catalog</strong> lives on the frontend/API (static
-            metadata). <strong>API keys</strong> are stored in the DB and synced
-            to <code>openclaw.json</code>. When setting a project default model,
-            save <code>defaultModel</code> (e.g.{" "}
-            <code>google/gemini-2.5-flash</code>) — no separate table per
-            catalog model is required.
+            {isProxy ? (
+              <>
+                <strong>Proxy providers</strong> store your model refs in the
+                database and sync them to <code>openclaw.json</code>. Set a
+                default model when adding or via the list above.
+              </>
+            ) : (
+              <>
+                <strong>Model catalog</strong> lives on the frontend/API
+                (curated metadata). <strong>API keys</strong> are stored in the
+                DB and synced to <code>openclaw.json</code>.
+              </>
+            )}
           </Typography>
         </Flex>
       </Box>

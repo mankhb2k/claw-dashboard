@@ -21,6 +21,11 @@ export type ProviderKeyRow = {
   enabled: boolean;
 };
 
+export type MergeProviderKeysOptions = {
+  foundationAllowlistOpenclawIds?: string[];
+  proxyModelOpenclawIds?: string[];
+};
+
 export async function readOpenClawConfigJson(
   configPath: string,
 ): Promise<Record<string, unknown> | null> {
@@ -63,6 +68,7 @@ export function mergeProviderKeysIntoConfig(
   config: Record<string, unknown>,
   rows: ProviderKeyRow[],
   decrypt: (ciphertext: string) => string,
+  options: MergeProviderKeysOptions = {},
 ): Record<string, unknown> {
   const enabled = rows.filter((r) => r.enabled);
   const enabledProviderIds = new Set(
@@ -100,6 +106,27 @@ export function mergeProviderKeysIntoConfig(
     const model = (defaults.model as Record<string, unknown> | undefined) ?? {};
     model.primary = primary;
     defaults.model = model;
+    agents.defaults = defaults;
+    config.agents = agents;
+  }
+
+  const allowlistEntries = [
+    ...(options.foundationAllowlistOpenclawIds ?? []),
+    ...(options.proxyModelOpenclawIds ?? []),
+  ]
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  if (allowlistEntries.length > 0) {
+    const agents = (config.agents as Record<string, unknown> | undefined) ?? {};
+    const defaults = (agents.defaults as Record<string, unknown> | undefined) ?? {};
+    const existingModels =
+      (defaults.models as Record<string, Record<string, never>> | undefined) ?? {};
+    const models: Record<string, Record<string, never>> = { ...existingModels };
+    for (const openclawId of allowlistEntries) {
+      models[openclawId] = models[openclawId] ?? {};
+    }
+    defaults.models = models;
     agents.defaults = defaults;
     config.agents = agents;
   }

@@ -75,7 +75,7 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
     const svc = catalog.find((s) => s.id === serviceId);
     if (!svc) return;
     setAppStoreOpen(false);
-    router.push(`/dashboard/connect/${svc.slug}`);
+    router.push(`/dashboard/connector/${svc.slug}`);
   };
 
   const handleDisconnect = async (slug: string) => {
@@ -132,7 +132,7 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
             <CardConnection
               key={svc.slug}
               service={svc}
-              onViewDetails={() => router.push(`/dashboard/connect/${svc.slug}`)}
+              onViewDetails={() => router.push(`/dashboard/connector/${svc.slug}`)}
               onDisconnect={() => void handleDisconnect(svc.slug)}
               onRemove={() => void handleDisconnect(svc.slug)}
             />
@@ -152,7 +152,7 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
           connections={Object.fromEntries([...connectedSlugs].map((slug) => [slug, true]))}
           onClose={() => setAppStoreOpen(false)}
           onConnect={handleConnect}
-          onOpenDetails={(service) => router.push(`/dashboard/connect/${service.slug}`)}
+          onOpenDetails={(service) => router.push(`/dashboard/connector/${service.slug}`)}
         />
       )}
       {customModalOpen && <ModalCustomConnector onClose={() => setCustomModalOpen(false)} />}

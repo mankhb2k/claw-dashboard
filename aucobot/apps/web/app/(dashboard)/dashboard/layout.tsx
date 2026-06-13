@@ -22,6 +22,7 @@ import {
   MonitorSmartphone,
 } from "lucide-react";
 import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+import { useSessionKeepAlive } from "@/hooks/auth/use-session-keep-alive";
 import styles from "./layout.module.css";
 
 function isDashboardCanvasRoute(pathname: string): boolean {
@@ -50,6 +51,8 @@ export default function DashboardLayout({
   const syncProjectHealth = useProjectStore((s) => s.syncProjectHealth);
   const projects = useProjectStore((s) => s.projects);
   const gateDoneRef = useRef(false);
+
+  useSessionKeepAlive();
 
   useEffect(() => {
     if (gateDoneRef.current) return;
@@ -147,10 +150,10 @@ export default function DashboardLayout({
     },
 
     {
-      href: `${DASHBOARD_BASE_PATH}/connect`,
-      label: "Connect",
+      href: `${DASHBOARD_BASE_PATH}/connector`,
+      label: "Connector",
       icon: Cable,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/connect`),
+      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/connector`),
     },
     {
       href: `${DASHBOARD_BASE_PATH}/nodes`,

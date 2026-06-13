@@ -14,7 +14,7 @@ export type CodeBlockTabsProps<T extends string = string> = {
   items: readonly CodeBlockTab<T>[];
   value: T;
   onValueChange: (value: T) => void;
-  /** Nội dung bên phải hàng tab (vd. nhãn Terminal) */
+  /** Content on the right side of the tab row (e.g. Terminal label) */
   trailing?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;

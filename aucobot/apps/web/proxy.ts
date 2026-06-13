@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveSession } from "@/lib/auth/session-middleware";
+import {
+  applySetCookies,
+  resolveSession,
+} from "@/lib/auth/session-middleware";
 import { getServerApiBaseUrl } from "@/lib/http/api-base-url";
 import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { SETUP_PATH } from "@/lib/routing/entry-route";
@@ -8,6 +11,13 @@ const PUBLIC_ROUTES = ["/login", "/register"];
 const MOCK_AUTH_BYPASS = process.env.NEXT_PUBLIC_MOCK_API === "true";
 
 const PUBLIC_STATIC_EXT = /\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$/i;
+
+function withSessionCookies(
+  response: NextResponse,
+  setCookies: string[],
+): NextResponse {
+  return setCookies.length > 0 ? applySetCookies(response, setCookies) : response;
+}
 
 export async function proxy(request: NextRequest) {
   // Mock API: not block /login /register (to logout work). Only redirect "/" → dashboard.
@@ -61,18 +71,22 @@ export async function proxy(request: NextRequest) {
               : [];
         const first = payload[0] as { status?: string } | undefined;
         if (first?.status?.toLowerCase() === "running") {
-          return NextResponse.redirect(
-            new URL(DASHBOARD_BASE_PATH, request.url),
+          return withSessionCookies(
+            NextResponse.redirect(new URL(DASHBOARD_BASE_PATH, request.url)),
+            session.setCookies,
           );
         }
       }
     } catch {
       // fall through to setup
     }
-    return NextResponse.redirect(new URL(SETUP_PATH, request.url));
+    return withSessionCookies(
+      NextResponse.redirect(new URL(SETUP_PATH, request.url)),
+      session.setCookies,
+    );
   }
 
-  return NextResponse.next();
+  return withSessionCookies(NextResponse.next(), session.setCookies);
 }
 
 export const config = {

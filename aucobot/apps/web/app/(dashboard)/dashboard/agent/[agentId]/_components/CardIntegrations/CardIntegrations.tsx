@@ -21,8 +21,8 @@ import {
 } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
-import { toServiceConnectData } from "../../../../connect/connect-display";
-import type { ServiceConnectData } from "../../../../connect/projectConnectData";
+import { toServiceConnectData } from "../../../../connector/connect-display";
+import type { ServiceConnectData } from "../../../../connector/projectConnectData";
 import { isProjectConnectorConnected } from "@/utils/connectors/project-connector-status";
 import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
 import {
@@ -708,7 +708,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/dashboard/connect")}
+              onClick={() => router.push("/dashboard/connector")}
             >
               <ArrowUpRight size={14} aria-hidden />
               Manage connectors
@@ -744,7 +744,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => router.push("/dashboard/connect")}
+              onClick={() => router.push("/dashboard/connector")}
             >
               Go to Connect
             </Button>
@@ -776,7 +776,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
                         size="sm"
                         className={styles.connectLink}
                         onClick={() =>
-                          router.push(`/dashboard/connect/${service.slug}`)
+                          router.push(`/dashboard/connector/${service.slug}`)
                         }
                       >
                         Not connected — connect now

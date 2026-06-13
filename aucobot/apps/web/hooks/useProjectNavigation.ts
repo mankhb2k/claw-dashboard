@@ -69,10 +69,10 @@ export function useProjectNavigation() {
         isActive: (p) => p.startsWith(`${baseProjectPath}/skill`),
       },
       {
-        href: `${baseProjectPath}/connect`,
-        label: "Connect",
+        href: `${baseProjectPath}/connector`,
+        label: "Connector",
         icon: Cable,
-        isActive: (p) => p.startsWith(`${baseProjectPath}/connect`),
+        isActive: (p) => p.startsWith(`${baseProjectPath}/connector`),
       },
       {
         href: `${baseProjectPath}/setting`,

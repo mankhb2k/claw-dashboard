@@ -66,6 +66,7 @@ export const Default: Story = {
     onChange: () => {},
     placeholder: "Search agents, skills...",
     size: "md",
+    pageSpacing: true,
   },
 };
 

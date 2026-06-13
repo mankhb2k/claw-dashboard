@@ -4,8 +4,7 @@
 
 .toolbar {
   gap: var(--space-4);
-  margin-top: var(--space-1);
-  margin-bottom: var(--space-6);
+  margin-block: var(--space-4);
 }
 
 .toolbarStart {

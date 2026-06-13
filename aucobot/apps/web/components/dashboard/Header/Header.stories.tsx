@@ -61,10 +61,10 @@ const mockItems = [
     isActive: (p: string) => p === "/dashboard/skill",
   },
   {
-    href: "/dashboard/connect",
+    href: "/dashboard/connector",
     label: "Connect",
     icon: Cable,
-    isActive: (p: string) => p === "/dashboard/connect",
+    isActive: (p: string) => p === "/dashboard/connector",
   },
   {
     href: "/dashboard/setting",

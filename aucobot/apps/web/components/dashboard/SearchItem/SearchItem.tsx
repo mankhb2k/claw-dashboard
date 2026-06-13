@@ -20,6 +20,8 @@ interface SearchItemProps {
   maxWidth?: string | number;
   /** Input size — defaults to `md` */
   size?: InputSize;
+  /** Margin 16px trên/dưới — dùng trên list page dưới TitleHeader */
+  pageSpacing?: boolean;
 }
 
 export function SearchItem({
@@ -30,6 +32,7 @@ export function SearchItem({
   className = "",
   maxWidth,
   size = "md",
+  pageSpacing = false,
 }: SearchItemProps) {
   const handleClear = () => {
     onChange("");
@@ -41,7 +44,7 @@ export function SearchItem({
 
   return (
     <div
-      className={`${styles.searchContainer} ${className}`}
+      className={`${styles.searchContainer} ${pageSpacing ? styles.pageSpacing : ""} ${className}`.trim()}
       style={customStyle}
       data-size={size}
     >

@@ -15,6 +15,13 @@ const OPENCLAW_PREFIX_TO_PROVIDER: Record<string, string> = {
   google: 'gemini',
   openai: 'openai',
   anthropic: 'anthropic',
+  deepseek: 'deepseek',
+  groq: 'groq',
+  mistral: 'mistral',
+  openrouter: 'openrouter',
+  together: 'together',
+  'vercel-ai-gateway': 'vercel-ai-gateway',
+  kilocode: 'kilocode',
 };
 
 @Injectable()

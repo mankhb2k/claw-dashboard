@@ -53,7 +53,7 @@ export function ActiveConnection({
       <Container size="md">
         <Box py={48}>
           <Flex direction="column" gap={32}>
-            <BackButton href="/dashboard/connect">{service.name}</BackButton>
+            <BackButton href="/dashboard/connector">{service.name}</BackButton>
 
             <header>
               <Flex align="start" justify="between" gap={4}>

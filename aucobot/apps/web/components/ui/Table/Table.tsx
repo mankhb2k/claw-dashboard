@@ -16,13 +16,13 @@ function cn(...parts: (string | false | undefined | null)[]) {
 }
 
 export interface TableProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Bật cuộn ngang khi bảng rộng */
+  /** Enable horizontal scroll when the table is wide */
   scrollable?: boolean;
-  /** Khoảng cách ô */
+  /** Cell padding density */
   size?: TableSize;
 }
 
-/** Vỏ bảng + `<table>` — dùng kèm Header / Body / Row / Head / Cell */
+/** Table wrapper + `<table>` — use with Header / Body / Row / Head / Cell */
 export function Table({
   scrollable = false,
   size = "md",
@@ -69,9 +69,9 @@ export function TableFooter({
 }
 
 export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
-  /** Highlight khi hover */
+  /** Highlight on hover */
   hoverable?: boolean;
-  /** Dòng đang chọn */
+  /** Currently selected row */
   selected?: boolean;
 }
 
@@ -97,7 +97,7 @@ export function TableRow({
 export interface TableHeadProps
   extends React.ThHTMLAttributes<HTMLTableCellElement> {
   align?: TableAlign;
-  /** Tự bọc chuỗi bằng Typography header */
+  /** Wrap string content with Typography header styling */
   label?: string;
 }
 
@@ -155,7 +155,7 @@ export interface TableEmptyProps extends React.HTMLAttributes<HTMLTableRowElemen
   message?: string;
 }
 
-/** Một dòng “không có dữ liệu” */
+/** Single "no data" row */
 export function TableEmpty({
   colSpan,
   message = "No data",

@@ -70,7 +70,8 @@ model Project {
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectProviderKeys ProjectProviderKey[]
+  projectProviderKeys  ProjectProviderKey[]
+  projectProviderModels ProjectProviderModel[]
   projectSkills       ProjectSkill[]
   projectAgents       ProjectAgent[]
   projectConnectors   ProjectConnector[]
@@ -248,6 +249,24 @@ model ProjectProviderKey {
   @@unique([projectId, providerId])
   @@index([projectId])
   @@map("project_provider_keys")
+}
+
+/// User-managed model ref for AI Provider (proxy) keys — e.g. openrouter/auto.
+model ProjectProviderModel {
+  id          String   @id @default(cuid())
+  projectId   String   @map("project_id")
+  providerId  String   @map("provider_id")
+  openclawId  String   @map("openclaw_id")
+  displayName String?  @map("display_name")
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, providerId, openclawId])
+  @@index([projectId, providerId])
+  @@map("project_provider_models")
 }
 
 /// OpenClaw messaging channel on a project (telegram, discord, zalo, …). MVP: one account per channelId.

@@ -17,7 +17,6 @@ export function NoApiKey({ isLoading = false, onAdd }: NoApiKeyProps) {
       center
       gap={16}
       p={40}
-      border
       radius="lg"
       color="surface"
       className={`${styles.notConnectedBorder} ${isLoading ? styles.loadingBox : ""}`}

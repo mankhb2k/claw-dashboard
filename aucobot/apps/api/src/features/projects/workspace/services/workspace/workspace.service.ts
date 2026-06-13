@@ -34,6 +34,10 @@ import { decryptSecret } from '@aucobot/control-plane-core';
 import { resolveConnector } from '../../../connectors/lib/connector-registry';
 import { resolveChannel } from '../../../channels/lib/channel-registry';
 import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
+import {
+  collectFoundationAllowlist,
+  resolveProvider,
+} from '../../../ai-providers/lib/provider-registry';
 
 @Injectable()
 export class WorkspaceService {
@@ -110,7 +114,27 @@ export class WorkspaceService {
     const providerRows = await this.prisma.projectProviderKey.findMany({
       where: { projectId },
     });
-    mergeProviderKeysIntoConfig(config, providerRows, decryptSecret);
+    const enabledProviderIds = new Set(
+      providerRows
+        .filter((row) => row.enabled)
+        .map((row) => row.providerId.trim())
+        .filter(Boolean),
+    );
+    const enabledAiProviderIds = [...enabledProviderIds].filter((id) => {
+      return resolveProvider(id)?.uiGroup === 'ai-provider';
+    });
+    const proxyModelRows = enabledAiProviderIds.length
+      ? await this.prisma.projectProviderModel.findMany({
+          where: {
+            projectId,
+            providerId: { in: enabledAiProviderIds },
+          },
+        })
+      : [];
+    mergeProviderKeysIntoConfig(config, providerRows, decryptSecret, {
+      foundationAllowlistOpenclawIds: collectFoundationAllowlist(enabledProviderIds),
+      proxyModelOpenclawIds: proxyModelRows.map((row) => row.openclawId),
+    });
 
     const agentRows = await this.prisma.projectAgent.findMany({
       where: { projectId, enabled: true },

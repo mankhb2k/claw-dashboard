@@ -6,11 +6,15 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import {
+  accessMaxAgeSec,
+  extractAccessTokenFromRequest,
+  extractRefreshTokenFromRequest,
   generateRefreshTokenRaw,
   hashRefreshToken,
   normalizeUsername,
   refreshExpiresAt,
   signAccessToken,
+  verifyAccessToken,
   type PublicUser,
 } from '@aucobot/control-plane-core';
 import { PrismaService } from '../database/prisma.service';
@@ -23,6 +27,15 @@ export type AuthTokensResult = {
   refreshToken: string;
   user: PublicUser;
 };
+
+export type SessionResolveResult = {
+  user: PublicUser;
+  accessExpiresIn: number;
+  refreshed: boolean;
+  tokens?: AuthTokensResult;
+};
+
+type SessionRequest = Parameters<typeof extractAccessTokenFromRequest>[0];
 
 @Injectable()
 export class AuthService {
@@ -81,6 +94,28 @@ export class AuthService {
 
   async me(userId: string): Promise<PublicUser> {
     return this.users.getPublicUser(userId);
+  }
+
+  /**
+   * Resolve session from cookies: valid access → user; expired access + valid refresh → rotate silently.
+   */
+  async resolveSession(req: SessionRequest): Promise<SessionResolveResult> {
+    const accessExpiresIn = accessMaxAgeSec();
+    const accessPayload = verifyAccessToken(extractAccessTokenFromRequest(req));
+
+    if (accessPayload) {
+      const user = await this.me(accessPayload.sub);
+      return { user, accessExpiresIn, refreshed: false };
+    }
+
+    const raw = extractRefreshTokenFromRequest(req);
+    const tokens = await this.refresh(raw);
+    return {
+      user: tokens.user,
+      accessExpiresIn,
+      refreshed: true,
+      tokens,
+    };
   }
 
   async logout(refreshTokenRaw: string | undefined): Promise<void> {

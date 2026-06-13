@@ -38,7 +38,7 @@
   z-index: 2;
 }
 
-/* 4. SELECTED — giữ border/nền như outline, chỉ đổi màu chữ */
+/* 4. SELECTED — keep border/background like outline, only change text color */
 .group > *[aria-pressed="true"] {
   background: var(--color-background) !important;
   color: var(--color-primary) !important;

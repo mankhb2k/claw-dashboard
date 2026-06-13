@@ -13,23 +13,23 @@ const meta: Meta<typeof Checkbox> = {
     size: {
       control: 'select',
       options: ['sm', 'md', 'lg'],
-      description: 'Kích thước ô checkbox và nhãn đi kèm',
+      description: 'Checkbox and label size',
     },
     label: {
       control: 'text',
-      description: 'Nhãn hiển thị bên cạnh checkbox',
+      description: 'Label shown beside the checkbox',
     },
     disabled: {
       control: 'boolean',
-      description: 'Vô hiệu hóa tương tác',
+      description: 'Disable interaction',
     },
     defaultChecked: {
       control: 'boolean',
-      description: 'Trạng thái checked mặc định (uncontrolled)',
+      description: 'Default checked state (uncontrolled)',
     },
     checked: {
       control: 'boolean',
-      description: 'Trạng thái checked (controlled — dùng trong demo có state)',
+      description: 'Checked state (controlled — used in stateful demos)',
     },
   },
   args: {

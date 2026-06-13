@@ -17,13 +17,13 @@ export type CodeBlockProps<T extends string = string> = {
   title?: string;
   /** Optional icon beside title */
   icon?: React.ReactNode;
-  /** Tab bar with sliding underline (thay ToggleGroup) */
+  /** Tab bar with sliding underline (replaces ToggleGroup) */
   tabs?: readonly CodeBlockTab<T>[];
   activeTab?: T;
   onTabChange?: (value: T) => void;
-  /** Nhãn / action bên phải hàng tab */
+  /** Label / action on the right side of the tab row */
   tabTrailing?: React.ReactNode;
-  /** Left side of header (custom chrome; không dùng cùng tabs) */
+  /** Left side of header (custom chrome; do not use together with tabs) */
   headerStart?: React.ReactNode;
   /** Extra actions before Copy */
   headerActions?: React.ReactNode;

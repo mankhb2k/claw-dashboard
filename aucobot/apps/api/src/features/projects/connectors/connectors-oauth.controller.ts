@@ -20,7 +20,7 @@ export class ConnectorsOAuthController {
 
     if (error || !code || !state) {
       return reply.redirect(
-        `${frontend}/dashboard/connect?oauth_error=${encodeURIComponent(error ?? 'missing_code')}`,
+        `${frontend}/dashboard/connector?oauth_error=${encodeURIComponent(error ?? 'missing_code')}`,
       );
     }
 
@@ -30,7 +30,7 @@ export class ConnectorsOAuthController {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'oauth_failed';
       return reply.redirect(
-        `${frontend}/dashboard/connect?oauth_error=${encodeURIComponent(message)}`,
+        `${frontend}/dashboard/connector?oauth_error=${encodeURIComponent(message)}`,
       );
     }
   }

@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import { type CSSProperties } from "react";
 import { Button, IconProvider, Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
 import styles from "./ProviderHeader.module.css";
@@ -9,7 +8,6 @@ import styles from "./ProviderHeader.module.css";
 interface ProviderHeaderProps {
   name: string;
   iconSrc?: string;
-  color?: string;
   apiKeyUrl?: string;
   apiKeyLabel?: string;
 }
@@ -17,33 +15,17 @@ interface ProviderHeaderProps {
 export function ProviderHeader({
   name,
   iconSrc,
-  color,
   apiKeyUrl,
   apiKeyLabel = "Get API key",
 }: ProviderHeaderProps) {
-  const icon = (
-    <IconProvider
-      src={iconSrc}
-      label={name}
-      size="xl"
-      shape="square"
-      withBackground
-      className={color ? styles.iconTinted : undefined}
-    />
-  );
-
   return (
     <Flex align="center" gap={16} className={styles.row}>
-      {color ? (
-        <div
-          className={styles.iconTintWrap}
-          style={{ "--provider-accent": color } as CSSProperties}
-        >
-          {icon}
-        </div>
-      ) : (
-        icon
-      )}
+      <IconProvider
+        src={iconSrc}
+        label={name}
+        size="xl"
+        shape="square"
+      />
       <Flex direction="column" gap={4} className={styles.meta}>
         <Typography variant="h2" weight="bold">
           {name}

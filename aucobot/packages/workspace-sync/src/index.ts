@@ -18,6 +18,7 @@ export {
   type ProjectExecPolicy,
   type ProjectSandboxPolicy,
   type ProviderKeyRow,
+  type MergeProviderKeysOptions,
 } from './openclaw-config-merge.js';
 
 export {

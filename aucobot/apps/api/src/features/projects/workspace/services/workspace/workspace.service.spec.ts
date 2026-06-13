@@ -128,6 +128,7 @@ function createService() {
   const prisma = {
     project: { findUnique: jest.fn() },
     projectProviderKey: { findMany: jest.fn() },
+    projectProviderModel: { findMany: jest.fn().mockResolvedValue([]) },
     projectAgent: { findMany: jest.fn(), update: jest.fn() },
     projectConnector: { findMany: jest.fn() },
     projectChannel: { findMany: jest.fn() },
@@ -316,6 +317,10 @@ describe('WorkspaceService', () => {
         config,
         [{ providerId: 'gemini', enabled: true, ciphertext: 'enc:key' }],
         decryptSecret,
+        expect.objectContaining({
+          foundationAllowlistOpenclawIds: expect.any(Array),
+          proxyModelOpenclawIds: [],
+        }),
       );
       expect(mergeAgentsIntoConfigMock).toHaveBeenCalled();
       expect(mergeConnectorsIntoConfigMock).toHaveBeenCalledWith(

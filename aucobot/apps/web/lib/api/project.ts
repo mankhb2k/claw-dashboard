@@ -16,6 +16,7 @@ import {
   projectExecPolicyResponseSchema,
   updateProjectExecPolicyBodySchema,
   providerDefinitionSchema,
+  providerModelRowSchema,
   gatewayTokenResponseSchema,
   connectorDefinitionSchema,
   projectConnectorSchema,
@@ -73,6 +74,7 @@ import {
   type ProjectChannel,
   type ChannelTestResult,
   type ProviderDefinition,
+  type ProviderModelRow,
   type ProviderKeyTestResult,
   type ProjectEnvMaskedRow,
   type ProviderKeyRevealResponse,
@@ -223,6 +225,51 @@ export const projectApi = {
 
   deleteProviderKey: async (id: string, providerId: string): Promise<void> => {
     await api.delete(`/api/projects/${id}/provider-keys/${providerId}`)
+  },
+
+  listProviderModels: async (
+    id: string,
+    providerId: string,
+  ): Promise<ProviderModelRow[]> => {
+    const res = await api.get(
+      `/api/projects/${id}/provider-keys/${providerId}/models`,
+    )
+    return z.array(providerModelRowSchema).parse(res.data)
+  },
+
+  addProviderModel: async (
+    id: string,
+    providerId: string,
+    body: { openclawId: string; displayName?: string; setDefault?: boolean },
+  ): Promise<ProviderModelRow> => {
+    const res = await api.post(
+      `/api/projects/${id}/provider-keys/${providerId}/models`,
+      body,
+    )
+    return providerModelRowSchema.parse(res.data)
+  },
+
+  updateProviderModel: async (
+    id: string,
+    providerId: string,
+    modelId: string,
+    body: { displayName?: string; setDefault?: boolean },
+  ): Promise<ProviderModelRow> => {
+    const res = await api.patch(
+      `/api/projects/${id}/provider-keys/${providerId}/models/${modelId}`,
+      body,
+    )
+    return providerModelRowSchema.parse(res.data)
+  },
+
+  deleteProviderModel: async (
+    id: string,
+    providerId: string,
+    modelId: string,
+  ): Promise<void> => {
+    await api.delete(
+      `/api/projects/${id}/provider-keys/${providerId}/models/${modelId}`,
+    )
   },
 
   listConnectorDefinitions: async (): Promise<ConnectorDefinition[]> => {

@@ -17,7 +17,7 @@ type ButtonGroupStoryArgs = {
   buttonSize: NonNullable<ButtonProps['size']>
   /** Variant for every item — active state uses `aria-pressed` + ButtonGroup styles */
   inactiveVariant: NonNullable<ButtonProps['variant']>
-  /** @deprecated Dùng cùng variant + `aria-pressed`; giữ arg để không break controls cũ */
+  /** @deprecated Use the same variant + `aria-pressed`; kept to avoid breaking legacy controls */
   activeVariant?: NonNullable<ButtonProps['variant']>
   /** Disable all buttons in the playground group */
   disabled: boolean
@@ -57,7 +57,7 @@ const meta: Meta<ButtonGroupStoryArgs> = {
     activeVariant: {
       control: 'select',
       options: ['secondary', 'primary', 'outline', 'ghost'],
-      description: 'Deprecated — active dùng aria-pressed, cùng variant outline',
+      description: 'Deprecated — active state uses aria-pressed with the same outline variant',
       table: { category: 'Button children' },
     },
     disabled: {
@@ -213,10 +213,10 @@ export const SegmentedControl: Story = {
         <DemoBox>
           <SegmentedButtons
             items={[
-              { value: 'rules', label: 'Quy tắc', icon: <ListChecks size={14} aria-hidden /> },
-              { value: 'constraints', label: 'Giới hạn', icon: <ShieldAlert size={14} aria-hidden /> },
-              { value: 'output', label: 'Định dạng đầu ra', icon: <TextQuote size={14} aria-hidden /> },
-              { value: 'tools', label: 'Ghi chú công cụ', icon: <Wrench size={14} aria-hidden /> },
+              { value: 'rules', label: 'Rules', icon: <ListChecks size={14} aria-hidden /> },
+              { value: 'constraints', label: 'Constraints', icon: <ShieldAlert size={14} aria-hidden /> },
+              { value: 'output', label: 'Output format', icon: <TextQuote size={14} aria-hidden /> },
+              { value: 'tools', label: 'Tool notes', icon: <Wrench size={14} aria-hidden /> },
             ]}
             defaultValue="rules"
             wrap
@@ -413,10 +413,10 @@ export const Wrapping: Story = {
       <DemoBox>
         <SegmentedButtons
           items={[
-            { value: 'rules', label: 'Quy tắc', icon: <ListChecks size={14} aria-hidden /> },
-            { value: 'constraints', label: 'Giới hạn', icon: <ShieldAlert size={14} aria-hidden /> },
-            { value: 'output', label: 'Định dạng đầu ra', icon: <TextQuote size={14} aria-hidden /> },
-            { value: 'tools', label: 'Ghi chú công cụ', icon: <Wrench size={14} aria-hidden /> },
+            { value: 'rules', label: 'Rules', icon: <ListChecks size={14} aria-hidden /> },
+            { value: 'constraints', label: 'Constraints', icon: <ShieldAlert size={14} aria-hidden /> },
+            { value: 'output', label: 'Output format', icon: <TextQuote size={14} aria-hidden /> },
+            { value: 'tools', label: 'Tool notes', icon: <Wrench size={14} aria-hidden /> },
           ]}
           defaultValue="rules"
           wrap

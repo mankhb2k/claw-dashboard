@@ -1,5 +1,5 @@
 /* =============================================================================
-   1. VỎ COMPONENT — Kích thước & bo góc
+   1. COMPONENT SHELL — size & border radius
    ============================================================================= */
 .root {
   display: inline-flex;
@@ -11,16 +11,16 @@
   background-color: var(--color-border);
 }
 
-/* --- HÌNH DÁNG (VARIANT) --- */
+/* --- SHAPE (VARIANT) --- */
 .circle {
-  border-radius: var(--radius-full); /* Tròn xoe cho User */
+  border-radius: var(--radius-full); /* Fully round for User */
 }
 
 .square {
-  border-radius: var(--radius-md); /* Bo góc vừa cho Project, Channel, Skill */
+  border-radius: var(--radius-md); /* Moderate rounding for Project, Channel, Skill */
 }
 
-/* --- KÍCH THƯỚC --- */
+/* --- SIZES --- */
 .sm {
   width: 24px;
   height: 24px;
@@ -42,7 +42,7 @@
 }
 
 /* =============================================================================
-   2. HÌNH ẢNH — Chiếm trọn vùng chứa
+   2. IMAGE — fills the container
    ============================================================================= */
 .image {
   width: 100%;
@@ -52,7 +52,7 @@
 }
 
 /* =============================================================================
-   3. CHỮ THAY THẾ (FALLBACK) — Khi không có ảnh
+   3. FALLBACK TEXT — when no image is available
    ============================================================================= */
 .fallback {
   width: 100%;

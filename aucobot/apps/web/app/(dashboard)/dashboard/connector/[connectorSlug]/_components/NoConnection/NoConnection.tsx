@@ -17,7 +17,7 @@ export function NoConnection({ service, isConnecting, onConnect }: Props) {
       <Container size="md">
         <Box py={48}>
           <Flex direction="column" gap={32}>
-            <BackButton href="/dashboard/connect">{service.name}</BackButton>
+            <BackButton href="/dashboard/connector">{service.name}</BackButton>
 
             <Flex
               direction="column"

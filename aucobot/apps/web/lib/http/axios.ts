@@ -44,14 +44,84 @@ function redirectToLogin(): void {
 
 let refreshPromise: Promise<void> | null = null
 
+const REFRESH_LOCK_KEY = 'oc_auth_refresh'
+const REFRESH_LOCK_TTL_MS = 15_000
+const PEER_REFRESH_WAIT_MS = 800
+
+let tabId: string | null = null
+
+function getTabId(): string {
+  if (!tabId) {
+    tabId = `tab_${Math.random().toString(36).slice(2, 11)}`
+  }
+  return tabId
+}
+
+type RefreshLockPayload = { at: number; tabId: string }
+
+function readRefreshLock(): RefreshLockPayload | null {
+  if (typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(REFRESH_LOCK_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as RefreshLockPayload
+    if (!parsed?.at || Date.now() - parsed.at > REFRESH_LOCK_TTL_MS) {
+      localStorage.removeItem(REFRESH_LOCK_KEY)
+      return null
+    }
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function tryAcquireRefreshLock(id: string): boolean {
+  if (typeof localStorage === 'undefined') return true
+  const existing = readRefreshLock()
+  if (existing && existing.tabId !== id) {
+    return false
+  }
+  localStorage.setItem(REFRESH_LOCK_KEY, JSON.stringify({ at: Date.now(), tabId: id }))
+  return true
+}
+
+function releaseRefreshLock(id: string): void {
+  if (typeof localStorage === 'undefined') return
+  const existing = readRefreshLock()
+  if (existing?.tabId === id) {
+    localStorage.removeItem(REFRESH_LOCK_KEY)
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitForPeerRefresh(): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    if (!readRefreshLock()) {
+      return
+    }
+    await sleep(PEER_REFRESH_WAIT_MS / 2)
+  }
+}
+
 async function refreshAccessToken(): Promise<void> {
   if (!refreshPromise) {
-    refreshPromise = api
-      .post('/api/auth/refresh', {}, { _skipAuthRefresh: true } as AuthAxiosConfig)
-      .then(() => undefined)
-      .finally(() => {
-        refreshPromise = null
-      })
+    refreshPromise = (async () => {
+      const id = getTabId()
+      if (!tryAcquireRefreshLock(id)) {
+        await waitForPeerRefresh()
+        return
+      }
+      try {
+        await api.post('/api/auth/refresh', {}, { _skipAuthRefresh: true } as AuthAxiosConfig)
+      } finally {
+        releaseRefreshLock(id)
+      }
+    })().finally(() => {
+      refreshPromise = null
+    })
   }
   await refreshPromise
 }

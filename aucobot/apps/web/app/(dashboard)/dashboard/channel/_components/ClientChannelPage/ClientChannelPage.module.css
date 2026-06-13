@@ -21,11 +21,6 @@
   box-sizing: border-box;
 }
 
-.searchBar {
-  margin-top: var(--space-2);
-  margin-bottom: var(--space-5);
-}
-
 .empty {
   margin: var(--space-8) 0;
   text-align: center;

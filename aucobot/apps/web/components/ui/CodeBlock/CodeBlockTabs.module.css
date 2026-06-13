@@ -1,4 +1,4 @@
-/* Tab bar — baseline + underline trượt */
+/* Tab bar — baseline + sliding underline */
 .root {
   display: flex;
   align-items: flex-end;

@@ -53,15 +53,15 @@ export const Variants: Story = {
   render: () => (
     <Flex direction="column" gap={24} style={{ maxWidth: 320 }}>
       <div>
-        <DemoLabel>text — dòng tiêu đề</DemoLabel>
+        <DemoLabel>text — title line</DemoLabel>
         <Skeleton variant="text" width="72%" />
       </div>
       <div>
-        <DemoLabel>textSm — dòng phụ</DemoLabel>
+        <DemoLabel>textSm — secondary line</DemoLabel>
         <Skeleton variant="textSm" width="100%" />
       </div>
       <div>
-        <DemoLabel>block — nút / khối tùy chỉnh</DemoLabel>
+        <DemoLabel>block — button / custom block</DemoLabel>
         <Skeleton variant="block" width={72} height={32} />
       </div>
       <div>
@@ -87,7 +87,7 @@ export const Pulse: Story = {
   ),
 };
 
-/** Ghép nhiều Skeleton — pattern CardSkillStore */
+/** Multiple Skeletons — CardSkillStore layout pattern */
 export const CardSkillStoreLayout: Story = {
   render: () => (
     <Card disableHover style={{ width: 320, padding: "var(--space-4)" }}>
@@ -109,7 +109,7 @@ export const CardSkillStoreLayout: Story = {
   ),
 };
 
-/** Hai card skeleton trong grid 2 cột */
+/** Two skeleton cards in a 2-column grid */
 export const GridLoading: Story = {
   render: () => (
     <div
@@ -145,7 +145,7 @@ export const WithTypography: Story = {
       <Skeleton variant="textSm" width="100%" />
       <Skeleton variant="textSm" width="60%" />
       <Typography variant="small" color="muted" style={{ marginTop: 8 }}>
-        Sau khi load, các thanh trên được thay bằng nội dung thật.
+        After loading, the bars above are replaced with real content.
       </Typography>
     </Flex>
   ),

@@ -7,6 +7,7 @@ export type ChatModelOption = {
 export type ChatModelProviderGroup = {
   providerId: string;
   displayName: string;
+  uiGroup?: 'foundation' | 'ai-provider';
   defaultModel: string | null;
   tested: boolean;
   models: ChatModelOption[];

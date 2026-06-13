@@ -83,7 +83,7 @@ export const LabelPositions: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <section>
-        <DemoLabel>Label trên (top)</DemoLabel>
+        <DemoLabel>Label on top (top)</DemoLabel>
         <DemoBox>
           <Input
             id="input-label-top"
@@ -95,7 +95,7 @@ export const LabelPositions: Story = {
       </section>
 
       <section>
-        <DemoLabel>Label bên trái (left)</DemoLabel>
+        <DemoLabel>Label on left (left)</DemoLabel>
         <DemoBox>
           <Input
             id="input-label-left"
@@ -107,7 +107,7 @@ export const LabelPositions: Story = {
       </section>
 
       <section>
-        <DemoLabel>Label bên phải (right)</DemoLabel>
+        <DemoLabel>Label on right (right)</DemoLabel>
         <DemoBox>
           <Input
             id="input-label-right"
@@ -119,7 +119,7 @@ export const LabelPositions: Story = {
       </section>
 
       <section>
-        <DemoLabel>Không label (none)</DemoLabel>
+        <DemoLabel>No label (none)</DemoLabel>
         <DemoBox>
           <Input
             id="input-label-none"

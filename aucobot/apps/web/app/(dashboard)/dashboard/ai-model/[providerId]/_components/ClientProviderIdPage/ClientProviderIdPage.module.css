@@ -47,6 +47,27 @@
   color: var(--color-warning);
 }
 
+.userModelRow {
+  padding: var(--space-4);
+  background: var(--color-card-background);
+}
+
+.userModelCode {
+  font-size: var(--text-sm);
+  word-break: break-all;
+}
+
+.defaultBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
 @media (max-width: 40rem) {
   .shell {
     padding-left: var(--space-4);

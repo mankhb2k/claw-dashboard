@@ -1,5 +1,5 @@
 /* =============================================================================
-   1. VỎ ICON — căn giữa, bo góc, viền nền
+   1. ICON SHELL — centered, rounded corners, background border
    ============================================================================= */
 .root {
   display: inline-flex;
@@ -17,7 +17,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* --- KÍCH THƯỚC --- */
+/* --- SIZES --- */
 .size_sm {
   width: 24px;
   height: 24px;
@@ -38,7 +38,7 @@
   height: 52px;
 }
 
-/* --- HÌNH DÁNG --- */
+/* --- SHAPES --- */
 .shape_square {
   border-radius: var(--radius-md);
 }
@@ -48,14 +48,14 @@
 }
 
 /* =============================================================================
-   2. ẢNH ICON — giữ tỉ lệ đồng nhất
+   2. ICON IMAGE — consistent aspect ratio
    ============================================================================= */
 .image {
   object-fit: contain;
 }
 
 /* =============================================================================
-   3. FALLBACK — ký tự thay thế khi thiếu icon
+   3. FALLBACK — replacement character when icon is missing
    ============================================================================= */
 .fallback {
   font-size: var(--font-size-xs);

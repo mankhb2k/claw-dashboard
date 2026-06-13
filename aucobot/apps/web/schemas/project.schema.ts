@@ -198,17 +198,42 @@ export const providerModelCatalogSchema = z.object({
   isFree: z.boolean().optional(),
 })
 
+export const providerStarterModelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  openclawId: z.string(),
+  recommended: z.boolean().optional(),
+})
+
 export const providerDefinitionSchema = z.object({
   id: z.string(),
   displayName: z.string(),
   envKey: z.string(),
+  uiGroup: z.enum(['foundation', 'ai-provider']),
+  category: z.enum(['direct', 'proxy']),
   openclawProviderId: z.string().optional(),
   defaultModel: z.string().optional(),
   models: z.array(providerModelCatalogSchema).optional(),
+  starterModels: z.array(providerStarterModelSchema).optional(),
+  modelRefHint: z.string().optional(),
+  apiKeyUrl: z.string().optional(),
+  docsUrl: z.string().optional(),
+})
+
+export const providerModelRowSchema = z.object({
+  id: z.string(),
+  providerId: z.string(),
+  openclawId: z.string(),
+  displayName: z.string().nullable(),
+  isDefault: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 })
 
 export type ProviderDefinition = z.infer<typeof providerDefinitionSchema>
 export type ProviderModelCatalog = z.infer<typeof providerModelCatalogSchema>
+export type ProviderStarterModel = z.infer<typeof providerStarterModelSchema>
+export type ProviderModelRow = z.infer<typeof providerModelRowSchema>
 
 export const connectorKindSchema = z.enum(['API', 'MCP', 'OAUTH'])
 export const connectorStatusSchema = z

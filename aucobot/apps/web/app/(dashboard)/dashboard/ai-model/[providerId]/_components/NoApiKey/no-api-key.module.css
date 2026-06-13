@@ -1,5 +1,5 @@
 .notConnectedBorder {
-  border-style: dashed;
+  border: 1px dashed var(--color-border);
   background-color: var(--color-muted);
 }
 

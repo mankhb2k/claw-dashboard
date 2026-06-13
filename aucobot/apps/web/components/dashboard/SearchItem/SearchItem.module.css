@@ -5,6 +5,11 @@
   max-width: 320px;
 }
 
+/* Khoảng cách chuẩn dưới TitleHeader — list page */
+.pageSpacing {
+  margin-block: var(--space-4);
+}
+
 /* Right padding for clear button */
 .searchInput {
   padding-right: 36px !important;
