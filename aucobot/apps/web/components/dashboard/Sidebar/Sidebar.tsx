@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { ChevronsLeft } from "lucide-react";
 import { SidebarFooter } from "@/components/dashboard/SidebarFooter/SidebarFooter";
+import { useI18n } from "@/lib/i18n";
 import styles from "./Sidebar.module.css";
 
 const ICON_STROKE = 1.25;
@@ -30,6 +31,7 @@ export function Sidebar({
   homeHref = "/",
 }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <aside
@@ -37,18 +39,18 @@ export function Sidebar({
     >
       <header className={styles.header}>
         <div className={styles.brand}>
-          <Link href={homeHref} title="Dashboard" className={styles.brandLink}>
+          <Link href={homeHref} title={t("sidebar.dashboardTitle")} className={styles.brandLink}>
             <span
               className={`${styles.logoText} ${collapsed ? styles.logoTextHidden : ""}`}
             >
-              AUCOBOT
+              {t("sidebar.brand")}
             </span>
           </Link>
         </div>
         <button
           onClick={onToggle}
           className={styles.collapseBtn}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
         >
           <ChevronsLeft
             size={14}

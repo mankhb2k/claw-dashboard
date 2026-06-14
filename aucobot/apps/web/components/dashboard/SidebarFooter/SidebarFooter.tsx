@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, Monitor, Moon, Palette, Settings, Sun, User } from "lucide-react";
@@ -19,36 +19,41 @@ import type { ThemePreference } from "@/schemas/theme.schema";
 import { resolveUserAvatarSrc } from "@/utils/profile/user-avatar";
 import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/stores/theme.store";
+import { useI18n } from "@/lib/i18n";
 import styles from "./SidebarFooter.module.css";
 
 const ICON_STROKE = 1.25;
-
-const THEME_DETAIL: Record<ThemePreference, string> = {
-  system: "System",
-  light: "Light",
-  dark: "Dark",
-};
 
 interface SidebarFooterProps {
   collapsed: boolean;
 }
 
 function FooterDropdownMenuContent({ onLogout }: { onLogout: () => void }) {
+  const { t } = useI18n();
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
+
+  const themeDetail = useMemo(
+    (): Record<ThemePreference, string> => ({
+      system: t("sidebar.footer.system"),
+      light: t("sidebar.footer.light"),
+      dark: t("sidebar.footer.dark"),
+    }),
+    [t],
+  );
 
   return (
     <>
       <DropdownMenuItem asChild>
         <Link href="/dashboard/profile">
           <User size={14} aria-hidden />
-          Profile
+          {t("sidebar.footer.profile")}
         </Link>
       </DropdownMenuItem>
       <DropdownMenuSub select>
-        <DropdownMenuSubItem detail={THEME_DETAIL[theme]}>
+        <DropdownMenuSubItem detail={themeDetail[theme]}>
           <Palette size={14} aria-hidden />
-          Appearance
+          {t("sidebar.footer.appearance")}
         </DropdownMenuSubItem>
         <DropdownMenuSubContent width={180}>
           <DropdownMenuItem
@@ -56,41 +61,42 @@ function FooterDropdownMenuContent({ onLogout }: { onLogout: () => void }) {
             onSelect={() => setTheme("system")}
           >
             <Monitor size={14} aria-hidden />
-            System
+            {t("sidebar.footer.system")}
           </DropdownMenuItem>
           <DropdownMenuItem
             selected={theme === "light"}
             onSelect={() => setTheme("light")}
           >
             <Sun size={14} aria-hidden />
-            Light
+            {t("sidebar.footer.light")}
           </DropdownMenuItem>
           <DropdownMenuItem
             selected={theme === "dark"}
             onSelect={() => setTheme("dark")}
           >
             <Moon size={14} aria-hidden />
-            Dark
+            {t("sidebar.footer.dark")}
           </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuSub>
       <DropdownMenuItem asChild>
         <Link href="/dashboard/setting">
           <Settings size={14} aria-hidden />
-          Settings
+          {t("sidebar.footer.settings")}
         </Link>
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />
       <DropdownMenuItem variant="danger" onClick={onLogout}>
         <LogOut size={14} aria-hidden />
-        Log out
+        {t("sidebar.footer.logout")}
       </DropdownMenuItem>
     </>
   );
 }
 
 export function SidebarFooter({ collapsed }: SidebarFooterProps) {
+  const { t } = useI18n();
   const [openCollapsedMenu, setOpenCollapsedMenu] = useState(false);
   const [openExpandedMenu, setOpenExpandedMenu] = useState(false);
   const router = useRouter();
@@ -98,7 +104,8 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
   const logout = useAuthStore((s) => s.logout);
 
   const initials = user?.username?.slice(0, 2).toUpperCase() ?? "??";
-  const displayName = user?.name?.trim() || user?.username || "User";
+  const displayName =
+    user?.name?.trim() || user?.username || t("sidebar.footer.userFallback");
 
   const handleLogout = async () => {
     setOpenCollapsedMenu(false);
@@ -125,7 +132,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
           <button
             type="button"
             className={styles.footerAvatarTrigger}
-            aria-label="Open quick settings"
+            aria-label={t("sidebar.footer.openQuickSettings")}
             aria-expanded={openCollapsedMenu}
             disabled={!collapsed}
           >
@@ -134,7 +141,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
               className={styles.footerAvatar}
               src={resolveUserAvatarSrc(user?.avatarUrl)}
               fallback={initials}
-              alt={user?.username ?? "User avatar"}
+              alt={user?.username ?? t("sidebar.footer.userAvatar")}
             />
           </button>
         </DropdownMenuTrigger>
@@ -168,7 +175,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
               <button
                 type="button"
                 className={styles.footerSettingsBtn}
-                aria-label="Open quick settings"
+                aria-label={t("sidebar.footer.openQuickSettings")}
                 aria-expanded={openExpandedMenu}
               >
                 <Settings size={18} strokeWidth={ICON_STROKE} aria-hidden />

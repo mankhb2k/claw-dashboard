@@ -1,6 +1,8 @@
 export const enSkills = {
   page: {
-    headerSkill: "Skill",
+    title: 'Skill Directory',
+    description: 'Manage and design intelligent AI agents for your projects.',
+    headerSkill: 'Skill',
     titleWithProject: "{{name}} · Skill",
     leadPart1:
       "A skill folder contains SKILL.md with YAML frontmatter and agent instructions. See ",

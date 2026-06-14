@@ -6,6 +6,7 @@ import { Flex } from "@/components/layout";
 import { Button, Input, Typography } from "@/components/ui";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useProjectStore } from "@/stores/project.store";
+import { useI18n } from "@/lib/i18n";
 import type { Project } from "@/schemas/project.schema";
 import styles from "./DangerZone.module.css";
 import { TitleSection } from "../TitleSection/TitleSection";
@@ -16,6 +17,7 @@ interface Props {
 
 export function DangerZone({ project }: Props) {
   /* 1. STATE & HOOKS */
+  const { t } = useI18n();
   const router = useRouter();
   const destroyProject = useProjectStore((s) => s.destroyProject);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -38,7 +40,9 @@ export function DangerZone({ project }: Props) {
       await destroyProject(project.id);
       router.push("/projects");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not delete project. Please try again.");
+      setError(
+        e instanceof Error ? e.message : t("settings.dangerZone.errors.delete"),
+      );
       setLoading(false);
     }
   };
@@ -48,8 +52,8 @@ export function DangerZone({ project }: Props) {
     <Flex direction="column" gap={24}>
       {/* HEADER SECTION */}
       <TitleSection
-        title="Delete project"
-        description="Permanently remove your project and its database"
+        title={t("settings.dangerZone.title")}
+        description={t("settings.dangerZone.description")}
       />
 
       {/* DANGER CARD SECTION */}
@@ -58,10 +62,10 @@ export function DangerZone({ project }: Props) {
           <AlertTriangle size={20} className={styles.warningIcon} />
           <div className={styles.warningContent}>
             <Typography variant="p" weight="medium">
-              Deleting this project will also remove your database.
+              {t("settings.dangerZone.warningTitle")}
             </Typography>
             <Typography variant="small" color="muted">
-              Make sure you have made a backup if you want to keep your data.
+              {t("settings.dangerZone.warningDetail")}
             </Typography>
           </div>
         </div>
@@ -70,7 +74,7 @@ export function DangerZone({ project }: Props) {
           {isRunning && (
             <p className={styles.blockHint}>
               <AlertTriangle size={14} />
-              Stop the container before deleting.
+              {t("settings.dangerZone.blockHint")}
             </p>
           )}
           <Button
@@ -80,7 +84,7 @@ export function DangerZone({ project }: Props) {
             className={styles.actionBtnWithIcon}
             size="sm"
           >
-            Delete project
+            {t("settings.dangerZone.deleteButton")}
           </Button>
         </div>
       </div>
@@ -90,19 +94,21 @@ export function DangerZone({ project }: Props) {
         <div className={styles.overlay} onClick={() => { if (!loading) setDialogOpen(false); }}>
           <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
             <div className={styles.dialogHeader}>
-              <Typography variant="h3" weight="bold">Delete project?</Typography>
+              <Typography variant="h3" weight="bold">
+                {t("settings.dangerZone.dialog.title")}
+              </Typography>
             </div>
 
             <div className={styles.dialogBody}>
               <div className={styles.dialogWarning}>
-                <p>
-                  This action <strong>cannot be undone</strong>. All project data, channel connections, skills, and configuration will be permanently deleted.
-                </p>
+                <p>{t("settings.dangerZone.dialog.body")}</p>
               </div>
 
               <div className={styles.confirmField}>
                 <label htmlFor="confirmName" className={styles.confirmLabel}>
-                  Type the project name <strong>{project.displayName}</strong> to confirm:
+                  {t("settings.dangerZone.dialog.confirmLabel")}{" "}
+                  <strong>{project.displayName}</strong>{" "}
+                  {t("settings.dangerZone.dialog.confirmSuffix")}
                 </label>
                 <Input
                   id="confirmName"
@@ -123,7 +129,7 @@ export function DangerZone({ project }: Props) {
                 onClick={() => { setDialogOpen(false); setConfirmName(""); setError(null); }}
                 disabled={loading}
               >
-                Cancel
+                {t("settings.dangerZone.dialog.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -131,7 +137,14 @@ export function DangerZone({ project }: Props) {
                 disabled={!confirmMatch || loading}
                 className={styles.actionBtnWithIcon}
               >
-                {loading ? "Deleting..." : <><Trash2 size={16} /> Delete permanently</>}
+                {loading ? (
+                  t("settings.dangerZone.dialog.deleting")
+                ) : (
+                  <>
+                    <Trash2 size={16} />{" "}
+                    {t("settings.dangerZone.dialog.deletePermanently")}
+                  </>
+                )}
               </Button>
             </div>
           </div>

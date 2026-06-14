@@ -9,13 +9,15 @@ import { CardChannel } from "../CardChannel/CardChannel";
 import styles from "./ClientChannelPage.module.css";
 import { Flex, Grid } from "@/components/layout";
 import { Button, Spinner, Typography } from "@/components/ui";
-import { BackButton, SearchItem } from "@/components/dashboard";
+import { BackButton, I18nTitleHeader, SearchItem } from "@/components/dashboard";
+import { useI18n } from "@/lib/i18n";
 
 interface ClientChannelPageProps {
   projectId: string;
 }
 
 export default function ClientChannelPage({ projectId: projectIdProp }: ClientChannelPageProps) {
+  const { t } = useI18n();
   const projects = useProjectStore((s) => s.projects);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const projectId = projectIdProp || projects[0]?.id || "";
@@ -43,12 +45,12 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
       ]);
       setCatalog(mergeChannelCatalog(definitions, rows));
     } catch (err) {
-      setChannelsError(err instanceof Error ? err.message : "Failed to load channel list");
+      setChannelsError(err instanceof Error ? err.message : t("channels.page.loadError"));
       setCatalog([]);
     } finally {
       setChannelsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   useEffect(() => {
     void loadChannels();
@@ -65,62 +67,81 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
 
   const loading = !projectsFetched || (Boolean(projectId) && channelsLoading);
 
+  const pageHeader = (
+    <I18nTitleHeader
+      titleKey="channels.page.title"
+      descriptionKey="channels.page.description"
+      showBorder
+    />
+  );
+
   if (!projectId && !projectsFetched) {
     return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        gap={3}
-        className={styles.loadingContainer}
-      >
-        <Spinner size="md" />
-        <Typography variant="p" color="muted">
-          Loading...
-        </Typography>
-      </Flex>
+      <>
+        {pageHeader}
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap={3}
+          className={styles.loadingContainer}
+        >
+          <Spinner size="md" />
+          <Typography variant="p" color="muted">
+            {t("channels.page.loading")}
+          </Typography>
+        </Flex>
+      </>
     );
   }
 
   if (!projectId) {
     return (
-      <p className={styles.error}>
-        No project yet. Create a project on Overview before configuring channels.
-      </p>
+      <>
+        {pageHeader}
+        <p className={styles.error}>{t("channels.page.noProject")}</p>
+      </>
     );
   }
 
   if (!project && !projectsFetched) {
     return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        gap={3}
-        className={styles.loadingContainer}
-      >
-        <Spinner size="md" />
-        <Typography variant="p" color="muted">
-          Loading...
-        </Typography>
-      </Flex>
+      <>
+        {pageHeader}
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap={3}
+          className={styles.loadingContainer}
+        >
+          <Spinner size="md" />
+          <Typography variant="p" color="muted">
+            {t("channels.page.loading")}
+          </Typography>
+        </Flex>
+      </>
     );
   }
 
   if (projectsFetched && !project) {
     return (
-      <div className={styles.errorWrap}>
-        <BackButton href="/dashboard">Back to overview</BackButton>
-        <p className={styles.error}>Project not found.</p>
-      </div>
+      <>
+        {pageHeader}
+        <div className={styles.errorWrap}>
+          <BackButton href="/dashboard">{t("channels.page.backToOverview")}</BackButton>
+          <p className={styles.error}>{t("channels.page.projectNotFound")}</p>
+        </div>
+      </>
     );
   }
 
   return (
     <>
+      {pageHeader}
       <SearchItem
         id="channel-search"
-        placeholder="Search channels..."
+        placeholder={t("channels.page.searchPlaceholder")}
         value={search}
         onChange={setSearch}
         maxWidth={360}
@@ -131,7 +152,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
         <Flex direction="column" align="center" gap={3} className={styles.errorBlock}>
           <p className={styles.error}>{channelsError}</p>
           <Button type="button" variant="secondary" onClick={() => void loadChannels()}>
-            Retry
+            {t("channels.page.retry")}
           </Button>
         </Flex>
       ) : null}
@@ -141,14 +162,14 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
           <Flex direction="column" align="center" justify="center" gap={3} className={styles.loadingContainer}>
             <Spinner size="md" />
             <Typography variant="p" color="muted">
-              Loading channels...
+              {t("channels.page.loadingChannels")}
             </Typography>
           </Flex>
         ) : filtered.length === 0 ? (
           <p className={styles.empty}>
             {catalog.length === 0
-              ? "No channels available on the server."
-              : "No matching channels found."}
+              ? t("channels.page.emptyServer")
+              : t("channels.page.emptySearch")}
           </p>
         ) : (
           <Grid columns={4} gap={16}>
@@ -168,7 +189,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
                     key={ch.channelId}
                     className={styles.channelCardDisabled}
                     aria-disabled
-                    title="Coming soon"
+                    title={t("channels.page.comingSoon")}
                   >
                     {card}
                   </div>

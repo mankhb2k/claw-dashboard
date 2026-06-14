@@ -13,6 +13,7 @@ import { Flex } from "@/components/layout";
 import { SearchItem } from "@/components/dashboard";
 import { AlertTriangle } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import styles from "./SandboxSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
@@ -24,12 +25,8 @@ interface Props {
 
 type SandboxMode = "all" | "selected";
 
-const MODE_OPTIONS = [
-  { value: "all", label: "All agents" },
-  { value: "selected", label: "Selected agents only" },
-];
-
 function AgentSandboxPicker({
+  t,
   summary,
   agents,
   filteredAgents,
@@ -40,6 +37,7 @@ function AgentSandboxPicker({
   selectedSlugs,
   onToggle,
 }: {
+  t: (path: string, vars?: Record<string, string>) => string;
   summary: string;
   agents: ProjectAgentListRow[];
   filteredAgents: ProjectAgentListRow[];
@@ -58,7 +56,7 @@ function AgentSandboxPicker({
 
       <SearchItem
         id="sandbox-applied-search"
-        placeholder="Search agents..."
+        placeholder={t("settings.sandbox.picker.searchPlaceholder")}
         value={searchQuery}
         onChange={onSearchChange}
         className={styles.agentPickerSearch}
@@ -70,7 +68,7 @@ function AgentSandboxPicker({
           color="muted"
           className={styles.agentPickerState}
         >
-          Loading agents...
+          {t("settings.sandbox.picker.loadingAgents")}
         </Typography>
       ) : agentsError ? (
         <Typography variant="small" className={styles.fieldError}>
@@ -84,10 +82,12 @@ function AgentSandboxPicker({
           className={styles.agentPickerState}
         >
           <Typography variant="small" color="muted">
-            No agents found for this project.
+            {t("settings.sandbox.picker.noAgents")}
           </Typography>
           <Button variant="link" size="sm" asChild>
-            <Link href="/dashboard/agent/create">Create an agent</Link>
+            <Link href="/dashboard/agent/create">
+              {t("settings.sandbox.picker.createAgent")}
+            </Link>
           </Button>
         </Flex>
       ) : filteredAgents.length === 0 ? (
@@ -96,7 +96,7 @@ function AgentSandboxPicker({
           color="muted"
           className={styles.agentPickerState}
         >
-          No agents match your search.
+          {t("settings.sandbox.picker.noMatch")}
         </Typography>
       ) : (
         <Flex
@@ -147,14 +147,16 @@ function AgentSandboxPicker({
                     color="muted"
                     className={styles.toggleHint}
                   >
-                    Use Docker sandbox
+                    {t("settings.sandbox.picker.useDocker")}
                   </Typography>
                   <Switch
                     id={switchId}
                     checked={selected}
                     disabled={!agentsLoaded || rowDisabled}
                     onCheckedChange={(val) => onToggle(agent.slug, val)}
-                    aria-label={`Use Docker sandbox for ${agent.name}`}
+                    aria-label={t("settings.sandbox.picker.useDockerFor", {
+                      name: agent.name,
+                    })}
                   />
                 </Flex>
               </Flex>
@@ -167,6 +169,7 @@ function AgentSandboxPicker({
 }
 
 export function SandboxSection({ projectId }: Props) {
+  const { t } = useI18n();
   const [enabled, setEnabled] = useState(false);
   const [mode, setMode] = useState<SandboxMode>("all");
   const [exemptAgentSlugs, setExemptAgentSlugs] = useState<string[]>([]);
@@ -203,7 +206,7 @@ export function SandboxSection({ projectId }: Props) {
         if (!active) return;
         setAgents([]);
         setAgentsError(
-          err instanceof Error ? err.message : "Cannot load agents",
+          err instanceof Error ? err.message : t("settings.sandbox.errors.loadAgents"),
         );
         setAgentsLoaded(true);
       });
@@ -222,7 +225,9 @@ export function SandboxSection({ projectId }: Props) {
       .catch((err) => {
         if (!active) return;
         setConfigError(
-          err instanceof Error ? err.message : "Cannot load sandbox settings",
+          err instanceof Error
+            ? err.message
+            : t("settings.sandbox.errors.loadSettings"),
         );
         setConfigLoaded(true);
       });
@@ -230,7 +235,15 @@ export function SandboxSection({ projectId }: Props) {
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [projectId, t]);
+
+  const modeOptions = useMemo(
+    () => [
+      { value: "all", label: t("settings.sandbox.mode.all") },
+      { value: "selected", label: t("settings.sandbox.mode.selected") },
+    ],
+    [t],
+  );
 
   const filteredAgents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -243,13 +256,20 @@ export function SandboxSection({ projectId }: Props) {
   }, [agents, searchQuery]);
 
   const appliedCount = appliedAgentSlugs.length;
+  const total = agents.length || appliedCount;
 
   const selectedModeSummary =
     appliedCount === 0
-      ? "Turn on Docker sandbox per agent. Agents left off run on the gateway host."
-      : `${appliedCount} of ${agents.length || appliedCount} agent${
-          (agents.length || appliedCount) === 1 ? "" : "s"
-        } use Sandbox.`;
+      ? t("settings.sandbox.picker.summaryEmpty")
+      : appliedCount === 1
+        ? t("settings.sandbox.picker.summaryOne", {
+            count: String(appliedCount),
+            total: String(total),
+          })
+        : t("settings.sandbox.picker.summaryMany", {
+            count: String(appliedCount),
+            total: String(total),
+          });
 
   const handleToggle = (val: boolean) => {
     setEnabled(val);
@@ -299,23 +319,22 @@ export function SandboxSection({ projectId }: Props) {
 
   return (
     <Flex direction="column" gap={24}>
-      <TitleSection title="Sandbox" />
+      <TitleSection title={t("settings.sandbox.title")} />
 
       <CardSection>
         {configError ? (
           <Typography variant="small" className={styles.configError}>
-            {configError}. Sandbox settings could not be loaded from the server.
+            {configError}. {t("settings.sandbox.configErrorSuffix")}
           </Typography>
         ) : null}
 
         <CardSection.Row className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Enable project sandbox
+              {t("settings.sandbox.enable.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              Run shell commands inside Docker. Choose whether sandbox applies to
-              all agents or only selected ones.
+              {t("settings.sandbox.enable.description")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
@@ -323,7 +342,7 @@ export function SandboxSection({ projectId }: Props) {
               checked={enabled}
               onCheckedChange={handleToggle}
               disabled={!configLoaded}
-              aria-label="Enable project sandbox"
+              aria-label={t("settings.sandbox.enable.aria")}
             />
           </CardSection.Action>
         </CardSection.Row>
@@ -331,17 +350,21 @@ export function SandboxSection({ projectId }: Props) {
         <CardSection.Row noBorder className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Isolation scope
+              {t("settings.sandbox.isolation.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              <strong>All agents</strong> — every agent uses Docker sandbox.{" "}
-              <strong>Selected agents only</strong> — pick who uses Docker.
+              <strong>{t("settings.sandbox.isolation.descriptionAll")}</strong>{" "}
+              — {t("settings.sandbox.isolation.descriptionAllDetail")}{" "}
+              <strong>
+                {t("settings.sandbox.isolation.descriptionSelected")}
+              </strong>{" "}
+              — {t("settings.sandbox.isolation.descriptionSelectedDetail")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
             <Select
               id="sandbox-default-mode"
-              options={MODE_OPTIONS}
+              options={modeOptions}
               value={mode}
               onValueChange={(val) => handleMode(val as SandboxMode)}
               disabled={!configLoaded || !enabled}
@@ -351,13 +374,14 @@ export function SandboxSection({ projectId }: Props) {
 
         {enabled && mode === "all" ? (
           <Typography variant="small" color="muted" className={styles.allModeHint}>
-            All agents use Docker sandbox.
+            {t("settings.sandbox.allModeHint")}
           </Typography>
         ) : null}
 
         {enabled && mode === "selected" ? (
           <Flex direction="column" className={styles.agentPickerSection}>
             <AgentSandboxPicker
+              t={t}
               summary={selectedModeSummary}
               agents={agents}
               filteredAgents={filteredAgents}
@@ -373,23 +397,21 @@ export function SandboxSection({ projectId }: Props) {
 
         {!enabled ? (
           <Typography variant="small" color="muted" className={styles.disabledHint}>
-            Turn on project sandbox to configure agent placement.
+            {t("settings.sandbox.disabledHint")}
           </Typography>
         ) : null}
 
         <Flex align="start" gap={2} className={styles.callout}>
           <AlertTriangle size={16} aria-hidden />
           <Typography variant="small" color="muted">
-            The <code>docker</code> backend requires the gateway to reach Docker
-            (socket or DinD). Sandbox changes where commands run, not whether
-            agents can use shell tools.
+            {t("settings.sandbox.callout")}
           </Typography>
         </Flex>
 
         <CardSection.Footer>
           {saveStatus === "error" && (
             <Typography variant="small" className={styles.fieldError}>
-              Something went wrong. Try again.
+              {t("settings.sandbox.save.error")}
             </Typography>
           )}
           <Button
@@ -400,10 +422,10 @@ export function SandboxSection({ projectId }: Props) {
             size="sm"
           >
             {saveStatus === "saving"
-              ? "Saving..."
+              ? t("settings.sandbox.save.saving")
               : saveStatus === "saved"
-                ? "Saved"
-                : "Save changes"}
+                ? t("settings.sandbox.save.saved")
+                : t("settings.sandbox.save.submit")}
           </Button>
         </CardSection.Footer>
       </CardSection>

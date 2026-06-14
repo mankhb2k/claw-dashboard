@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
 import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
 import {
   changePasswordSchema,
   type ChangePasswordInput,
@@ -15,6 +16,7 @@ import { TitleSection } from "../../../setting/_components/TitleSection/TitleSec
 import styles from "../../profile.module.css";
 
 export function ProfileSecuritySection() {
+  const { t } = useI18n();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -48,8 +50,8 @@ export function ProfileSecuritySection() {
   return (
     <Flex direction="column" gap={24}>
       <TitleSection
-        title="Security"
-        description="Update your password. You will stay signed in on this device."
+        title={t("profile.security.title")}
+        description={t("profile.security.description")}
       />
 
       <CardSection>
@@ -57,7 +59,7 @@ export function ProfileSecuritySection() {
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Current password
+                {t("profile.security.currentPassword")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -74,7 +76,7 @@ export function ProfileSecuritySection() {
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                New password
+                {t("profile.security.newPassword")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -91,7 +93,7 @@ export function ProfileSecuritySection() {
           <CardSection.Row className={styles.cardRow} noBorder>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Confirm new password
+                {t("profile.security.confirmPassword")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -108,11 +110,11 @@ export function ProfileSecuritySection() {
           <CardSection.Footer>
             <div className={styles.footerActions}>
               {saveStatus === "saved" && (
-                <span className={styles.statusOk}>Password updated</span>
+                <span className={styles.statusOk}>{t("profile.security.saved")}</span>
               )}
               {saveStatus === "error" && (
                 <span className={styles.statusError}>
-                  Could not update — check current password
+                  {t("profile.security.saveError")}
                 </span>
               )}
               <Button
@@ -120,7 +122,7 @@ export function ProfileSecuritySection() {
                 size="sm"
                 loading={saveStatus === "saving"}
               >
-                Update password
+                {t("profile.security.submit")}
               </Button>
             </div>
           </CardSection.Footer>

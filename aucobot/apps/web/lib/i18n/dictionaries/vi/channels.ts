@@ -1,5 +1,19 @@
 export const viChannels = {
   page: {
+    title: 'Kênh chat',
+    description:
+      'Kết nối chatbot với các kênh phổ biến như Telegram, Facebook, Discord...',
+    searchPlaceholder: 'Tìm kênh...',
+    loading: 'Đang tải...',
+    loadingChannels: 'Đang tải kênh...',
+    noProject: 'Chưa có dự án. Tạo dự án ở Tổng quan trước khi cấu hình kênh.',
+    backToOverview: 'Về tổng quan',
+    projectNotFound: 'Không tìm thấy dự án.',
+    retry: 'Thử lại',
+    emptyServer: 'Không có kênh nào trên máy chủ.',
+    emptySearch: 'Không có kênh khớp tìm kiếm.',
+    comingSoon: 'Sắp ra mắt',
+    loadError: 'Không thể tải danh sách kênh',
     headerChannel: 'Channel',
     titleWithProject: '{{name}} · Channel',
     chatChannelsTitle: 'Kênh chat',
@@ -10,12 +24,8 @@ export const viChannels = {
       '; có thể bật nhiều kênh và định tuyến theo từng cuộc trò chuyện. ',
     docsLinkLabel: 'Tài liệu đầy đủ',
     searchAria: 'Tìm kênh',
-    searchPlaceholder: 'Tìm kênh…',
-    emptySearch: 'Không có kênh nào khớp tìm kiếm.',
-    loading: 'Đang tải…',
     notFoundTitle: 'Không tìm thấy',
     backToList: '← Về danh sách',
-    projectNotFound: 'Không tìm thấy project.',
     invalidProject: 'Mã project không hợp lệ',
   },
   badge: {

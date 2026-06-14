@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
 import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   updateUserNameSchema,
@@ -25,14 +26,16 @@ export function ProfileAccountSection({
   user,
   onUserUpdated,
 }: ProfileAccountSectionProps) {
+  const { t, locale } = useI18n();
   const setAuthUser = useAuthStore((s) => s.setUser);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
 
-  const memberSince = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
-    new Date(user.createdAt),
-  );
+  const memberSince = new Intl.DateTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-US",
+    { dateStyle: "medium" },
+  ).format(new Date(user.createdAt));
 
   const {
     register,
@@ -67,8 +70,8 @@ export function ProfileAccountSection({
   return (
     <Flex direction="column" gap={24}>
       <TitleSection
-        title="Account"
-        description="Your sign-in identity and display name across the dashboard."
+        title={t("profile.account.title")}
+        description={t("profile.account.description")}
       />
 
       <CardSection>
@@ -76,10 +79,10 @@ export function ProfileAccountSection({
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Display name
+                {t("profile.account.displayName.label")}
               </Typography>
               <Typography variant="small" color="muted">
-                Shown in the sidebar and profile header.
+                {t("profile.account.displayName.description")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -94,10 +97,10 @@ export function ProfileAccountSection({
           <CardSection.Row className={styles.cardRow} noBorder>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Username
+                {t("profile.account.username.label")}
               </Typography>
               <Typography variant="small" color="muted">
-                Used to sign in. Cannot be changed.
+                {t("profile.account.username.description")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -108,7 +111,7 @@ export function ProfileAccountSection({
           <CardSection.Row className={styles.cardRow} noBorder>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Member since
+                {t("profile.account.memberSince")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -119,10 +122,10 @@ export function ProfileAccountSection({
           <CardSection.Footer>
             <div className={styles.footerActions}>
               {saveStatus === "saved" && (
-                <span className={styles.statusOk}>Saved</span>
+                <span className={styles.statusOk}>{t("profile.account.saved")}</span>
               )}
               {saveStatus === "error" && (
-                <span className={styles.statusError}>Could not save</span>
+                <span className={styles.statusError}>{t("profile.account.saveError")}</span>
               )}
               <Button
                 type="submit"
@@ -130,7 +133,7 @@ export function ProfileAccountSection({
                 disabled={!isDirty || saveStatus === "saving"}
                 loading={saveStatus === "saving"}
               >
-                Save changes
+                {t("profile.account.submit")}
               </Button>
             </div>
           </CardSection.Footer>

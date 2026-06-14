@@ -1,5 +1,7 @@
 export const viSkills = {
   page: {
+    title: 'Thư mục Skill',
+    description: 'Quản lý và thiết kế agent AI thông minh cho dự án của bạn.',
     headerSkill: 'Skill',
     titleWithProject: '{{name}} · Skill',
     leadPart1:

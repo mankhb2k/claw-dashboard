@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Flex, Container } from "@/components/layout";
 import { Spinner, Typography } from "@/components/ui";
 import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
 import type { PublicUser } from "@/schemas/user.schema";
 import { TitleSection } from "../../../setting/_components/TitleSection/TitleSection";
 import { ProfileAccountSection } from "../ProfileAccountSection/ProfileAccountSection";
@@ -12,6 +13,7 @@ import { ProfileSecuritySection } from "../ProfileSecuritySection/ProfileSecurit
 import styles from "../../profile.module.css";
 
 export function ClientProfilePage() {
+  const { t } = useI18n();
   const [user, setUser] = useState<PublicUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function ClientProfilePage() {
       const profile = await usersApi.me();
       setUser(profile);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load profile");
+      setError(err instanceof Error ? err.message : t("profile.loadError"));
     } finally {
       setLoading(false);
     }
@@ -32,7 +34,7 @@ export function ClientProfilePage() {
 
   useEffect(() => {
     void loadProfile();
-  }, [loadProfile]);
+  }, [loadProfile, t]);
 
   if (loading) {
     return (
@@ -47,7 +49,7 @@ export function ClientProfilePage() {
       <Flex direction="column" align="stretch" className={styles.page}>
         <Container size="sm" className={styles.content}>
           <Typography variant="small" color="muted">
-            {error ?? "Profile unavailable"}
+            {error ?? t("profile.unavailable")}
           </Typography>
         </Container>
       </Flex>
@@ -59,8 +61,8 @@ export function ClientProfilePage() {
       <Container size="sm" display="flex" className={styles.content}>
         <div className={styles.sections}>
           <TitleSection
-            title="Profile"
-            description="Manage your personal account. Project settings stay under Settings."
+            title={t("profile.title")}
+            description={t("profile.description")}
           />
 
           <div className={styles.hero}>

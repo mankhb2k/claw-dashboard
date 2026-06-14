@@ -27,7 +27,7 @@ import { projectApi } from "@/lib/api/project";
 import type { ProjectSkillListRow } from "@/schemas/project.schema";
 import { useProjectSkills } from "@/hooks/skill/use-project-skills";
 import { useProjectStore } from "@/stores/project.store";
-import { SearchItem } from "@/components/dashboard";
+import { SearchItem, I18nTitleHeader } from "@/components/dashboard";
 import { CardSkill } from "../CardSkill/CardSkill";
 import { ModalCreateSkill } from "../ModalCreateSkill/ModalCreateSkill";
 import { ModalSkillStore } from "../ModalSkillStore/ModalSkillStore";
@@ -274,31 +274,50 @@ export function ClientSkillPage() {
 
   if (loading) {
     return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        gap={3}
-        className={styles.loadingContainer}
-      >
-        <Spinner size="md" />
-        <Typography variant="p" color="muted">
-          Loading data...
-        </Typography>
-      </Flex>
+      <>
+        <I18nTitleHeader
+          titleKey="skills.page.title"
+          descriptionKey="skills.page.description"
+          showBorder
+        />
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap={3}
+          className={styles.loadingContainer}
+        >
+          <Spinner size="md" />
+          <Typography variant="p" color="muted">
+            Loading data...
+          </Typography>
+        </Flex>
+      </>
     );
   }
 
   if (!projectId) {
     return (
-      <Typography variant="p" className={styles.errorText}>
-        No project. Please create a project before managing skills.
-      </Typography>
+      <>
+        <I18nTitleHeader
+          titleKey="skills.page.title"
+          descriptionKey="skills.page.description"
+          showBorder
+        />
+        <Typography variant="p" className={styles.errorText}>
+          No project. Please create a project before managing skills.
+        </Typography>
+      </>
     );
   }
 
   return (
     <>
+      <I18nTitleHeader
+        titleKey="skills.page.title"
+        descriptionKey="skills.page.description"
+        showBorder
+      />
       <Flex
         justify="between"
         align="center"

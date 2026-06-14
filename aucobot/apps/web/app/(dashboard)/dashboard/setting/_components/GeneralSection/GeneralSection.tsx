@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button, Input, Typography } from "@/components/ui";
+import { Button, Input, Select, Typography } from "@/components/ui";
 import { Copy, Check } from "lucide-react";
 import { Flex } from "@/components/layout";
+import {
+  useI18n,
+  SUPPORTED_LOCALES,
+  writeLocale,
+  type Locale,
+} from "@/lib/i18n";
 import { projectApi } from "@/lib/api/project";
 import type { Project } from "@/schemas/project.schema";
 import styles from "./GeneralSection.module.css";
@@ -17,27 +23,51 @@ interface Props {
   project: Project;
 }
 
-const formSchema = z.object({
-  displayName: z
-    .string()
-    .min(3, "Project name must be at least 3 characters")
-    .max(50, "Project name must be at most 50 characters"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  displayName: string;
+};
 
 export function GeneralSection({ project }: Props) {
+  const { t, locale } = useI18n();
+  const [pendingLocale, setPendingLocale] = useState<Locale>(locale);
   const [copied, setCopied] = useState<"subdomain" | "id" | null>(null);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(project.createdAt));
+  useEffect(() => {
+    setPendingLocale(locale);
+  }, [locale]);
+
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        displayName: z
+          .string()
+          .min(3, t("settings.general.projectName.validation.min"))
+          .max(50, t("settings.general.projectName.validation.max")),
+      }),
+    [t],
+  );
+
+  const formattedDate = new Intl.DateTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-US",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    },
+  ).format(new Date(project.createdAt));
 
   const subdomainValue = `${project.subdomain}.openclaw.ai`;
+
+  const languageOptions = useMemo(
+    () =>
+      SUPPORTED_LOCALES.map((code) => ({
+        value: code,
+        label: t(`settings.general.language.options.${code}`),
+      })),
+    [t],
+  );
 
   const {
     register,
@@ -51,12 +81,21 @@ export function GeneralSection({ project }: Props) {
     },
   });
 
+  const isLocaleDirty = pendingLocale !== locale;
+
   const onSubmit = async (data: FormValues) => {
     setSaveStatus("saving");
     try {
-      await projectApi.updateDisplayName(project.id, data.displayName);
+      if (isDirty) {
+        await projectApi.updateDisplayName(project.id, data.displayName);
+        reset(data);
+      }
+      if (isLocaleDirty) {
+        writeLocale(pendingLocale);
+        window.location.reload();
+        return;
+      }
       setSaveStatus("saved");
-      reset(data);
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
       setSaveStatus("error");
@@ -102,24 +141,24 @@ export function GeneralSection({ project }: Props) {
 
   return (
     <Flex direction="column" gap={24}>
-      <TitleSection title="General settings" />
+      <TitleSection title={t("settings.general.title")} />
 
       <CardSection>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Project name
+                {t("settings.general.projectName.label")}
               </Typography>
               <Typography variant="small" color="muted">
-                Display name used across the system.
+                {t("settings.general.projectName.description")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
               <Input
                 id="displayName"
                 type="text"
-                placeholder="Enter project name..."
+                placeholder={t("settings.general.projectName.placeholder")}
                 className={styles.input}
                 error={errors.displayName?.message}
                 {...register("displayName")}
@@ -130,39 +169,62 @@ export function GeneralSection({ project }: Props) {
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Project ID
+                {t("settings.general.projectId.label")}
               </Typography>
               <Typography variant="small" color="muted">
-                Unique identifier for this project.
+                {t("settings.general.projectId.description")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
-              {renderCopyField(project.id, "id", "Copy project ID")}
+              {renderCopyField(
+                project.id,
+                "id",
+                t("settings.general.projectId.copyAria"),
+              )}
             </CardSection.Action>
           </CardSection.Row>
 
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Subdomain
+                {t("settings.general.subdomain.label")}
               </Typography>
               <Typography variant="small" color="muted">
-                Subdomain dedicated to this project.
+                {t("settings.general.subdomain.description")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
               {renderCopyField(
                 subdomainValue,
                 "subdomain",
-                "Copy subdomain",
+                t("settings.general.subdomain.copyAria"),
               )}
+            </CardSection.Action>
+          </CardSection.Row>
+
+          <CardSection.Row className={styles.cardRow}>
+            <CardSection.Info className={styles.rowInfo}>
+              <Typography variant="p" weight="medium">
+                {t("settings.general.language.label")}
+              </Typography>
+              <Typography variant="small" color="muted">
+                {t("settings.general.language.description")}
+              </Typography>
+            </CardSection.Info>
+            <CardSection.Action className={styles.rowAction}>
+              <Select
+                id="interface-language"
+                options={languageOptions}
+                value={pendingLocale}
+                onValueChange={(value) => setPendingLocale(value as Locale)}
+              />
             </CardSection.Action>
           </CardSection.Row>
 
           <CardSection.Row noBorder className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>
               <Typography variant="p" weight="medium">
-                Created at
+                {t("settings.general.createdAt.label")}
               </Typography>
             </CardSection.Info>
             <CardSection.Action className={styles.rowAction}>
@@ -173,20 +235,20 @@ export function GeneralSection({ project }: Props) {
           <CardSection.Footer>
             {saveStatus === "error" && (
               <Typography variant="small" className={styles.fieldError}>
-                Something went wrong. Please try again.
+                {t("settings.general.save.error")}
               </Typography>
             )}
             <Button
               type="submit"
               variant="primary"
-              disabled={!isDirty || saveStatus === "saving"}
+              disabled={(!isDirty && !isLocaleDirty) || saveStatus === "saving"}
               size="sm"
             >
               {saveStatus === "saving"
-                ? "Saving..."
+                ? t("settings.general.save.saving")
                 : saveStatus === "saved"
-                  ? "Saved"
-                  : "Save changes"}
+                  ? t("settings.general.save.saved")
+                  : t("settings.general.save.submit")}
             </Button>
           </CardSection.Footer>
         </form>

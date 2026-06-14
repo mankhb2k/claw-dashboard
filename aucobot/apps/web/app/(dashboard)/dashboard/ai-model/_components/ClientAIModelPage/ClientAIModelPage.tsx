@@ -12,7 +12,7 @@ import type {
 } from "@/schemas/project.schema";
 import { mergeProviderCatalog, type MergedProviderCard } from "@/utils/ai-model/merge-provider-catalog";
 import { CardProvider } from "../CardProvider/CardProvider";
-import { SearchItem } from "@/components/dashboard";
+import { I18nTitleHeader, SearchItem } from "@/components/dashboard";
 import styles from "./ClientAIModelPage.module.css";
 
 function filterProviderCards(
@@ -101,6 +101,11 @@ export default function ClientAIModelPage() {
 
   return (
     <div className={styles.container}>
+      <I18nTitleHeader
+        titleKey="aiModel.page.title"
+        descriptionKey="aiModel.page.description"
+        showBorder
+      />
       {error && (
         <Typography variant="p" className={styles.error}>
           {error}

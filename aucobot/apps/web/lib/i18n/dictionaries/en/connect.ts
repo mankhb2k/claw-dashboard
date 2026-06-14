@@ -1,6 +1,14 @@
 export const enConnect = {
   page: {
-    headerConnect: "Connect",
+    title: 'Connect Center',
+    description: 'Connect your project with external services.',
+    addConnection: 'Add connection',
+    addCustomConnection: 'Add custom connection',
+    emptyConnected: 'No services connected yet.',
+    oauthFailed: 'OAuth failed: {{error}}',
+    failedToLoad: 'Failed to load data',
+    failedToDisconnect: 'Failed to disconnect',
+    headerConnect: 'Connect',
     titleWithProject: "{{name}} · Connect",
     hubTitle: "Integration Hub (Connect)",
     lead: "Connect your agent to the outside world through APIs or MCP. Selected services provide extra context and capabilities to the model in real time.",

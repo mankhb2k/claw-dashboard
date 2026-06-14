@@ -1,6 +1,21 @@
 export const enChannels = {
   page: {
-    headerChannel: "Channel",
+    title: 'Chat Channel',
+    description:
+      'Connect your chatbot with popular communication channels like Telegram, Facebook, Discord...',
+    searchPlaceholder: 'Search channels...',
+    loading: 'Loading...',
+    loadingChannels: 'Loading channels...',
+    noProject:
+      'No project yet. Create a project on Overview before configuring channels.',
+    backToOverview: 'Back to overview',
+    projectNotFound: 'Project not found.',
+    retry: 'Retry',
+    emptyServer: 'No channels available on the server.',
+    emptySearch: 'No matching channels found.',
+    comingSoon: 'Coming soon',
+    loadError: 'Failed to load channel list',
+    headerChannel: 'Channel',
     titleWithProject: "{{name}} · Channel",
     chatChannelsTitle: "Chat channels",
     leadBeforeStrong:
@@ -10,12 +25,8 @@ export const enChannels = {
       "; you can enable multiple channels and route per conversation. ",
     docsLinkLabel: "Full documentation",
     searchAria: "Search channels",
-    searchPlaceholder: "Search channels…",
-    emptySearch: "No channels match your search.",
-    loading: "Loading…",
     notFoundTitle: "Not found",
     backToList: "← Back to list",
-    projectNotFound: "Project not found.",
     invalidProject: "Invalid project id",
   },
   badge: {

@@ -2,6 +2,7 @@ import { Flex, Container } from "@/components/layout";
 import { projectApi } from "@/lib/api/project";
 import { getCurrentProject } from "@/lib/current-project";
 import { ClientSettingPage } from "./_components/ClientSettingPage/ClientSettingPage";
+import { SettingProjectNotFound } from "./_components/SettingProjectNotFound/SettingProjectNotFound";
 import styles from "./setting.module.css";
 
 export default async function ProjectSettingPage() {
@@ -22,7 +23,7 @@ export default async function ProjectSettingPage() {
     return (
       <Flex direction="column" align="stretch" className={styles.page}>
         <Container size="sm" className={styles.content}>
-          <p className={styles.error}>Project not found.</p>
+          <SettingProjectNotFound />
         </Container>
       </Flex>
     );

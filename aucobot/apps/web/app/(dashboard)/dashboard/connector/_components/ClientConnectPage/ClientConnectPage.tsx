@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button/Button";
 import styles from "./ClientConnectPage.module.css";
 import { Typography } from "@/components/ui/Typography/Typography";
 import { Flex } from "@/components/layout";
+import { I18nTitleHeader } from "@/components/dashboard";
+import { useI18n } from "@/lib/i18n";
 import { toServiceConnectData } from "../../connect-display";
 import type { ServiceConnectData } from "../../projectConnectData";
 import { CardConnection } from "../CardConnection/CardConnection";
@@ -21,6 +23,7 @@ interface ClientConnectPageProps {
 }
 
 export default function ClientConnectPage({ projectId }: ClientConnectPageProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const oauthError = searchParams.get("oauth_error");
@@ -51,10 +54,10 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
     void fetchProjects()
       .then(() => loadConnectData())
       .catch((err) =>
-        setLoadError(err instanceof Error ? err.message : "Failed to load data"),
+        setLoadError(err instanceof Error ? err.message : t("connect.page.failedToLoad")),
       )
       .finally(() => setFetched(true));
-  }, [projectId, fetchProjects, loadConnectData]);
+  }, [projectId, fetchProjects, loadConnectData, t]);
 
   const connectedSlugs = useMemo(
     () =>
@@ -85,40 +88,62 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
       await projectApi.deleteConnector(projectId, row.id);
       await loadConnectData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to disconnect");
+      alert(err instanceof Error ? err.message : t("connect.page.failedToDisconnect"));
     }
   };
 
+  const pageHeader = (
+    <I18nTitleHeader
+      titleKey="connect.page.title"
+      descriptionKey="connect.page.description"
+      showBorder
+    />
+  );
+
   if (!projectId || (fetched && !project)) {
-    return <p className={styles.error}>Project not found.</p>;
+    return (
+      <>
+        {pageHeader}
+        <p className={styles.error}>{t("connect.page.projectNotFound")}</p>
+      </>
+    );
   }
 
   if (!project && !fetched) {
     return (
-      <Flex direction="column" align="center" justify="center" gap={3} className={styles.loadingContainer}>
-        <Spinner size="md" />
-        <Typography variant="p" color="muted">Loading...</Typography>
-      </Flex>
+      <>
+        {pageHeader}
+        <Flex direction="column" align="center" justify="center" gap={3} className={styles.loadingContainer}>
+          <Spinner size="md" />
+          <Typography variant="p" color="muted">{t("connect.page.loading")}</Typography>
+        </Flex>
+      </>
     );
   }
 
   if (loadError) {
-    return <p className={styles.error}>{loadError}</p>;
+    return (
+      <>
+        {pageHeader}
+        <p className={styles.error}>{loadError}</p>
+      </>
+    );
   }
 
   return (
     <>
+      {pageHeader}
       {oauthError ? (
         <p className={styles.error} role="alert">
-          OAuth failed: {oauthError}
+          {t("connect.page.oauthFailed", { error: oauthError })}
         </p>
       ) : null}
       <div className={styles.toolbar}>
         <Button variant="primary" onClick={() => setAppStoreOpen(true)}>
-          Add connection
+          {t("connect.page.addConnection")}
         </Button>
         <Button variant="primary" onClick={() => setCustomModalOpen(true)}>
-          Add custom connection
+          {t("connect.page.addCustomConnection")}
         </Button>
       </div>
 
@@ -140,7 +165,7 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
         ) : (
           <Flex justify="center" align="center" className={styles.centeredPanel}>
             <Typography variant="small" color="muted">
-              No services connected yet.
+              {t("connect.page.emptyConnected")}
             </Typography>
           </Flex>
         )}

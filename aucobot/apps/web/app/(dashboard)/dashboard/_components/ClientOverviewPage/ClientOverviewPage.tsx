@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Flex, Grid } from "@/components/layout";
 import { DateRangePicker, Spinner, Typography } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import type {
   OverviewChartPeriod,
   OverviewResponse,
@@ -27,6 +28,7 @@ function formatMetricsRange(dateFrom: string, dateTo: string): string {
 }
 
 export function ClientOverviewPage() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const projectsLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
@@ -58,7 +60,7 @@ export function ClientOverviewPage() {
       });
       setOverview(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot load overview");
+      setError(err instanceof Error ? err.message : t("overview.loadError"));
       setOverview(null);
     } finally {
       setLoading(false);
@@ -104,7 +106,7 @@ export function ClientOverviewPage() {
   if (!projectId && !projectsLoading) {
     return (
       <Typography variant="p" className={styles.errorText}>
-        No project yet. Create a project before viewing the overview.
+        {t("overview.noProject")}
       </Typography>
     );
   }
@@ -120,7 +122,7 @@ export function ClientOverviewPage() {
       >
         <Spinner size="md" />
         <Typography variant="p" color="muted">
-          Loading data...
+          {t("overview.loading")}
         </Typography>
       </Flex>
     );
@@ -149,21 +151,21 @@ export function ClientOverviewPage() {
 
           <Grid columns={3} gap={24}>
             <CardMetric
-              title="Total Input"
+              title={t("overview.metrics.totalInput")}
               value={formatTokenCount(overview?.metrics.totalInput ?? 0)}
-              subtitle={metricsRangeLabel || "Selected range"}
+              subtitle={metricsRangeLabel || t("overview.metrics.selectedRange")}
               color="var(--color-overview-input)"
             />
             <CardMetric
-              title="Total Output"
+              title={t("overview.metrics.totalOutput")}
               value={formatTokenCount(overview?.metrics.totalOutput ?? 0)}
-              subtitle={metricsRangeLabel || "Selected range"}
+              subtitle={metricsRangeLabel || t("overview.metrics.selectedRange")}
               color="var(--color-overview-output)"
             />
             <CardMetric
-              title="Total Cost"
+              title={t("overview.metrics.totalCost")}
               value={formatCostUsd(overview?.metrics.totalCostUsd ?? "0")}
-              subtitle={metricsRangeLabel || "Selected range"}
+              subtitle={metricsRangeLabel || t("overview.metrics.selectedRange")}
               color="var(--color-overview-cost)"
             />
           </Grid>
@@ -173,14 +175,14 @@ export function ClientOverviewPage() {
 
         <Grid columns={2} gap={24}>
           <OverviewChart
-            title="Input Usage"
+            title={t("overview.charts.inputUsage")}
             data={inputChartData}
             period={chartPeriod}
             onPeriodChange={setChartPeriod}
             color="var(--color-primary)"
           />
           <OverviewChart
-            title="Output Usage"
+            title={t("overview.charts.outputUsage")}
             data={outputChartData}
             period={chartPeriod}
             onPeriodChange={setChartPeriod}
@@ -188,7 +190,7 @@ export function ClientOverviewPage() {
           />
         </Grid>
 
-        <UsageTable title="Recent Model Calls" data={recentCalls} />
+        <UsageTable title={t("overview.usageTable.title")} data={recentCalls} />
       </Flex>
     </div>
   );

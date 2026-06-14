@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import { useProjectStore } from "@/stores/project.store";
 import type { ProjectHealth, ProjectStatus } from "@/schemas/project.schema";
 import {
@@ -32,15 +33,6 @@ interface Props {
   initialHealth: ProjectHealth | null;
 }
 
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  creating: "Creating",
-  running: "Running",
-  starting: "Starting",
-  stopping: "Stopping",
-  stopped: "Stopped",
-  error: "Error",
-};
-
 const MASKED_TOKEN = "••••••••••••••••••••••••••••••";
 
 const STATUS_CLASS: Record<ProjectStatus, string> = {
@@ -57,6 +49,7 @@ export function GatewayStatusSection({
   subdomain,
   initialHealth,
 }: Props) {
+  const { t } = useI18n();
   const [health, setHealth] = useState<ProjectHealth | null>(initialHealth);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -150,7 +143,7 @@ export function GatewayStatusSection({
       }
     } catch (e) {
       setErrorMsg(
-        e instanceof Error ? e.message : "Unable to start the container.",
+        e instanceof Error ? e.message : t("settings.gateway.errors.start"),
       );
       setActionLoading(false);
     }
@@ -167,7 +160,7 @@ export function GatewayStatusSection({
       }
     } catch (e) {
       setErrorMsg(
-        e instanceof Error ? e.message : "Unable to respawn the container.",
+        e instanceof Error ? e.message : t("settings.gateway.errors.respawn"),
       );
       setActionLoading(false);
     }
@@ -183,7 +176,9 @@ export function GatewayStatusSection({
         setActionLoading(false);
       }
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Unable to stop the container.");
+      setErrorMsg(
+        e instanceof Error ? e.message : t("settings.gateway.errors.stop"),
+      );
       setActionLoading(false);
     }
   };
@@ -195,7 +190,7 @@ export function GatewayStatusSection({
       const data = await projectApi.gatewayToken(projectId);
       setToken(data.token);
     } catch {
-      setGatewayError("Unable to fetch token. Please try again.");
+      setGatewayError(t("settings.gateway.errors.fetchToken"));
     } finally {
       setTokenLoading(false);
     }
@@ -218,9 +213,7 @@ export function GatewayStatusSection({
       const href = buildGatewayControlUiUrl(gatewayHttpBase, authToken);
       window.open(href, "_blank", "noopener,noreferrer");
     } catch {
-      setGatewayError(
-        "Unable to open Control UI. Try again after the gateway is running.",
-      );
+      setGatewayError(t("settings.gateway.errors.openControlUi"));
     } finally {
       setControlUiLoading(false);
     }
@@ -235,7 +228,7 @@ export function GatewayStatusSection({
       setCopied("control");
       setTimeout(() => setCopied(null), 2000);
     } catch {
-      setGatewayError("Unable to copy Control UI link.");
+      setGatewayError(t("settings.gateway.errors.copyControlUi"));
     }
   };
 
@@ -258,24 +251,23 @@ export function GatewayStatusSection({
 
   return (
     <Flex direction="column" gap={24}>
-      <TitleSection title="Gateway Status" />
+      <TitleSection title={t("settings.gateway.title")} />
 
       <CardSection>
         <Flex align="start" gap={3} className={styles.warningRow}>
           <AlertTriangle size={18} className={styles.warningIcon} aria-hidden />
           <Typography variant="small" className={styles.warningText}>
-            Do not share the Gateway Token or Control UI links that include a
-            token. Anyone with access can control your bot.
+            {t("settings.gateway.warning")}
           </Typography>
         </Flex>
 
         <CardSection.Row className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Gateway Token
+              {t("settings.gateway.token.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              Authentication token for API and WebSocket connections.
+              {t("settings.gateway.token.description")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
@@ -296,10 +288,10 @@ export function GatewayStatusSection({
                   size="sm"
                 >
                   {tokenLoading ? (
-                    "Loading..."
+                    t("settings.gateway.token.loading")
                   ) : (
                     <>
-                      <Eye size={14} /> Show
+                      <Eye size={14} /> {t("settings.gateway.token.show")}
                     </>
                   )}
                 </Button>
@@ -313,11 +305,11 @@ export function GatewayStatusSection({
                   >
                     {copied === "token" ? (
                       <>
-                        <Check size={14} /> Copied
+                        <Check size={14} /> {t("settings.gateway.token.copied")}
                       </>
                     ) : (
                       <>
-                        <Copy size={14} /> Copy
+                        <Copy size={14} /> {t("settings.gateway.token.copy")}
                       </>
                     )}
                   </Button>
@@ -327,7 +319,7 @@ export function GatewayStatusSection({
                     className={styles.actionBtnWithIcon}
                     size="sm"
                   >
-                    <EyeOff size={14} /> Hide
+                    <EyeOff size={14} /> {t("settings.gateway.token.hide")}
                   </Button>
                 </>
               )}
@@ -343,10 +335,10 @@ export function GatewayStatusSection({
         <CardSection.Row className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Gateway status
+              {t("settings.gateway.status.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              Current state of the gateway worker.
+              {t("settings.gateway.status.description")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
@@ -363,7 +355,7 @@ export function GatewayStatusSection({
                   aria-hidden
                 />
                 <Typography variant="p" weight="bold">
-                  {STATUS_LABEL[status]}
+                  {t(`settings.gateway.status.${status}`)}
                 </Typography>
                 {isTransitioning && <Spinner size="sm" />}
               </Flex>
@@ -377,7 +369,7 @@ export function GatewayStatusSection({
                     size="sm"
                   >
                     <Play size={14} fill="currentColor" />
-                    Start
+                    {t("settings.gateway.status.start")}
                   </Button>
                 )}
                 {status === "running" && (
@@ -389,7 +381,7 @@ export function GatewayStatusSection({
                     size="sm"
                   >
                     <Square size={14} fill="currentColor" />
-                    Stop
+                    {t("settings.gateway.status.stop")}
                   </Button>
                 )}
                 {isTransitioning && (
@@ -399,7 +391,7 @@ export function GatewayStatusSection({
                     size="sm"
                     className={styles.actionBtnWithIcon}
                   >
-                    Processing...
+                    {t("settings.gateway.status.processing")}
                   </Button>
                 )}
                 {(status === "error" || containerMissing) && (
@@ -411,7 +403,7 @@ export function GatewayStatusSection({
                     size="sm"
                   >
                     <RotateCw size={14} />
-                    Respawn
+                    {t("settings.gateway.status.respawn")}
                   </Button>
                 )}
                 {status === "error" && !containerMissing && (
@@ -423,7 +415,7 @@ export function GatewayStatusSection({
                     size="sm"
                   >
                     <Play size={14} />
-                    Start
+                    {t("settings.gateway.status.start")}
                   </Button>
                 )}
               </Flex>
@@ -439,12 +431,12 @@ export function GatewayStatusSection({
         <CardSection.Row noBorder className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Gateway URL
+              {t("settings.gateway.url.label")}
             </Typography>
             <Typography variant="small" color="muted">
               {isOss
-                ? "Local gateway address for API, WebSocket, and Control UI."
-                : "Public gateway address for API, WebSocket, and Control UI."}
+                ? t("settings.gateway.url.descriptionLocal")
+                : t("settings.gateway.url.descriptionPublic")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
@@ -467,7 +459,7 @@ export function GatewayStatusSection({
                 size="md"
                 iconOnly
                 className={styles.copyBtn}
-                aria-label="Copy Gateway URL"
+                aria-label={t("settings.gateway.url.copyAria")}
                 onClick={() => void copyToClipboard(gatewayUrl, "url")}
               >
                 {copied === "url" ? (
@@ -485,7 +477,9 @@ export function GatewayStatusSection({
                 className={styles.actionBtnWithIcon}
               >
                 <ExternalLink size={14} aria-hidden />
-                {controlUiLoading ? "Opening..." : "Open Control UI"}
+                {controlUiLoading
+                  ? t("settings.gateway.url.opening")
+                  : t("settings.gateway.url.openControlUi")}
               </Button>
               <Button
                 variant="secondary"
@@ -495,11 +489,13 @@ export function GatewayStatusSection({
               >
                 {copied === "control" ? (
                   <>
-                    <Check size={14} aria-hidden /> Link copied
+                    <Check size={14} aria-hidden />{" "}
+                    {t("settings.gateway.url.linkCopied")}
                   </>
                 ) : (
                   <>
-                    <Copy size={14} aria-hidden /> Copy link
+                    <Copy size={14} aria-hidden />{" "}
+                    {t("settings.gateway.url.copyLink")}
                   </>
                 )}
               </Button>

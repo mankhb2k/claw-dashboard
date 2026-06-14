@@ -11,6 +11,7 @@ import {
 import { Flex } from "@/components/layout";
 import { X } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import { INTERPRETER_SAFE_BINS } from "@/schemas/agentForm.schema";
 import styles from "./ShellExecSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
@@ -22,19 +23,26 @@ interface Props {
 
 type AskPolicy = "always" | "on-miss" | "off";
 
-const POLICY_HINT: Record<AskPolicy, string> = {
-  always: "Agents must request approval before running any shell command.",
-  "on-miss": "Only commands outside the fast-path list require approval.",
-  off: "Commands may run without approval. Use only with trusted workloads.",
-};
+export function formatPolicyLabel(
+  policy: AskPolicy,
+  t: (path: string) => string,
+): string {
+  if (policy === "always") return t("settings.shellExec.policy.alwaysAsk");
+  if (policy === "on-miss") return t("settings.shellExec.policy.standard");
+  return t("settings.shellExec.policy.automatic");
+}
 
-export function formatPolicyLabel(policy: AskPolicy): string {
-  if (policy === "always") return "Always ask";
-  if (policy === "on-miss") return "Standard";
-  return "Automatic";
+function policyHint(
+  policy: AskPolicy,
+  t: (path: string) => string,
+): string {
+  if (policy === "always") return t("settings.shellExec.policy.hintAlways");
+  if (policy === "on-miss") return t("settings.shellExec.policy.hintOnMiss");
+  return t("settings.shellExec.policy.hintOff");
 }
 
 export function ShellExecSection({ projectId }: Props) {
+  const { t } = useI18n();
   const [askPolicy, setAskPolicy] = useState<AskPolicy>("on-miss");
   const [safeBins, setSafeBins] = useState<string[]>([]);
   const [timeoutSec, setTimeoutSec] = useState(1800);
@@ -105,17 +113,16 @@ export function ShellExecSection({ projectId }: Props) {
 
   return (
     <Flex direction="column" gap={24}>
-      <TitleSection title="Shell execution" />
+      <TitleSection title={t("settings.shellExec.title")} />
 
       <CardSection>
         <CardSection.Row className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Approval policy
+              {t("settings.shellExec.approval.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              Project-wide shell policy synced to <code>tools.exec</code>. Applies
-              to all agents that are allowed to run shell commands.
+              {t("settings.shellExec.approval.description")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={`${styles.rowAction} ${styles.policyAction}`}>
@@ -131,12 +138,18 @@ export function ShellExecSection({ projectId }: Props) {
               disabled={!loaded}
               className={styles.policyGroup}
             >
-              <ToggleGroupItem value="always">Always ask</ToggleGroupItem>
-              <ToggleGroupItem value="on-miss">Standard</ToggleGroupItem>
-              <ToggleGroupItem value="off">Automatic</ToggleGroupItem>
+              <ToggleGroupItem value="always">
+                {formatPolicyLabel("always", t)}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="on-miss">
+                {formatPolicyLabel("on-miss", t)}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="off">
+                {formatPolicyLabel("off", t)}
+              </ToggleGroupItem>
             </ToggleGroup>
             <Typography variant="small" color="muted" className={styles.hint}>
-              {POLICY_HINT[askPolicy]}
+              {policyHint(askPolicy, t)}
             </Typography>
           </CardSection.Action>
         </CardSection.Row>
@@ -144,11 +157,10 @@ export function ShellExecSection({ projectId }: Props) {
         <CardSection.Row className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Fast-path utilities
+              {t("settings.shellExec.fastPath.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              Stdin-only utilities that may run without approval when policy is
-              Standard. Interpreters belong in exec approvals, not this list.
+              {t("settings.shellExec.fastPath.description")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
@@ -169,7 +181,9 @@ export function ShellExecSection({ projectId }: Props) {
                     iconOnly
                     className={styles.tagDeleteBtn}
                     onClick={() => handleRemoveBin(bin)}
-                    aria-label={`Remove ${bin}`}
+                    aria-label={t("settings.shellExec.fastPath.removeAria", {
+                      bin,
+                    })}
                   >
                     <X size={13} aria-hidden />
                   </Button>
@@ -180,8 +194,8 @@ export function ShellExecSection({ projectId }: Props) {
                 className={styles.tagInput}
                 placeholder={
                   safeBins.length === 0
-                    ? "Enter a command and press Enter..."
-                    : "Add command..."
+                    ? t("settings.shellExec.fastPath.placeholderEmpty")
+                    : t("settings.shellExec.fastPath.placeholderAdd")
                 }
                 value={newBinInput}
                 onChange={(e) => setNewBinInput(e.target.value)}
@@ -191,7 +205,9 @@ export function ShellExecSection({ projectId }: Props) {
             </Flex>
             {interpreterWarnings.length > 0 ? (
               <Typography variant="small" className={styles.warning}>
-                Avoid interpreters in fast-path: {interpreterWarnings.join(", ")}
+                {t("settings.shellExec.fastPath.interpreterWarning", {
+                  list: interpreterWarnings.join(", "),
+                })}
               </Typography>
             ) : null}
           </CardSection.Action>
@@ -200,10 +216,10 @@ export function ShellExecSection({ projectId }: Props) {
         <CardSection.Row noBorder className={styles.cardRow}>
           <CardSection.Info className={styles.rowInfo}>
             <Typography variant="p" weight="medium">
-              Default timeout
+              {t("settings.shellExec.timeout.label")}
             </Typography>
             <Typography variant="small" color="muted">
-              Maximum seconds a shell command may run before the gateway stops it.
+              {t("settings.shellExec.timeout.description")}
             </Typography>
           </CardSection.Info>
           <CardSection.Action className={styles.rowAction}>
@@ -227,7 +243,7 @@ export function ShellExecSection({ projectId }: Props) {
         <CardSection.Footer>
           {saveStatus === "error" && (
             <Typography variant="small" className={styles.fieldError}>
-              Something went wrong. Try again.
+              {t("settings.shellExec.save.error")}
             </Typography>
           )}
           <Button
@@ -238,10 +254,10 @@ export function ShellExecSection({ projectId }: Props) {
             size="sm"
           >
             {saveStatus === "saving"
-              ? "Saving..."
+              ? t("settings.shellExec.save.saving")
               : saveStatus === "saved"
-                ? "Saved"
-                : "Save changes"}
+                ? t("settings.shellExec.save.saved")
+                : t("settings.shellExec.save.submit")}
           </Button>
         </CardSection.Footer>
       </CardSection>

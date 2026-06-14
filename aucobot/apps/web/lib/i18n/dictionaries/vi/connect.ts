@@ -1,5 +1,13 @@
 export const viConnect = {
   page: {
+    title: 'Connect Center',
+    description: 'Kết nối dự án với các dịch vụ bên ngoài.',
+    addConnection: 'Thêm kết nối',
+    addCustomConnection: 'Thêm kết nối tùy chỉnh',
+    emptyConnected: 'Chưa có dịch vụ nào được kết nối.',
+    oauthFailed: 'OAuth thất bại: {{error}}',
+    failedToLoad: 'Không thể tải dữ liệu',
+    failedToDisconnect: 'Không thể ngắt kết nối',
     headerConnect: 'Connect',
     titleWithProject: '{{name}} · Connect',
     hubTitle: 'Hub Tích Hợp (Connect)',

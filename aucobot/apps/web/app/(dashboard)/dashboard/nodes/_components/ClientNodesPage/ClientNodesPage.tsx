@@ -32,6 +32,7 @@ import { CardCreateInvite } from "../CardCreateInvite/CardCreateInvite";
 import { CardInviteHistory } from "../CardInviteHistory/CardInviteHistory";
 import { CardGuide } from "../CardGuide/CardGuide";
 import { CardDeviceManager } from "../CardDeviceManager/CardDeviceManager";
+import { I18nTitleHeader } from "@/components/dashboard";
 import styles from "./ClientNodesPage.module.css";
 
 const POLL_MS = 4_000;
@@ -310,33 +311,48 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   const actionBusy = Boolean(actionId);
   const confirmCopy = confirmAction ? nodesConfirmCopy(confirmAction) : null;
 
+  const pageHeader = (
+    <I18nTitleHeader
+      titleKey="nodes.page.title"
+      descriptionKey="nodes.page.description"
+      showBorder
+    />
+  );
+
   if (!projectId) {
     return (
-      <Typography variant="p" className={styles.error}>
-        No project yet. Create one on Overview first.
-      </Typography>
+      <>
+        {pageHeader}
+        <Typography variant="p" className={styles.error}>
+          No project yet. Create one on Overview first.
+        </Typography>
+      </>
     );
   }
 
   if (loading && !pairing) {
     return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        gap={3}
-        className={styles.loadingContainer}
-      >
-        <Spinner size="md" />
-        <Typography variant="p" color="muted">
-          Loading companion nodes...
-        </Typography>
-      </Flex>
+      <>
+        {pageHeader}
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap={3}
+          className={styles.loadingContainer}
+        >
+          <Spinner size="md" />
+          <Typography variant="p" color="muted">
+            Loading companion nodes...
+          </Typography>
+        </Flex>
+      </>
     );
   }
 
   return (
     <Flex direction="column" gap={24} className={styles.content}>
+      {pageHeader}
       {error ? (
         <Typography variant="p" className={styles.error}>
           {error}

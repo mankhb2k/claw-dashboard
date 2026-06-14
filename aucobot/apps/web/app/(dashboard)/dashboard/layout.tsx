@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useProjectStore } from "@/stores/project.store";
+import { useI18n } from "@/lib/i18n";
 import {
   getPrimaryProject,
   shouldRedirectToSetup,
@@ -47,6 +48,7 @@ export default function DashboardLayout({
   const [workspaceChecked, setWorkspaceChecked] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const syncProjectHealth = useProjectStore((s) => s.syncProjectHealth);
   const projects = useProjectStore((s) => s.projects);
@@ -117,69 +119,71 @@ export default function DashboardLayout({
 
   const canvasRoute = isDashboardCanvasRoute(pathname);
 
-  const nav: NavItem[] = [
-    {
-      href: DASHBOARD_BASE_PATH,
-      label: "Overview",
-      icon: LayoutDashboard,
-      isActive: (p) => p === DASHBOARD_BASE_PATH,
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/chat`,
-      label: "Chat",
-      icon: MessageCircle,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/chat`),
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/ai-model`,
-      label: "AI Model",
-      icon: Brain,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/ai-model`),
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/agent`,
-      label: "Bot Agent",
-      icon: Bot,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/agent`),
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/channel`,
-      label: "Channels",
-      icon: MessageSquareCodeIcon,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/channel`),
-    },
-
-    {
-      href: `${DASHBOARD_BASE_PATH}/connector`,
-      label: "Connector",
-      icon: Cable,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/connector`),
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/nodes`,
-      label: "Nodes",
-      icon: MonitorSmartphone,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/nodes`),
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/skill`,
-      label: "Skills",
-      icon: Sparkles,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/skill`),
-    },
-    {
-      href: `${DASHBOARD_BASE_PATH}/setting`,
-      label: "Settings",
-      icon: SettingsIcon,
-      isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/setting`),
-    },
-  ];
+  const nav: NavItem[] = useMemo(
+    () => [
+      {
+        href: DASHBOARD_BASE_PATH,
+        label: t("sidebar.nav.overview"),
+        icon: LayoutDashboard,
+        isActive: (p) => p === DASHBOARD_BASE_PATH,
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/chat`,
+        label: t("sidebar.nav.chat"),
+        icon: MessageCircle,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/chat`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/ai-model`,
+        label: t("sidebar.nav.aiModel"),
+        icon: Brain,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/ai-model`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/agent`,
+        label: t("sidebar.nav.agent"),
+        icon: Bot,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/agent`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/channel`,
+        label: t("sidebar.nav.channel"),
+        icon: MessageSquareCodeIcon,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/channel`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/connector`,
+        label: t("sidebar.nav.connector"),
+        icon: Cable,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/connector`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/nodes`,
+        label: t("sidebar.nav.nodes"),
+        icon: MonitorSmartphone,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/nodes`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/skill`,
+        label: t("sidebar.nav.skill"),
+        icon: Sparkles,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/skill`),
+      },
+      {
+        href: `${DASHBOARD_BASE_PATH}/setting`,
+        label: t("sidebar.nav.settings"),
+        icon: SettingsIcon,
+        isActive: (p) => p.startsWith(`${DASHBOARD_BASE_PATH}/setting`),
+      },
+    ],
+    [t],
+  );
 
   if (!workspaceChecked) {
     return (
       <div className={styles.shell} data-dashboard-shell>
         <div className={styles.gate}>
-          <p>Checking workspace…</p>
+          <p>{t("sidebar.gate")}</p>
         </div>
       </div>
     );
