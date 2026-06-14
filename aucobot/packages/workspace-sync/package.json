@@ -12,20 +12,22 @@
       "default": "./dist/index.js"
     },
     "./agent-workspace-compile": {
-      "types": "./dist/agent-workspace-compile.d.ts",
-      "default": "./dist/agent-workspace-compile.js"
+      "types": "./dist/agents/agent-workspace-compile.d.ts",
+      "default": "./dist/agents/agent-workspace-compile.js"
     },
     "./skill-markdown": {
-      "types": "./dist/skill-markdown.d.ts",
-      "default": "./dist/skill-markdown.js"
+      "types": "./dist/skills/skill-markdown.d.ts",
+      "default": "./dist/skills/skill-markdown.js"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch"
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "node --import tsx --test src/**/*.spec.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "tsx": "^4.19.4",
     "typescript": "^6.0.3"
   }
 }

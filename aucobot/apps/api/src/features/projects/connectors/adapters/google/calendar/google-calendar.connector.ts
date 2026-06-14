@@ -1,4 +1,4 @@
-import { createGoogleOAuthConnector } from './create-google-oauth-connector';
+import { createGoogleOAuthConnector } from '../create-google-oauth-connector';
 
 export const GOOGLE_CALENDAR_CONNECTOR = createGoogleOAuthConnector({
   id: 'google-calendar',

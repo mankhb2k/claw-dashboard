@@ -1,6 +1,6 @@
 import type { ConnectorAdapter } from './connector-adapter.types';
-import { GOOGLE_CALENDAR_CONNECTOR } from '../adapters/google/google-calendar.connector';
-import { GOOGLE_DRIVE_CONNECTOR } from '../adapters/google/google-drive.connector';
+import { GOOGLE_CALENDAR_CONNECTOR } from '../adapters/google/calendar/google-calendar.connector';
+import { GOOGLE_DRIVE_CONNECTOR } from '../adapters/google/drive/google-drive.connector';
 
 export const CONNECTOR_REGISTRY: ConnectorAdapter[] = [
   GOOGLE_DRIVE_CONNECTOR,

@@ -334,6 +334,7 @@ describe('WorkspaceService', () => {
         ]),
         DATA_DIR,
         expect.any(Function),
+        expect.objectContaining({ projectId: PROJECT_ID }),
       );
       expect(mergeChannelsIntoConfigMock).toHaveBeenCalled();
       expect(cleanupStaleMainAgentModelsMock).toHaveBeenCalledWith(DATA_DIR, config);
@@ -372,6 +373,7 @@ describe('WorkspaceService', () => {
         [expect.objectContaining({ connectorSlug: 'bad', secrets: {} })],
         DATA_DIR,
         expect.any(Function),
+        expect.objectContaining({ projectId: PROJECT_ID }),
       );
     });
 

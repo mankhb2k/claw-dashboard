@@ -1,4 +1,5 @@
-import { Bot, User } from "lucide-react";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown/ChatMarkdown";
+import { isVisibleChatBubbleText } from "@/utils/chat/history-filter";
 import styles from "./ChatMessageBubble.module.css";
 
 export type ChatMessageBubbleProps = {
@@ -13,6 +14,10 @@ export function ChatMessageBubble({
   streaming,
 }: ChatMessageBubbleProps) {
   const isUser = role === "user";
+
+  if (!isVisibleChatBubbleText(role, text)) {
+    return null;
+  }
 
   if (isUser) {
     return (
@@ -33,10 +38,7 @@ export function ChatMessageBubble({
       data-role={role}
     >
       <div className={styles.assistantBody}>
-        {streaming ? (
-          <span className={styles.streaming}>Agent is replying…</span>
-        ) : null}
-        <div className={styles.assistantText}>{text}</div>
+        <ChatMarkdown content={text} streaming={streaming} />
       </div>
     </article>
   );

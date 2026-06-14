@@ -1,0 +1,195 @@
+.block {
+  width: 100%;
+  margin: var(--space-2) 0;
+  padding: 0 var(--space-1);
+  animation: toolResearchFadeIn 0.22s var(--ease-out) both;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-muted) 42%, var(--color-background));
+  color: var(--color-foreground);
+  cursor: pointer;
+  text-align: left;
+}
+
+.headerMain {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.headerLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.headerSpinner {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  animation: spin 0.9s linear infinite;
+}
+
+.headerDone {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--color-success, #16a34a);
+}
+
+.headerError {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--color-destructive, #ef4444);
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--color-muted-foreground);
+  transition: transform 0.2s var(--ease-out);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s var(--ease-out);
+}
+
+.bodyOpen {
+  max-height: 480px;
+}
+
+.steps {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0 var(--space-2) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--color-muted-foreground);
+}
+
+.step[data-status='running'] {
+  color: var(--color-foreground);
+}
+
+.step[data-status='error'] {
+  color: var(--color-destructive, #ef4444);
+}
+
+.stepIconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.stepIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.stepSpinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  animation: spin 0.9s linear infinite;
+}
+
+.stepError {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.stepLabel {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.sources {
+  padding: 0 var(--space-2) var(--space-3);
+}
+
+.sourcesTitle {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.sourcePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sourcePill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-size: var(--font-size-xs);
+  text-decoration: none;
+}
+
+.sourcePill:hover {
+  background: color-mix(in srgb, var(--color-muted) 35%, var(--color-background));
+}
+
+.sourceFavicon {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes toolResearchFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

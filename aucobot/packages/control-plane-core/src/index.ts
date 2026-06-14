@@ -69,3 +69,9 @@ export {
   selfHostLoginFromEnv,
   selfHostPasswordFromEnv,
 } from './auth/self-host-user.js';
+export {
+  getMcpServiceSecret,
+  signProjectMcpToken,
+  verifyProjectMcpToken,
+  type ProjectMcpTokenPayload,
+} from './mcp/mcp-project-token.js';

@@ -1,4 +1,5 @@
 import { viChannels } from './channels'
+import { viChatToolActivity } from './chat/toolActivity'
 import { viConnect } from './connect'
 import { viDashboard } from './dashboard'
 import { viSkills } from './skills'
@@ -10,6 +11,9 @@ import { viSidebarProject } from './sidebarProject'
  */
 export const vi = {
   channels: viChannels,
+  chat: {
+    toolActivity: viChatToolActivity,
+  },
   connect: viConnect,
   skills: viSkills,
   dashboard: viDashboard,

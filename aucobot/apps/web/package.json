@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --import tsx --test utils/chat/*.spec.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -38,7 +39,10 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.73.1",
     "react-icons": "^5.6.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
@@ -60,6 +64,7 @@
     "eslint-plugin-storybook": "^10.3.6",
     "playwright": "^1.59.1",
     "storybook": "^10.3.6",
+    "tsx": "^4.19.4",
     "typescript": "^5",
     "vite": "^8.0.10",
     "vitest": "^4.1.5"

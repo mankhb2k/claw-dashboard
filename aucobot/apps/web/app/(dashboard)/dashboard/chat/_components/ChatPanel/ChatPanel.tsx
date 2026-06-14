@@ -9,8 +9,9 @@ import {
 import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
+import type { LiveThreadItem } from "@/utils/chat/tool-stream.types";
 import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
-import { ChatTypingIndicator } from "../ChatTypingIndicator/ChatTypingIndicator";
+import { ChatLiveThread } from "../ChatLiveThread/ChatLiveThread";
 import { ContentArea } from "../ContentArea/ContentArea";
 import {
   MessageBox,
@@ -82,6 +83,8 @@ export type ChatPanelProps = {
     totalTokensFresh?: boolean;
     compactionCount?: number;
   };
+  liveItems?: LiveThreadItem[];
+  showToolPreparing?: boolean;
 };
 
 export function ChatPanel({
@@ -119,9 +122,12 @@ export function ChatPanel({
   sandboxActive,
   stagingMaxBytes,
   contextUsage,
+  liveItems = [],
+  showToolPreparing = false,
 }: ChatPanelProps) {
   const showEmpty =
     messages.length === 0 &&
+    liveItems.length === 0 &&
     !streamText &&
     !sending &&
     connectionState === "connected";
@@ -289,11 +295,14 @@ export function ChatPanel({
           />
         ))}
 
-        {streamText && (
-          <ChatMessageBubble role="assistant" text={streamText} streaming />
-        )}
+        <ChatLiveThread
+          liveItems={liveItems}
+          showToolPreparing={showToolPreparing}
+        />
 
-        {sending && !streamText && <ChatTypingIndicator />}
+        {streamText ? (
+          <ChatMessageBubble role="assistant" text={streamText} streaming />
+        ) : null}
       </ContentArea>
     </Box>
   );

@@ -8,7 +8,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
-    "predev": "pnpm --filter @aucobot/runtime-contracts --filter @aucobot/control-plane-core run build",
+    "predev": "pnpm --filter @aucobot/runtime-contracts --filter @aucobot/control-plane-core --filter @aucobot/clawhub-client run build",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

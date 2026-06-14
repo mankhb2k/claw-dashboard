@@ -1,4 +1,6 @@
-import { buildSkillMarkdown, parseSkillMarkdown } from './skill-markdown';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import { buildSkillMarkdown, parseSkillMarkdown } from './skill-markdown.js';
 
 describe('skill-markdown', () => {
   it('round-trips build then parse', () => {
@@ -11,7 +13,7 @@ describe('skill-markdown', () => {
     const markdown = buildSkillMarkdown(draft, body);
     const parsed = parseSkillMarkdown(markdown);
 
-    expect(parsed).toEqual({
+    assert.deepEqual(parsed, {
       name: 'my-skill',
       description: 'Does something useful',
       heading: 'My Skill',
@@ -34,9 +36,9 @@ Use this skill to post messages.
       fallbackHeading: 'Slack',
     });
 
-    expect(parsed.name).toBe('slack');
-    expect(parsed.description).toBe('Post to Slack channels');
-    expect(parsed.heading).toBe('Slack Integration');
-    expect(parsed.bodyMarkdown).toContain('post messages');
+    assert.equal(parsed.name, 'slack');
+    assert.equal(parsed.description, 'Post to Slack channels');
+    assert.equal(parsed.heading, 'Slack Integration');
+    assert.ok(parsed.bodyMarkdown.includes('post messages'));
   });
 });

@@ -12,6 +12,7 @@ Mỗi mục dùng **Mermaid** (render trên GitHub, VS Code, Cursor).
 | 1 | [Runtime (OSS vs Cloud)](#1-runtime-oss-vs-cloud) | ✅ |
 | 2 | [Database / Prisma](#2-database--prisma) | ✅ |
 | 3 | Workspace sync → OpenClaw | 🔜 |
+| 3b | [Connectors MCP (aucomcp)](#3b-connectors-mcp-aucomcp) | ✅ |
 | 4 | Auth + session (web ↔ api) | 🔜 |
 | 5 | Full stack compose | 🔜 |
 
@@ -173,6 +174,31 @@ sequenceDiagram
 | `packages/runtime-oss/src/gateway-health.ts` | Poll `/healthz` |
 | `apps/api/.../runtime/gateway-endpoint.ts` | Cloud branch + map lỗi → `BadRequestException` |
 | `apps/api/.../projects.service.ts` | Gọi resolver + health khi create/start |
+
+---
+
+## 3b. Connectors MCP (aucomcp)
+
+Hosted MCP service ở sibling [`../../aucomcp/`](../../aucomcp/) — service thứ 5 trong OSS compose.
+
+```mermaid
+flowchart LR
+  API[apps/api] -->|sync url + JWT| VOL[openclaw.json]
+  VOL --> GW[gateway]
+  GW -->|POST streamable-http| MCP[aucomcp :8080]
+  MCP -->|X-Mcp-Service-Secret| API
+  MCP --> GOOG[Google APIs]
+```
+
+| Thành phần | Path |
+|------------|------|
+| MCP server | `aucomcp/src/main.ts` |
+| Connectors | `aucomcp/src/connectors/google/*` |
+| Internal secrets API | `apps/api/src/features/internal/mcp-internal.controller.ts` |
+| Remote sync | `packages/workspace-sync/src/connector-mcp.ts` |
+| Token signing | `packages/control-plane-core/src/mcp/mcp-project-token.ts` |
+
+Unset `AUCOMCP_BASE_URL` on API → fallback `npx` MCP on gateway volume.
 
 ---
 

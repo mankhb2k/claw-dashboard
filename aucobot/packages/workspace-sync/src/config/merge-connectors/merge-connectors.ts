@@ -3,8 +3,9 @@ import {
   buildMcpServerEntry,
   type ConnectorSecretMap,
   type McpConnectorDef,
+  type RemoteMcpConfig,
   writeGoogleDriveCredentialFiles,
-} from './connector-mcp.js';
+} from '../../connectors/connector-mcp.js';
 
 export type ConnectorMergeRow = {
   connectorSlug: string;
@@ -12,6 +13,11 @@ export type ConnectorMergeRow = {
   connectionStatus: string;
   mcpServerId: string;
   secrets: ConnectorSecretMap;
+};
+
+export type ConnectorMergeOptions = {
+  projectId: string;
+  remoteMcp?: RemoteMcpConfig;
 };
 
 const MANAGED_MCP_IDS = new Set(['google-drive', 'google-calendar']);
@@ -22,10 +28,12 @@ export async function mergeConnectorsIntoConfig(
   rows: ConnectorMergeRow[],
   dataDir: string,
   resolveDef: (slug: string) => McpConnectorDef | undefined,
+  options?: ConnectorMergeOptions,
 ): Promise<Record<string, unknown>> {
   const existingMcp = (config.mcp as Record<string, unknown> | undefined) ?? {};
   const existingServers = (existingMcp.servers as Record<string, unknown> | undefined) ?? {};
   const servers: Record<string, unknown> = {};
+  const useRemote = Boolean(options?.remoteMcp && options.projectId);
 
   for (const [id, entry] of Object.entries(existingServers)) {
     if (!MANAGED_MCP_IDS.has(id)) {
@@ -45,7 +53,7 @@ export async function mergeConnectorsIntoConfig(
     if (!def) continue;
 
     let containerPaths: { oauthPath?: string; credentialsPath?: string } = {};
-    if (def.slug === 'google-drive') {
+    if (!useRemote && def.slug === 'google-drive') {
       await writeGoogleDriveCredentialFiles(dataDir, row.secrets);
       containerPaths = {
         oauthPath: path.posix.join(
@@ -64,7 +72,10 @@ export async function mergeConnectorsIntoConfig(
     }
 
     try {
-      servers[def.mcpServerId] = buildMcpServerEntry(def, row.secrets, containerPaths);
+      servers[def.mcpServerId] = buildMcpServerEntry(def, row.secrets, containerPaths, {
+        projectId: options?.projectId,
+        remoteMcp: options?.remoteMcp,
+      });
     } catch {
       // skip invalid row
     }

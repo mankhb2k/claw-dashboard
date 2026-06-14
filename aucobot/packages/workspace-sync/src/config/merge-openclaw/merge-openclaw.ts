@@ -1,16 +1,16 @@
 import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { AgentFormInput } from './agent-form.types.js';
+import type { AgentFormInput } from '../../agents/agent-form.types.js';
 import {
   compileOpenClawAgentConfig,
   type OpenClawAgentSandbox,
-} from './agent-workspace-compile.js';
+} from '../../agents/agent-workspace-compile.js';
 import {
   buildAgentToAgentAllowListFromCollaboration,
   type ProjectCollaborationSettings,
-} from './agent-collaboration.js';
-import { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './provider-env-keys.js';
-import { CONTAINER_STATE_DIR, CONTAINER_WORKSPACE_DIR } from './openclaw-config.js';
+} from '../../agents/agent-collaboration.js';
+import { PROVIDER_ENV_KEYS, providerIdForEnvKey } from '../provider-env-keys.js';
+import { CONTAINER_STATE_DIR, CONTAINER_WORKSPACE_DIR } from '../openclaw-config.js';
 
 export type ProviderKeyRow = {
   providerId?: string;

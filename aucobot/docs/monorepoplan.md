@@ -19,24 +19,25 @@ AucoBot là monorepo **pnpm** gồm:
 **Điểm quan trọng (đã chỉnh so với sketch cũ trong `workflow.md`):**
 
 - **Spawn container per project = chỉ Cloud.** Code hiện tại (`DockerService.spawnWorker`, `hostPort` động) là mô hình Cloud.
-- **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
+- **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`, `mcp`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
 - **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — [`workflow.md`](../../workflow.md) §5.6).
 
-> **OSS compose = 4 services:** `web` + `api` (AucoBot) + `gateway` + `postgres` (upstream pull). **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài.
+> **OSS compose = 5 services:** `web` + `api` (AucoBot) + `gateway` + `mcp` ([`aucomcp`](../../aucomcp/)) + `postgres`. **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài. Bỏ `AUCOMCP_BASE_URL` → connectors fallback `npx` local trên gateway.
 
 ---
 
-## 2. Ranh giới service OSS (4 container + volume)
+## 2. Ranh giới service OSS (5 container + volume)
 
-OSS self-host **đủ** với **bốn container** trong `docker compose`. Chỉ **`web`** (frontend) và **`api`** (backend) là **code AucoBot** — build từ repo. **`postgres`** và **`gateway`** (OpenClaw) **pull image upstream**; fork để pin tag/commit, **không sửa** runtime upstream.
+OSS self-host **đủ** với **năm container** trong `docker compose`. **`web`** và **`api`** là **code AucoBot** — build từ repo. **`mcp`** build từ sibling [`aucomcp/`](../../aucomcp/). **`postgres`** và **`gateway`** (OpenClaw) **pull image upstream**.
 
-### 2.1 Bốn service compose
+### 2.1 Năm service compose
 
 | Service | Tên compose gợi ý | Image | Sở hữu | Port mặc định | Vai trò |
 | ------- | ----------------- | ----- | ------- | ------------- | ------- |
-| Dashboard | `web` | Build `frontend/` | **AucoBot** | 3000 | UI; gọi API (`NEXT_PUBLIC_API_URL`) |
-| Control plane | `api` | Build `backend/` | **AucoBot** | 3001 | JWT, CRUD, sync file, proxy WS chat → gateway |
-| Gateway | `gateway` | Pull OpenClaw (fork pin) | **Upstream** | **18789** | Agent, kênh chat, đọc volume |
+| Dashboard | `web` | Build `apps/web` | **AucoBot** | 3000 | UI; gọi API (`NEXT_PUBLIC_API_URL`) |
+| Control plane | `api` | Build `apps/api` | **AucoBot** | 3001 | JWT, CRUD, sync file, proxy WS chat → gateway |
+| MCP connectors | `mcp` | Build `../aucomcp` | **Aucomcp** | 8080 (internal) | Hosted MCP HTTP — Drive, Calendar tools |
+| Gateway | `gateway` | Pull OpenClaw (fork pin) | **Upstream** | **18789** | Agent, kênh chat, gọi MCP qua `openclaw.json` |
 | Database | `postgres` | `postgres:16-alpine` | **Upstream** | 5432 | Users, projects, skills metadata… |
 
 ```mermaid
@@ -47,6 +48,8 @@ flowchart LR
     API -->|sync| VOL[openclaw_data]
     API -->|OPENCLAW_GATEWAY_URL| GW[gateway :18789]
     VOL --> GW
+    GW -->|streamable-http| MCP[mcp :8080]
+    MCP -->|internal API| API
     GW <-->|channels| EXT[Internet]
 ```
 
@@ -58,14 +61,17 @@ flowchart LR
 | Thành phần | Mô tả |
 | ---------- | ----- |
 | **Volume `openclaw_data`** | `api` ghi `{OPENCLAW_DATA_ROOT}/{projectId}/…`; `gateway` đọc cùng dữ liệu (`openclaw.json`, `workspace/`). Thiếu volume chung → gateway chạy nhưng không thấy config. |
-| **Env nối stack** | `DATABASE_URL`, `JWT_SECRET`, `OPENCLAW_GATEWAY_URL=http://gateway:18789`, `OPENCLAW_GATEWAY_TOKEN` (khớp `gateway.auth`), `OPENCLAW_DATA_ROOT`, `NEXT_PUBLIC_API_URL` |
+| **Env nối stack** | `DATABASE_URL`, `JWT_SECRET`, `OPENCLAW_GATEWAY_URL=http://gateway:18789`, `OPENCLAW_GATEWAY_TOKEN`, `OPENCLAW_DATA_ROOT`, `MCP_SERVICE_SECRET`, `AUCOMCP_BASE_URL=http://mcp:8080`, `NEXT_PUBLIC_API_URL` |
 
 ### 2.3 Ranh giới sở hữu code
 
 ```text
 AucoBot (build image)
-├── frontend/  → service web
-└── backend/   → service api (+ Prisma migrate/seed)
+├── apps/web/   → service web
+└── apps/api/   → service api (+ Prisma migrate/seed)
+
+Aucomcp (build image — sibling repo folder)
+└── aucomcp/    → service mcp (hosted MCP connectors)
 
 Upstream (pull image — fork pin, không patch runtime)
 ├── postgres:16-alpine
@@ -77,7 +83,8 @@ Compose / hạ tầng (bạn viết, không phải app logic)
 └── .env
 ```
 
-- Gateway/postgres là **image upstream** (`OPENCLAW_IMAGE`, `postgres:16-alpine`) — fork OpenClaw giữ ở `../openclaw-worker/` ngoài monorepo, không copy vào `aucobot/`.
+- Gateway/postgres là **image upstream** — fork OpenClaw giữ ở `../openclaw-worker/` ngoài monorepo.
+- **Aucomcp** (`../aucomcp/`) — service MCP hosted; không vendored trong `aucobot/`.
 - `skill-hub/`: catalog skill mẫu — **không** chạy như container.
 
 ### 2.4 Không có trong compose OSS (MVP)
@@ -99,7 +106,7 @@ Compose / hạ tầng (bạn viết, không phải app logic)
 | Telegram, Discord, … | Token kênh — cấu hình trong gateway (sync qua api) | Tuỳ user |
 | HTTPS công khai | Caddy / Nginx / Traefik phía trước | Tuỳ triển khai |
 
-### 2.6 Tuỳ chọn production (không đếm service app thứ 5)
+### 2.6 Tuỳ chọn production (không đếm service app thứ 6)
 
 | Lớp | Vai trò |
 | --- | ------- |
@@ -111,14 +118,14 @@ Compose / hạ tầng (bạn viết, không phải app logic)
 
 | Môi trường | Stack |
 | ---------- | ----- |
-| **OSS production (đích)** | 4 service + volume |
+| **OSS production (đích)** | 5 service + volume |
 | **Dev nhanh** | `postgres` container (`docker-compose.deps.yml`) + `api`/`web` trên host + `gateway` container hoặc local `:18789` |
 
 ### 2.8 Checklist “còn thiếu service không?”
 
 | Câu hỏi | Trả lời |
 | ------- | ------- |
-| Đủ 4 container? | **Có** |
+| Đủ 5 container? | **Có** (web, api, gateway, mcp, postgres) |
 | Thiếu Redis/queue? | **Không** (OSS) |
 | Thiếu volume api ↔ gateway? | **Cần** (không phải container) |
 | Code repo đã khớp? | **Chưa** — `backend/` vẫn spawn Docker; Phase 2: `RUNTIME_MODE=oss` + compose `gateway` |
@@ -884,4 +891,4 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 
 ---
 
-*AucoBot — OSS: 4 services (`web`, `api`, `gateway`, `postgres`) + volume `openclaw_data`; chỉ web/api là code AucoBot. Cloud: spawn per project. Monorepo pnpm tách package public OSS và `cloud/` proprietary.*
+*AucoBot — OSS: 5 services (`web`, `api`, `gateway`, `mcp`, `postgres`) + volume `openclaw_data`; `mcp` = sibling [`aucomcp`](../../aucomcp/). Cloud: spawn per project.*

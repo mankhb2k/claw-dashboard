@@ -30,7 +30,7 @@ import {
   type ProjectExecPolicy,
 } from '@aucobot/workspace-sync';
 import { PrismaService } from '../../../../../core/database/prisma.service';
-import { decryptSecret } from '@aucobot/control-plane-core';
+import { decryptSecret, getMcpServiceSecret, signProjectMcpToken } from '@aucobot/control-plane-core';
 import { resolveConnector } from '../../../connectors/lib/connector-registry';
 import { resolveChannel } from '../../../channels/lib/channel-registry';
 import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
@@ -291,6 +291,17 @@ export class WorkspaceService {
       where: { projectId },
       include: { secrets: true },
     });
+    const aucomcpBase = process.env.AUCOMCP_BASE_URL?.trim();
+    const mcpSecret = getMcpServiceSecret();
+    const remoteMcp =
+      aucomcpBase && mcpSecret ?
+        {
+          baseUrl: aucomcpBase,
+          signProjectToken: (pid: string, connectorSlug: string) =>
+            signProjectMcpToken({ projectId: pid, connectorSlug, secret: mcpSecret }),
+        }
+      : undefined;
+
     await mergeConnectorsIntoConfig(
       config,
       connectorRows.map((row) => {
@@ -315,6 +326,10 @@ export class WorkspaceService {
       (slug) => {
         const def = resolveConnector(slug);
         return def ? { slug: def.slug, mcpServerId: def.mcpServerId } : undefined;
+      },
+      {
+        projectId,
+        remoteMcp,
       },
     );
 

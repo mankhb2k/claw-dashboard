@@ -1,12 +1,17 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { CONTAINER_STATE_DIR } from './openclaw-config.js';
+import { CONTAINER_STATE_DIR } from '../config/openclaw-config.js';
 
 export type ConnectorSecretMap = Record<string, string>;
 
 export type McpConnectorDef = {
   slug: string;
   mcpServerId: string;
+};
+
+export type RemoteMcpConfig = {
+  baseUrl: string;
+  signProjectToken: (projectId: string, connectorSlug: string) => string;
 };
 
 /** Write Google Drive MCP credential files into the project volume. */
@@ -61,11 +66,34 @@ export async function writeGoogleDriveCredentialFiles(
   return { oauthPath, credentialsPath };
 }
 
+export function buildRemoteMcpServerEntry(
+  remote: RemoteMcpConfig,
+  projectId: string,
+  def: McpConnectorDef,
+): Record<string, unknown> {
+  const base = remote.baseUrl.replace(/\/$/, '');
+  return {
+    url: `${base}/connectors/${def.slug}/mcp`,
+    transport: 'streamable-http',
+    headers: {
+      Authorization: `Bearer ${remote.signProjectToken(projectId, def.slug)}`,
+    },
+  };
+}
+
 export function buildMcpServerEntry(
   def: McpConnectorDef,
   secrets: ConnectorSecretMap,
   containerPaths: { oauthPath?: string; credentialsPath?: string },
+  options?: {
+    projectId?: string;
+    remoteMcp?: RemoteMcpConfig;
+  },
 ): Record<string, unknown> {
+  if (options?.remoteMcp && options.projectId) {
+    return buildRemoteMcpServerEntry(options.remoteMcp, options.projectId, def);
+  }
+
   if (def.slug === 'google-drive') {
     const oauth =
       containerPaths.oauthPath ?? `${CONTAINER_STATE_DIR}/connectors/google-drive/gcp-oauth.keys.json`;

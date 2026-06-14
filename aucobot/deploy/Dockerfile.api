@@ -14,6 +14,7 @@ COPY packages/runtime-oss/package.json packages/runtime-oss/
 COPY packages/workspace-sync/package.json packages/workspace-sync/
 COPY packages/shared/package.json packages/shared/
 COPY packages/control-plane-core/package.json packages/control-plane-core/
+COPY packages/clawhub-client/package.json packages/clawhub-client/
 RUN pnpm install --frozen-lockfile --filter @aucobot/api...
 
 COPY packages/database packages/database
@@ -22,7 +23,8 @@ COPY packages/runtime-oss packages/runtime-oss
 COPY packages/workspace-sync packages/workspace-sync
 COPY packages/shared packages/shared
 COPY packages/control-plane-core packages/control-plane-core
-RUN pnpm --filter @aucobot/database build && pnpm --filter @aucobot/runtime-contracts build && pnpm --filter @aucobot/shared build && pnpm --filter @aucobot/control-plane-core build && pnpm --filter @aucobot/runtime-oss build && pnpm --filter @aucobot/workspace-sync build
+COPY packages/clawhub-client packages/clawhub-client
+RUN pnpm --filter @aucobot/database build && pnpm --filter @aucobot/runtime-contracts build && pnpm --filter @aucobot/shared build && pnpm --filter @aucobot/control-plane-core build && pnpm --filter @aucobot/runtime-oss build && pnpm --filter @aucobot/workspace-sync build && pnpm --filter @aucobot/clawhub-client build
 
 COPY apps/api apps/api
 WORKDIR /repo/apps/api

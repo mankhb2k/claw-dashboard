@@ -3,7 +3,7 @@ export {
   CONTAINER_STATE_DIR,
   CONTAINER_WORKSPACE_DIR,
   type OpenClawProjectConfig,
-} from './openclaw-config.js';
+} from './config/openclaw-config.js';
 
 export {
   mergeAgentsIntoConfig,
@@ -19,24 +19,27 @@ export {
   type ProjectSandboxPolicy,
   type ProviderKeyRow,
   type MergeProviderKeysOptions,
-} from './openclaw-config-merge.js';
+} from './config/merge-openclaw/merge-openclaw.js';
 
 export {
   mergeChannelsIntoConfig,
   type ChannelMergeRow,
-} from './merge-channels-into-config.js';
+} from './config/merge-channel/merge-channel.js';
 
 export {
   mergeConnectorsIntoConfig,
   type ConnectorMergeRow,
-} from './merge-connectors-into-config.js';
+  type ConnectorMergeOptions,
+} from './config/merge-connectors/merge-connectors.js';
 
 export {
   buildMcpServerEntry,
+  buildRemoteMcpServerEntry,
   writeGoogleDriveCredentialFiles,
   type ConnectorSecretMap,
   type McpConnectorDef,
-} from './connector-mcp.js';
+  type RemoteMcpConfig,
+} from './connectors/connector-mcp.js';
 
 export {
   AgentCollaborationValidationError,
@@ -52,7 +55,7 @@ export {
   type LegacyAgentTeamFormData,
   type LegacyAgentTeamRow,
   type ProjectCollaborationSettings,
-} from './agent-collaboration.js';
+} from './agents/agent-collaboration.js';
 
 export {
   formDataHasLegacyExecKeys,
@@ -70,7 +73,7 @@ export {
   type AgentFormInput,
   type AgentInstructionsMode,
   type AgentVibe,
-} from './agent-form.types.js';
+} from './agents/agent-form.types.js';
 
 export {
   BOOTSTRAP_MAX_CHARS_PER_FILE,
@@ -88,7 +91,7 @@ export {
   type AgentWorkspaceBundle,
   type OpenClawAgentConfigPatch,
   type OpenClawAgentSandbox,
-} from './agent-workspace-compile.js';
+} from './agents/agent-workspace-compile.js';
 
 export {
   buildSkillMarkdown,
@@ -99,23 +102,23 @@ export {
   validateSkillSlug,
   type ParsedSkillMarkdown,
   type SkillDraftInput,
-} from './skill-markdown.js';
+} from './skills/skill-markdown.js';
 
 export {
   ensureGatewayWritableProjectDir,
   ensureProjectLayout,
   openClawConfigPath,
   resolveProjectDataDir,
-} from './project-paths.js';
+} from './paths/project-paths.js';
 
 export {
   cleanupStaleMainAgentModels,
   gatewayAuthTokenFromConfig,
   mergeGatewayBlockIfMissing,
   syncGatewayAuthToken,
-} from './sync-helpers.js';
+} from './config/sync-helpers.js';
 
-export { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './provider-env-keys.js';
+export { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './config/provider-env-keys.js';
 
 export {
   buildHeartbeatSummary,
@@ -129,4 +132,4 @@ export {
   type HeartbeatAgentMode,
   type HeartbeatSummaryEntry,
   type ProjectHeartbeatRow,
-} from './heartbeat-sync.js';
+} from './heartbeat/heartbeat-sync.js';

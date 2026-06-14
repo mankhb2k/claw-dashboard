@@ -55,6 +55,9 @@ import {
   SANDBOX_STAGING_MAX_BYTES,
 } from "@/utils/chat/sandbox-staging-limit";
 import { useChatSandboxContext } from "@/hooks/chat/use-chat-sandbox-context";
+import { useChatToolStream } from "@/hooks/chat/use-chat-tool-stream";
+import { isHiddenToolPayloadText, shouldShowHistoryMessage } from "@/utils/chat/history-filter";
+import { mergeLiveAssistantText } from "@/utils/chat/tool-stream";
 import {
   ChatPanel,
   type ChatPanelConnectionState,
@@ -68,13 +71,11 @@ type ConnectionState = ChatPanelConnectionState;
 
 const SESSIONS_LIST_LIMIT = 50;
 
-const HIDDEN_HISTORY_ROLES = new Set(["tool", "toolresult", "system"]);
-
 function rowFromMessage(message: unknown, index: number): ChatPanelMessage | null {
   const text = extractText(message);
   if (!text?.trim()) return null;
   const role = roleOf(message);
-  if (HIDDEN_HISTORY_ROLES.has(role)) return null;
+  if (!shouldShowHistoryMessage(role, text.trim())) return null;
   return { id: stableMessageId(message, index), role, text: text.trim() };
 }
 
@@ -121,7 +122,18 @@ export function ClientChatPage() {
   const [streamText, setStreamText] = useState("");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const {
+    liveItems,
+    showPreparing: showToolPreparing,
+    handleGatewayToolEvent,
+    resetToolStream,
+    registerStreamFlush,
+  } = useChatToolStream(sessionKey, sending);
+  const handleGatewayToolEventRef = useRef(handleGatewayToolEvent);
+  const resetToolStreamRef = useRef(resetToolStream);
+  const liveItemsRef = useRef(liveItems);
   const clientRef = useRef<ProjectChatClient | null>(null);
   const streamRef = useRef("");
   const sessionKeyRef = useRef(sessionKey);
@@ -132,6 +144,10 @@ export function ClientChatPage() {
   const sessionsRequestIdRef = useRef(0);
   const patchedSessionLabelsRef = useRef(new Map<string, string>());
   const sessionSortPreserveRef = useRef(new Map<string, number | null>());
+
+  useEffect(() => {
+    sendingRef.current = sending;
+  }, [sending]);
 
   useEffect(() => {
     debouncedSessionSearchRef.current = debouncedSessionSearch;
@@ -153,6 +169,29 @@ export function ClientChatPage() {
   }, [agentId]);
 
   useEffect(() => {
+    handleGatewayToolEventRef.current = handleGatewayToolEvent;
+  }, [handleGatewayToolEvent]);
+
+  useEffect(() => {
+    resetToolStreamRef.current = resetToolStream;
+  }, [resetToolStream]);
+
+  useEffect(() => {
+    liveItemsRef.current = liveItems;
+  }, [liveItems]);
+
+  useEffect(() => {
+    registerStreamFlush(() => {
+      const text = streamRef.current;
+      if (text.trim()) {
+        streamRef.current = "";
+        setStreamText("");
+      }
+      return text;
+    });
+  }, [registerStreamFlush]);
+
+  useEffect(() => {
     if (!projectId) return;
     setSidebarCollapsed(loadSidebarCollapsed(projectId));
   }, [projectId]);
@@ -169,6 +208,7 @@ export function ClientChatPage() {
       );
       if (requestId !== historyRequestIdRef.current) return;
       if (sessionKeyRef.current !== key) return;
+      if (sendingRef.current) return;
       const rows: ChatPanelMessage[] = [];
       const list = Array.isArray(res.messages) ? res.messages : [];
       list.forEach((msg, i) => {
@@ -251,6 +291,11 @@ export function ClientChatPage() {
         );
       },
       onEvent: (evt: GatewayEventFrame) => {
+        if (evt.event === "agent" || evt.event === "session.tool") {
+          handleGatewayToolEventRef.current(evt);
+          return;
+        }
+
         if (evt.event === "sessions.changed") {
           const clientNow = clientRef.current;
           if (clientNow?.connected) {
@@ -285,31 +330,35 @@ export function ClientChatPage() {
               deltaPayload.deltaText) ||
             extractText(deltaPayload.message);
           if (t) {
-            streamRef.current = t;
-            setStreamText(t);
+            if (isHiddenToolPayloadText(t)) {
+              streamRef.current = "";
+              setStreamText("");
+            } else {
+              streamRef.current = t;
+              setStreamText(t);
+            }
           }
         } else if (payload.state === "final") {
           const t = extractText(payload.message);
-          if (t?.trim()) {
+          const merged = mergeLiveAssistantText(
+            liveItemsRef.current,
+            t?.trim() || streamRef.current,
+          );
+          if (merged.trim() && !isHiddenToolPayloadText(merged.trim())) {
             setMessages((prev) => [
               ...prev,
-              { id: `a-${Date.now()}`, role: "assistant", text: t.trim() },
-            ]);
-          } else if (streamRef.current.trim()) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `a-${Date.now()}`,
-                role: "assistant",
-                text: streamRef.current.trim(),
-              },
+              { id: `a-${Date.now()}`, role: "assistant", text: merged.trim() },
             ]);
           }
           streamRef.current = "";
           setStreamText("");
+          sendingRef.current = false;
           setSending(false);
+          resetToolStreamRef.current();
           const clientNow = clientRef.current;
+          const activeKey = sessionKeyRef.current;
           if (clientNow?.connected) {
+            void loadHistory(clientNow, activeKey).catch(() => undefined);
             void loadSessions(
               clientNow,
               agentIdRef.current,
@@ -317,12 +366,16 @@ export function ClientChatPage() {
             );
           }
         } else if (payload.state === "error") {
+          sendingRef.current = false;
           setSending(false);
           setStreamText("");
+          resetToolStreamRef.current();
           setError("The agent returned an error while processing your message");
         } else if (payload.state === "aborted") {
+          sendingRef.current = false;
           setSending(false);
           setStreamText("");
+          resetToolStreamRef.current();
         }
       },
       onClose: ({ code, reason }) => {
@@ -730,7 +783,9 @@ export function ClientChatPage() {
       return;
     setStreamText("");
     streamRef.current = "";
-    setMessages([]);
+    if (!sendingRef.current) {
+      setMessages([]);
+    }
     void loadHistory(client, sessionKey).catch((err) => {
       if (sessionKeyRef.current !== sessionKey) return;
       setError(err instanceof Error ? err.message : "Could not load chat history");
@@ -771,8 +826,10 @@ export function ClientChatPage() {
         : "");
 
     setInput("");
+    sendingRef.current = true;
     setSending(true);
     setError(null);
+    resetToolStream();
     setMessages((prev) => [
       ...prev,
       { id: `u-${Date.now()}`, role: "user", text: messageText },
@@ -788,6 +845,7 @@ export function ClientChatPage() {
         attachmentIds,
       });
     } catch (err) {
+      sendingRef.current = false;
       setSending(false);
       setError(err instanceof Error ? err.message : "Failed to send message");
       return;
@@ -795,7 +853,7 @@ export function ClientChatPage() {
     window.setTimeout(() => {
       setSending((active) => {
         if (!active) return active;
-        void loadHistory(client, sessionKey).catch(() => undefined);
+        sendingRef.current = false;
         return false;
       });
     }, 8000);
@@ -809,8 +867,10 @@ export function ClientChatPage() {
     } catch {
       /* ignore */
     }
+    sendingRef.current = false;
     setSending(false);
     setStreamText("");
+    resetToolStream();
   };
 
   if (!projectId) {
@@ -885,6 +945,8 @@ export function ClientChatPage() {
           sandboxActive={sandboxActive}
           stagingMaxBytes={stagingMaxBytes}
           contextUsage={activeContextUsage}
+          liveItems={liveItems}
+          showToolPreparing={showToolPreparing}
           modelHint={
             modelIsOverride
               ? "Session only — Telegram, Discord, and other channels still use the agent default model."

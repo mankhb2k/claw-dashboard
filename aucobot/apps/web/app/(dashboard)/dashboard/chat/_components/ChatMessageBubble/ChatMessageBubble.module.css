@@ -40,22 +40,9 @@
   padding: 0 var(--space-1);
 }
 
-.streaming {
-  display: block;
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  color: var(--color-muted-foreground);
-}
-
-.assistantText {
-  margin: 0;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: var(--color-foreground);
+.assistantBody {
+  width: 100%;
+  min-width: 0;
 }
 
 @keyframes chatFadeIn {

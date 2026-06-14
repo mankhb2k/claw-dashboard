@@ -1,4 +1,5 @@
 import { enChannels } from './channels'
+import { enChatToolActivity } from './chat/toolActivity'
 import { enConnect } from './connect'
 import { enDashboard } from './dashboard'
 import { enSkills } from './skills'
@@ -10,6 +11,9 @@ import { enSidebarProject } from './sidebarProject'
  */
 export const en = {
   channels: enChannels,
+  chat: {
+    toolActivity: enChatToolActivity,
+  },
   connect: enConnect,
   skills: enSkills,
   dashboard: enDashboard,
