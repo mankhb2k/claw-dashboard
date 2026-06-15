@@ -65,7 +65,7 @@
 }
 
 .markdown a {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
 }

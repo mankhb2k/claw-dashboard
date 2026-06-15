@@ -25,7 +25,7 @@
 }
 
 .row[data-status='error'] {
-  color: var(--color-destructive, #ef4444);
+  color: var(--color-danger);
 }
 
 .icon {

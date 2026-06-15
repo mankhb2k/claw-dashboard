@@ -50,7 +50,7 @@
 }
 
 .block[data-error='true'] .headerLabel {
-  color: var(--color-destructive, #ef4444);
+  color: var(--color-danger);
 }
 
 .headerSpinner {
@@ -64,7 +64,7 @@
 .body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.25s var(--ease-out);
+  transition: max-height var(--transition-slow) var(--ease-out);
 }
 
 .bodyOpen {
@@ -94,7 +94,7 @@
 }
 
 .step[data-status='error'] {
-  color: var(--color-destructive, #ef4444);
+  color: var(--color-danger);
 }
 
 .stepLeading {
@@ -155,7 +155,7 @@
   gap: var(--space-2);
   max-width: 100%;
   padding: var(--space-1) var(--space-3);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
   background: var(--color-background);
   color: var(--color-foreground);

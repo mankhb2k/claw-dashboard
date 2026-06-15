@@ -20,7 +20,7 @@
 }
 
 .chipBlocked {
-  border-color: var(--color-destructive, #dc2626);
+  border-color: var(--color-danger);
   opacity: 0.85;
 }
 
@@ -52,8 +52,8 @@
   padding: 0;
   border: none;
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--color-foreground) 82%, transparent);
-  color: var(--color-background);
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--transition-fast) ease;
@@ -91,15 +91,15 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  color: var(--color-primary-foreground);
+  color: var(--color-secondary-foreground);
 }
 
 .fileIconDoc {
-  background: #2563eb;
+  background: var(--color-provider-gemini-emphasis);
 }
 
 .fileIconPdf {
-  background: #dc2626;
+  background: var(--color-danger);
 }
 
 .fileIconOther {
@@ -125,7 +125,7 @@
 }
 
 .fileKind {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-muted-foreground);
 }
 

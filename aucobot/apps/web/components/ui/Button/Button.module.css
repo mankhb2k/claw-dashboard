@@ -182,13 +182,18 @@
   animation: spin 0.6s linear infinite;
 }
 
-/* Spinner color logic - only for outline, secondary, ghost, link variants */
+/* Spinner color logic — outline/ghost/link on light surfaces */
 .v_outline .spinner,
-.v_secondary .spinner,
 .v_ghost .spinner,
 .v_link .spinner {
   border-color: rgba(0, 0, 0, 0.1);
   border-top-color: var(--color-muted-foreground);
+}
+
+/* Secondary uses foreground token (works on both light/dark solid fills) */
+.v_secondary .spinner {
+  border-color: color-mix(in srgb, var(--color-secondary-foreground) 28%, transparent);
+  border-top-color: var(--color-secondary-foreground);
 }
 
 @keyframes spin {
