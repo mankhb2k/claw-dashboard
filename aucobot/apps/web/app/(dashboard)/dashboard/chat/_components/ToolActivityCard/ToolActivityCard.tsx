@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import {
   AlertCircle,
-  Check,
   ChevronDown,
+  ChevronRight,
   FileText,
   Loader2,
   Terminal,
@@ -21,7 +21,7 @@ type ToolActivityCardProps = {
 }
 
 function ToolIcon({ entry }: { entry: ToolStreamEntry }) {
-  const className = styles.headerIcon
+  const className = styles.leadingIcon
   switch (entry.canonicalId) {
     case 'exec':
     case 'code_execution':
@@ -36,13 +36,14 @@ function ToolIcon({ entry }: { entry: ToolStreamEntry }) {
   }
 }
 
-function statusLabel(
-  status: ToolStreamEntry['status'],
-  t: (key: string) => string,
-): string {
-  if (status === 'running') return t('chat.toolActivity.ui.running')
-  if (status === 'error') return t('chat.toolActivity.ui.failed')
-  return t('chat.toolActivity.ui.completed')
+function HeaderLeading({ entry }: { entry: ToolStreamEntry }) {
+  if (entry.status === 'running') {
+    return <Loader2 className={styles.headerSpinner} aria-hidden />
+  }
+  if (entry.status === 'error') {
+    return <AlertCircle className={styles.headerErrorIcon} aria-hidden />
+  }
+  return <ToolIcon entry={entry} />
 }
 
 export function ToolActivityCard({ entry }: ToolActivityCardProps) {
@@ -59,8 +60,16 @@ export function ToolActivityCard({ entry }: ToolActivityCardProps) {
   const displayOutput =
     showFullOutput && fullOutput ? fullOutput : preview || fullOutput
 
+  const Chevron = expanded ? ChevronDown : ChevronRight
+  const isRunning = entry.status === 'running'
+  const hasError = entry.status === 'error'
+
   return (
-    <article className={styles.card} data-status={entry.status}>
+    <article
+      className={styles.card}
+      data-running={isRunning ? 'true' : 'false'}
+      data-error={hasError ? 'true' : 'false'}
+    >
       <button
         type="button"
         className={styles.header}
@@ -68,31 +77,9 @@ export function ToolActivityCard({ entry }: ToolActivityCardProps) {
         onClick={() => setExpanded((v) => !v)}
       >
         <span className={styles.headerMain}>
-          <span className={styles.headerIconWrap}>
-            {entry.status === 'running' ? (
-              <Loader2 className={styles.headerSpinner} />
-            ) : entry.status === 'error' ? (
-              <AlertCircle className={styles.headerErrorIcon} />
-            ) : (
-              <Check className={styles.headerDoneIcon} />
-            )}
-            <ToolIcon entry={entry} />
-          </span>
-          <span className={styles.headerText}>
-            <span className={styles.title}>{label}</span>
-            {!expanded && preview ? (
-              <span className={styles.summary}>{preview.split('\n')[0]}</span>
-            ) : null}
-          </span>
-        </span>
-        <span className={styles.headerMeta}>
-          <span className={styles.badge} data-status={entry.status}>
-            {statusLabel(entry.status, t)}
-          </span>
-          <ChevronDown
-            className={`${styles.chevron}${expanded ? ` ${styles.chevronOpen}` : ''}`}
-            aria-hidden
-          />
+          <HeaderLeading entry={entry} />
+          <span className={styles.title}>{label}</span>
+          <Chevron className={styles.chevron} aria-hidden />
         </span>
       </button>
 

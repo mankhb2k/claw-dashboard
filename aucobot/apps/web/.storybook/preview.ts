@@ -4,6 +4,11 @@ import '../app/globals.css'
 
 const preview: Preview = {
   parameters: {
+    options: {
+      storySort: {
+        order: ['Welcome', 'Chat', ['Chat', ['Introduction', 'ContentArea', 'ToolActivity', 'Message']], 'Dashboard', 'Layout', 'UI'],
+      },
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,

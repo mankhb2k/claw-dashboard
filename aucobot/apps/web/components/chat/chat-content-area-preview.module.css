@@ -1,0 +1,9 @@
+.frame {
+  height: min(420px, 72vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}

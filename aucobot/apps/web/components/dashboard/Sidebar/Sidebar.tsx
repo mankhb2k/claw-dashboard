@@ -40,9 +40,16 @@ export function Sidebar({
       <header className={styles.header}>
         <div className={styles.brand}>
           <Link href={homeHref} title={t("sidebar.dashboardTitle")} className={styles.brandLink}>
-            <span
-              className={`${styles.logoText} ${collapsed ? styles.logoTextHidden : ""}`}
-            >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/aucobot-icon.svg"
+              alt=""
+              aria-hidden
+              className={styles.logoIcon}
+              width={24}
+              height={24}
+            />
+            <span className={styles.logoText}>
               {t("sidebar.brand")}
             </span>
           </Link>

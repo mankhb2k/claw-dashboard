@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import {
   AlertCircle,
-  Check,
   ChevronDown,
+  ChevronRight,
   FileText,
   Globe,
   Link2,
@@ -98,8 +98,14 @@ export function ToolResearchBlock({ entries }: ToolResearchBlockProps) {
 
   if (entries.length === 0) return null
 
+  const Chevron = expanded ? ChevronDown : ChevronRight
+
   return (
-    <div className={styles.block} data-running={isRunning ? 'true' : 'false'}>
+    <div
+      className={styles.block}
+      data-running={isRunning ? 'true' : 'false'}
+      data-error={hasError ? 'true' : 'false'}
+    >
       <button
         type="button"
         className={styles.header}
@@ -109,24 +115,17 @@ export function ToolResearchBlock({ entries }: ToolResearchBlockProps) {
         <span className={styles.headerMain}>
           {isRunning ? (
             <Loader2 className={styles.headerSpinner} aria-hidden />
-          ) : hasError ? (
-            <AlertCircle className={styles.headerError} aria-hidden />
-          ) : (
-            <Check className={styles.headerDone} aria-hidden />
-          )}
+          ) : null}
           <span className={styles.headerLabel}>{headerLabel}</span>
+          <Chevron className={styles.chevron} aria-hidden />
         </span>
-        <ChevronDown
-          className={`${styles.chevron}${expanded ? ` ${styles.chevronOpen}` : ''}`}
-          aria-hidden
-        />
       </button>
 
       <div className={`${styles.body}${expanded ? ` ${styles.bodyOpen}` : ''}`}>
         <ul className={styles.steps}>
           {steps.map(({ entry, step }) => (
             <li key={step.id} className={styles.step} data-status={step.status}>
-              <span className={styles.stepIconWrap}>
+              <span className={styles.stepLeading} aria-hidden>
                 {step.status === 'running' ? (
                   <Loader2 className={styles.stepSpinner} />
                 ) : step.status === 'error' ? (

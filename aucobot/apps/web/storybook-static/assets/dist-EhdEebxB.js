@@ -1,1 +1,0 @@
-import{c as e,i as t}from"./preload-helper-D2yxXLVK.js";import{P as n}from"./iframe-D8t7WUQB.js";function r(e){let t=i.useRef(e);return i.useEffect(()=>{t.current=e}),i.useMemo(()=>(...e)=>t.current?.(...e),[])}var i,a=t((()=>{i=e(n(),1)}));export{r as n,a as t};

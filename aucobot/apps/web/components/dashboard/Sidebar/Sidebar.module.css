@@ -20,6 +20,14 @@
   width: var(--sidebar-collapsed-width, 64px);
 }
 
+.sidebarCollapsed .header {
+  justify-content: center;
+}
+
+.sidebarCollapsed .brand {
+  display: none;
+}
+
 /* ==========================================================================
    HEADER & LOGO
    ========================================================================== */
@@ -44,25 +52,23 @@
 .brandLink {
   display: flex;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
   color: var(--color-sidebar-active, #ffffff);
+}
+
+.logoIcon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .logoText {
   font-weight: bold;
   font-size: 14px;
   white-space: nowrap;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.logoTextHidden {
-  opacity: 0;
-  transform: translateX(-10px);
-  pointer-events: none;
+  margin-top: 3px;
 }
 
 /* ==========================================================================
@@ -199,10 +205,12 @@
     width: var(--sidebar-collapsed-width, 64px);
   }
 
-  .logoText {
-    opacity: 0;
-    transform: translateX(-10px);
-    pointer-events: none;
+  .header {
+    justify-content: center;
+  }
+
+  .brand {
+    display: none;
   }
 
   .navText {
