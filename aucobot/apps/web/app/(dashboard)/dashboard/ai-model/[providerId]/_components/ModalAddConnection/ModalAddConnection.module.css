@@ -13,10 +13,19 @@
   padding-right: var(--space-10);
 }
 
-.eyeBtn {
+.apiKeyInputOverlay {
   position: absolute;
-  right: var(--space-3);
-  bottom: 0.65rem;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding-right: var(--space-3);
+  pointer-events: none;
+}
+
+.eyeBtn {
+  pointer-events: auto;
   background: transparent;
   border: none;
   color: var(--color-text-muted);

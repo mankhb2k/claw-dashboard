@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { migrateFoundationOpenClawId } from '@aucobot/shared';
 import { chatApi } from '@/lib/api/chat';
 
 const STORAGE_PREFIX = 'agent-panel-model:';
@@ -55,13 +56,16 @@ export function useChatModelSelect(projectId: string) {
         setLoadError(null);
         const stored = loadStoredSelection(projectId);
         const primary = res.primaryModel?.trim();
+        const migratedPrimary = primary
+          ? migrateFoundationOpenClawId(primary) ?? primary
+          : undefined;
         const storedProvider = stored.providerId
           ? res.providers.find((p) => p.providerId === stored.providerId)
           : undefined;
         const provider =
           storedProvider ??
           res.providers.find((p) =>
-            p.models.some((m) => m.openclawId === primary),
+            p.models.some((m) => m.openclawId === migratedPrimary),
           ) ??
           res.providers[0];
 
@@ -72,13 +76,21 @@ export function useChatModelSelect(projectId: string) {
             provider.models.some((m) => m.openclawId === stored.modelId)
               ? stored.modelId
               : undefined;
+          const migratedStored = storedModel
+            ? migrateFoundationOpenClawId(storedModel) ?? storedModel
+            : undefined;
           const model =
-            storedModel ??
-            (primary && provider.models.some((m) => m.openclawId === primary)
-              ? primary
-              : (provider.defaultModel ??
-                provider.models[0]?.openclawId ??
-                ''));
+            (migratedStored &&
+            provider.models.some((m) => m.openclawId === migratedStored)
+              ? migratedStored
+              : undefined) ??
+            (migratedPrimary &&
+            provider.models.some((m) => m.openclawId === migratedPrimary)
+              ? migratedPrimary
+              : undefined) ??
+            (provider.defaultModel ??
+              provider.models[0]?.openclawId ??
+              '');
           setModelId(model || undefined);
         } else {
           setProviderId(undefined);

@@ -38,7 +38,7 @@ import {
   isAutoTitleCandidate,
 } from "@/utils/chat/session-auto-title";
 import {
-  DEFAULT_NEW_SESSION_LABEL,
+  allocateNewSessionLabel,
   filterSessionsForChatSidebar,
   isBrowsableChatSession,
   isMainSessionKey,
@@ -57,6 +57,8 @@ import {
 import { useChatSandboxContext } from "@/hooks/chat/use-chat-sandbox-context";
 import { useChatToolStream } from "@/hooks/chat/use-chat-tool-stream";
 import { isHiddenToolPayloadText, shouldShowHistoryMessage } from "@/utils/chat/history-filter";
+import { resolveModelContextTokens } from "@/utils/chat/model-context-limit";
+import { accumulateStreamDelta } from "@/utils/chat/stream-delta";
 import { mergeLiveAssistantText } from "@/utils/chat/tool-stream";
 import {
   ChatPanel,
@@ -130,7 +132,7 @@ export function ClientChatPage() {
     handleGatewayToolEvent,
     resetToolStream,
     registerStreamFlush,
-  } = useChatToolStream(sessionKey, sending);
+  } = useChatToolStream(sessionKey, sending, streamText);
   const handleGatewayToolEventRef = useRef(handleGatewayToolEvent);
   const resetToolStreamRef = useRef(resetToolStream);
   const liveItemsRef = useRef(liveItems);
@@ -215,7 +217,12 @@ export function ClientChatPage() {
         const row = rowFromMessage(msg, i);
         if (row) rows.push(row);
       });
-      setMessages(rows);
+      setMessages((prev) => {
+        if (rows.length === 0 && prev.length > 0) return prev;
+        if (rows.length >= prev.length) return rows;
+        // Session store can lag behind optimistic UI right after chat.final.
+        return [...rows, ...prev.slice(rows.length)];
+      });
     },
     [],
   );
@@ -334,8 +341,9 @@ export function ClientChatPage() {
               streamRef.current = "";
               setStreamText("");
             } else {
-              streamRef.current = t;
-              setStreamText(t);
+              const merged = accumulateStreamDelta(streamRef.current, t);
+              streamRef.current = merged;
+              setStreamText(merged);
             }
           }
         } else if (payload.state === "final") {
@@ -358,7 +366,10 @@ export function ClientChatPage() {
           const clientNow = clientRef.current;
           const activeKey = sessionKeyRef.current;
           if (clientNow?.connected) {
-            void loadHistory(clientNow, activeKey).catch(() => undefined);
+            window.setTimeout(() => {
+              if (sessionKeyRef.current !== activeKey || sendingRef.current) return;
+              void loadHistory(clientNow, activeKey).catch(() => undefined);
+            }, 600);
             void loadSessions(
               clientNow,
               agentIdRef.current,
@@ -491,11 +502,18 @@ export function ClientChatPage() {
     setModelId(selection.modelId);
 
     const client = clientRef.current;
-    if (!client?.connected || connectionState !== "connected" || !target) {
+    const sessionModel = selection.modelId?.trim();
+    if (
+      !client?.connected ||
+      connectionState !== "connected" ||
+      !sessionModel
+    ) {
       return;
     }
 
-    void patchSessionModel(client, sessionKey, target).catch(() => undefined);
+    void patchSessionModel(client, sessionKey, sessionModel).catch(
+      () => undefined,
+    );
   }, [
     projectId,
     agentId,
@@ -534,11 +552,11 @@ export function ClientChatPage() {
     if (!row) return undefined;
     return {
       totalTokens: row.totalTokens,
-      contextTokens: row.contextTokens,
+      contextTokens: resolveModelContextTokens(modelId),
       totalTokensFresh: row.totalTokensFresh,
       compactionCount: row.compactionCount,
     };
-  }, [sessions, sessionKey]);
+  }, [sessions, sessionKey, modelId]);
 
   const handleProviderChange = (nextProviderId: string) => {
     setProviderId(nextProviderId);
@@ -591,13 +609,14 @@ export function ClientChatPage() {
     setCreatingSession(true);
     setError(null);
     try {
+      const label = allocateNewSessionLabel(sessions, agentId);
       const res = await client.request<SessionsCreateResult>(
         "sessions.create",
-        { agentId, label: DEFAULT_NEW_SESSION_LABEL },
+        { agentId, label },
       );
       const key = res.key?.trim();
       if (!key) throw new Error("Gateway did not return a session key");
-      patchedSessionLabelsRef.current.set(key, DEFAULT_NEW_SESSION_LABEL);
+      patchedSessionLabelsRef.current.set(key, label);
       setSessionKey(key);
       if (projectId) saveLastSessionKey(projectId, agentId, key);
       setMessages([]);
@@ -628,6 +647,7 @@ export function ClientChatPage() {
     projectId,
     modelOptions,
     loadSessions,
+    sessions,
   ]);
 
   const handleRenameSession = useCallback(
@@ -850,13 +870,6 @@ export function ClientChatPage() {
       setError(err instanceof Error ? err.message : "Failed to send message");
       return;
     }
-    window.setTimeout(() => {
-      setSending((active) => {
-        if (!active) return active;
-        sendingRef.current = false;
-        return false;
-      });
-    }, 8000);
   };
 
   const handleAbort = async () => {

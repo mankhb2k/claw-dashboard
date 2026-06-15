@@ -86,15 +86,17 @@ export function ModalAddConnection({
               disabled={apiKeyDisabled}
               required
             />
-            <button
-              type="button"
-              className={styles.eyeBtn}
-              onClick={() => setShowApiKey((prev) => !prev)}
-              disabled={apiKeyDisabled || !apiKey}
-              aria-label={showApiKey ? "Hide key" : "Show key"}
-            >
-              {showApiKey ? <Eye size={16} /> : <EyeOff size={16} />}
-            </button>
+            <div className={styles.apiKeyInputOverlay}>
+              <button
+                type="button"
+                className={styles.eyeBtn}
+                onClick={() => setShowApiKey((prev) => !prev)}
+                disabled={apiKeyDisabled || !apiKey}
+                aria-label={showApiKey ? "Hide key" : "Show key"}
+              >
+                {showApiKey ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
           </div>
 
           <DialogFooter>

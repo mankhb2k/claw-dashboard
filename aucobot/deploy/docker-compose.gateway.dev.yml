@@ -19,7 +19,7 @@ services:
       OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
     volumes:
       # Project workspace (synced by API under OPENCLAW_DATA_ROOT)
-      - ../../backend/data/projects/${PROJECT_ID:-cmpedzekq0001d4k5op1bk8bi}:/home/node/.openclaw
+      - ../../apps/api/data/projects/${PROJECT_ID:-cmpmxxyeh0002p8k5tohc35m1}:/home/node/.openclaw
     ports:
       - "127.0.0.1:18789:18789"
     restart: unless-stopped

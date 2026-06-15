@@ -121,6 +121,16 @@ export {
 export { PROVIDER_ENV_KEYS, providerIdForEnvKey } from './config/provider-env-keys.js';
 
 export {
+  authProfilesPath,
+  buildManagedAuthProfiles,
+  collectAgentIdsFromOpenClawConfig,
+  mergeAuthProfilesStore,
+  openClawProviderIdForSaasProvider,
+  syncAgentAuthProfiles,
+  type AuthProfilesStore,
+} from './config/sync-agent-auth-profiles.js';
+
+export {
   buildHeartbeatSummary,
   mergeHeartbeatIntoConfig,
   parseHeartbeatMode,

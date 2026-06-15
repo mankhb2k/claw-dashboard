@@ -116,6 +116,34 @@ describe('mergeProviderKeysIntoConfig', () => {
     assert.ok(models['anthropic/claude-3']);
     assert.ok(models['openai/gpt-4o']);
   });
+
+  it('migrates deprecated DeepSeek primary model on merge', () => {
+    const config: Record<string, unknown> = {
+      agents: {
+        defaults: {
+          model: { primary: 'deepseek/deepseek-v3' },
+        },
+      },
+    };
+
+    const result = mergeProviderKeysIntoConfig(
+      config,
+      [
+        providerRow({
+          providerId: 'deepseek',
+          envKey: 'DEEPSEEK_API_KEY',
+          defaultModel: 'deepseek/deepseek-v3',
+        }),
+      ],
+      (cipher) => cipher,
+    );
+
+    const primary = (
+      (result.agents as { defaults: { model: { primary: string } } }).defaults.model
+        .primary
+    );
+    assert.equal(primary, 'deepseek/deepseek-v4-flash');
+  });
 });
 
 describe('mergeSharedSkillsLoadIntoConfig', () => {
@@ -203,6 +231,8 @@ describe('mergeAgentsIntoConfig', () => {
     const list = (result.agents as { list: Array<Record<string, unknown>> }).list;
     assert.equal(list.length, 2);
     assert.equal(list[0].id, 'main');
+    assert.deepEqual(list[0].skills, []);
+    assert.deepEqual((list[0].tools as { profile: string }).profile, 'messaging');
     assert.equal(list[1].id, 'researcher');
     assert.match(String(list[1].workspace), /workspace-researcher$/);
     assert.deepEqual(list[1].skills, ['web-search']);

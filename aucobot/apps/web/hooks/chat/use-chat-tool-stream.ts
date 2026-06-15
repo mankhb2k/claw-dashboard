@@ -17,7 +17,11 @@ import type {
   ToolStreamEntry,
 } from '@/utils/chat/tool-stream.types'
 
-export function useChatToolStream(activeSessionKey: string, sending: boolean) {
+export function useChatToolStream(
+  activeSessionKey: string,
+  sending: boolean,
+  streamText = '',
+) {
   const [entryMap, setEntryMap] = useState<Map<string, ToolStreamEntry>>(
     () => new Map(),
   )
@@ -101,7 +105,11 @@ export function useChatToolStream(activeSessionKey: string, sending: boolean) {
     [entryMap],
   ) as ToolActivity[]
 
-  const showPreparing = sending && entries.length === 0 && liveItems.length === 0
+  const showPreparing =
+    sending &&
+    !streamText.trim() &&
+    entries.length === 0 &&
+    liveItems.length === 0
 
   return {
     entries,

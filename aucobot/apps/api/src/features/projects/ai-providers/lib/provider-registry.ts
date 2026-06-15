@@ -16,33 +16,98 @@ export type {
 } from './provider-registry.types';
 
 const ANTHROPIC_MODELS = [
-  { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', openclawId: 'anthropic/claude-opus-4-5' },
   {
-    id: 'claude-sonnet-4-5',
-    name: 'Claude Sonnet 4.5',
-    openclawId: 'anthropic/claude-sonnet-4-5',
-    recommended: true,
+    id: 'claude-opus-4-8',
+    name: 'Claude Opus 4.8',
+    openclawId: 'anthropic/claude-opus-4-8',
+    description: 'Flagship — deepest reasoning',
   },
-  { id: 'claude-haiku-3-5', name: 'Claude Haiku 3.5', openclawId: 'anthropic/claude-haiku-3-5' },
+  {
+    id: 'claude-opus-4-6',
+    name: 'Claude Opus 4.6',
+    openclawId: 'anthropic/claude-opus-4-6',
+    description: 'Opus-class — agentic coding, 1M context (beta)',
+  },
+  {
+    id: 'claude-sonnet-4-6',
+    name: 'Claude Sonnet 4.6',
+    openclawId: 'anthropic/claude-sonnet-4-6',
+    recommended: true,
+    description: 'Default — agents, coding, 1M context (beta)',
+  },
+  {
+    id: 'claude-haiku-4-5',
+    name: 'Claude Haiku 4.5',
+    openclawId: 'anthropic/claude-haiku-4-5',
+    description: 'Fast, cost-efficient',
+  },
 ] satisfies ProviderDefinition['models'];
 
 const DEEPSEEK_MODELS = [
-  { id: 'deepseek-v3', name: 'DeepSeek V3', openclawId: 'deepseek/deepseek-v3' },
-  { id: 'deepseek-r1', name: 'DeepSeek R1', openclawId: 'deepseek/deepseek-r1' },
+  {
+    id: 'deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    openclawId: 'deepseek/deepseek-v4-flash',
+    recommended: true,
+    description: 'Fast, economical choice with 1M context',
+  },
+  {
+    id: 'deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    openclawId: 'deepseek/deepseek-v4-pro',
+    description: 'Top-tier reasoning and agent capabilities',
+  },
 ] satisfies ProviderDefinition['models'];
 
 const GROQ_MODELS = [
-  { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', openclawId: 'groq/llama-3.1-70b' },
-  { id: 'mixtral-8x7b', name: 'Mixtral 8x7B', openclawId: 'groq/mixtral-8x7b' },
+  {
+    id: 'llama-3.3-70b-versatile',
+    name: 'Llama 3.3 70B',
+    openclawId: 'groq/llama-3.3-70b-versatile',
+    recommended: true,
+    description: 'Production — general purpose',
+  },
+  {
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B',
+    openclawId: 'groq/llama-3.1-8b-instant',
+    description: 'Fast, low latency',
+  },
+  {
+    id: 'llama-3.1-70b-versatile',
+    name: 'Llama 3.1 70B',
+    openclawId: 'groq/llama-3.1-70b-versatile',
+    tier: 'deprecated',
+    description: 'Deprecated — use Llama 3.3 70B',
+  },
 ] satisfies ProviderDefinition['models'];
 
 const MISTRAL_MODELS = [
   {
-    id: 'mistral-large',
+    id: 'mistral-large-latest',
     name: 'Mistral Large',
-    openclawId: 'mistral/mistral-large',
+    openclawId: 'mistral/mistral-large-latest',
+    recommended: true,
+    description: 'Flagship reasoning & agents',
   },
-  { id: 'codestral', name: 'Codestral', openclawId: 'mistral/codestral' },
+  {
+    id: 'mistral-small-latest',
+    name: 'Mistral Small',
+    openclawId: 'mistral/mistral-small-latest',
+    description: 'Fast, cost-efficient',
+  },
+  {
+    id: 'devstral-latest',
+    name: 'Devstral 2',
+    openclawId: 'mistral/devstral-latest',
+    description: 'Agentic coding',
+  },
+  {
+    id: 'codestral-latest',
+    name: 'Codestral',
+    openclawId: 'mistral/codestral-latest',
+    description: 'Code completion & FIM',
+  },
 ] satisfies ProviderDefinition['models'];
 
 export const PROVIDER_REGISTRY: ProviderDefinition[] = [
@@ -70,7 +135,7 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     envKey: 'ANTHROPIC_API_KEY',
     uiGroup: 'foundation',
     category: 'direct',
-    defaultModel: 'anthropic/claude-sonnet-4-5',
+    defaultModel: 'anthropic/claude-sonnet-4-6',
     apiKeyUrl: 'https://console.anthropic.com/settings/keys',
     docsUrl: 'https://docs.anthropic.com/en/docs/about-claude/models',
     models: ANTHROPIC_MODELS,
@@ -83,6 +148,7 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     category: 'direct',
     openclawProviderId: GEMINI_OPENCLAW_PROVIDER,
     defaultModel: GEMINI_DEFAULT_OPENCLAW_MODEL,
+    apiKeyUrl: 'https://aistudio.google.com/apikey',
     docsUrl: 'https://ai.google.dev/gemini-api/docs/models',
     models: GEMINI_CHAT_MODELS.map((m) => ({
       id: m.id,
@@ -100,9 +166,14 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     envKey: 'DEEPSEEK_API_KEY',
     uiGroup: 'foundation',
     category: 'direct',
-    defaultModel: 'deepseek/deepseek-v3',
+    defaultModel: 'deepseek/deepseek-v4-flash',
     apiKeyUrl: 'https://platform.deepseek.com/api_keys',
+    docsUrl: 'https://api-docs.deepseek.com/',
     models: DEEPSEEK_MODELS,
+    openAiCompatTest: {
+      baseUrl: 'https://api.deepseek.com',
+      model: 'deepseek-v4-flash',
+    },
   },
   {
     id: 'groq',
@@ -110,9 +181,14 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     envKey: 'GROQ_API_KEY',
     uiGroup: 'foundation',
     category: 'direct',
-    defaultModel: 'groq/llama-3.1-70b',
+    defaultModel: 'groq/llama-3.3-70b-versatile',
     apiKeyUrl: 'https://console.groq.com/keys',
+    docsUrl: 'https://console.groq.com/docs/models',
     models: GROQ_MODELS,
+    openAiCompatTest: {
+      baseUrl: 'https://api.groq.com/openai/v1',
+      model: 'llama-3.3-70b-versatile',
+    },
   },
   {
     id: 'mistral',
@@ -120,9 +196,14 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     envKey: 'MISTRAL_API_KEY',
     uiGroup: 'foundation',
     category: 'direct',
-    defaultModel: 'mistral/mistral-large',
+    defaultModel: 'mistral/mistral-large-latest',
     apiKeyUrl: 'https://console.mistral.ai/api-keys/',
+    docsUrl: 'https://docs.mistral.ai/getting-started/models',
     models: MISTRAL_MODELS,
+    openAiCompatTest: {
+      baseUrl: 'https://api.mistral.ai/v1',
+      model: 'mistral-small-latest',
+    },
   },
   {
     id: 'openrouter',
@@ -184,7 +265,7 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     uiGroup: 'ai-provider',
     category: 'proxy',
     openclawProviderId: 'vercel-ai-gateway',
-    defaultModel: 'vercel-ai-gateway/anthropic/claude-opus-4-6',
+    defaultModel: 'vercel-ai-gateway/anthropic/claude-opus-4-8',
     modelRefHint: 'vercel-ai-gateway/<vendor>/<model>',
     apiKeyUrl: 'https://vercel.com/docs/ai-gateway',
     docsUrl: 'https://vercel.com/docs/ai-gateway',
@@ -192,7 +273,7 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
       {
         id: 'claude-opus',
         name: 'Claude Opus (via Vercel AI Gateway)',
-        openclawId: 'vercel-ai-gateway/anthropic/claude-opus-4-6',
+        openclawId: 'vercel-ai-gateway/anthropic/claude-opus-4-8',
         recommended: true,
       },
       {

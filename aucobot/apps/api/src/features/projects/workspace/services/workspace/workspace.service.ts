@@ -31,6 +31,7 @@ import {
 } from '@aucobot/workspace-sync';
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { decryptSecret, getMcpServiceSecret, signProjectMcpToken } from '@aucobot/control-plane-core';
+import { migrateFoundationOpenClawId } from '@aucobot/shared';
 import { resolveConnector } from '../../../connectors/lib/connector-registry';
 import { resolveChannel } from '../../../channels/lib/channel-registry';
 import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
@@ -114,6 +115,16 @@ export class WorkspaceService {
     const providerRows = await this.prisma.projectProviderKey.findMany({
       where: { projectId },
     });
+    for (const row of providerRows) {
+      const migrated = migrateFoundationOpenClawId(row.defaultModel);
+      if (migrated && migrated !== row.defaultModel) {
+        await this.prisma.projectProviderKey.update({
+          where: { projectId_providerId: { projectId, providerId: row.providerId } },
+          data: { defaultModel: migrated },
+        });
+        row.defaultModel = migrated;
+      }
+    }
     const enabledProviderIds = new Set(
       providerRows
         .filter((row) => row.enabled)

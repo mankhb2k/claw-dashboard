@@ -18,6 +18,28 @@ import { ModelUsageRecorderService } from '../model-usage-recorder/model-usage-r
 const DEFAULT_RECONCILE_MS = 60_000;
 const MIN_BACKOFF_MS = 2_000;
 const MAX_BACKOFF_MS = 30_000;
+const GATEWAY_HEALTH_TIMEOUT_MS = 3_000;
+
+function wsBaseToHealthUrl(wsBaseUrl: string): string {
+  const base = wsBaseUrl.trim().replace(/\/$/, '');
+  if (base.startsWith('ws://')) {
+    return `http://${base.slice('ws://'.length)}`;
+  }
+  if (base.startsWith('wss://')) {
+    return `https://${base.slice('wss://'.length)}`;
+  }
+  return base;
+}
+
+async function isGatewayHealthOk(wsBaseUrl: string): Promise<boolean> {
+  const url = `${wsBaseToHealthUrl(wsBaseUrl)}/healthz`;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(GATEWAY_HEALTH_TIMEOUT_MS) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 type ProjectTarget = {
   id: string;
@@ -168,6 +190,14 @@ export class GatewayUsageSubscriberService
     }
 
     try {
+      if (!(await isGatewayHealthOk(endpoint.wsBaseUrl))) {
+        this.log.debug(
+          `Gateway health check pending for ${project.id} (${endpoint.wsBaseUrl})`,
+        );
+        this.scheduleReconnect(project.id);
+        return;
+      }
+
       const upstream = await openGatewayUpstream(
         endpoint.wsBaseUrl,
         endpoint.token,

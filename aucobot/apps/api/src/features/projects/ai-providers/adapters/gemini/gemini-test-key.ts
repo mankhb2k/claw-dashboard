@@ -16,7 +16,7 @@ type GeminiGenerateResponse = {
 export async function smokeTestGeminiApiKey(
   apiKey: string,
 ): Promise<GeminiApiKeySmokeResult> {
-  const model = 'gemini-2.5-flash';
+  const model = 'gemini-3.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const body = {
     contents: [{ role: 'user', parts: [{ text: 'ok' }] }],

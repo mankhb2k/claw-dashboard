@@ -2,6 +2,7 @@ import type { ChatModelsResponse } from '@/lib/api/chat';
 import {
   findCatalogModelInCatalog,
   isOpenClawIdInCatalog,
+  migrateFoundationOpenClawId,
   NO_MODEL_LABEL,
 } from '@aucobot/shared';
 
@@ -48,14 +49,11 @@ export function resolveModelSelection(
   }
 
   if (primary) {
-    const match = findCatalogModel(catalog, primary);
+    const migrated = migrateFoundationOpenClawId(primary) ?? primary;
+    const match = findCatalogModel(catalog, migrated);
     if (match) {
       return { providerId: match.providerId, modelId: match.openclawId };
     }
-    return {
-      providerId: catalog.providers[0]?.providerId,
-      modelId: primary,
-    };
   }
 
   const fallbackId =
@@ -86,9 +84,10 @@ export function resolveAgentPrimaryOpenClawId(
   const candidate =
     catalog.agentPrimaryModel?.trim() || catalog.primaryModel?.trim() || '';
   if (!candidate) return null;
-  if (isOpenClawIdInCatalogResponse(catalog, candidate)) {
-    const match = findCatalogModel(catalog, candidate);
-    return match?.openclawId ?? candidate;
+  const migrated = migrateFoundationOpenClawId(candidate) ?? candidate;
+  if (isOpenClawIdInCatalogResponse(catalog, migrated)) {
+    const match = findCatalogModel(catalog, migrated);
+    return match?.openclawId ?? migrated;
   }
   return catalog.primaryModel?.trim() || null;
 }

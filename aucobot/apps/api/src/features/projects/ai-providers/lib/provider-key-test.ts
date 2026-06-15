@@ -1,3 +1,5 @@
+import type { AnthropicApiKeySmokeResult } from '../adapters/anthropic/anthropic-test-key.types';
+import { smokeTestAnthropicApiKey } from '../adapters/anthropic/anthropic-test-key';
 import type { GeminiApiKeySmokeResult } from '../adapters/gemini/gemini-test-key.types';
 import { smokeTestGeminiApiKey } from '../adapters/gemini/gemini-test-key';
 import type { OpenAiApiKeySmokeResult } from '../adapters/openai/openai-test-key.types';
@@ -6,6 +8,7 @@ import { smokeTestOpenAiCompatApiKey } from '../adapters/openai-compat/openai-co
 import { resolveProvider } from './provider-registry';
 
 export type ProviderApiKeySmokeResult =
+  | AnthropicApiKeySmokeResult
   | GeminiApiKeySmokeResult
   | OpenAiApiKeySmokeResult;
 /** @deprecated Use ProviderApiKeySmokeResult */
@@ -24,6 +27,9 @@ export async function runProviderKeyTest(
   }
   if (provider.id === 'openai') {
     return smokeTestOpenAiApiKey(apiKey);
+  }
+  if (provider.id === 'anthropic') {
+    return smokeTestAnthropicApiKey(apiKey);
   }
   if (provider.openAiCompatTest) {
     return smokeTestOpenAiCompatApiKey({

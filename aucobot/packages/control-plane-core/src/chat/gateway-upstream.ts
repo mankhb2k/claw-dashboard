@@ -155,9 +155,18 @@ async function sendConnect(
 
 async function openWs(wsBaseUrl: string): Promise<{ ws: WebSocket; connectNonce: string }> {
   const ws = new WebSocket(wsBaseUrl);
-  await waitOpen(ws, UPSTREAM_CONNECT_MS);
-  const connectNonce = await readConnectChallenge(ws);
-  return { ws, connectNonce };
+  const challengePromise = readConnectChallenge(ws);
+  // Prevent unhandled rejection if waitOpen fails before the challenge arrives.
+  void challengePromise.catch(() => {});
+
+  try {
+    await waitOpen(ws, UPSTREAM_CONNECT_MS);
+    const connectNonce = await challengePromise;
+    return { ws, connectNonce };
+  } catch (err) {
+    closeWs(ws);
+    throw err;
+  }
 }
 
 function closeWs(ws: WebSocket): void {

@@ -63,7 +63,7 @@ export const Default: Story = {
       { value: "gpt-4o", label: "GPT-4o (OpenAI)" },
       { value: "claude-3-5", label: "Claude 3.5 Sonnet (Anthropic)" },
       { value: "gemini-1-5", label: "Gemini 1.5 Pro (Google)" },
-      { value: "deepseek-v3", label: "DeepSeek V3 (DeepSeek)" },
+      { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash (DeepSeek)" },
     ],
   },
 };

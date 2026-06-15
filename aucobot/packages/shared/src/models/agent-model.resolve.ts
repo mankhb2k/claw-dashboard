@@ -1,3 +1,4 @@
+import { migrateFoundationOpenClawId } from './foundation-model-migrate.js';
 import type {
   ChatModelProviderGroup,
   ProjectModelCatalogProviders,
@@ -81,8 +82,11 @@ export function resolveEffectiveAgentModel(params: {
 
   const primary = params.projectPrimary?.trim();
   if (primary) {
-    const primaryMatch = findCatalogModel(params.providers, primary);
-    return primaryMatch?.openclawId ?? primary;
+    const migratedPrimary = migrateFoundationOpenClawId(primary) ?? primary;
+    const primaryMatch = findCatalogModel(params.providers, migratedPrimary);
+    if (primaryMatch) {
+      return primaryMatch.openclawId;
+    }
   }
 
   for (const provider of params.providers) {

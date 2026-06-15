@@ -1,5 +1,9 @@
 export { type ApiResponse } from './types/api-response.js';
 export {
+  FOUNDATION_MODEL_MIGRATIONS,
+  migrateFoundationOpenClawId,
+} from './models/foundation-model-migrate.js';
+export {
   type OpenAiModelTier,
   type OpenAiModelDef,
   type OpenAiProviderModelEntry,

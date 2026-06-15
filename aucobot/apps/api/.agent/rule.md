@@ -416,6 +416,75 @@ features/projects/
 - **Khi user Save** → ghi DB → **sync file** (`WorkspaceService`) — **không** sync mỗi tin nhắn chat.
 - OpenClaw **không đọc PostgreSQL** — chỉ file trên `OPENCLAW_DATA_ROOT`.
 
+### 4.1.1 LLM API keys — **chỉ** qua `openclaw.json` (`env`)
+
+> **Chính sách cố định:** AUCOBOT có **một** đường đưa foundation provider API key xuống OpenClaw gateway — block `env` trong `{projectId}/openclaw.json`. **Không** dùng cơ chế song song.
+
+#### Luồng chuẩn (bắt buộc)
+
+```text
+UI Save provider key
+  → DB project_provider_keys (ciphertext, ProviderKeysService)
+  → WorkspaceService.syncProjectRuntime()
+  → mergeProviderKeysIntoConfig() (@aucobot/workspace-sync)
+  → openclaw.json → "env": { "DEEPSEEK_API_KEY": "sk-...", ... }
+  → Gateway load openclaw.json → inject env vào process (OpenClaw config/io)
+  → resolveApiKeyForProvider() đọc DEEPSEEK_API_KEY từ process.env
+```
+
+- **SSOT app:** PostgreSQL `project_provider_keys` (mã hóa at-rest).
+- **SSOT runtime OpenClaw:** `openclaw.json` → `env` — gateway **không** đọc DB.
+- **Mapping env key:** `provider-registry.ts` field `envKey` trên mỗi `ProviderDefinition` (ví dụ `deepseek` → `DEEPSEEK_API_KEY`). Danh sách key được merge: `packages/workspace-sync/src/config/provider-env-keys.ts` (`PROVIDER_ENV_KEYS`).
+- **Ghi file:** chỉ qua `writeOpenClawConfigJson` sau `mergeProviderKeysIntoConfig` — **cấm** controller/service ghi plaintext key ra path khác.
+- Provider **disabled** hoặc xóa key → merge **gỡ** entry tương ứng khỏi `env` (không để key cũ sót lại).
+
+#### Ví dụ trên volume
+
+```json
+{
+  "env": {
+    "DEEPSEEK_API_KEY": "sk-...",
+    "OPENAI_API_KEY": "sk-..."
+  },
+  "agents": { "defaults": { "model": { "primary": "deepseek/deepseek-v4-flash" } } },
+  "plugins": { "entries": { "deepseek": { "enabled": true } } }
+}
+```
+
+#### Cấm — không dùng các cách khác cho LLM API key
+
+| Cách | Lý do cấm |
+|------|-----------|
+| `agents/{agentId}/agent/auth-profiles.json` | Trùng nguồn sự thật; OpenClaw CLI/onboard path — **không** sync từ AUCOBOT |
+| `models.providers.*.apiKey` plaintext trong config | Trùng với `env`; khó rotate và audit một chỗ |
+| File `.env` / `dotenv` trong project volume | Legacy — `removeLegacyDotEnv` xóa khi sync; **cấm** tái giới thiệu |
+| Gắn `DEEPSEEK_API_KEY` trực tiếp vào Docker `environment` gateway (ngoài config project) | Không per-project; lệch `OPENCLAW_DATA_ROOT` |
+| OAuth / onboard CLI (`openclaw onboard`) trong SaaS | User-facing flow khác; credential không thuộc dashboard DB |
+
+**Lưu ý OpenClaw worker:** `resolveApiKeyForProvider` vẫn *có thể* đọc auth profile nếu file tồn tại (thứ tự profile-first). AUCOBOT **không tạo/không ghi** `auth-profiles.json` — chỉ dựa vào `openclaw.json` `env` sau khi gateway load config.
+
+#### Phạm vi áp dụng / ngoại lệ
+
+| Loại secret | Cơ chế sync |
+|-------------|-------------|
+| Foundation LLM keys (`ai-providers`) | **`openclaw.json` `env` only** (mục này) |
+| Gateway token | `openclaw.json` `gateway.auth` (+ DB `project.gatewayToken`) |
+| Channel tokens (Telegram, Discord, …) | Merge slice từ `CHANNEL_REGISTRY` → `openclaw.json` |
+| Connector OAuth (Google Drive, …) | Merge slice connector — **không** nhét vào `env` LLM |
+
+#### Smoke test vs runtime
+
+- **Test key** (`provider-key-test.ts`, adapters): gọi API provider trực tiếp từ API process — **không** ghi disk.
+- **Chat runtime**: gateway đọc key từ `openclaw.json` `env` sau sync — test pass **không** thay thế sync.
+
+#### Checklist khi chạm provider keys
+
+- [ ] Key lưu DB qua `encryptSecret`; list chỉ masked
+- [ ] Sync qua `mergeProviderKeysIntoConfig` → `openclaw.json` `env`
+- [ ] **Không** thêm writer `auth-profiles.json` hoặc per-agent key file
+- [ ] `envKey` mới: cập nhật `provider-registry.ts` + `PROVIDER_ENV_KEYS` + merge spec
+- [ ] Sau deploy sync: gateway cần reload config (restart hoặc config reload) để `env` có hiệu lực
+
 ### 4.2 Quy trình sync chuẩn
 
 1. `assertOwned` / validate DTO
@@ -576,6 +645,7 @@ Diagram: workflow.md §[n] hoặc monorepo-diagram.md
 - [ ] Service — không logic trong controller
 - [ ] Secret: encrypt at-rest, masked in list
 - [ ] Cần OpenClaw thấy? → sync qua `WorkspaceService`
+- [ ] LLM API key? → **chỉ** `openclaw.json` `env` (§4.1.1) — không `auth-profiles.json`
 - [ ] Response qua envelope — không custom shape lỗi
 - [ ] Không log secret / PII
 - [ ] `pnpm --filter @aucobot/api build` pass

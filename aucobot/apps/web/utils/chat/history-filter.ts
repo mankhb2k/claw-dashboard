@@ -67,10 +67,22 @@ export function isHiddenToolPayloadText(text: string): boolean {
   return false
 }
 
+export function isOrphanStreamFragment(text: string): boolean {
+  const trimmed = text.trim()
+  if (!trimmed || trimmed.length > 120) return false
+  if (/^\)\s*[-–—]/.test(trimmed)) return true
+  if (/^[-–—•]\s*$/.test(trimmed)) return true
+  if (/^[\s).,;:\-–—•]+\S{0,40}$/.test(trimmed) && !trimmed.includes('\n')) {
+    return true
+  }
+  return false
+}
+
 export function shouldShowHistoryMessage(role: string, text: string): boolean {
   const normalizedRole = role.toLowerCase()
   if (HIDDEN_HISTORY_ROLES.has(normalizedRole)) return false
   if (normalizedRole === 'user') return true
+  if (isOrphanStreamFragment(text)) return false
   return !isHiddenToolPayloadText(text)
 }
 

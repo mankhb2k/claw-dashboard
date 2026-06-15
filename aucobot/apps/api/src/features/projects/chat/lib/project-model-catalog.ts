@@ -3,6 +3,7 @@ import type { PrismaService } from '../../../../core/database/prisma.service';
 import {
   GEMINI_CHAT_MODELS,
   OPENAI_CHAT_MODELS,
+  migrateFoundationOpenClawId,
   resolveGeminiSkillDefaultModel,
   resolveOpenAiSkillDefaultModel,
 } from '@aucobot/shared';
@@ -40,7 +41,12 @@ function catalogForProvider(providerId: string) {
 function resolveDefaultModel(providerId: string, stored: string | null): string | null {
   if (providerId === 'openai') return resolveOpenAiSkillDefaultModel(stored);
   if (providerId === 'gemini') return resolveGeminiSkillDefaultModel(stored);
-  return stored?.trim() || resolveProvider(providerId)?.defaultModel || null;
+  const def = resolveProvider(providerId);
+  const catalogIds = (def?.models ?? []).map((m) => m.openclawId);
+  const migrated = migrateFoundationOpenClawId(stored);
+  if (migrated && catalogIds.includes(migrated)) return migrated;
+  if (stored?.trim() && catalogIds.includes(stored.trim())) return stored.trim();
+  return def?.defaultModel ?? null;
 }
 
 export async function loadProjectModelCatalog(params: {
@@ -62,8 +68,11 @@ export async function loadProjectModelCatalog(params: {
     | Record<string, unknown>
     | undefined;
   const modelBlock = defaults?.model as Record<string, unknown> | undefined;
-  const primaryModel =
-    typeof modelBlock?.primary === 'string' ? modelBlock.primary.trim() : null;
+  const primaryModel = (() => {
+    const raw =
+      typeof modelBlock?.primary === 'string' ? modelBlock.primary.trim() : null;
+    return raw ? migrateFoundationOpenClawId(raw) : null;
+  })();
 
   const providers: ChatModelProviderGroup[] = [];
   const proxyModelRows = await params.prisma.projectProviderModel.findMany({
@@ -89,7 +98,11 @@ export async function loadProjectModelCatalog(params: {
       }));
     }
     const defaultModel = resolveDefaultModel(row.providerId, row.defaultModel);
-    if (defaultModel && !models.some((m) => m.openclawId === defaultModel)) {
+    if (
+      def.uiGroup === 'ai-provider' &&
+      defaultModel &&
+      !models.some((m) => m.openclawId === defaultModel)
+    ) {
       models = [
         { id: defaultModel, name: defaultModel, openclawId: defaultModel },
         ...models,

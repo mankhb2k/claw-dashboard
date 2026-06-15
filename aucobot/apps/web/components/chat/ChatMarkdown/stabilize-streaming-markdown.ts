@@ -23,5 +23,13 @@ export function stabilizeStreamingMarkdown(text: string): string {
     result = result.replace(/\[[^\]\n]*$/, '')
   }
 
+  // Unclosed list item / dangling continuation line while streaming
+  const lines = result.split('\n')
+  const lastLine = lines[lines.length - 1] ?? ''
+  if (/^\s*[-*•]\s*$/.test(lastLine)) {
+    lines.pop()
+    result = lines.join('\n')
+  }
+
   return result
 }

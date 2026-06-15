@@ -25,11 +25,11 @@ describe('smokeTestGeminiApiKey', () => {
 
     const result = await smokeTestGeminiApiKey('test-gemini-key');
 
-    expect(result).toEqual({ ok: true, model: 'gemini-2.5-flash', message: 'ok' });
+    expect(result).toEqual({ ok: true, model: 'gemini-3.5-flash', message: 'ok' });
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('generativelanguage.googleapis.com');
-    expect(url).toContain('gemini-2.5-flash');
+    expect(url).toContain('gemini-3.5-flash');
     expect(url).toContain(encodeURIComponent('test-gemini-key'));
     expect(init.method).toBe('POST');
     expect(init.headers).toMatchObject({ 'Content-Type': 'application/json' });
@@ -46,7 +46,7 @@ describe('smokeTestGeminiApiKey', () => {
 
     expect(result).toEqual({
       ok: true,
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       message: 'verified',
     });
   });

@@ -1,5 +1,6 @@
 import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { migrateFoundationOpenClawId } from '@aucobot/shared';
 import type { AgentFormInput } from '../../agents/agent-form.types.js';
 import {
   compileOpenClawAgentConfig,
@@ -63,6 +64,36 @@ function mergePluginEntriesFromProviders(
   config.plugins = plugins;
 }
 
+function migrateModelPrimaryBlock(model: Record<string, unknown> | undefined): void {
+  if (!model) return;
+  const primary = typeof model.primary === 'string' ? model.primary.trim() : '';
+  if (!primary) return;
+  const migrated = migrateFoundationOpenClawId(primary);
+  if (migrated && migrated !== primary) {
+    model.primary = migrated;
+  }
+}
+
+/** Rewrite deprecated foundation model refs in agent defaults and per-agent overrides. */
+export function migrateDeprecatedFoundationModelsInConfig(
+  config: Record<string, unknown>,
+): void {
+  const agents = config.agents as Record<string, unknown> | undefined;
+  if (!agents) return;
+
+  const defaults = agents.defaults as Record<string, unknown> | undefined;
+  migrateModelPrimaryBlock(defaults?.model as Record<string, unknown> | undefined);
+
+  const list = agents.list;
+  if (!Array.isArray(list)) return;
+  for (const entry of list) {
+    if (!entry || typeof entry !== 'object') continue;
+    migrateModelPrimaryBlock(
+      (entry as Record<string, unknown>).model as Record<string, unknown> | undefined,
+    );
+  }
+}
+
 /** Merge provider API keys + default model into openclaw.json (gateway watch → reload). */
 export function mergeProviderKeysIntoConfig(
   config: Record<string, unknown>,
@@ -104,7 +135,7 @@ export function mergeProviderKeysIntoConfig(
     const agents = (config.agents as Record<string, unknown> | undefined) ?? {};
     const defaults = (agents.defaults as Record<string, unknown> | undefined) ?? {};
     const model = (defaults.model as Record<string, unknown> | undefined) ?? {};
-    model.primary = primary;
+    model.primary = migrateFoundationOpenClawId(primary) ?? primary;
     defaults.model = model;
     agents.defaults = defaults;
     config.agents = agents;
@@ -130,6 +161,8 @@ export function mergeProviderKeysIntoConfig(
     agents.defaults = defaults;
     config.agents = agents;
   }
+
+  migrateDeprecatedFoundationModelsInConfig(config);
 
   return config;
 }
@@ -289,6 +322,8 @@ export function mergeAgentsIntoConfig(
     id: 'main',
     name: 'Main',
     workspace: CONTAINER_WORKSPACE_DIR,
+    skills: [],
+    tools: { profile: 'messaging' },
   };
   applyProjectSandboxToEntry(mainEntry, 'main', policy, exemptSet, appliedSet);
 

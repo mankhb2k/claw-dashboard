@@ -513,6 +513,10 @@ importers:
   packages/ui-kit: {}
 
   packages/workspace-sync:
+    dependencies:
+      '@aucobot/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@types/node':
         specifier: ^24.0.0

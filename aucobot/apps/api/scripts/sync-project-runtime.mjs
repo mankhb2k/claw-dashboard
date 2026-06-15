@@ -5,7 +5,7 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const projectId = process.argv[2]?.trim() || 'cmpedzekq0001d4k5op1bk8bi';
+const projectId = process.argv[2]?.trim() || 'cmpmxxyeh0002p8k5tohc35m1';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const modPath = path.join(root, 'dist', 'features', 'projects', 'workspace', 'services', 'workspace', 'workspace.service.js');
 

@@ -88,6 +88,7 @@ describe('GatewayUsageSubscriberService', () => {
     delete process.env.USAGE_SUBSCRIBER_ENABLED;
     isOssRuntimeMock.mockReturnValue(true);
     resolveOssGatewayEndpointMock.mockReturnValue(gatewayEndpointFixture);
+    global.fetch = jest.fn().mockResolvedValue({ ok: true }) as typeof fetch;
   });
 
   afterEach(() => {

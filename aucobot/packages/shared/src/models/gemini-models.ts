@@ -27,11 +27,11 @@ export const GEMINI_CHAT_MODELS: GeminiModelDef[] = [
     description: 'Preview — balance cost/performance',
   },
   {
-    id: 'gemini-3.1-flash-lite-preview',
+    id: 'gemini-3.1-flash-lite',
     name: 'Gemini 3.1 Flash-Lite',
-    openclawId: 'google/gemini-3.1-flash-lite-preview',
-    tier: 'preview',
-    description: 'Preview — cheap, low latency',
+    openclawId: 'google/gemini-3.1-flash-lite',
+    tier: 'stable',
+    description: 'Cheap, low latency — 3.x line',
   },
   {
     id: 'gemini-2.5-pro',
@@ -72,14 +72,15 @@ export const GEMINI_CHAT_MODELS: GeminiModelDef[] = [
 ];
 
 export const GEMINI_DEFAULT_OPENCLAW_MODEL =
-  GEMINI_CHAT_MODELS.find((m) => m.id === 'gemini-2.5-flash')?.openclawId ??
-  'google/gemini-2.5-flash';
+  GEMINI_CHAT_MODELS.find((m) => m.id === 'gemini-3.5-flash')?.openclawId ??
+  'google/gemini-3.5-flash';
 
 /** Skill AI editor — 3 latest models in 3.x line (first in catalog). */
 export const GEMINI_SKILL_AI_EDITOR_MODEL_IDS = [
   'gemini-3.5-flash',
   'gemini-3.1-pro-preview',
   'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite',
 ] as const;
 
 export const GEMINI_SKILL_AI_EDITOR_MODELS = GEMINI_CHAT_MODELS.filter((m) =>
