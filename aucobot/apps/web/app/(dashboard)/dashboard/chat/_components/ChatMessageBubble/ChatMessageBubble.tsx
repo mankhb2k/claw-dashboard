@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown/ChatMarkdown";
 import { isVisibleChatBubbleText } from "@/utils/chat/stream/history-filter";
 import styles from "./ChatMessageBubble.module.css";
@@ -8,7 +9,7 @@ export type ChatMessageBubbleProps = {
   streaming?: boolean;
 };
 
-export function ChatMessageBubble({
+export const ChatMessageBubble = memo(function ChatMessageBubble({
   role,
   text,
   streaming,
@@ -42,4 +43,4 @@ export function ChatMessageBubble({
       </div>
     </article>
   );
-}
+});

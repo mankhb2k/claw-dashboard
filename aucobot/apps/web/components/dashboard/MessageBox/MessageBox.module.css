@@ -247,64 +247,6 @@
   color: var(--color-muted-foreground);
 }
 
-/* ── Slash command picker ────────────────────────────────────────────────── */
-.slashMenu {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 40;
-  max-height: min(320px, 40vh);
-  overflow-y: auto;
-  padding: 6px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  background: var(--color-input-background);
-  box-shadow: var(--shadow-lg);
-}
-
-.slashEmpty {
-  padding: 10px 12px;
-  font-size: var(--font-size-xs);
-  color: var(--color-muted-foreground);
-}
-
-.slashItem {
-  width: 100%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  text-align: left;
-}
-
-.slashItem:hover {
-  background: var(--color-accent);
-}
-
-.slashItemActive {
-  background: var(--color-accent);
-}
-
-.slashItemTitle {
-  font-family: var(--font-mono, monospace);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.slashItemDesc {
-  margin-top: 2px;
-  font-size: var(--font-size-xs);
-  color: var(--color-muted-foreground);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 @media (max-width: 640px) {
   .root {
     padding: var(--space-2) var(--space-3) var(--space-3);

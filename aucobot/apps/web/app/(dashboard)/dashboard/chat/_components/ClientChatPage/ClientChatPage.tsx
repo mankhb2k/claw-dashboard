@@ -150,7 +150,6 @@ export function ClientChatPage() {
     useState<ConnectionState>("idle");
   const [messages, setMessages] = useState<ChatPanelMessage[]>([]);
   const [streamText, setStreamText] = useState("");
-  const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -1020,7 +1019,6 @@ export function ClientChatPage() {
         ? attachments.map((item) => item.file.name).join(", ")
         : "");
 
-    setInput("");
     sendingRef.current = true;
     setSending(true);
     setError(null);
@@ -1060,6 +1058,33 @@ export function ClientChatPage() {
     setStreamText("");
     resetToolStream();
   };
+
+  // Stable identities so the memoized chat composer doesn't re-render on every
+  // streamed token (refs always point at the latest handler closure).
+  const handleSendRef = useRef(handleSend);
+  handleSendRef.current = handleSend;
+  const handleAbortRef = useRef(handleAbort);
+  handleAbortRef.current = handleAbort;
+  const handleSendStable = useCallback(
+    (payload: ComposerSendPayload) => void handleSendRef.current(payload),
+    [],
+  );
+  const handleAbortStable = useCallback(
+    () => void handleAbortRef.current(),
+    [],
+  );
+  const handleProviderChangeRef = useRef(handleProviderChange);
+  handleProviderChangeRef.current = handleProviderChange;
+  const handleModelChangeRef = useRef(handleModelChange);
+  handleModelChangeRef.current = handleModelChange;
+  const handleProviderChangeStable = useCallback(
+    (nextProviderId: string) => handleProviderChangeRef.current(nextProviderId),
+    [],
+  );
+  const handleModelChangeStable = useCallback(
+    (nextModel: string) => handleModelChangeRef.current(nextModel),
+    [],
+  );
 
   if (!projectId) {
     return (
@@ -1120,20 +1145,18 @@ export function ClientChatPage() {
           thinkingSaving={thinkingSaving}
           providerId={providerId}
           providerOptions={providerSelectOptions}
-          onProviderChange={handleProviderChange}
+          onProviderChange={handleProviderChangeStable}
           modelId={modelId}
           modelOptions={modelSelectOptions}
-          onModelChange={handleModelChange}
+          onModelChange={handleModelChangeStable}
           modelsLoading={modelsLoading}
           modelSaving={modelSaving}
           hasProviders={(modelOptions?.providers.length ?? 0) > 0}
           messages={messages}
           streamText={streamText}
           sending={sending}
-          input={input}
-          onInputChange={setInput}
-          onSend={(payload) => void handleSend(payload)}
-          onAbort={() => void handleAbort()}
+          onSend={handleSendStable}
+          onAbort={handleAbortStable}
           sessionActionsDisabled={sessionSidebarDisabled}
           onNewSession={() => void handleNewSession()}
           projectId={projectId}

@@ -10,13 +10,10 @@ import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import type { LiveThreadItem } from "@/utils/chat/tool/types";
-import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
-import { ChatLiveThread } from "../ChatLiveThread/ChatLiveThread";
+import { ChatComposer } from "../ChatComposer/ChatComposer";
+import { ChatMessageList } from "../ChatMessageList/ChatMessageList";
 import { ContentArea } from "../ContentArea/ContentArea";
-import {
-  MessageBox,
-  type ComposerSendPayload,
-} from "@/components/dashboard/MessageBox";
+import type { ComposerSendPayload } from "@/components/dashboard/MessageBox";
 import type { SlashCommandItem } from "@/utils/chat/slash-command";
 import styles from "./ChatPanel.module.css";
 
@@ -73,8 +70,6 @@ export type ChatPanelProps = {
   messages: ChatPanelMessage[];
   streamText: string;
   sending: boolean;
-  input: string;
-  onInputChange: (value: string) => void;
   onSend: (payload: ComposerSendPayload) => void;
   onAbort: () => void;
   sessionActionsDisabled: boolean;
@@ -123,8 +118,6 @@ export function ChatPanel({
   messages,
   streamText,
   sending,
-  input,
-  onInputChange,
   onSend,
   onAbort,
   sessionActionsDisabled,
@@ -282,10 +275,8 @@ export function ChatPanel({
           ) : undefined
         }
         footer={
-          <MessageBox
-            enableAttachments
-            value={input}
-            onChange={onInputChange}
+          <ChatComposer
+            draftResetKey={sessionKey}
             onSend={onSend}
             onAbort={onAbort}
             sending={sending}
@@ -319,22 +310,12 @@ export function ChatPanel({
           />
         }
       >
-        {messages.map((message) => (
-          <ChatMessageBubble
-            key={message.id}
-            role={message.role}
-            text={message.text}
-          />
-        ))}
-
-        <ChatLiveThread
+        <ChatMessageList
+          messages={messages}
+          streamText={streamText}
           liveItems={liveItems}
           showToolPreparing={showToolPreparing}
         />
-
-        {streamText ? (
-          <ChatMessageBubble role="assistant" text={streamText} streaming />
-        ) : null}
       </ContentArea>
     </Box>
   );
