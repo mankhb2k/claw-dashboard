@@ -49,11 +49,9 @@ export function ClientSkillPage() {
     update: updateSkill,
     setEnabled: setSkillEnabledApi,
     remove: removeSkill,
-    syncAll,
     setSkills,
   } = useProjectSkills(projectId, { enabled: Boolean(projectId) });
   const [searchQuery, setSearchQuery] = useState("");
-  const [syncingAll, setSyncingAll] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
@@ -167,13 +165,15 @@ export function ClientSkillPage() {
         setSkills((prev) =>
           prev.map((s) => (s.slug === skill.slug ? result : s)),
         );
-        if (result.lastSyncError && nextEnabled) {
+        if (result.lastSyncError) {
           toast.error("Skill sync failed", result.lastSyncError);
         } else if (nextEnabled) {
           toast.success(
             "Enabled skill",
-            "Agent will apply at the next chat message (/new if old session).",
+            "Synced to OpenClaw — agent applies at the next chat message (/new if old session).",
           );
+        } else {
+          toast.success("Disabled skill", "Removed from OpenClaw workspace.");
         }
       } catch (err) {
         setSkills((prev) =>
@@ -205,25 +205,6 @@ export function ClientSkillPage() {
       );
     }
   }, [skillToDelete, projectId, removeSkill]);
-
-  const handleSyncAll = useCallback(async () => {
-    if (!projectId) return;
-    setSyncingAll(true);
-    try {
-      const result = await syncAll();
-      toast.success(
-        "Skills re-synced",
-        `${result.synced} synced${result.failed ? `, ${result.failed} failed` : ""}`,
-      );
-    } catch (err) {
-      toast.error(
-        "Re-sync failed",
-        err instanceof Error ? err.message : undefined,
-      );
-    } finally {
-      setSyncingAll(false);
-    }
-  }, [projectId, syncAll]);
 
   const handleInstallFromStore = useCallback(
     async (slug: string, openAfterInstall = false) => {
@@ -333,13 +314,6 @@ export function ClientSkillPage() {
           />
         </Flex>
         <div className={styles.toolbarActions}>
-          <Button
-            variant="ghost"
-            onClick={() => void handleSyncAll()}
-            disabled={syncingAll}
-          >
-            {syncingAll ? "Re-syncing…" : "Re-sync skills"}
-          </Button>
           <Button variant="secondary" onClick={() => setIsStoreModalOpen(true)}>
             <Store size={16} aria-hidden />
             Browser Store

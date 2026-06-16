@@ -1,5 +1,5 @@
-import { redactObject, redactSensitiveText } from './tool-redact'
-import type { ToolSource, ToolStep, ToolStreamEntry } from './tool-stream.types'
+import { redactObject, redactSensitiveText } from './redact'
+import type { ToolSource, ToolStep, ToolStreamEntry } from './types'
 
 export const TOOL_OUTPUT_PREVIEW_LIMIT = 500
 export const TOOL_OUTPUT_MAX_LIMIT = 120_000

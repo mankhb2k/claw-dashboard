@@ -160,6 +160,7 @@ describe('GatewayUsageSubscriberService', () => {
       expect.objectContaining({
         projectId: PROJECT_ID,
         userId: USER_ID,
+        projectDataDir: DATA_DIR,
         frame: expect.objectContaining({ event: 'chat' }),
       }),
     );

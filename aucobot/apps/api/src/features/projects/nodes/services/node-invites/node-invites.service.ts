@@ -181,5 +181,5 @@ function resolveAucobotWebUrl(): string {
   if (fromEnv) {
     return fromEnv.replace(/\/$/, '');
   }
-  return 'http://localhost:3000';
+  return 'http://localhost:8386';
 }

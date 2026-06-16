@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 
 import { useI18n } from '@/lib/i18n'
-import type { ToolStep, ToolStreamEntry } from '@/utils/chat/tool-stream.types'
+import type { ToolStep, ToolStreamEntry } from '@/utils/chat/tool/types'
 
 import styles from './ToolResearchBlock.module.css'
 

@@ -1,4 +1,4 @@
-import type { GatewaySessionRow } from './session-types'
+import type { GatewaySessionRow } from './types'
 
 export type SessionDateGroup = 'today' | 'yesterday' | 'thisWeek' | 'older'
 

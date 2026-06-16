@@ -3,19 +3,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { GatewayEventFrame } from '@/lib/chat/project-chat-client'
-import { isHiddenToolPayloadText } from '@/utils/chat/history-filter'
+import { isHiddenToolPayloadText } from '@/utils/chat/stream/history-filter'
 import {
   applyToolActivityPatch,
   parseToolGatewayEvent,
   toActivityList,
   toStreamEntryList,
   toolEntryToActivity,
-} from '@/utils/chat/tool-stream'
+} from '@/utils/chat/tool/stream'
 import type {
   LiveThreadItem,
   ToolActivity,
   ToolStreamEntry,
-} from '@/utils/chat/tool-stream.types'
+} from '@/utils/chat/tool/types'
 
 export function useChatToolStream(
   activeSessionKey: string,

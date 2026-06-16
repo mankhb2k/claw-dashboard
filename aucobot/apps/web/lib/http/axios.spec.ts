@@ -42,7 +42,7 @@ function setWindow(pathname = '/dashboard'): TestWindow {
   const win: TestWindow = {
     location: {
       pathname,
-      origin: 'http://localhost:3000',
+      origin: 'http://localhost:8386',
       assign,
     },
   }

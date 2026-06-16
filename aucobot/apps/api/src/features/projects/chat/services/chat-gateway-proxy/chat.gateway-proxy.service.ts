@@ -87,6 +87,7 @@ export class ChatGatewayProxyService {
         userId,
         frame,
         pendingRuns,
+        projectDataDir,
       });
       sendJson(client, frame);
     });

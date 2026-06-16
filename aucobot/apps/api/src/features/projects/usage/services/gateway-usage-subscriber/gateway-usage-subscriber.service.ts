@@ -216,6 +216,7 @@ export class GatewayUsageSubscriberService
           userId: project.userId,
           frame,
           pendingRuns,
+          projectDataDir,
         });
       });
 

@@ -243,6 +243,13 @@ export class WorkspaceService {
       appliedSlugs: parseCollaborationMemberSlugs(project?.sandboxAppliedAgentSlugs),
     };
 
+    const enabledSkillRows = await this.prisma.projectSkill.findMany({
+      where: { projectId, enabled: true },
+      select: { name: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+    const mainAgentSkillNames = enabledSkillRows.map((row) => row.name);
+
     mergeAgentsIntoConfig(
       config,
       agentRows.map((row) => ({
@@ -254,6 +261,7 @@ export class WorkspaceService {
       collaboration,
       projectSandboxPolicy,
       projectExecPolicy,
+      mainAgentSkillNames,
     );
 
     const heartbeatAgentRows = await this.prisma.projectAgent.findMany({

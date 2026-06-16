@@ -4,9 +4,18 @@ import { PrismaService } from '../../../../../core/database/prisma.service';
 import { computeCostUsd } from '../../lib/compute-cost-usd';
 import {
   consumePendingRun,
+  mergeSessionEnrichment,
   parseGatewayUsageFrame,
 } from '../../lib/parse-gateway-usage';
+import type { ParsedGatewayUsage } from '../../lib/parse-gateway-usage';
+import {
+  computeSessionUsageDelta,
+  readSessionUsageRow,
+  type SessionUsageRow,
+} from '../../lib/session-usage-snapshot';
 import type { GatewayTapContext, RecordUsageInput } from '../../lib/usage-record.types';
+
+const SESSION_ENRICH_DELAY_MS = 250;
 
 function isUniqueViolation(err: unknown): boolean {
   return (
@@ -14,9 +23,14 @@ function isUniqueViolation(err: unknown): boolean {
   );
 }
 
+function sessionTrackerKey(projectId: string, sessionKey: string): string {
+  return `${projectId}:${sessionKey}`;
+}
+
 @Injectable()
 export class ModelUsageRecorderService {
   private readonly log = new Logger(ModelUsageRecorderService.name);
+  private readonly sessionSnapshots = new Map<string, SessionUsageRow>();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -76,11 +90,82 @@ export class ModelUsageRecorderService {
     }
 
     consumePendingRun(parsed, ctx.pendingRuns);
+
+    if (parsed.needsSessionEnrichment && ctx.projectDataDir) {
+      this.recordWithSessionEnrichment(ctx, parsed);
+      return;
+    }
+
     this.recordFireAndForget({
       projectId: ctx.projectId,
       userId: ctx.userId,
       ...parsed,
     });
+  }
+
+  private recordWithSessionEnrichment(
+    ctx: GatewayTapContext,
+    parsed: ParsedGatewayUsage,
+  ): void {
+    const sessionKey =
+      typeof parsed.metadata?.sessionKey === 'string'
+        ? parsed.metadata.sessionKey
+        : '';
+    if (!sessionKey || !ctx.projectDataDir) {
+      this.recordFireAndForget({
+        projectId: ctx.projectId,
+        userId: ctx.userId,
+        ...parsed,
+      });
+      return;
+    }
+
+    const trackerKey = sessionTrackerKey(ctx.projectId, sessionKey);
+    const previous = this.sessionSnapshots.get(trackerKey) ?? null;
+
+    setTimeout(() => {
+      void this.enrichAndRecord(ctx, parsed, trackerKey, previous, sessionKey);
+    }, SESSION_ENRICH_DELAY_MS);
+  }
+
+  private async enrichAndRecord(
+    ctx: GatewayTapContext,
+    parsed: ParsedGatewayUsage,
+    trackerKey: string,
+    previous: SessionUsageRow | null,
+    sessionKey: string,
+  ): Promise<void> {
+    if (!ctx.projectDataDir) return;
+
+    try {
+      const current = await readSessionUsageRow(ctx.projectDataDir, sessionKey);
+      if (!current) {
+        this.recordFireAndForget({
+          projectId: ctx.projectId,
+          userId: ctx.userId,
+          ...parsed,
+        });
+        return;
+      }
+
+      const delta = computeSessionUsageDelta(previous, current);
+      this.sessionSnapshots.set(trackerKey, current);
+
+      const enriched = mergeSessionEnrichment(parsed, current, delta);
+      this.recordFireAndForget({
+        projectId: ctx.projectId,
+        userId: ctx.userId,
+        ...enriched,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.log.warn(`Session usage enrichment failed: ${message}`);
+      this.recordFireAndForget({
+        projectId: ctx.projectId,
+        userId: ctx.userId,
+        ...parsed,
+      });
+    }
   }
 
   private async resolveCostUsd(

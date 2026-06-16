@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 
-const BASE = process.env.WEB_BASE_URL ?? "http://localhost:3000";
+const BASE = process.env.WEB_BASE_URL ?? "http://localhost:8386";
 const USER = process.env.SELF_HOST_USER_USERNAME ?? "admin";
 const PASS = process.env.SELF_HOST_USER_PASSWORD ?? "admin123";
 

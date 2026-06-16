@@ -5,9 +5,9 @@ Mục tiêu: **một lệnh** dựng 4 service + volume dùng chung (Supabase-st
 | Service | Port | Image |
 | ------- | ---- | ----- |
 | `postgres` | 5432 | `postgres:16-alpine` |
-| `api` | 3001 | build `Dockerfile.api` |
-| `web` | 3000 | build `Dockerfile.web` |
-| `gateway` | 18789 | `openclaw-worker:latest` (pull hoặc build local) |
+| `api` | 8387 | build `Dockerfile.api` |
+| `web` | 8386 | build `Dockerfile.web` |
+| `gateway` | 18789 | `alpine/openclaw:latest` (official release, Docker Hub mirror) |
 
 Volume **`openclaw_data`**: API ghi `/data/projects/{projectId}/…`, gateway đọc cùng dữ liệu.
 
@@ -21,7 +21,7 @@ copy deploy\.env.example deploy\.env
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
-Mở http://localhost:3000 → đăng nhập (`SELF_HOST_USER_*`) → tạo project lần đầu.
+Mở http://localhost:8386 → đăng nhập (`SELF_HOST_USER_*`) → tạo project lần đầu.
 
 Gateway **chờ** đến khi có `openclaw.json` trong volume (script `scripts/gateway-entrypoint.sh`), sau đó tự bind `:18789`.
 
@@ -53,7 +53,7 @@ pnpm dev   # api + web trên host
 docker compose -f deploy/docker-compose.yml ps
 docker compose -f deploy/docker-compose.yml logs -f api gateway
 curl.exe http://127.0.0.1:18789/healthz
-curl.exe http://127.0.0.1:3001/api/health
+curl.exe http://127.0.0.1:8387/api/health
 docker compose -f deploy/docker-compose.yml down
 ```
 

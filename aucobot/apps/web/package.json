@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8386",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8386",
     "lint": "eslint",
-    "test": "node --import tsx --test utils/chat/*.spec.ts",
+    "test": "node --import tsx --test utils/chat/**/*.spec.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

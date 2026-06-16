@@ -10,7 +10,8 @@
 
 services:
   gateway:
-    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:latest}
+    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    pull_policy: always
     container_name: aucobot-gateway-dev
     command: ["node", "openclaw.mjs", "gateway", "--bind", "lan"]
     environment:

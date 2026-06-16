@@ -6,25 +6,43 @@ import { SETUP_PATH, shouldRedirectToSetup } from "@/lib/routing/entry-route";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import { useProjectStore } from "@/stores/project.store";
 import { chatApi, type ChatModelsResponse } from "@/lib/api/chat";
+import { projectApi } from "@/lib/api/project";
 import {
   resolveAgentPrimaryOpenClawId,
   resolveModelSelection,
 } from "@/utils/chat/model-catalog";
 import {
+  shortenSingleLine,
+  resolveSlashCommandsFromAllowedSkills,
+  type SlashCommandItem,
+} from "@/utils/chat/slash-command";
+import {
   ProjectChatClient,
   type GatewayEventFrame,
 } from "@/lib/chat/project-chat-client";
-import { patchSessionModel } from "@/utils/chat/session-model-patch";
+import { patchSessionModel } from "@/utils/chat/session/model-patch";
+import { patchSessionThinking } from "@/utils/chat/session/thinking-patch";
+import {
+  clearSessionThinkingSelection,
+  resolveSessionThinkingLevel,
+  saveSessionThinkingSelection,
+} from "@/utils/chat/session/thinking-storage";
+import {
+  DEFAULT_THINKING_LEVEL,
+  normalizeThinkingLevel,
+  THINKING_LEVEL_OPTIONS,
+  type ThinkingLevel,
+} from "@/utils/chat/thinking-level";
 import {
   clearSessionModelSelection,
   loadSessionModelSelection,
   saveSessionModelSelection,
-} from "@/utils/chat/session-model-storage";
+} from "@/utils/chat/session/model-storage";
 import {
   extractText,
   roleOf,
   stableMessageId,
-} from "@/utils/chat/message-extract";
+} from "@/utils/chat/stream/message-extract";
 import {
   loadLastAgentId,
   loadLastSessionKey,
@@ -32,34 +50,35 @@ import {
   saveLastAgentId,
   saveLastSessionKey,
   saveSidebarCollapsed,
-} from "@/utils/chat/last-session-key";
+} from "@/utils/chat/session/last-key";
 import {
   deriveAutoTitleFromMessage,
   isAutoTitleCandidate,
-} from "@/utils/chat/session-auto-title";
+} from "@/utils/chat/session/auto-title";
 import {
   allocateNewSessionLabel,
   filterSessionsForChatSidebar,
   isBrowsableChatSession,
   isMainSessionKey,
   reconcilePatchedSessionLabels,
-} from "@/utils/chat/session-display";
+} from "@/utils/chat/session/display";
 import type {
   GatewaySessionRow,
   SessionsCreateResult,
   SessionsListResult,
-} from "@/utils/chat/session-types";
-import { matchesSessionKey, sessionKeyForAgent } from "@/utils/chat/session-key";
+} from "@/utils/chat/session/types";
+import { matchesSessionKey, sessionKeyForAgent } from "@/utils/chat/session/key";
 import {
   isFileOverSandboxStagingLimit,
   SANDBOX_STAGING_MAX_BYTES,
 } from "@/utils/chat/sandbox-staging-limit";
 import { useChatSandboxContext } from "@/hooks/chat/use-chat-sandbox-context";
 import { useChatToolStream } from "@/hooks/chat/use-chat-tool-stream";
-import { isHiddenToolPayloadText, shouldShowHistoryMessage } from "@/utils/chat/history-filter";
+import { useProjectSkills } from "@/hooks/skill/use-project-skills";
+import { isHiddenToolPayloadText, shouldShowHistoryMessage } from "@/utils/chat/stream/history-filter";
 import { resolveModelContextTokens } from "@/utils/chat/model-context-limit";
-import { accumulateStreamDelta } from "@/utils/chat/stream-delta";
-import { mergeLiveAssistantText } from "@/utils/chat/tool-stream";
+import { accumulateStreamDelta } from "@/utils/chat/stream/stream-delta";
+import { mergeLiveAssistantText } from "@/utils/chat/tool/stream";
 import {
   ChatPanel,
   type ChatPanelConnectionState,
@@ -100,6 +119,12 @@ export function ClientChatPage() {
   const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
   const [agentId, setAgentId] = useState("main");
 
+  const [slashCommands, setSlashCommands] = useState<SlashCommandItem[]>([]);
+  const {
+    skills: projectSkills,
+    loading: projectSkillsLoading,
+  } = useProjectSkills(projectId);
+
   const { sandboxActive, stagingMaxBytes } = useChatSandboxContext(
     projectId,
     agentId,
@@ -118,6 +143,9 @@ export function ClientChatPage() {
   const [providerId, setProviderId] = useState<string | undefined>(undefined);
   const [modelId, setModelId] = useState<string | undefined>(undefined);
   const [modelSaving, setModelSaving] = useState(false);
+  const [thinkingLevel, setThinkingLevel] =
+    useState<ThinkingLevel>(DEFAULT_THINKING_LEVEL);
+  const [thinkingSaving, setThinkingSaving] = useState(false);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("idle");
   const [messages, setMessages] = useState<ChatPanelMessage[]>([]);
@@ -169,6 +197,72 @@ export function ClientChatPage() {
   useEffect(() => {
     agentIdRef.current = agentId;
   }, [agentId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!projectId) {
+        setSlashCommands([]);
+        return;
+      }
+
+      if (projectSkillsLoading) {
+        return;
+      }
+
+      const enabledSkills = projectSkills.filter((s) => s.enabled);
+      const enabledByName = new Map(
+        enabledSkills.map((s) => [s.name, s] as const),
+      );
+      const enabledBySlug = new Map(
+        enabledSkills.map((s) => [s.slug, s] as const),
+      );
+
+      const resolveEnabledSkill = (allowName: string) =>
+        enabledByName.get(allowName) ?? enabledBySlug.get(allowName);
+
+      const buildItems = (allowedSkillNames: string[]) => {
+        const filteredAllowed = allowedSkillNames.filter((name) =>
+          Boolean(resolveEnabledSkill(name)),
+        );
+
+        const descriptionsByName: Record<string, string> = {};
+        for (const name of filteredAllowed) {
+          const row = resolveEnabledSkill(name);
+          if (row?.description) descriptionsByName[name] = row.description;
+        }
+
+        return resolveSlashCommandsFromAllowedSkills({
+          allowedSkillNames: filteredAllowed,
+          skillDescriptionsByName: descriptionsByName,
+        }).map((item) => ({
+          ...item,
+          description: item.description
+            ? shortenSingleLine(item.description, 70)
+            : undefined,
+        }));
+      };
+
+      try {
+        if (agentId === "main") {
+          const allowedSkillNames = enabledSkills.map((s) => s.name);
+          if (!cancelled) setSlashCommands(buildItems(allowedSkillNames));
+          return;
+        }
+
+        const detail = await projectApi.getAgent(projectId, agentId);
+        const allowedSkillNames = detail.formData.skillNames ?? [];
+        if (!cancelled) setSlashCommands(buildItems(allowedSkillNames));
+      } catch {
+        if (!cancelled) setSlashCommands([]);
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [agentId, projectSkills, projectSkillsLoading, projectId]);
 
   useEffect(() => {
     handleGatewayToolEventRef.current = handleGatewayToolEvent;
@@ -464,6 +558,40 @@ export function ClientChatPage() {
     [projectId, providerId],
   );
 
+  const applySessionThinking = useCallback(
+    async (
+      nextLevel: ThinkingLevel,
+      options?: { persist?: boolean; sessionKey?: string },
+    ) => {
+      const key = (options?.sessionKey ?? sessionKeyRef.current).trim();
+      if (!key) return;
+      const client = clientRef.current;
+      if (!client?.connected) return;
+
+      setThinkingSaving(true);
+      setError(null);
+      try {
+        await patchSessionThinking(client, key, nextLevel);
+        setThinkingLevel(nextLevel);
+        if (options?.persist !== false && projectId) {
+          saveSessionThinkingSelection(
+            projectId,
+            agentIdRef.current,
+            key,
+            nextLevel,
+          );
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to change thinking level",
+        );
+      } finally {
+        setThinkingSaving(false);
+      }
+    },
+    [projectId],
+  );
+
   useEffect(() => {
     if (!projectId) {
       setModelsLoading(false);
@@ -524,6 +652,34 @@ export function ClientChatPage() {
     connectionState,
   ]);
 
+  useEffect(() => {
+    if (!projectId || !sessionKey) return;
+
+    const gatewayRow = sessions.find((s) => s.key === sessionKey);
+    const target = resolveSessionThinkingLevel(
+      projectId,
+      agentId,
+      sessionKey,
+      gatewayRow?.thinkingLevel,
+    );
+    setThinkingLevel(target);
+
+    const client = clientRef.current;
+    if (!client?.connected || connectionState !== "connected") {
+      return;
+    }
+
+    void patchSessionThinking(client, sessionKey, target).catch(
+      () => undefined,
+    );
+  }, [
+    projectId,
+    agentId,
+    sessionKey,
+    sessions,
+    connectionState,
+  ]);
+
   const activeProvider = useMemo(
     () => modelOptions?.providers.find((p) => p.providerId === providerId),
     [modelOptions, providerId],
@@ -575,6 +731,12 @@ export function ClientChatPage() {
   const handleModelChange = (nextModel: string) => {
     setModelId(nextModel);
     void applySessionModel(nextModel);
+  };
+
+  const handleThinkingChange = (nextLevel: string) => {
+    const level = normalizeThinkingLevel(nextLevel);
+    if (!level) return;
+    void applySessionThinking(level);
   };
 
   const handleAgentChange = (nextAgentId: string) => {
@@ -633,6 +795,19 @@ export function ClientChatPage() {
           clearSessionModelSelection(projectId, agentId, key);
         }
       }
+      setThinkingLevel(DEFAULT_THINKING_LEVEL);
+      if (projectId) {
+        clearSessionThinkingSelection(projectId, agentId, key);
+        saveSessionThinkingSelection(
+          projectId,
+          agentId,
+          key,
+          DEFAULT_THINKING_LEVEL,
+        );
+      }
+      await patchSessionThinking(client, key, DEFAULT_THINKING_LEVEL).catch(
+        () => undefined,
+      );
       await loadSessions(client, agentId, debouncedSessionSearchRef.current);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create a new session");
@@ -936,6 +1111,13 @@ export function ClientChatPage() {
           agentId={agentId}
           agentOptions={agentOptions}
           onAgentChange={handleAgentChange}
+          thinkingLevel={thinkingLevel}
+          thinkingOptions={THINKING_LEVEL_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+          onThinkingChange={handleThinkingChange}
+          thinkingSaving={thinkingSaving}
           providerId={providerId}
           providerOptions={providerSelectOptions}
           onProviderChange={handleProviderChange}
@@ -958,8 +1140,10 @@ export function ClientChatPage() {
           sandboxActive={sandboxActive}
           stagingMaxBytes={stagingMaxBytes}
           contextUsage={activeContextUsage}
+          sessionKey={sessionKey}
           liveItems={liveItems}
           showToolPreparing={showToolPreparing}
+          slashCommands={slashCommands}
           modelHint={
             modelIsOverride
               ? "Session only — Telegram, Discord, and other channels still use the agent default model."

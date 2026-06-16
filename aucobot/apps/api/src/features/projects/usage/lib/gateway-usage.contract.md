@@ -7,14 +7,16 @@ Verify against a live OpenClaw gateway when upgrading gateway versions.
 
 Terminal states: `final`, `error`, `aborted`.
 
+**OpenClaw SSOT for Dashboard Overview:** prefer `chat.final` payload fields `usage` + `model` (or nested `message.usage` / `message.model`). When absent, AUCOBOT enriches from OpenClaw session store (`agents/<slug>/sessions/sessions.json`) or `agent` lifecycle `phase: "usage"`.
+
 ```json
 {
   "type": "event",
   "event": "chat",
   "payload": {
+    "runId": "<uuid from chat.send idempotencyKey>",
     "sessionKey": "agent:main:direct",
     "state": "final",
-    "idempotencyKey": "<uuid from chat.send>",
     "model": "openai/gpt-5.4-mini",
     "usage": {
       "inputTokens": 100,
@@ -24,7 +26,30 @@ Terminal states: `final`, `error`, `aborted`.
 }
 ```
 
-Alternate usage field names accepted by parser: `input`/`output`, `prompt_tokens`/`completion_tokens`, Gemini-style `promptTokenCount`/`candidatesTokenCount`.
+Alternate usage field names accepted by parser: `input`/`output`, `prompt_tokens`/`completion_tokens`, Gemini-style `promptTokenCount`/`candidatesTokenCount`, nested `message.usage`.
+
+**Dedup:** `externalId = run:<runId>` shared across chat proxy + usage subscriber + lifecycle usage.
+
+## Agent lifecycle usage (`event: agent`, `stream: lifecycle`, `phase: usage`)
+
+```json
+{
+  "type": "event",
+  "event": "agent",
+  "payload": {
+    "runId": "...",
+    "sessionKey": "agent:main:main",
+    "stream": "lifecycle",
+    "data": {
+      "phase": "usage",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "usage": { "input": 1234, "output": 567 },
+      "durationMs": 4521
+    }
+  }
+}
+```
 
 ## Agent / cron (`event: agent` | `event: cron`)
 

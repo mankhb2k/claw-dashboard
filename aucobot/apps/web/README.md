@@ -15,14 +15,14 @@ npm install
 npm run dev
 ```
 
-Mặc định: [http://localhost:3000](http://localhost:3000) → **`/`** redirect **`/dashboard`**.
+Mặc định: [http://localhost:8386](http://localhost:8386) → **`/`** redirect **`/dashboard`**.
 
 ### Biến môi trường
 
 Tạo `frontend/.env.local`:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:8387
 # Dev UI không cần backend thật:
 # NEXT_PUBLIC_MOCK_API=true
 ```

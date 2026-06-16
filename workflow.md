@@ -1,6 +1,6 @@
 # AucoBot — Workflow & kiến trúc vận hành
 
-> **Cập nhật:** 2026-05-31  
+> **Cập nhật:** 2026-06-15  
 > **SSOT tính năng AucoBot** (control plane, API, sync, chat proxy, channels) — file này.  
 > **SSOT OpenClaw worker** (gateway, kênh upstream, RPC, skills load) — [`openclaw-architecture.md`](openclaw-architecture.md).  
 > **Tên sản phẩm / monorepo:** AucoBot (`aucobot/`, xem `aucobot/docs/monorepoplan.md`)  
@@ -15,7 +15,7 @@
 
 | Thuộc (`workflow.md`) | Không thuộc (→ file khác) |
 | ----- | ----------- |
-| Luồng vận hành **OSS / Cloud**, sync DB → volume, **merge openclaw.json**, chat WS proxy, channels API | Chi tiết gateway RPC, channel plugin upstream (→ `openclaw-architecture.md`) |
+| Luồng vận hành **OSS / Cloud**, sync DB → volume, **merge openclaw.json**, chat WS proxy, channels API, **runtime plane `data/projects`** | Chi tiết gateway RPC, channel plugin upstream (→ `openclaw-architecture.md`) |
 | Phase 1 / 2 tích hợp control plane ↔ worker | Schema Prisma từng bảng (→ `packages/database/`) |
 | Sketch **Cloud SaaS** (cloud bạn bán) | Giá/credit hosted (→ `billing-plan.md`) |
 | Ranh OSS vs Cloud / proprietary | Danh sách sprint (→ `roadmap-plan.md`) |
@@ -60,8 +60,8 @@ OSS self-host **đủ** với **bốn container** trong `docker compose`. Chỉ 
 
 | Service | Image | Sở hữu | Port | Vai trò |
 | ------- | ----- | ------- | ---- | ------- |
-| `web` | Build `frontend/` | **AucoBot** | 3000 | Dashboard → API |
-| `api` | Build `backend/` | **AucoBot** | 3001 | DB, sync file, proxy chat → gateway |
+| `web` | Build `frontend/` | **AucoBot** | 8386 | Dashboard → API |
+| `api` | Build `backend/` | **AucoBot** | 8387 | DB, sync file, proxy chat → gateway |
 | `gateway` | Pull OpenClaw | **Upstream** | **18789** | Kênh chat, agent (đọc volume) |
 | `postgres` | `postgres:16-alpine` | **Upstream** | 5432 | Metadata app |
 
@@ -75,7 +75,8 @@ OSS self-host **đủ** với **bốn container** trong `docker compose`. Chỉ 
 | Volume `openclaw_data` | `api` ghi sync; `gateway` đọc — cùng mount |
 | `OPENCLAW_GATEWAY_URL` | `http://gateway:18789` (trong compose) |
 | `OPENCLAW_GATEWAY_TOKEN` | Khớp token gateway; ≠ JWT dashboard |
-| `OPENCLAW_DATA_ROOT` | Đường ghi file trên volume |
+| `OPENCLAW_DATA_ROOT` | Đường ghi file trên volume (compose: `/data/projects`; dev: `apps/api/data/projects`) |
+| `OSS_PROJECT_ID` | (tuỳ chọn) Chọn **một** thư mục `{ROOT}/{OSS_PROJECT_ID}/` khi >1 project trên cùng gateway — xem §5.8.3 |
 | `DATABASE_URL` | → `postgres` |
 
 ### 2.3 Không có trong compose OSS
@@ -181,8 +182,8 @@ flowchart TB
 ```mermaid
 flowchart TB
     subgraph Compose["docker compose — OSS (Supabase-style)"]
-        FE["Next.js frontend\n:3000"]
-        API["NestJS backend\n:3001"]
+        FE["Next.js frontend\n:8386"]
+        API["NestJS backend\n:8387"]
         DB[("PostgreSQL\n:5432")]
         GW["OpenClaw gateway\n:18789"]
         VOL["volume openclaw_data"]
@@ -373,15 +374,39 @@ sequenceDiagram
 | **Phase 1** | Ghi file volume (`openclaw.json`, workspace, skills) — gateway **watch** (§4.5.1 upstream) | **JWT** cho API SaaS; worker dùng **`gateway.auth.token`** |
 | **Phase 2** | Tuỳ chọn RPC `config.patch` / `POST /tools/invoke` | Map JWT → operator credential nội bộ |
 
-**Hai lớp dữ liệu:** Postgres (SSOT UI) → `WorkspaceService.syncProjectRuntime()` → disk → gateway đọc.
+**Hai lớp dữ liệu (hybrid SSOT):**
+
+| Lớp | Vai trò | Công nghệ |
+| --- | ------- | --------- |
+| **Control plane** | Cấu hình dashboard, secrets (mã hóa), user, usage analytics | PostgreSQL qua `apps/api` |
+| **Runtime plane** | Những gì OpenClaw gateway thực sự chạy | `{OPENCLAW_DATA_ROOT}/{projectId}/` trên volume dùng chung |
+
+Postgres (SSOT UI) → `WorkspaceService.syncProjectRuntime()` → disk → gateway đọc/ghi cùng volume. OpenClaw **không đọc PostgreSQL**.
+
+**Entry path:** `packages/workspace-sync/src/paths/project-paths.ts` — `resolveProjectDataDir(projectId)` → `{dataRoot}/{projectId}`.
 
 ```
 {OPENCLAW_DATA_ROOT}/{projectId}/
-  openclaw.json
-  workspace-{slug}/     # AGENTS.md, SOUL.md, IDENTITY.md, TOOLS.md (per agent)
-  workspace/            # shared / main
-  skills/{slug}/SKILL.md
+  openclaw.json              # API merge → gateway watch/reload
+  proxy-device.json          # API: Ed25519 identity cho WS proxy connect
+  workspace/                 # skills, HEARTBEAT.md (project)
+  workspace-{slug}/          # AGENTS.md, SOUL.md, IDENTITY.md, TOOLS.md (per agent)
+  connectors/                # file OAuth (vd. google-drive) — API khi sync connector
+  chat-uploads/              # đính kèm chat (API)
+  devices/
+    paired.json              # Gateway (+ API auto-approve proxy)
+    pending.json
+  agents/{slug}/             # Gateway-owned runtime state
+    agent/                   # models.json, tooling artifacts
+    sessions/
+      sessions.json          # index session + token totals
+      {sessionId}.jsonl      # transcript chat
+      {sessionId}.trajectory.jsonl
+  logs/
+    config-health.json       # gateway diagnostics
 ```
+
+`ensureProjectLayout()` bootstrap: `workspace`, `devices`, `agents`, `logs`, `chat-uploads` (`project-paths.ts`). Thư mục `connectors/` được tạo khi `mergeConnectorsIntoConfig` chạy.
 
 **Package merge:** `@aucobot/workspace-sync` (`packages/workspace-sync/`). Orchestrator: `apps/api/.../workspace/workspace.service.ts`. Dev: `pnpm dev:runtime` (`aucobot/package.json`).
 
@@ -393,7 +418,15 @@ sequenceDiagram
 | Đổi provider key / default model | `ProviderKeysService` | `syncProjectRuntime` |
 | Bật / sửa channel | `ChannelsService` | `syncProjectRuntime` |
 | Bật / sửa connector | `ProjectConnectorsService` | `syncProjectRuntime` |
-| CLI dev | `apps/api/scripts/sync-project-runtime.mjs` | `syncProjectRuntime` |
+| Sandbox default / per-agent | `SandboxService` | `syncProjectRuntime` |
+| Exec policy (ask, safeBins, timeout) | `ExecPolicyService` | `syncProjectRuntime` |
+| Heartbeat project / agent | `HeartbeatService` | `syncProjectRuntime` + `writeHeartbeatFiles` |
+| Collaboration (`tools.agentToAgent`) | `CollaborationService` | `syncProjectRuntime` |
+| Bật/tắt skill, sync-all | `ProjectSkillsService` | `syncProjectRuntime` |
+| Tạo project (bootstrap) | `ProjectsService` → `WorkspaceService.bootstrapProjectWorkspace` | layout + `openclaw.json` ban đầu |
+| `GET /api/projects/:id/health` (OSS) | `ProjectsService.syncOssProjectFromGateway` | `syncGatewayAuthToDisk` (token reconcile) |
+| CLI / ops | `sync-project-runtime.mjs`, `sync-project-openclaw.mjs`, `sync-gateway-token-disk.mjs` | `syncProjectRuntime` / token |
+| `POST …/agents/sync-all`, `…/skills/sync-all` | controller tương ứng | `syncProjectRuntime` |
 
 Tin nhắn chat **không** trigger sync — chỉ thay đổi cấu hình (§3, §5.4).
 
@@ -548,6 +581,158 @@ OpenClaw gateway field: `model` trên `sessions.patch` (`openclaw-worker/src/gat
 
 Sơ đồ compose: `aucobot/docs/monorepo-diagram.md` §1.5.
 
+### 5.8 Runtime data plane — `data/projects/{projectId}` (SSOT & khoảng trống)
+
+Mục tiêu vận hành: **mọi dữ liệu runtime OpenClaw nằm trên cùng volume `{OPENCLAW_DATA_ROOT}/{projectId}/`** khi deploy đúng. Đây **không** đồng nghĩa mọi thứ được mirror vào PostgreSQL — chat transcript, cron, node runtime **cố ý** chỉ trên disk (gateway) hoặc trong bộ nhớ gateway.
+
+#### 5.8.1 Sơ đồ luồng dữ liệu
+
+```mermaid
+flowchart TB
+  subgraph Control["Control plane — PostgreSQL"]
+    DB[(Project, Agents, Skills, Providers, Channels, Usage)]
+  end
+
+  subgraph Runtime["Runtime plane — data/projects/{projectId}/"]
+    OC[openclaw.json]
+    WS[workspace*, skills, connectors]
+    GWState[agents/, devices/, logs/, chat-uploads/]
+  end
+
+  subgraph GWProc["OpenClaw Gateway"]
+    G[Gateway process]
+  end
+
+  subgraph Web["apps/web"]
+    UI[Dashboard + Chat WS]
+  end
+
+  UI -->|REST + WS proxy| API[apps/api]
+  API --> DB
+  API -->|syncProjectRuntime| OC
+  API -->|syncProjectRuntime| WS
+  G -->|OPENCLAW_STATE_DIR| OC
+  G -->|read/write| GWState
+  API -->|WS proxy + device pair| G
+  G -.->|watch reload| OC
+  DB -.->|usage events only| UsageTap[GatewayUsageSubscriber]
+  UsageTap -.->|enrich sessions.json| GWState
+```
+
+#### 5.8.2 Bảng entity — ai là SSOT?
+
+| Entity | SSOT chính | Trong `data/projects` | Trong DB | Ghi bởi |
+| ------ | ---------- | --------------------- | -------- | ------- |
+| Project metadata (tên, status) | DB | — | `Project` | API |
+| Gateway token | DB + env | `openclaw.json` → `gateway.auth.token` | `Project.gatewayToken` | API (`syncGatewayAuthToDisk`, `syncProjectRuntime`) |
+| LLM provider keys | DB (mã hóa) | `openclaw.json` → `env` | `ProjectProviderKey`, `ProjectProviderModel` | API merge |
+| Agents (config) | DB | `openclaw.json` + `workspace-{slug}/*.md` | `ProjectAgent` | API |
+| Skills | DB | `workspace/skills/{slug}/SKILL.md` | `ProjectSkill` | API |
+| Connectors / MCP | DB | `openclaw.json` + `connectors/*` | `ProjectConnector` + secrets | API |
+| Channels (Telegram, …) | DB | `openclaw.json` → `channels.*` | `ProjectChannel` + secrets | API |
+| Sandbox / exec policy | DB | `openclaw.json` → `tools.exec`, `tools.sandbox` | cột `Project` / agent | API; exec disk→DB **một lần** (`maybeMigrateExecPolicyFromLegacy`) |
+| Collaboration / heartbeat | DB | `openclaw.json` + `HEARTBEAT.md` | `Project` + agent heartbeat | API |
+| Chat attachments | DB metadata | `chat-uploads/` | `ChatAttachment` | API |
+| Proxy device identity | Disk | `proxy-device.json` | — | API (`loadOrCreateGatewayDeviceIdentity`) |
+| Device pairing | Disk (gateway) | `devices/paired.json`, `pending.json` | — | Gateway; API patch auto-approve proxy |
+| Node pairing / nodes | Gateway runtime | (RPC nội bộ gateway) | `NodeInvite` (mã mời) | Gateway |
+| Chat sessions / transcript | Gateway | `agents/*/sessions/sessions.json`, `*.jsonl` | — | Gateway |
+| Session thinking level | Gateway | `sessions.json` | — | Gateway (`sessions.patch`) |
+| Cron jobs | Gateway | trong STATE_DIR gateway | — | Gateway RPC (`cron.*`) — API proxy, **không** mirror DB |
+| Model usage / Overview | DB | đọc `sessions.json` khi enrich event | `ModelUsageEvent` | API tap WS (`GatewayUsageSubscriberService`) |
+| Exec approvals (host) | Gateway | `exec-approvals.json` (OpenClaw) | — | Gateway — **không** sync ngược AucoBot |
+
+**Quy tắc một dòng:** Cấu hình từ dashboard **phải** đi qua `syncProjectRuntime` trước khi kỳ vọng gateway khớp DB. Runtime chat/cron **không** cần API copy thêm nếu api + gateway **cùng mount** volume.
+
+#### 5.8.3 Ba hướng sync
+
+**A. DB → disk (control plane → runtime)** — trung tâm `WorkspaceService.syncProjectRuntime(projectId)` (`apps/api/.../workspace/workspace.service.ts`). Package merge: `@aucobot/workspace-sync`.
+
+**B. Disk ↔ Gateway (runtime consumption)** — **không có API pull.** Gateway mount cùng volume; `deploy/scripts/gateway-entrypoint.sh` set:
+
+- `OPENCLAW_STATE_DIR` = `{ROOT}/{OSS_PROJECT_ID}` hoặc thư mục **đầu tiên** có `openclaw.json`
+- `OPENCLAW_CONFIG_PATH` = `{STATE}/openclaw.json`
+
+| Deploy | Mount |
+| ------ | ----- |
+| `deploy/docker-compose.yml` | `openclaw_data:/data/projects` (api + gateway) |
+| `deploy/docker-compose.runtime.yml` | `../apps/api/data/projects:/data/projects` |
+| `deploy/docker-compose.gateway.dev.yml` | **một** project → `/home/node/.openclaw` (khác full compose) |
+| Cloud fleet | `{hostDataPath}` → `/home/node/.openclaw` per project |
+
+Gateway **ghi trực tiếp** sessions, devices, logs vào volume. API **đọc** một phần (usage enrich, exec migrate) — **không** sync định kỳ toàn bộ sessions vào DB.
+
+**C. Live runtime (API ↔ Gateway qua WS)** — **không có webhook gateway → API.**
+
+| Cơ chế | Path | Vai trò |
+| ------ | ---- | ------- |
+| Chat WS proxy | `ChatGatewayProxyService`, `ChatWsRegistrar` | Browser → gateway RPC whitelist |
+| Upstream connect | `openGatewayUpstream` (`control-plane-core`) | Signed connect + `proxy-device.json` |
+| Device auto-pair | `approveProxyDeviceIfPending` | Ghi `devices/paired.json` trên volume |
+| One-shot RPC | `GatewayRpcService` → `callGatewayRpc` | Cron, nodes |
+| Usage tap | `GatewayUsageSubscriberService` | WS events → `ModelUsageEvent`; enrich từ `sessions.json` khi thiếu `usage` |
+| Health reconcile | `ProjectsService.health` (OSS) | `syncGatewayAuthToDisk` + ping `/healthz` |
+
+Contract usage: `apps/api/.../usage/lib/gateway-usage.contract.md`.
+
+#### 5.8.4 Web app đọc từ đâu?
+
+| Concern | Nguồn |
+| ------- | ----- |
+| CRUD dashboard | REST `projectApi.*` → `/api/projects/...` |
+| Chat, sessions, history | `ProjectChatClient` → WS `/api/projects/{id}/chat/ws` → gateway RPC |
+| Nodes, cron UI | REST → API → gateway RPC |
+| Overview / usage | REST → DB (`ModelUsageEvent`) |
+| Control UI (Settings) | **Ngoại lệ:** browser mở gateway HTTP (`gateway-control-ui.ts`) — không qua API |
+| Thinking level UX | Gateway `sessions.list` authoritative; localStorage cache phụ (`session-thinking-storage.ts`) |
+
+#### 5.8.5 Khoảng trống & rủi ro (đã kiểm tra)
+
+**Đúng thiết kế (không phải bug):**
+
+- Config dashboard: DB → disk; chat/cron: gateway → disk — không mirror transcript vào DB.
+- `ModelUsageEvent` là analytics derived — không phải archive chat đầy đủ.
+
+**Cần lưu ý khi vận hành:**
+
+1. **OSS multi-project / một gateway** — Không set `OSS_PROJECT_ID` → entrypoint chọn project **đầu tiên** có `openclaw.json`. Nhiều project → bắt buộc `OSS_PROJECT_ID` hoặc gateway riêng/project (cloud fleet).
+2. **Dev vs prod mount** — `docker-compose.gateway.dev.yml` mount một project vào `/home/node/.openclaw`; full compose dùng `/data/projects` + entrypoint resolver.
+3. **Không gateway → API push** — Sessions/cron không được API poll vào DB; chỉ tồn tại trên disk qua shared volume.
+4. **Dual-read agents** — `ChatAgentsService` fallback đọc `openclaw.json` nếu DB chưa có `ProjectAgent` → có thể lệch DB vs disk.
+5. **Exec policy một chiều** — migrate disk→DB một lần; sửa qua Control UI không sync ngược DB.
+6. **`auth-profiles.json`** — OpenClaw có thể tạo profile per-agent; AucoBot policy dùng **`openclaw.json` `env` only** (`.agent/rule.md` §4.1.1) — có thể drift nếu chỉnh ngoài dashboard.
+7. **Device pairing dual writers** — Gateway và API (proxy approve) cùng ghi `devices/*` trên volume — thường ổn nhưng có race hiếm.
+8. **Không reconciliation tự động DB vs disk** — Ngoài health sync token, chưa có job so `updatedAt` DB với mtime `openclaw.json`.
+
+**Hướng cải thiện (chưa triển khai):** reconciliation job `syncProjectRuntime` khi DB mới hơn disk; thêm `connectors/` vào `PROJECT_SUBDIRS` + chown gateway; snapshot cron/sessions định kỳ; bỏ fallback đọc disk trong `ChatAgentsService`.
+
+#### 5.8.6 Checklist vận hành — một nguồn `data/projects/{id}`
+
+```text
+✓ OPENCLAW_DATA_ROOT giống nhau trên api + gateway (/data/projects)
+✓ Volume openclaw_data mount chung (dev: apps/api/data/projects)
+✓ OSS_PROJECT_ID set khi >1 thư mục project trên cùng gateway
+✓ OPENCLAW_GATEWAY_TOKEN khớp openclaw.json (GET …/health reconcile)
+✓ Mọi thay đổi dashboard đi qua API → syncProjectRuntime tự động
+✓ Sau bulk edit / migration: sync-project-openclaw.mjs hoặc agents/sync-all
+✓ Không sửa openclaw.json tay mà không chạy sync
+✓ Chat history: chat.history RPC + *.jsonl trên disk — không expect trong DB
+✓ USAGE_SUBSCRIBER_ENABLED bật nếu cần Overview từ gateway events
+```
+
+**File index:**
+
+| Mục đích | Path |
+| -------- | ---- |
+| Layout project | `aucobot/packages/workspace-sync/src/paths/project-paths.ts` |
+| Runtime sync | `aucobot/apps/api/.../workspace/workspace.service.ts` |
+| Chat WS proxy | `aucobot/apps/api/.../chat/chat.gateway-proxy.service.ts` |
+| Gateway upstream | `aucobot/packages/control-plane-core/src/chat/gateway-upstream.ts` |
+| Device pairing | `aucobot/packages/control-plane-core/src/chat/gateway-device-pairing.ts` |
+| Docker volume | `aucobot/deploy/docker-compose.yml` |
+| Gateway entrypoint | `aucobot/deploy/scripts/gateway-entrypoint.sh` |
+| Web chat client | `aucobot/apps/web/lib/chat/project-chat-client.ts` |
+
 ---
 
 ## 6. OSS — Phạm vi backend (“có” / “chưa”)
@@ -682,6 +867,7 @@ sequenceDiagram
 | Gateway upstream (RPC, channels, skills load) | `openclaw-architecture.md` |
 | Agent-to-agent tools (`sessions_send`, …) — worker | `openclaw-architecture.md` §25.8 |
 | Sync DB → disk, merge `openclaw.json`, collaboration allow list (AucoBot) | `workflow.md` §5.6 |
+| Runtime plane `data/projects`, entity SSOT, gaps, checklist | `workflow.md` §5.8 |
 | Sync, chat proxy, channels API (AucoBot) | `workflow.md` §5.5–5.7 |
 | Merge implementation | `aucobot/packages/workspace-sync/` |
 | Monorepo AucoBot, **4 service OSS**, compose, Phase migrate | `monorepoplan.md` §2, §14 |

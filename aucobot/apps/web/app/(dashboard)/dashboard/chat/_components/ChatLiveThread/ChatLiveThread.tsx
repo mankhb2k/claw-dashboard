@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react'
 
-import { isWebResearchTool } from '@/utils/chat/tool-output'
-import type { LiveThreadItem, ToolStreamEntry } from '@/utils/chat/tool-stream.types'
+import { isWebResearchTool } from '@/utils/chat/tool/output'
+import type { LiveThreadItem, ToolStreamEntry } from '@/utils/chat/tool/types'
 
 import { ChatMessageBubble } from '../ChatMessageBubble/ChatMessageBubble'
 import { ToolActivityBar } from '../ToolActivityBar/ToolActivityBar'

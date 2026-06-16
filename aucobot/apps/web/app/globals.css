@@ -17,9 +17,9 @@
   --color-primary-hover: #f25912;
   --color-primary-dim: rgba(255, 95, 0, 0.12);
   /* Secondary — neutral grayscale (#fff ↔ #000), solid buttons */
-  --color-secondary: #171717;
-  --color-secondary-foreground: #fafafa;
-  --color-secondary-hover: #262626;
+  --color-secondary: #3f3f3f;
+  --color-secondary-foreground: #f1f1f1;
+  --color-secondary-hover: #1d1d1d;
   --color-danger: rgb(225, 29, 72);
   --color-danger-dim: rgba(239, 68, 68, 0.1);
   --color-success: #22c55e;

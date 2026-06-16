@@ -16,7 +16,7 @@ Tuỳ chọn:
 - `JWT_ACCESS_SECONDS` — TTL access token (mặc định 900)
 - `JWT_REFRESH_DAYS` — refresh token (mặc định 7)
 - `FRONTEND_URL` — CORS
-- `PORT` — mặc định 3001
+- `PORT` — mặc định 8387
 - `SELF_HOST_USER_USERNAME` / `SELF_HOST_USER_PASSWORD` — tài khoản mặc định (tự sync vào DB khi start; thêm user khác qua đăng ký)
 
 ## DB
@@ -44,8 +44,8 @@ npx prisma generate
 npm run dev
 ```
 
-- API: `http://localhost:3001/api`
-- Swagger: `http://localhost:3001/api/docs`
+- API: `http://localhost:8387/api`
+- Swagger: `http://localhost:8387/api/docs`
 
 ## Endpoints
 

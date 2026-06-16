@@ -239,6 +239,23 @@ describe('mergeAgentsIntoConfig', () => {
     assert.ok((result.skills as { load: { extraDirs: string[] } }).load.extraDirs.length >= 1);
   });
 
+  it('main agent allowlists all enabled project skills when provided', () => {
+    const config: Record<string, unknown> = {};
+    const result = mergeAgentsIntoConfig(
+      config,
+      [],
+      NO_COLLABORATION,
+      undefined,
+      undefined,
+      ['github', 'weather', 'github'],
+    );
+
+    const list = (result.agents as { list: Array<Record<string, unknown>> }).list;
+    assert.equal(list.length, 1);
+    assert.equal(list[0].id, 'main');
+    assert.deepEqual(list[0].skills, ['github', 'weather']);
+  });
+
   it('denies exec tools when shellExecEnabled is false', () => {
     const config: Record<string, unknown> = {};
     const rows: ProjectAgentMergeRow[] = [

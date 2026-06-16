@@ -22,21 +22,21 @@ AucoBot là monorepo **pnpm** gồm:
 - **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`, `mcp`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
 - **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — [`workflow.md`](../../workflow.md) §5.6).
 
-> **OSS compose = 5 services:** `web` + `api` (AucoBot) + `gateway` + `mcp` ([`aucomcp`](../../aucomcp/)) + `postgres`. **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài. Bỏ `AUCOMCP_BASE_URL` → connectors fallback `npx` local trên gateway.
+> **OSS compose = 5 services:** `web` + `api` (AucoBot) + `gateway` + `mcp` ([`mcp`](../mcp/)) + `postgres`. **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài. Bỏ `AUCOMCP_BASE_URL` → connectors fallback `npx` local trên gateway.
 
 ---
 
 ## 2. Ranh giới service OSS (5 container + volume)
 
-OSS self-host **đủ** với **năm container** trong `docker compose`. **`web`** và **`api`** là **code AucoBot** — build từ repo. **`mcp`** build từ sibling [`aucomcp/`](../../aucomcp/). **`postgres`** và **`gateway`** (OpenClaw) **pull image upstream**.
+OSS self-host **đủ** với **năm container** trong `docker compose`. **`web`** và **`api`** là **code AucoBot** — build từ repo. **`mcp`** build từ sibling [`mcp/`](../mcp/). **`postgres`** và **`gateway`** (OpenClaw) **pull image upstream**.
 
 ### 2.1 Năm service compose
 
 | Service | Tên compose gợi ý | Image | Sở hữu | Port mặc định | Vai trò |
 | ------- | ----------------- | ----- | ------- | ------------- | ------- |
-| Dashboard | `web` | Build `apps/web` | **AucoBot** | 3000 | UI; gọi API (`NEXT_PUBLIC_API_URL`) |
-| Control plane | `api` | Build `apps/api` | **AucoBot** | 3001 | JWT, CRUD, sync file, proxy WS chat → gateway |
-| MCP connectors | `mcp` | Build `../aucomcp` | **Aucomcp** | 8080 (internal) | Hosted MCP HTTP — Drive, Calendar tools |
+| Dashboard | `web` | Build `apps/web` | **AucoBot** | 8386 | UI; gọi API (`NEXT_PUBLIC_API_URL`) |
+| Control plane | `api` | Build `apps/api` | **AucoBot** | 8387 | JWT, CRUD, sync file, proxy WS chat → gateway |
+| MCP connectors | `mcp` | Build `../mcp` | **MCP** | 8080 (internal) | Hosted MCP HTTP — Drive, Calendar tools |
 | Gateway | `gateway` | Pull OpenClaw (fork pin) | **Upstream** | **18789** | Agent, kênh chat, gọi MCP qua `openclaw.json` |
 | Database | `postgres` | `postgres:16-alpine` | **Upstream** | 5432 | Users, projects, skills metadata… |
 
@@ -71,7 +71,7 @@ AucoBot (build image)
 └── apps/api/   → service api (+ Prisma migrate/seed)
 
 Aucomcp (build image — sibling repo folder)
-└── aucomcp/    → service mcp (hosted MCP connectors)
+└── mcp/    → service mcp (hosted MCP connectors)
 
 Upstream (pull image — fork pin, không patch runtime)
 ├── postgres:16-alpine
@@ -84,7 +84,7 @@ Compose / hạ tầng (bạn viết, không phải app logic)
 ```
 
 - Gateway/postgres là **image upstream** — fork OpenClaw giữ ở `../openclaw-worker/` ngoài monorepo.
-- **Aucomcp** (`../aucomcp/`) — service MCP hosted; không vendored trong `aucobot/`.
+- **MCP** (`../mcp/`) — service MCP hosted; không vendored trong `aucobot/`.
 - `skill-hub/`: catalog skill mẫu — **không** chạy như container.
 
 ### 2.4 Không có trong compose OSS (MVP)
@@ -137,8 +137,8 @@ Compose / hạ tầng (bạn viết, không phải app logic)
 ```mermaid
 flowchart TB
     subgraph OSS["AucoBot OSS — docker compose"]
-        FE["web :3000"]
-        API["api :3001"]
+        FE["web :8386"]
+        API["api :8387"]
         DB[("postgres")]
         GW["gateway :18789"]
         VOL["volume openclaw_data"]
@@ -364,8 +364,8 @@ Chat proxy và health check dùng resolver thay vì `project.hostPort` trực ti
 | Service | Port | Vai trò |
 | ------- | ---- | ------- |
 | `postgres` | 5432 | Nguồn sự thật app |
-| `api` | 3001 | NestJS control plane |
-| `web` | 3000 | Next.js dashboard |
+| `api` | 8387 | NestJS control plane |
+| `web` | 8386 | Next.js dashboard |
 | `gateway` | **18789** | Image `openclaw-worker:*` (pull, `OPENCLAW_IMAGE`) |
 
 ### 9.2 `deploy/docker-compose.yml` (sketch)
@@ -449,7 +449,7 @@ OPENCLAW_GATEWAY_URL=http://gateway:18789
 OPENCLAW_GATEWAY_TOKEN=...
 OPENCLAW_DATA_ROOT=/data/projects
 JWT_SECRET=...
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:8386
 
 # Dev trên host (không compose): OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
 # KHÔNG dùng trên OSS: OPENCLAW_IMAGE spawn, docker.sock
@@ -891,4 +891,4 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 
 ---
 
-*AucoBot — OSS: 5 services (`web`, `api`, `gateway`, `mcp`, `postgres`) + volume `openclaw_data`; `mcp` = sibling [`aucomcp`](../../aucomcp/). Cloud: spawn per project.*
+*AucoBot — OSS: 5 services (`web`, `api`, `gateway`, `mcp`, `postgres`) + volume `openclaw_data`; `mcp` = sibling [`mcp`](../mcp/). Cloud: spawn per project.*

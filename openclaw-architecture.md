@@ -204,7 +204,7 @@ Gateway là **một tiến trình luôn chạy** (long-lived process) đóng vai
 
 **Port mặc định:** `18789` (bind: loopback)
 
-**Pin upstream (tham chiếu khi đọc tài liệu này):** commit `110042d840` trên `openclaw/openclaw` (`main`), đồng bộ với repo vendored `openclaw-worker` trong monorepo.
+**Pin upstream (tham chiếu khi đọc tài liệu này):** release `v2026.6.6` — commit `8c802aa683` trên `openclaw/openclaw`, đồng bộ với nhánh `upstream/pin` trong repo vendored `openclaw-worker` và image `alpine/openclaw:2026.6.6` (OCI revision `de16f57dea`).
 
 ### 4.2 Các Endpoint HTTP
 
@@ -302,7 +302,7 @@ OPENCLAW_CONFIG_PATH=~/.openclaw/b.json OPENCLAW_STATE_DIR=~/.openclaw-b opencla
 ```
 
 
-### 4.8 Đối chiếu nhanh với upstream vừa pin (`110042d840`)
+### 4.8 Đối chiếu nhanh với upstream vừa pin (`v2026.6.6` / `8c802aa683`)
 
 So với bản mô tả cũ trong tài liệu này (hoặc pin cũ hơn), các điểm đáng cập nhật từ **mã `server-http.ts` + `docs/gateway/*` + `CHANGELOG.md`** tại snapshot trên:
 
@@ -1087,7 +1087,7 @@ Khi agent đang chạy và nhận tin nhắn mới:
 
 ### 11.5 Skills — Skill tự tạo, import và cách agent dùng
 
-> Phần dưới đối chiếu `openclaw-worker/docs/tools/skills.md`, `creating-skills.md`, `skills-config.md`, `docs/cli/skills.md` và mã `src/agents/skills/*`, `src/agents/skills-install*.ts`, `src/gateway/server-methods/skills*.ts` (pin `110042d840`). Cách AucoBot sync skill từ DB → volume: `workflow.md`.
+> Phần dưới đối chiếu `openclaw-worker/docs/tools/skills.md`, `creating-skills.md`, `skills-config.md`, `docs/cli/skills.md` và mã `src/agents/skills/*`, `src/agents/skills-install*.ts`, `src/gateway/server-methods/skills*.ts` (pin `v2026.6.6` / `8c802aa683`). Cách AucoBot sync skill từ DB → volume: `workflow.md`.
 
 #### 11.5.1 Skill là gì
 

@@ -1,5 +1,5 @@
-import { isHiddenToolPayloadText } from '@/utils/chat/history-filter'
-import { matchesSessionKey } from '@/utils/chat/session-key'
+import { isHiddenToolPayloadText } from '@/utils/chat/stream/history-filter'
+import { matchesSessionKey } from '@/utils/chat/session/key'
 import {
   buildArgsPreview,
   buildToolSteps,
@@ -7,7 +7,7 @@ import {
   formatToolOutput,
   mergeToolOutput,
   truncateToolOutput,
-} from '@/utils/chat/tool-output'
+} from '@/utils/chat/tool/output'
 import type {
   AgentToolEventPayload,
   ToolActivity,
@@ -15,7 +15,7 @@ import type {
   ToolActivityStatus,
   ToolGatewayEventName,
   ToolStreamEntry,
-} from '@/utils/chat/tool-stream.types'
+} from '@/utils/chat/tool/types'
 
 export const MAX_TOOL_ACTIVITIES = 5
 

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, "../.tmp/skill-editor-check");
-const BASE = process.env.WEB_BASE_URL ?? "http://localhost:3000";
+const BASE = process.env.WEB_BASE_URL ?? "http://localhost:8386";
 const USER = process.env.SELF_HOST_USER_USERNAME ?? "admin";
 const PASS = process.env.SELF_HOST_USER_PASSWORD ?? "admin123";
 const SKILL_URL = `${BASE}/dashboard/skill/self-improving-agent`;

@@ -357,7 +357,7 @@ _components/CardXxx/CardXxx.tsx
 | Path | Vai trò | Ví dụ hiện có |
 |------|---------|---------------|
 | **`utils/agent/`** | Agent, schedule, heartbeat, collaboration | `cron-format`, `heartbeat-interval`, `collaboration-events`, `agent-panel-*` |
-| **`utils/chat/`** | Session, model patch, message transform | `session-key`, `session-groups`, `model-catalog`, `message-extract` |
+| **`utils/chat/`** | Session, model patch, message transform | `session/key`, `session/display`, `stream/message-extract`, `tool/stream`, `model-catalog` |
 | **`utils/channels/`** | Catalog kênh, icon, merge API + i18n | `openclaw-channels`, `channel-icons`, `merge-channel-catalog` |
 | **`utils/connectors/`** | Trạng thái connector | `project-connector-status` |
 | **`utils/nodes/`** | Device / invite helpers | `nodes-utils` |

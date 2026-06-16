@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { NextRequest } from 'next/server'
 
 vi.mock('@/lib/http/api-base-url', () => ({
-  getServerApiBaseUrl: () => 'http://localhost:3001',
+  getServerApiBaseUrl: () => 'http://localhost:8387',
 }))
 
 import { resolveSession } from '@/lib/auth/session-middleware'
@@ -49,7 +49,7 @@ describe('resolveSession', () => {
     expect(result.valid).toBe(true)
     expect(result.setCookies).toHaveLength(2)
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'http://localhost:3001/api/auth/session',
+      'http://localhost:8387/api/auth/session',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({ cookie: 'oc_refresh=old' }),

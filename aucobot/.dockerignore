@@ -9,4 +9,4 @@
 **/.git
 backend
 frontend
-openclaw-worker
+**/storybook-static

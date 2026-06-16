@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { REDACTED, redactSensitiveText } from './tool-redact.js'
+import { REDACTED, redactSensitiveText } from './redact.js'
 import {
   extractWebSources,
   truncateToolOutput,
-} from './tool-output.js'
+} from './output.js'
 import {
   applyToolActivityPatch,
   CANONICAL_TOOL_IDS,
@@ -15,7 +15,7 @@ import {
   resolveCanonicalToolId,
   resolveToolActivityI18nKey,
   toActivityList,
-} from './tool-stream.js'
+} from './stream.js'
 
 describe('parseAgentToolPayload', () => {
   it('parses tool start as running', () => {

@@ -9,11 +9,11 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/openclaw
       NODE_ENV: production
-      PORT: 3001
+      PORT: 8387
       APP_DOMAIN: ${APP_DOMAIN:-clawsandbox.cloud}
       OPENCLAW_IMAGE: ${OPENCLAW_IMAGE:-mankhb2k/clawsaas-worker:1.0.0}
     ports:
-      - '3001:3001'
+      - '8387:8387'
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,6 +1,23 @@
-# AucoBot monorepo (scaffold)
+# AucoBot
 
-Monorepo mới nằm **song song** với code legacy ở parent:
+Control plane OSS for OpenClaw — NestJS API, Next.js dashboard, workspace sync, chat proxy.
+
+**Related repos (sibling checkout for full stack):**
+
+| Repo | Clone |
+| ---- | ----- |
+| **aucobot** (this) | `git@github.com:aucobot/aucobot.git` |
+| **mcp** (hosted connectors) | `git@github.com:aucobot/mcp.git` → clone as `../mcp` |
+| **node-device** (companion desktop) | `git@github.com:aucobot/node-device.git` |
+
+```text
+workspace/
+├── aucobot/      ← this repo
+├── mcp/          ← required for docker compose MCP service
+└── node-device/  ← optional Electron companion
+```
+
+Monorepo mới nằm **song song** với code legacy ở parent (nếu bạn vẫn dùng `openclaw-saas` meta-repo):
 
 | Legacy (giữ nguyên) | Monorepo mới |
 | ------------------- | ------------ |
@@ -36,9 +53,14 @@ cp .env.example .env   # single env at repo root (API + Web)
 pnpm dev:deps     # Postgres nếu chưa có :5432
 
 docker compose -f deploy/docker-compose.gateway.dev.yml --env-file deploy/.env.gateway up -d
-pnpm dev          # api :3001 + web :3000
+pnpm dev          # api :8387 + web :8386
 ```
 
-Full stack: `docker compose -f deploy/docker-compose.yml up -d --build`
+Full stack (cần sibling `../mcp`):
+
+```bash
+git clone git@github.com:aucobot/mcp.git ../mcp
+docker compose -f deploy/docker-compose.yml up -d --build
+```
 
 Chi tiết: `docs/monorepoplan.md` · Sơ đồ luồng: `docs/monorepo-diagram.md` · AI agents: [`AGENTS.md`](./AGENTS.md)

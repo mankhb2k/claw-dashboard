@@ -36,7 +36,7 @@ export class ProjectChatClient {
     const configured = getPublicApiBaseUrl()
     const base =
       configured ||
-      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8386')
     const wsBase = base.replace(/^http/, 'ws')
     return `${wsBase}/api/projects/${this.opts.projectId}/chat/ws`
   }

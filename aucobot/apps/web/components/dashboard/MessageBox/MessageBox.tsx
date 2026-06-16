@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useMemo,
   type Dispatch,
   type DragEvent,
   type SetStateAction,
@@ -38,6 +39,7 @@ import {
   readClipboardPlainText,
   restoreSelection,
 } from "./AttachmentPreviewRow/composer-paste";
+import type { SlashCommandItem } from "@/utils/chat/slash-command";
 import styles from "./MessageBox.module.css";
 
 const MAX_INPUT_LINES = 12;
@@ -71,6 +73,8 @@ export type MessageBoxChatProps = MessageBoxBaseProps & {
   onSend: (payload: ComposerSendPayload) => void;
   onAbort: () => void;
   canSend: boolean;
+  /** User-invocable skill commands (built from current agent allowlist). */
+  slashCommands?: SlashCommandItem[];
   modelSaving?: boolean;
   modelLabel?: string;
   contextUsage?: ContextUsageSnapshot;
@@ -168,6 +172,13 @@ export function MessageBox(props: MessageBoxProps) {
   const enableAttachments = props.enableAttachments === true;
   const onAbort = enableAttachments ? props.onAbort : undefined;
   const canSend = enableAttachments ? props.canSend : undefined;
+  const slashCommandsProp = enableAttachments
+    ? (props as MessageBoxChatProps).slashCommands
+    : undefined;
+  const slashCommands = useMemo(
+    () => slashCommandsProp ?? [],
+    [slashCommandsProp],
+  );
   const modelSaving = enableAttachments ? (props.modelSaving ?? false) : false;
   const modelLabel = enableAttachments ? props.modelLabel : undefined;
   const contextUsage = enableAttachments ? props.contextUsage : undefined;
@@ -178,6 +189,104 @@ export function MessageBox(props: MessageBoxProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
   const attachmentsRef = useRef<ComposerAttachment[]>([]);
+
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [slashTokenRange, setSlashTokenRange] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const [slashActiveIndex, setSlashActiveIndex] = useState(0);
+
+  const filteredSlashCommands = useMemo(() => {
+    if (!slashOpen) return [];
+    const q = slashQuery.trim().toLowerCase();
+    if (!q) return slashCommands;
+
+    return slashCommands.filter((item) => {
+      const command = item.command.toLowerCase();
+      const withoutSlash = command.startsWith("/") ? command.slice(1) : command;
+      return (
+        withoutSlash.startsWith(q) ||
+        item.skillName.toLowerCase().startsWith(q) ||
+        item.skillName.toLowerCase().includes(q)
+      );
+    });
+  }, [slashOpen, slashQuery, slashCommands]);
+
+  const resolveSlashTokenAtCaret = useCallback(
+    (nextValue: string, caretPos: number) => {
+      // Caret is assumed to be within [0, value.length].
+      const pos = Math.max(0, Math.min(nextValue.length, caretPos));
+      const left = nextValue.slice(0, pos);
+      // Token boundaries = whitespace.
+      const tokenStart =
+        Math.max(
+          left.lastIndexOf(" "),
+          left.lastIndexOf("\n"),
+          left.lastIndexOf("\t"),
+        ) + 1;
+      const token = nextValue.slice(tokenStart, pos);
+      if (!token.startsWith("/")) return null;
+      return { tokenStart, tokenEnd: pos, query: token.slice(1) };
+    },
+    [],
+  );
+
+  const updateSlashMenuFromValue = useCallback(
+    (nextValue: string, caretPos: number) => {
+      if (!enableAttachments) {
+        setSlashOpen(false);
+        setSlashQuery("");
+        setSlashTokenRange(null);
+        setSlashActiveIndex(0);
+        return;
+      }
+
+      const resolved = resolveSlashTokenAtCaret(nextValue, caretPos);
+      if (!resolved) {
+        setSlashOpen(false);
+        setSlashQuery("");
+        setSlashTokenRange(null);
+        setSlashActiveIndex(0);
+        return;
+      }
+
+      setSlashOpen(true);
+      setSlashQuery(resolved.query);
+      setSlashTokenRange({ start: resolved.tokenStart, end: resolved.tokenEnd });
+      setSlashActiveIndex(0);
+    },
+    [enableAttachments, resolveSlashTokenAtCaret],
+  );
+
+  const insertSlashCommand = useCallback(
+    (item: SlashCommandItem) => {
+      if (!slashTokenRange) return;
+      const nextValue =
+        value.slice(0, slashTokenRange.start) +
+        item.command +
+        " " +
+        value.slice(slashTokenRange.end);
+
+      onChange(nextValue);
+      setSlashOpen(false);
+      setSlashQuery("");
+      setSlashTokenRange(null);
+      setSlashActiveIndex(0);
+
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        const caret = slashTokenRange.start + item.command.length + 1;
+        el.selectionStart = caret;
+        el.selectionEnd = caret;
+        el.focus();
+        syncComposerHeight(el, MAX_INPUT_LINES);
+      });
+    },
+    [onChange, slashTokenRange, value],
+  );
 
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
   const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
@@ -417,6 +526,12 @@ export function MessageBox(props: MessageBoxProps) {
   }, [value, attachments.length, adjustHeight]);
 
   useEffect(() => {
+    const el = textareaRef.current;
+    if (!el || !enableAttachments) return;
+    updateSlashMenuFromValue(value, el.selectionStart ?? value.length);
+  }, [slashCommands, enableAttachments, updateSlashMenuFromValue, value]);
+
+  useEffect(() => {
     return () => {
       for (const item of attachmentsRef.current) {
         revokeAttachmentPreview(item);
@@ -487,6 +602,44 @@ export function MessageBox(props: MessageBoxProps) {
         ) : null}
 
         <div className={styles.inputArea}>
+          {enableAttachments && slashOpen ? (
+            <div
+              className={styles.slashMenu}
+              role="listbox"
+              aria-label="Slash commands"
+            >
+              {filteredSlashCommands.length === 0 ? (
+                <div className={styles.slashEmpty}>
+                  {slashCommands.length === 0
+                    ? "No skills available for this agent. Add skills in the Agent tab."
+                    : "No matching skills"}
+                </div>
+              ) : (
+                filteredSlashCommands.map((item, index) => (
+                  <button
+                    key={`${item.skillName}-${item.command}`}
+                    type="button"
+                    className={`${styles.slashItem} ${
+                      index === slashActiveIndex ? styles.slashItemActive : ""
+                    }`}
+                    onMouseEnter={() => setSlashActiveIndex(index)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                    }}
+                    onClick={() => insertSlashCommand(item)}
+                    role="option"
+                    aria-selected={index === slashActiveIndex}
+                  >
+                    <div className={styles.slashItemTitle}>{item.command}</div>
+                    <div className={styles.slashItemDesc}>
+                      {item.description ?? item.skillName}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : null}
+
           <Textarea
             ref={textareaRef}
             id={inputId}
@@ -495,11 +648,59 @@ export function MessageBox(props: MessageBoxProps) {
             placeholder={placeholder}
             value={value}
             onChange={(event) => {
-              onChange(event.target.value);
+              const next = event.target.value;
+              onChange(next);
               syncComposerHeight(event.target, MAX_INPUT_LINES);
+              updateSlashMenuFromValue(
+                next,
+                event.target.selectionStart ?? next.length,
+              );
             }}
             onPaste={enableAttachments ? handlePaste : undefined}
             onKeyDown={(event) => {
+              if (enableAttachments && slashOpen) {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setSlashOpen(false);
+                  setSlashQuery("");
+                  setSlashTokenRange(null);
+                  setSlashActiveIndex(0);
+                  return;
+                }
+
+                if (filteredSlashCommands.length > 0) {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setSlashActiveIndex((prev) => {
+                      const next = prev + 1;
+                      return next >= filteredSlashCommands.length ? 0 : next;
+                    });
+                    return;
+                  }
+
+                  if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    setSlashActiveIndex((prev) => {
+                      const next = prev - 1;
+                      return next < 0
+                        ? Math.max(0, filteredSlashCommands.length - 1)
+                        : next;
+                    });
+                    return;
+                  }
+
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    const item = filteredSlashCommands[slashActiveIndex];
+                    if (item) insertSlashCommand(item);
+                    return;
+                  }
+                } else if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  return;
+                }
+              }
+
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
                 if (canSendNow) handleSendClick();

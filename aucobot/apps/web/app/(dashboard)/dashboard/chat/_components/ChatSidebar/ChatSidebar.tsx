@@ -34,12 +34,12 @@ import {
   formatRelativeSessionTime,
   groupSessionsByDate,
   SESSION_GROUP_LABELS,
-} from "@/utils/chat/session-groups";
+} from "@/utils/chat/session/groups";
 import {
   isMainSessionKey,
   resolveSessionDisplayName,
-} from "@/utils/chat/session-display";
-import type { GatewaySessionRow } from "@/utils/chat/session-types";
+} from "@/utils/chat/session/display";
+import type { GatewaySessionRow } from "@/utils/chat/session/types";
 import styles from "./ChatSidebar.module.css";
 
 type ChatSidebarProps = {

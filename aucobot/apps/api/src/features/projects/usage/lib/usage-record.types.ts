@@ -32,4 +32,6 @@ export type GatewayTapContext = {
   userId: string;
   frame: Record<string, unknown>;
   pendingRuns: Map<string, PendingChatRun>;
+  /** Host project data dir for OpenClaw session-store enrichment. */
+  projectDataDir?: string;
 };

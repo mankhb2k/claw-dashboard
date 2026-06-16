@@ -13,6 +13,8 @@ export type GatewaySessionRow = {
   contextTokens?: number
   totalTokensFresh?: boolean
   compactionCount?: number
+  /** Session override from gateway store (`sessions.patch` / `/think`). */
+  thinkingLevel?: string
 }
 
 export type SessionsListResult = {

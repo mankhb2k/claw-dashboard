@@ -123,6 +123,7 @@ describe('ModelUsageRecorderService', () => {
         event: 'chat',
         payload: {
           state: 'final',
+          runId: 'run-1',
           idempotencyKey: 'run-1',
           model: 'openai/gpt-5.4-mini',
           usage: { inputTokens: 12, outputTokens: 4 },
@@ -137,7 +138,7 @@ describe('ModelUsageRecorderService', () => {
         data: expect.objectContaining({
           source: UsageSource.CHAT_UI,
           status: UsageStatus.SUCCESS,
-          externalId: 'chat:run-1',
+          externalId: 'run:run-1',
         }),
       }),
     );

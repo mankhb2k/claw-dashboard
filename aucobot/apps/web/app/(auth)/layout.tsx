@@ -9,8 +9,16 @@ export default function AuthLayout({
     <div className={styles.shell}>
       <div className={styles.card}>
         <div className={styles.logo}>
-          <span className={styles.logoIcon}>⚡</span>
-          <span className={styles.logoText}>Aucobot</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/aucobot-icon.svg"
+            alt=""
+            aria-hidden
+            className={styles.logoIcon}
+            width={28}
+            height={28}
+          />
+          <span className={styles.logoText}>AUCOBOT</span>
         </div>
         {children}
       </div>

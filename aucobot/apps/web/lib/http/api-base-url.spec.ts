@@ -26,15 +26,15 @@ describe('getPublicApiBaseUrl', () => {
   })
 
   it('keeps configured same-origin localhost URL', () => {
-    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000/'
-    setWindowOrigin('http://localhost:3000')
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8386/'
+    setWindowOrigin('http://localhost:8386')
 
-    expect(getPublicApiBaseUrl()).toBe('http://localhost:3000')
+    expect(getPublicApiBaseUrl()).toBe('http://localhost:8386')
   })
 
   it('falls back to same-origin for localhost cross-port in browser', () => {
-    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001'
-    setWindowOrigin('http://localhost:3000')
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8387'
+    setWindowOrigin('http://localhost:8386')
 
     expect(getPublicApiBaseUrl()).toBe('')
   })

@@ -193,6 +193,19 @@ function normalizeAgentSkillAllowlist(formData: AgentFormInput): string[] {
   );
 }
 
+/** Deduplicate skill names while preserving input order (for main agent allowlist). */
+export function normalizeSkillNameListPreservingOrder(names: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of names) {
+    const name = String(raw ?? '').trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push(name);
+  }
+  return out;
+}
+
 export type ProjectAgentMergeRow = {
   slug: string;
   name: string;
@@ -299,6 +312,8 @@ export function mergeAgentsIntoConfig(
   collaboration: ProjectCollaborationSettings,
   projectSandboxPolicy?: ProjectSandboxPolicy,
   projectExecPolicy?: ProjectExecPolicy,
+  /** Main agent allowlist — all enabled project skills (OpenClaw `agents.list` id `main`). */
+  mainAgentSkillNames?: string[],
 ): Record<string, unknown> {
   const policy: ProjectSandboxPolicy = projectSandboxPolicy ?? {
     enabled: false,
@@ -322,7 +337,7 @@ export function mergeAgentsIntoConfig(
     id: 'main',
     name: 'Main',
     workspace: CONTAINER_WORKSPACE_DIR,
-    skills: [],
+    skills: normalizeSkillNameListPreservingOrder(mainAgentSkillNames ?? []),
     tools: { profile: 'messaging' },
   };
   applyProjectSandboxToEntry(mainEntry, 'main', policy, exemptSet, appliedSet);

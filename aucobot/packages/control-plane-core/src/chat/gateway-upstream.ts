@@ -10,8 +10,8 @@ import {
   type GatewayDeviceIdentity,
 } from './gateway-device-identity.js';
 
-/** Negotiation range: must include the gateway's PROTOCOL_VERSION (openclaw-worker:1.0.2 → v3). */
-const GATEWAY_MIN_PROTOCOL = Number(process.env.OPENCLAW_GATEWAY_MIN_PROTOCOL ?? 3) || 3;
+/** Negotiation range: must include the gateway's PROTOCOL_VERSION (openclaw v2026.6.6 → v4). */
+const GATEWAY_MIN_PROTOCOL = Number(process.env.OPENCLAW_GATEWAY_MIN_PROTOCOL ?? 4) || 4;
 const GATEWAY_MAX_PROTOCOL = Number(
   process.env.OPENCLAW_GATEWAY_MAX_PROTOCOL ?? 4,
 ) || 4;

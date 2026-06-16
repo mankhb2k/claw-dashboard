@@ -1,14 +1,14 @@
-import { buildToolSteps } from '@/utils/chat/tool-output'
+import { buildToolSteps } from '@/utils/chat/tool/output'
 import {
   CANONICAL_TOOL_IDS,
   resolveToolActivityI18nKey,
   type CanonicalToolId,
-} from '@/utils/chat/tool-stream'
+} from '@/utils/chat/tool/stream'
 import type {
   ToolActivity,
   ToolActivityStatus,
   ToolStreamEntry,
-} from '@/utils/chat/tool-stream.types'
+} from '@/utils/chat/tool/types'
 
 const NOW = 1_700_000_000_000
 

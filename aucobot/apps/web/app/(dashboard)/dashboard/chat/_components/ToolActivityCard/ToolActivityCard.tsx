@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 import { useI18n } from '@/lib/i18n'
-import type { ToolStreamEntry } from '@/utils/chat/tool-stream.types'
+import type { ToolStreamEntry } from '@/utils/chat/tool/types'
 
 import styles from './ToolActivityCard.module.css'
 

@@ -9,7 +9,7 @@ import {
 import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
-import type { LiveThreadItem } from "@/utils/chat/tool-stream.types";
+import type { LiveThreadItem } from "@/utils/chat/tool/types";
 import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
 import { ChatLiveThread } from "../ChatLiveThread/ChatLiveThread";
 import { ContentArea } from "../ContentArea/ContentArea";
@@ -17,6 +17,7 @@ import {
   MessageBox,
   type ComposerSendPayload,
 } from "@/components/dashboard/MessageBox";
+import type { SlashCommandItem } from "@/utils/chat/slash-command";
 import styles from "./ChatPanel.module.css";
 
 export type ChatPanelMessage = {
@@ -55,6 +56,10 @@ export type ChatPanelProps = {
   agentId: string;
   agentOptions: SelectOption[];
   onAgentChange: (agentId: string) => void;
+  thinkingLevel: string;
+  thinkingOptions: SelectOption[];
+  onThinkingChange: (level: string) => void;
+  thinkingSaving?: boolean;
   providerId?: string;
   providerOptions: SelectOption[];
   onProviderChange: (providerId: string) => void;
@@ -83,8 +88,10 @@ export type ChatPanelProps = {
     totalTokensFresh?: boolean;
     compactionCount?: number;
   };
+  sessionKey?: string;
   liveItems?: LiveThreadItem[];
   showToolPreparing?: boolean;
+  slashCommands?: SlashCommandItem[];
 };
 
 export function ChatPanel({
@@ -99,6 +106,10 @@ export function ChatPanel({
   agentId,
   agentOptions,
   onAgentChange,
+  thinkingLevel,
+  thinkingOptions,
+  onThinkingChange,
+  thinkingSaving = false,
   providerId,
   providerOptions,
   onProviderChange,
@@ -122,8 +133,10 @@ export function ChatPanel({
   sandboxActive,
   stagingMaxBytes,
   contextUsage,
+  sessionKey,
   liveItems = [],
   showToolPreparing = false,
+  slashCommands,
 }: ChatPanelProps) {
   const showEmpty =
     messages.length === 0 &&
@@ -164,20 +177,37 @@ export function ChatPanel({
           </p>
         </div>
 
-        <div className={styles.agentField}>
-          <Select
-            id="chat-agent"
-            labelPosition="none"
-            value={agentId}
-            onValueChange={onAgentChange}
-            options={
-              agentOptions.length
-                ? agentOptions
-                : [{ value: "main", label: "main" }]
-            }
-            disabled={controlsDisabled}
-            placeholder="Select agent"
-          />
+        <div className={styles.headerControls}>
+          <div className={styles.agentField}>
+            <Select
+              id="chat-agent"
+              labelPosition="none"
+              value={agentId}
+              onValueChange={onAgentChange}
+              options={
+                agentOptions.length
+                  ? agentOptions
+                  : [{ value: "main", label: "main" }]
+              }
+              disabled={controlsDisabled}
+              placeholder="Select agent"
+            />
+          </div>
+
+          <div
+            className={styles.thinkingField}
+            title="Off = faster responses; High = deeper reasoning, slower"
+          >
+            <Select
+              id="chat-thinking"
+              labelPosition="none"
+              value={thinkingLevel}
+              onValueChange={onThinkingChange}
+              options={thinkingOptions}
+              disabled={controlsDisabled || thinkingSaving}
+              placeholder="Thinking"
+            />
+          </div>
         </div>
 
         <div className={styles.headerActions}>
@@ -227,6 +257,7 @@ export function ChatPanel({
       )}
 
       <ContentArea
+        scrollResetKey={sessionKey}
         emptyState={
           showEmpty ? (
             <div className={styles.empty}>
@@ -268,6 +299,7 @@ export function ChatPanel({
                 ? "Type a message…"
                 : "Connect to the gateway to chat…"
             }
+            slashCommands={slashCommands}
             providerId={providerId}
             providerOptions={providerOptions}
             onProviderChange={onProviderChange}

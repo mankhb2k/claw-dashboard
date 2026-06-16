@@ -1,12 +1,14 @@
-# AucoBot OSS — full stack: postgres + api + web + gateway + mcp (aucomcp)
+# AucoBot OSS — full stack: postgres + api + web + gateway + mcp
+#
+# Requires sibling repo: git clone git@github.com:aucobot/mcp.git ../mcp
 #
 # From aucobot/:
 #   cp deploy/.env.example deploy/.env
 #   docker compose -f deploy/docker-compose.yml up -d --build
 #
 # URLs:
-#   Web:     http://localhost:3000
-#   API:     http://localhost:3001
+#   Web:     http://localhost:8386
+#   API:     http://localhost:8387
 #   Gateway: http://localhost:18789  (internal: http://gateway:18789)
 
 services:
@@ -33,7 +35,8 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: ${OPENCLAW_IMAGE:-mankhb2k/openclaw-worker:latest}
+    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    pull_policy: always
     container_name: aucobot-gateway
     entrypoint: ["sh", "/entrypoint/gateway-entrypoint.sh"]
     environment:
@@ -70,34 +73,34 @@ services:
     container_name: aucobot-api
     environment:
       NODE_ENV: production
-      PORT: 3001
+      PORT: 8387
       RUNTIME_MODE: oss
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-openclaw}
       JWT_SECRET: ${JWT_SECRET:-change-me-to-long-random-string}
       JWT_ACCESS_SECONDS: ${JWT_ACCESS_SECONDS:-900}
       JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-7}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-      BACKEND_URL: http://localhost:3001
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8386}
+      BACKEND_URL: http://localhost:8387
       APP_DOMAIN: ${APP_DOMAIN:-localhost}
       OPENCLAW_GATEWAY_URL: http://gateway:18789
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
       OPENCLAW_DATA_ROOT: /data/projects
       OPENCLAW_RUNTIME_UID: ${OPENCLAW_RUNTIME_UID:-1000}
       OPENCLAW_RUNTIME_GID: ${OPENCLAW_RUNTIME_GID:-1000}
-      OPENCLAW_GATEWAY_MIN_PROTOCOL: ${OPENCLAW_GATEWAY_MIN_PROTOCOL:-3}
+      OPENCLAW_GATEWAY_MIN_PROTOCOL: ${OPENCLAW_GATEWAY_MIN_PROTOCOL:-4}
       OPENCLAW_GATEWAY_MAX_PROTOCOL: ${OPENCLAW_GATEWAY_MAX_PROTOCOL:-4}
       SELF_HOST_USER_USERNAME: ${SELF_HOST_USER_USERNAME:-${SELF_HOST_USER_LOGIN:-admin}}
       SELF_HOST_USER_PASSWORD: ${SELF_HOST_USER_PASSWORD:-admin123}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
-      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:3001/api/connectors/oauth/callback}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:8387/api/connectors/oauth/callback}
       MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-change-me-mcp-service-secret}
       AUCOMCP_BASE_URL: ${AUCOMCP_BASE_URL:-http://mcp:8080}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:
       - openclaw_data:/data/projects
     ports:
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:8387:8387"
     depends_on:
       postgres:
         condition: service_healthy
@@ -107,15 +110,15 @@ services:
 
   mcp:
     build:
-      context: ../../aucomcp
+      context: ../../mcp
       dockerfile: deploy/Dockerfile
-    image: aucomcp:local
+    image: aucobot-mcp:local
     container_name: aucobot-mcp
     environment:
       PORT: 8080
       HOST: 0.0.0.0
       MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-change-me-mcp-service-secret}
-      AUCOBOT_INTERNAL_API_URL: http://api:3001
+      AUCOBOT_INTERNAL_API_URL: http://api:8387
     depends_on:
       api:
         condition: service_started
@@ -128,17 +131,17 @@ services:
       args:
         # Empty = browser uses same-origin /api rewrite (cookies work for chat WebSocket).
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
-        API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:3001}
+        API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:8387}
         NEXT_PUBLIC_RUNTIME_MODE: ${NEXT_PUBLIC_RUNTIME_MODE:-oss}
         NEXT_PUBLIC_MOCK_API: ${NEXT_PUBLIC_MOCK_API:-false}
     image: aucobot-web:local
     container_name: aucobot-web
     environment:
       NODE_ENV: production
-      PORT: 3000
-      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:3001}
+      PORT: 8386
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:8387}
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:8386:8386"
     depends_on:
       api:
         condition: service_started

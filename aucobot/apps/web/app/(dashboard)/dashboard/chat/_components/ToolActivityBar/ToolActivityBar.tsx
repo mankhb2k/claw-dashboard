@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, Check, Loader2 } from 'lucide-react'
 
 import { useI18n } from '@/lib/i18n'
-import type { ToolActivity } from '@/utils/chat/tool-stream.types'
+import type { ToolActivity } from '@/utils/chat/tool/types'
 
 import styles from './ToolActivityBar.module.css'
 

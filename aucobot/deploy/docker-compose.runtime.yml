@@ -10,7 +10,9 @@
 #   OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
 #   OPENCLAW_GATEWAY_TOKEN=<same as deploy/.env.gateway và aucobot/.env>
 #
-# Image local: deploy/.env.gateway → OPENCLAW_IMAGE=openclaw-worker:latest
+# Image: official release mirror (Docker Hub) — ghcr.io/openclaw/openclaw
+#   docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway pull gateway
+#   pnpm dev:runtime:pull
 
 name: aucobot-runtime
 
@@ -38,8 +40,8 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: ${OPENCLAW_IMAGE:-openclaw-worker:latest}
-    pull_policy: if_not_present
+    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    pull_policy: always
     container_name: aucobot-gateway-runtime
     entrypoint: ["sh", "/entrypoint/gateway-entrypoint.sh"]
     environment:

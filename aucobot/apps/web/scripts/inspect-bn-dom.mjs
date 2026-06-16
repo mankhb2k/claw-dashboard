@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 
-const BASE = process.env.WEB_BASE_URL ?? "http://localhost:3000";
+const BASE = process.env.WEB_BASE_URL ?? "http://localhost:8386";
 
 async function login(page) {
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });

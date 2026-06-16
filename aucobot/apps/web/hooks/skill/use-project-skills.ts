@@ -94,12 +94,6 @@ export function useProjectSkills(
     [projectId],
   );
 
-  const syncAll = useCallback(async (): Promise<{ synced: number; failed: number }> => {
-    const result = await projectApi.syncAllSkills(projectId);
-    await refresh();
-    return result;
-  }, [projectId, refresh]);
-
   return {
     skills,
     loading,
@@ -109,7 +103,6 @@ export function useProjectSkills(
     update,
     setEnabled,
     remove,
-    syncAll,
     setSkills,
   };
 }

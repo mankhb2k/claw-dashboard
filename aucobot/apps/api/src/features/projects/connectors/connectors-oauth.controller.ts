@@ -16,7 +16,7 @@ export class ConnectorsOAuthController {
     @Query('error') error: string | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const frontend = (process.env.FRONTEND_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    const frontend = (process.env.FRONTEND_URL ?? 'http://localhost:8386').replace(/\/$/, '');
 
     if (error || !code || !state) {
       return reply.redirect(
