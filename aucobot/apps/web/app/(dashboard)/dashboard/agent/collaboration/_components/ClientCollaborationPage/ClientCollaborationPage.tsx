@@ -13,9 +13,11 @@ import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { CardCollaborationSettings } from "../CardCollaborationSettings/CardCollaborationSettings";
 import { CardCollaborationMembers } from "../CardCollaborationMembers/CardCollaborationMembers";
 import { CardCollaborationAllowList } from "../CardCollaborationAllowList/CardCollaborationAllowList";
+import { useI18n } from "@/lib/i18n";
 import styles from "./ClientCollaborationPage.module.css";
 
-export default function ClientCollaborationPage() {
+export function ClientCollaborationPage() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
 
@@ -56,7 +58,7 @@ export default function ClientCollaborationPage() {
       setDirty(false);
     } catch (err) {
       setLoadError(
-        err instanceof Error ? err.message : "Could not load collaboration",
+        err instanceof Error ? err.message : t("agent.collaboration.loadError"),
       );
     } finally {
       setLoading(false);
@@ -114,9 +116,12 @@ export default function ClientCollaborationPage() {
       setEffectiveAllow(result.effectiveAllow);
       setDirty(false);
       notifyCollaborationUpdated();
-      toast.success("Collaboration saved", "Gateway allow list updated.");
+      toast.success(
+        t("agent.collaboration.saved"),
+        t("agent.collaboration.savedDetail"),
+      );
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Save failed");
+      setSaveError(err instanceof Error ? err.message : t("agent.collaboration.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -140,7 +145,7 @@ export default function ClientCollaborationPage() {
 
   const validationError =
     enabled && memberSlugs.length === 0
-      ? "Select at least one agent when collaboration is enabled"
+      ? t("agent.collaboration.needMember")
       : null;
 
   const enabledAgentCount = agents.filter((a) => a.enabled).length;
@@ -150,19 +155,19 @@ export default function ClientCollaborationPage() {
     <div className={styles.root}>
       {agents.length < 2 ? (
         <Typography variant="small" className={styles.hintBanner}>
-          Create at least two agents before enabling collaboration.{" "}
+          {t("agent.collaboration.needTwoAgents")}{" "}
           <Link
             href={`${DASHBOARD_BASE_PATH}/agent`}
             className={styles.inlineLink}
           >
-            Go to agents
+            {t("agent.collaboration.goToAgents")}
           </Link>
         </Typography>
       ) : null}
 
       {needsMoreAgents ? (
         <Typography variant="small" className={styles.hintBanner}>
-          Collaboration works best with two or more enabled agents in the pool.
+          {t("agent.collaboration.bestWithTwo")}
         </Typography>
       ) : null}
 
@@ -198,7 +203,7 @@ export default function ClientCollaborationPage() {
           disabled={!projectId || saving || Boolean(validationError) || !dirty}
           onClick={() => void handleSave()}
         >
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? t("agent.collaboration.saving") : t("agent.collaboration.saveChanges")}
         </Button>
       </Flex>
     </div>

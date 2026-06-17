@@ -10,18 +10,6 @@ async function login(page) {
   await page.waitForURL(/\/dashboard/);
 }
 
-function describe(el, depth = 0) {
-  if (!el || depth > 8) return null;
-  const cn = el.className?.toString?.() ?? "";
-  const r = el.getBoundingClientRect();
-  return {
-    tag: el.tagName,
-    className: cn.slice(0, 120),
-    children: [...el.children].map((c) => describe(c, depth + 1)),
-    rect: { h: Math.round(r.height), w: Math.round(r.width) },
-  };
-}
-
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 

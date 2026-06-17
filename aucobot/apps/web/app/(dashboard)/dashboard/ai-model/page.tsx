@@ -1,5 +1,5 @@
 import { Flex, Container } from "@/components/layout/";
-import ClientAIModelPage from "./_components/ClientAIModelPage/ClientAIModelPage";
+import { ClientAIModelPage } from "./_components/ClientAIModelPage/ClientAIModelPage";
 import styles from "./ai-model.module.css";
 
 export default function Page() {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { dashboardPath } from "@/lib/routing/dashboard-route";
 import { Flex } from "@/components/layout";
@@ -24,6 +24,7 @@ import {
 } from "@/utils/agent/cron-format";
 import type { CronJob } from "@/schemas/cron.schema";
 import { CalendarClock, Play, Trash2, Plus } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import styles from "./CardSchedules.module.css";
 
 interface CardSchedulesProps {
@@ -33,13 +34,14 @@ interface CardSchedulesProps {
 
 type ScheduleKind = "cron" | "every" | "at";
 
-const SCHEDULE_OPTIONS = [
-  { value: "cron", label: "Cron expression" },
-  { value: "every", label: "Interval" },
-  { value: "at", label: "One-shot" },
-];
+const SCHEDULE_OPTION_KEYS = [
+  { value: "cron", labelKey: "agent.schedules.tab.typeCron" },
+  { value: "every", labelKey: "agent.schedules.tab.typeInterval" },
+  { value: "at", labelKey: "agent.schedules.tab.typeOnce" },
+] as const;
 
 export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
 
   const [jobs, setJobs] = useState<CronJob[]>([]);
@@ -59,6 +61,15 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
   const [everyMinutes, setEveryMinutes] = useState("60");
   const [at, setAt] = useState("");
 
+  const scheduleOptions = useMemo(
+    () =>
+      SCHEDULE_OPTION_KEYS.map((option) => ({
+        value: option.value,
+        label: t(option.labelKey),
+      })),
+    [t],
+  );
+
   const loadJobs = useCallback(async () => {
     if (!projectId || !isEditing) {
       return;
@@ -74,7 +85,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
       setQuotaTotal(summary.total);
       setJobs(list.jobs);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot load schedules");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.load"));
       setJobs([]);
     } finally {
       setLoading(false);
@@ -125,7 +136,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
       setShowForm(false);
       await loadJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot create schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.create"));
     } finally {
       setSaving(false);
     }
@@ -140,7 +151,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
       await projectApi.updateCronJob(projectId, job.id, { enabled: !job.enabled });
       await loadJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot update schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.update"));
     } finally {
       setBusyJobId(null);
     }
@@ -155,7 +166,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
       await projectApi.runCronJob(projectId, jobId);
       await loadJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot run schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.run"));
     } finally {
       setBusyJobId(null);
     }
@@ -170,7 +181,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
       await projectApi.deleteCronJob(projectId, jobId);
       await loadJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot delete schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.delete"));
     } finally {
       setBusyJobId(null);
     }
@@ -180,10 +191,10 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
     return (
       <Card className={styles.card} disableHover>
         <Typography variant="p" weight="bold">
-          Schedules
+          {t("agent.editPanel.tabs.schedules")}
         </Typography>
         <Typography variant="small" color="muted">
-          Save the agent first, then add scheduled tasks for this bot.
+          {t("agent.schedules.tab.saveFirst")}
         </Typography>
       </Card>
     );
@@ -197,14 +208,16 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
         <Flex justify="between" align="start" gap={4} className={styles.headerRow}>
           <div className={styles.header}>
             <Typography variant="p" weight="bold">
-              Schedules
+              {t("agent.editPanel.tabs.schedules")}
             </Typography>
             <Typography variant="small" color="muted">
-              Run this agent on a schedule (gateway cron). Permissions for tools and
-              channels are configured in Connect and Channel tabs.
+              {t("agent.schedules.tab.description")}
             </Typography>
             <Typography variant="small" className={styles.quota}>
-              {quotaTotal} / {quotaLimit} jobs in project
+              {t("agent.schedules.tab.jobsUsed", {
+                total: String(quotaTotal),
+                limit: String(quotaLimit),
+              })}
             </Typography>
           </div>
           <Button
@@ -214,7 +227,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
             onClick={() => setShowForm((open) => !open)}
           >
             <Plus size={14} aria-hidden />
-            Add schedule
+            {t("agent.schedules.tab.add")}
           </Button>
         </Flex>
 
@@ -222,7 +235,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
           id="agent-schedule-search"
           value={search}
           onChange={setSearch}
-          placeholder="Search schedules..."
+          placeholder={t("agent.schedules.tab.searchPlaceholder")}
           maxWidth="100%"
         />
 
@@ -231,7 +244,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
             <Typography variant="small">{error}</Typography>
             {error.includes("not available") || error.includes("GATEWAY") ? (
               <Typography variant="small" color="muted">
-                Start the project gateway, then try again.
+              {t("agent.schedules.jobs.gatewayHint")}
               </Typography>
             ) : null}
           </div>
@@ -242,25 +255,25 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
             <div className={styles.formFull}>
               <Input
                 id="schedule-name"
-                label="Name"
+                label={t("agent.schedules.tab.name")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Daily report"
+                placeholder={t("agent.schedules.tab.namePlaceholder")}
               />
             </div>
             <div className={styles.formFull}>
               <Input
                 id="schedule-message"
-                label="Agent prompt"
+                label={t("agent.schedules.tab.prompt")}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Summarize inbox and post to Slack"
+                placeholder={t("agent.schedules.tab.promptPlaceholder")}
               />
             </div>
             <Select
               id="schedule-kind"
               label="Schedule type"
-              options={SCHEDULE_OPTIONS}
+              options={scheduleOptions}
               value={scheduleKind}
               onValueChange={(value) => setScheduleKind(value as ScheduleKind)}
             />
@@ -268,7 +281,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
               <div className={styles.formFull}>
                 <Input
                   id="schedule-cron-expr"
-                  label="Cron expression"
+                  label={t("agent.schedules.tab.cronExpression")}
                   value={cronExpr}
                   onChange={(e) => setCronExpr(e.target.value)}
                   placeholder="0 9 * * *"
@@ -278,7 +291,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
             {scheduleKind === "every" ? (
               <Input
                 id="schedule-every"
-                label="Every (minutes)"
+                label={t("agent.schedules.tab.everyMinutes")}
                 type="number"
                 min={1}
                 value={everyMinutes}
@@ -288,10 +301,10 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
             {scheduleKind === "at" ? (
               <Input
                 id="schedule-at"
-                label="Run at (ISO datetime)"
+                label={t("agent.schedules.tab.runAt")}
                 value={at}
                 onChange={(e) => setAt(e.target.value)}
-                placeholder="2026-06-01T09:00:00"
+                placeholder={t("agent.schedules.tab.runAtPlaceholder")}
               />
             ) : null}
             <div className={styles.formFull}>
@@ -303,7 +316,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
                   disabled={!name.trim() || !message.trim() || atQuota}
                   onClick={() => void handleCreate()}
                 >
-                  Create schedule
+                  {t("agent.schedules.tab.create")}
                 </Button>
                 <Button
                   type="button"
@@ -314,7 +327,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
                     resetForm();
                   }}
                 >
-                  Cancel
+                  {t("agent.schedules.tab.cancel")}
                 </Button>
               </Flex>
             </div>
@@ -330,8 +343,8 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
             <CalendarClock size={28} aria-hidden />
             <Typography variant="small" color="muted">
               {jobs.length === 0
-                ? "No schedules for this agent yet."
-                : "No schedules match your search."}
+                ? t("agent.schedules.tab.empty")
+                : t("agent.schedules.tab.noMatch")}
             </Typography>
           </div>
         ) : (
@@ -350,13 +363,19 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
                     <div className={styles.jobMeta}>
                       <span className={styles.scheduleBadge}>{formatCronSchedule(job)}</span>
                       <Typography variant="small" color="muted">
-                        Next: {formatNextRun(job)}
+                        {t("agent.schedules.jobs.next", {
+                          time: formatNextRun(job),
+                        })}
                       </Typography>
                       {status === "ok" ? (
-                        <span className={styles.statusOk}>Last run OK</span>
+                        <span className={styles.statusOk}>
+                          {t("agent.schedules.jobs.lastOk")}
+                        </span>
                       ) : null}
                       {status === "error" ? (
-                        <span className={styles.statusError}>Last run failed</span>
+                        <span className={styles.statusError}>
+                          {t("agent.schedules.jobs.lastFailed")}
+                        </span>
                       ) : null}
                     </div>
                   </div>
@@ -368,7 +387,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
                       iconOnly
                       disabled={busyJobId === job.id}
                       onClick={() => void runNow(job.id)}
-                      aria-label={`Run ${job.name} now`}
+                      aria-label={t("agent.schedules.jobs.runNowAria", { name: job.name })}
                     >
                       <Play size={14} />
                     </Button>
@@ -376,7 +395,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
                       checked={job.enabled}
                       disabled={busyJobId === job.id}
                       onCheckedChange={() => void toggleEnabled(job)}
-                      aria-label={`Enable ${job.name}`}
+                      aria-label={t("agent.schedules.jobs.enableAria", { name: job.name })}
                     />
                     <Button
                       type="button"
@@ -385,7 +404,7 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
                       iconOnly
                       disabled={busyJobId === job.id}
                       onClick={() => void removeJob(job.id)}
-                      aria-label={`Delete ${job.name}`}
+                      aria-label={t("agent.schedules.jobs.deleteAria", { name: job.name })}
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -398,8 +417,11 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
       </Card>
 
       <Typography variant="small" color="muted">
-        <Link href={dashboardPath("agent", "schedules")}>Project schedules</Link> lists all
-        jobs across agents; <Link href="/dashboard">Overview</Link> shows quota and failures.
+        {t("agent.schedules.tab.footerPrefix")}{" "}
+        <Link href={dashboardPath("agent", "schedules")}>
+          {t("agent.schedules.tab.projectSchedules")}
+        </Link>{" "}
+        {t("agent.schedules.tab.footerSuffix")}
       </Typography>
     </div>
   );

@@ -1,5 +1,4 @@
 import { Container, Flex } from "@/components/layout";
-import { TitleHeader } from "@/components/dashboard";
 import { ClientOverviewPage } from "./_components/ClientOverviewPage/ClientOverviewPage";
 import styles from "./overview.module.css";
 

@@ -1,21 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Flex } from "@/components/layout";
 import { Typography, Button, Card, Input, Select } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import {
   HEARTBEAT_MD_PLACEHOLDER,
   type HeartbeatIntervalPreset,
 } from "@/utils/agent/heartbeat-interval";
 import styles from "./CardHeartbeatConfig.module.css";
-
-const PRESET_OPTIONS: { value: HeartbeatIntervalPreset; label: string }[] = [
-  { value: "off", label: "Off" },
-  { value: "15m", label: "Every 15 minutes" },
-  { value: "30m", label: "Every 30 minutes" },
-  { value: "1h", label: "Every 1 hour" },
-  { value: "custom", label: "Custom" },
-];
 
 type CardHeartbeatConfigProps = {
   preset: HeartbeatIntervalPreset;
@@ -48,14 +41,27 @@ export function CardHeartbeatConfig({
   onHeartbeatMdChange,
   onSave,
 }: CardHeartbeatConfigProps) {
+  const { t } = useI18n();
+
+  const presetOptions = useMemo(
+    (): { value: HeartbeatIntervalPreset; label: string }[] => [
+      { value: "off", label: t("agent.heartbeat.config.off") },
+      { value: "15m", label: t("agent.heartbeat.config.every15") },
+      { value: "30m", label: t("agent.heartbeat.config.every30") },
+      { value: "1h", label: t("agent.heartbeat.config.every1h") },
+      { value: "custom", label: t("agent.heartbeat.config.custom") },
+    ],
+    [t],
+  );
+
   return (
     <Card className={styles.card}>
       <div className={styles.fieldGroup}>
         <Typography variant="small" weight="medium">
-          Interval
+          {t("agent.heartbeat.config.interval")}
         </Typography>
         <div className={styles.presetRow}>
-          {PRESET_OPTIONS.map((option) => (
+          {presetOptions.map((option) => (
             <label key={option.value} className={styles.presetOption}>
               <input
                 type="radio"
@@ -70,21 +76,21 @@ export function CardHeartbeatConfig({
         {preset === "custom" ? (
           <Flex align="end" gap={8} className={styles.customRow}>
             <Input
-              label="Custom interval"
+              label={t("agent.heartbeat.config.customInterval")}
               type="number"
               min={1}
               value={customAmount}
               onChange={(e) => onCustomAmountChange(e.target.value)}
             />
             <Select
-              label="Unit"
+              label={t("agent.heartbeat.config.unit")}
               value={customUnit}
               onValueChange={(value) =>
                 onCustomUnitChange(value === "h" ? "h" : "m")
               }
               options={[
-                { value: "m", label: "Minutes" },
-                { value: "h", label: "Hours" },
+                { value: "m", label: t("agent.heartbeat.config.minutes") },
+                { value: "h", label: t("agent.heartbeat.config.hours") },
               ]}
             />
           </Flex>
@@ -93,7 +99,7 @@ export function CardHeartbeatConfig({
 
       <div className={styles.fieldGroup}>
         <Typography variant="small" weight="medium">
-          HEARTBEAT.md checklist
+          {t("agent.heartbeat.config.checklist")}
         </Typography>
         <textarea
           className={styles.textarea}
@@ -107,7 +113,9 @@ export function CardHeartbeatConfig({
 
       <Flex justify="between" align="center" className={styles.footerRow}>
         <Typography variant="small" color="muted">
-          Effective: {effectiveEvery ?? "disabled"}
+          {t("agent.heartbeat.config.effective", {
+            value: effectiveEvery ?? t("agent.heartbeat.config.disabled"),
+          })}
         </Typography>
         <Button
           variant="primary"
@@ -115,7 +123,7 @@ export function CardHeartbeatConfig({
           onClick={onSave}
           disabled={saving || !projectId}
         >
-          {saving ? "Saving…" : "Save heartbeat"}
+          {saving ? t("agent.heartbeat.config.saving") : t("agent.heartbeat.config.save")}
         </Button>
       </Flex>
     </Card>

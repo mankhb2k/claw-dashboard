@@ -156,6 +156,7 @@ export function ToolResearchBlock({ entries }: ToolResearchBlockProps) {
                   className={styles.sourcePill}
                   title={source.title ?? source.url}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- remote favicon from arbitrary source domains; next/image would require remotePatterns config + fixed dimensions for a tiny decorative icon */}
                   <img
                     src={faviconUrl(source.domain)}
                     alt=""

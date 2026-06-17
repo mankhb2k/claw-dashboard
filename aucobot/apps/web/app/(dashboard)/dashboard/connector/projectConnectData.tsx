@@ -1,5 +1,3 @@
-import React from "react";
-
 export type ServiceType = "MCP" | "API" | "OAUTH";
 
 export type PermissionMode = "allow" | "ask" | "block";

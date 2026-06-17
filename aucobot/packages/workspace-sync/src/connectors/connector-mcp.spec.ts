@@ -6,14 +6,14 @@ describe('buildRemoteMcpServerEntry', () => {
   it('builds streamable-http config', () => {
     const entry = buildRemoteMcpServerEntry(
       {
-        baseUrl: 'http://mcp:8080',
+        baseUrl: 'http://mcp:8388',
         signProjectToken: () => 'signed-token',
       },
       'project-abc',
       { slug: 'google-drive', mcpServerId: 'google-drive' },
     );
     assert.deepEqual(entry, {
-      url: 'http://mcp:8080/connectors/google-drive/mcp',
+      url: 'http://mcp:8388/connectors/google-drive/mcp',
       transport: 'streamable-http',
       headers: { Authorization: 'Bearer signed-token' },
     });
@@ -29,7 +29,7 @@ describe('buildMcpServerEntry dual mode', () => {
       {
         projectId: 'p1',
         remoteMcp: {
-          baseUrl: 'http://localhost:8080',
+          baseUrl: 'http://localhost:8388',
           signProjectToken: () => 'tok',
         },
       },

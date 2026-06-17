@@ -20,7 +20,8 @@ import {
   OPTIMIZE_SEED_USER_MESSAGE,
 } from "@/utils/agent/agent-panel-context";
 import { dispatchApplyAgentsMd } from "@/utils/agent/agent-panel-events";
-import { MessageBox } from "@/components/dashboard/MessageBox";
+import { MessageBox } from "@/components/chat/MessageBox";
+import { useI18n } from "@/lib/i18n";
 import { AgentPanelNoModelBanner } from "./AgentPanelModelBar";
 import { CardOptimizeResult } from "./CardOptimizeResult/CardOptimizeResult";
 import styles from "./AgentPanel.module.css";
@@ -46,8 +47,12 @@ function renderSimpleMarkdown(text: string): React.ReactNode {
   });
 }
 
-function formatApiError(err: unknown, providerId?: string): React.ReactNode {
-  const msg = err instanceof Error ? err.message : "AI did not respond";
+function formatApiError(
+  err: unknown,
+  providerId: string | undefined,
+  t: (path: string) => string,
+): React.ReactNode {
+  const msg = err instanceof Error ? err.message : t("agent.panel.noResponse");
   const needsKey =
     msg.includes("NO_PROVIDER_KEY") ||
     msg.includes("PROVIDER_DISABLED") ||
@@ -58,7 +63,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
       <>
         {msg}{" "}
         <Link href={`/dashboard/ai-model/${providerId}`}>
-          Open provider settings
+          {t("agent.panel.openProviderSettings")}
         </Link>
       </>
     );
@@ -67,7 +72,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
     return (
       <>
         {msg}{" "}
-        <Link href="/dashboard/ai-model">Connect AI Model</Link>
+        <Link href="/dashboard/ai-model">{t("agent.panel.connectAiModel")}</Link>
       </>
     );
   }
@@ -75,6 +80,7 @@ function formatApiError(err: unknown, providerId?: string): React.ReactNode {
 }
 
 export function AgentPanel() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const formSnapshot = useAgentEditorStore((s) => s.formSnapshot);
   const activeEditTab = useAgentEditorStore((s) => s.activeEditTab);
@@ -121,7 +127,7 @@ export function AgentPanel() {
       intent: "optimize" | "chat",
     ) => {
       if (!projectId || !providerId || !modelId) {
-        throw new Error("Select a provider and model first");
+        throw new Error(t("agent.panel.selectModelFirst"));
       }
 
       const apiMessages = nextMessages
@@ -178,12 +184,12 @@ export function AgentPanel() {
         const res = await callAgentAi(nextMessages, intent);
         appendAssistantFromApi(res);
       } catch (err) {
-        setApiError(formatApiError(err, providerId));
+        setApiError(formatApiError(err, providerId, t));
       } finally {
         setIsTyping(false);
       }
     },
-    [isTyping, messages, callAgentAi, appendAssistantFromApi, providerId],
+    [isTyping, messages, callAgentAi, appendAssistantFromApi, providerId, t],
   );
 
   const sendMessage = useCallback(
@@ -293,12 +299,12 @@ export function AgentPanel() {
           <Sparkles size={18} aria-hidden className={panelStyles.headerIcon} />
           <Flex direction="column" gap={2}>
             <Typography variant="p" weight="bold">
-              Agent assistant
+              {t("agent.panel.title")}
             </Typography>
             <Typography variant="xs" color="muted">
               {optimizeMode
-                ? "Optimizing AGENTS.md…"
-                : "Draft AGENTS.md · Bot Agent tab guidance"}
+                ? t("agent.panel.optimizing")
+                : t("agent.panel.drafting")}
             </Typography>
           </Flex>
         </Flex>
@@ -307,7 +313,7 @@ export function AgentPanel() {
           variant="ghost"
           size="md"
           iconOnly
-          title="Reset conversation"
+          title={t("agent.panel.resetConversation")}
           onClick={resetChat}
         >
           <RotateCcw size={16} />
@@ -392,7 +398,9 @@ export function AgentPanel() {
                 <Flex align="center" gap={8}>
                   <Spinner size="sm" />
                   <Typography variant="small" color="muted">
-                    {optimizeMode ? "AI is analyzing…" : "Drafting…"}
+                    {optimizeMode
+                      ? t("agent.panel.analyzing")
+                      : t("agent.panel.draftingReply")}
                   </Typography>
                 </Flex>
               </Box>
@@ -412,8 +420,8 @@ export function AgentPanel() {
           disabled={inputDisabled}
           placeholder={
             optimizeMode
-              ? "Answer the AI's questions to finish AGENTS.md…"
-              : "Describe the agent, ask about a tab, or request AGENTS.md…"
+              ? t("agent.panel.placeholderOptimize")
+              : t("agent.panel.placeholderChat")
           }
           providerId={providerId}
           providerOptions={providerSelectOptions}
@@ -424,12 +432,12 @@ export function AgentPanel() {
           modelsLoading={modelsLoading}
           inputId="agent-panel-message-input"
           composerId="agent-panel-composer"
-          ariaLabel="Agent assistant message input"
-          hint={`Left tab: ${activeEditTab}. ${
+          ariaLabel={t("agent.panel.inputAria")}
+          hint={
             hasProviders
-              ? "Optimize with AI uses the selected model."
-              : "Add an API key to use AI."
-          }`}
+              ? t("agent.panel.hintWithModel", { tab: activeEditTab })
+              : t("agent.panel.hintNoModel", { tab: activeEditTab })
+          }
         />
       </div>
     </Flex>

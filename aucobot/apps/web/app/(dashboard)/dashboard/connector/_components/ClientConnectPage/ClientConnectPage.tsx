@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button/Button";
 import styles from "./ClientConnectPage.module.css";
 import { Typography } from "@/components/ui/Typography/Typography";
 import { Flex } from "@/components/layout";
-import { I18nTitleHeader } from "@/components/dashboard";
+import { TitleHeader } from "@/components/dashboard";
 import { useI18n } from "@/lib/i18n";
 import { toServiceConnectData } from "../../connect-display";
 import type { ServiceConnectData } from "../../projectConnectData";
@@ -22,7 +22,7 @@ interface ClientConnectPageProps {
   projectId: string;
 }
 
-export default function ClientConnectPage({ projectId }: ClientConnectPageProps) {
+export function ClientConnectPage({ projectId }: ClientConnectPageProps) {
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,7 +93,7 @@ export default function ClientConnectPage({ projectId }: ClientConnectPageProps)
   };
 
   const pageHeader = (
-    <I18nTitleHeader
+    <TitleHeader
       titleKey="connect.page.title"
       descriptionKey="connect.page.description"
       showBorder

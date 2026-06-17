@@ -5,7 +5,7 @@
 
 ---
 
-## Tổng quan 6 nhóm (ưu tiên)
+## Tổng quan 7 nhóm (ưu tiên)
 
 | # | Nhóm | Trạng thái trong rule |
 |---|------|------------------------|
@@ -15,6 +15,7 @@
 | 4 | **Data & state** | Đã có — API, fetch, form, state, loading/error |
 | 5 | **UI & CSS** | Đã có (CSS Modules, design tokens) |
 | 6 | **Phạm vi task** | Đã có — scope, cấm, verify |
+| 7 | **Lint & Enforcement** | Đã có — §7 (ESLint error/warn + CI) |
 
 ---
 
@@ -108,7 +109,7 @@
 
 | Folder | Vai trò | Được chứa | Cấm |
 |--------|---------|-----------|-----|
-| **`utils/<domain>/`** | Helper **thuần** theo domain | Transform, parse, validate, tính toán không side-effect | React, gọi API/WS, JSX |
+| **`utils/<domain>/`** | Helper **thuần** theo domain | Transform, parse, validate, tính toán không side-effect; `import type` + `lib/http/api-base-url` (hàm thuần) được phép (§7.2) | React, gọi API/WS (value `lib/api`/`axios`/`fetch`), JSX |
 | **`hooks/<domain>/`** | **React hook** theo domain | `useState`, `useEffect`, compose `utils` + `lib/api` | Helper thuần, component UI |
 | **`lib/<domain>/`** | **Client / service** có I/O theo domain | WebSocket client, class kết nối (vd `project-chat-client`) | React hook, JSX |
 | **`lib/http/`** | **HTTP transport** toàn app | `axios`, `api-base-url`, `server-api` | Business API, JSX |
@@ -119,7 +120,8 @@
 | **`hooks/`** (root) | Hook **cross-domain** (hiếm) | Dùng ≥2 domain không liên quan | Hook thuộc 1 domain |
 | **`components/ui/`** | Design system | Button, Input, Dialog… | Business logic, API |
 | **`components/layout/`** | Layout thuần | Flex, Container, Grid | Fetch, domain rule |
-| **`components/dashboard/`** | Shell dùng **≥2 màn** | Sidebar, MessageBox, Header | Logic chỉ 1 feature |
+| **`components/dashboard/`** | Shell dùng **≥2 màn** | Sidebar, TitleHeader, Header | Logic chỉ 1 feature |
+| **`components/chat/`** | UI chat **tái dùng** + story | `MessageBox`, `ChatMarkdown` | Logic 1 màn chat |
 
 **Chọn folder nhanh:**
 
@@ -135,13 +137,14 @@ Infra khác (theme, route)? → lib/<infra>/
 **Luồng phụ thuộc (cấm đảo ngược):**
 
 ```text
-_components / components  →  hooks/<domain>  →  lib/api + utils/<domain> + lib/<domain>
-                                              →  lib/ (infra)
+_components / components  →  hooks/<domain>  →  lib/api + utils/<domain> + lib/<domain> + lib/ (infra)
+_components / components  →  lib/api            (action 1 phát: toggle/submit — §4.5, §7.2)
 ```
 
 - `utils` **không** import `hooks`
 - `hooks` **được** import `utils`, `lib/api`, `lib/<domain>`
-- **Cấm** `fetch`/`axios` trực tiếp trong component — qua `lib/api/*`
+- `_components`/`components` **được** import `lib/api` trực tiếp cho **action đơn** (§4.5); logic fetch/transform **dùng lại ≥2 nơi** → tách `hooks/<domain>/`
+- **Cấm** `fetch`/`axios` **thô** trong component/hook — qua `lib/api/*` (§7.2)
 
 > **Code mới bắt buộc** `hooks/<domain>/`, `utils/<domain>/`, `stores/<domain>/`.
 
@@ -170,7 +173,7 @@ _components / components  →  hooks/<domain>  →  lib/api + utils/<domain> + l
 - Tạo `<button>` custom → `Button` từ `components/ui`
 - Copy hook thành bản mới → import từ `hooks/<domain>/`
 - Đặt helper thuần trong `hooks/` hoặc hook trong `utils/`
-- Tạo `hooks/useXxx` khi chỉ 1 domain dùng → `hooks/<domain>/`
+- Tạo `hooks/use-xxx` ở root khi chỉ 1 domain dùng → `hooks/<domain>/`
 
 ### 2.5 UI Primitives (Composition First)
 
@@ -202,7 +205,7 @@ apps/web/
 ├── hooks/                  §3.D   React hooks (bắt buộc code mới)
 │   ├── chat/                      use-model-catalog, use-chat-model-select, use-chat-sandbox-context
 │   ├── skill/                     use-skill-model-select
-│   └── useProjectNavigation.ts    # root — nav cross-route (sidebar)
+│   └── use-project-navigation.ts  # root — nav cross-route (sidebar)
 ├── utils/                  §3.E   Helper thuần (bắt buộc code mới)
 │   ├── agent/                     cron, heartbeat, collaboration-events, agent-panel-*
 │   ├── chat/                      session-key, groups, model-catalog transform, message-extract…
@@ -238,7 +241,7 @@ apps/web/
 ```
 
 ```text
-app/ → components/ + hooks/ + stores/
+app/ → components/ + hooks/ + stores/ + lib/api (action đơn — §4.5)
 hooks/ → lib/api/ + utils/<domain>/ + lib/<domain>/
 lib/api/ → lib/http/axios.ts
 lib/http/server-api.ts ← page.tsx (RSC only)
@@ -287,6 +290,9 @@ app/
 | `useState`, API client | ❌ | ✅ |
 
 - **`setup/`** + **`(dashboard)/dashboard/**`**: bắt buộc tuân theo.
+- **Mọi `page.tsx`** đều bọc layout chuẩn (`Container`/`Flex` + `<feature>.module.css`, `TitleHeader` nếu có) rồi render đúng 1 `<ClientXxxPage />` — **không** để `page.tsx` chỉ render trơ `<ClientXxxPage />` không khung. Shell **không được** đặt bên trong `ClientXxxPage` (client component) — phải ở `page.tsx`.
+  - **Section route dùng chung shell:** với nhóm route con (vd `agent/`, `agent/collaboration`, `agent/heartbeat`, `agent/schedules`) shell + section nav đặt ở `agent/layout.tsx` dùng chung là **đạt chuẩn** — khi đó `page.tsx` con render trơ `<ClientXxxPage />` là **đúng** (không bọc thêm kẻo double-wrapper).
+  - **Route canvas full-bleed** (vd `chat` — `contentCanvas`): `page.tsx` chỉ bọc `<div className={styles.page}>` full-bleed, **không** `Container` (Container giới hạn bề rộng sẽ vỡ layout chat).
 - **`(auth)/`**: ngoại lệ — không bắt buộc `ClientXxxPage` / `_components/`.
 
 #### 3.B.3 `_components/` — folder bắt buộc
@@ -330,11 +336,13 @@ _components/CardXxx/CardXxx.tsx
 |-----------|---------|-----|
 | **`ui/`** | Design system (Button, Input, Dialog…) | Business logic, API |
 | **`layout/`** | Bố cục (Flex, Container, Grid) | Fetch, domain rule |
-| **`dashboard/`** | Widget **≥2 route** (Sidebar, MessageBox, TitleHeader) | Logic 1 feature |
+| **`dashboard/`** | Widget **≥2 route** (Sidebar, TitleHeader, Header) | Logic 1 feature |
+| **`chat/`** | UI chat **tái dùng** + Storybook chat (`MessageBox`, `ChatMarkdown`…) | Logic 1 màn chat (→ `app/.../chat/_components/`) |
 
-- Mỗi component = folder + `.module.css`; ui/layout/dashboard có `.stories.tsx`.
+- Mỗi component = **folder riêng** + `ComponentName.tsx` + `ComponentName.module.css` (nếu có style) + `.stories.tsx` (ui/layout/dashboard/chat) — đặt tên theo **§3.M**.
 - Import gộp: `@/components/ui`, `@/components/layout`.
-- Feature-specific → `app/.../_components/`, không đặt ở đây.
+- **`components/chat/`**: nơi ở của UI chat dùng chung (gồm `MessageBox`). Component **chỉ thuộc 1 màn chat** vẫn ở `app/.../chat/_components/`.
+- Feature-specific (1 màn) → `app/.../_components/`, không đặt ở đây.
 
 ---
 
@@ -344,11 +352,12 @@ _components/CardXxx/CardXxx.tsx
 |------|---------|---------------|
 | **`hooks/chat/`** | Hook chat / model / sandbox | `use-model-catalog`, `use-chat-model-select`, `use-chat-sandbox-context` |
 | **`hooks/skill/`** | Hook skill editor | `use-skill-model-select` |
-| **`hooks/` (root)** | Hook **cross-domain** (≥2 domain) | `useProjectNavigation` (sidebar nav) |
+| **`hooks/` (root)** | Hook **cross-domain** (≥2 domain) | `use-project-navigation` (sidebar nav) |
 
 - Có `useState` / `useEffect` → **đây**, không `utils/`, không `lib/`.
 - Compose: `lib/api/` + `utils/<domain>/` + `lib/<domain>/`.
-- **Cấm** JSX, helper thuần, hook 1 domain ở root `hooks/useXxx.ts`.
+- Tên file **kebab** `use-xxx.ts` (kể cả root) — xem §3.M.
+- **Cấm** JSX, helper thuần, hook 1 domain ở root `hooks/use-xxx.ts`.
 
 ---
 
@@ -469,6 +478,44 @@ State 1 component?           → useState
 | **`proxy.ts`** | Route guard, session check |
 | **`next.config.ts`** | Rewrites API, redirects |
 | **Cấm** business logic feature |
+
+---
+
+### 3.M — Quy ước đặt tên & export *(đã chốt)*
+
+> Một quy ước duy nhất cho mọi file — không để mỗi người một kiểu. Áp dụng cho **code mới**; file cũ migrate dần (§7.4).
+
+#### 3.M.1 Tên file
+
+| Loại | Quy ước | Ví dụ |
+|------|---------|-------|
+| **Component** (`.tsx`) | **PascalCase**, folder riêng cùng tên | `ChatPanel/ChatPanel.tsx` |
+| **CSS Module (component)** | **`ComponentName.module.css`** — khớp đúng tên component | `ChatPanel/ChatPanel.module.css`, `MessageBox/MessageBox.module.css` |
+| **CSS phụ** trong 1 folder component (đi kèm css chính) | **PascalCase mô tả** | `AgentPanel/AgentPanelLayout.module.css` (cạnh `AgentPanel.module.css`) |
+| **CSS cấp page/route** (owner `page.tsx`/`layout.tsx`) | `<feature>.module.css` / `layout.module.css` (kebab/lowercase) | `ai-model.module.css`, `connect.module.css`, `dashboard/layout.module.css` |
+| **CSS dùng chung** nhiều component | kebab + tiền tố rõ (ngoại lệ) | `setup-shared.module.css` |
+| **Hook** | **kebab** `use-xxx.ts` (kể cả root) | `use-project-navigation.ts` |
+| **Util / lib / store** | **kebab** | `model-catalog.ts`, `project-chat-client.ts`, `agent-editor.store.ts` |
+| **Schema** | **kebab** `xxx.schema.ts` | `agent-form.schema.ts` |
+| **Story** | `ComponentName.stories.tsx` | `Button.stories.tsx` |
+
+- **Toàn bộ file non-component dùng kebab.** Không camelCase tên file (vd `agentForm.schema.ts` → `agent-form.schema.ts`).
+- **Hook co-located (page-local)** — hook chỉ phục vụ đúng 1 màn (cả orchestrator của `ClientXxxPage` **lẫn** các hook con tách ra từ nó) đặt **co-located** trong `_components/ClientXxxPage/` và vẫn dùng tiền tố `use-xxx.ts`. Yếu tố phân biệt với `hooks/` là **vị trí**, không phải tên: co-located = dùng đúng 1 màn; `hooks/` = tái dùng ≥2 màn. Khi orchestrator phình to (>1k dòng), tách các phần **state riêng / derive thuần** thành hook con co-located, **giữ phần lõi gắn kết** (vd WebSocket + streaming) trong orchestrator để tránh phải truyền `ref`/`setter` chung qua lại (dependency threading). Ví dụ — `chat/_components/ClientChatPage/`: `use-client-chat-page.ts` (orchestrator) compose `use-chat-session-search.ts`, `use-sidebar-preference.ts`, `use-chat-derivations.ts`.
+
+#### 3.M.2 Export
+
+| Loại file | Export |
+|-----------|--------|
+| Component, hook, util, helper | **Named export** (`export function ChatPanel() {}`) |
+| `page.tsx`, `layout.tsx`, file Next yêu cầu | **Default export** (Next bắt buộc) |
+
+- **Cấm `export default`** cho component/hook/util (trừ file Next ép default).
+- Lý do: dễ grep, đổi tên đồng bộ, auto-import nhất quán.
+
+#### 3.M.3 Enforce
+
+- Export: lint `no-restricted-syntax` cấm `ExportDefaultDeclaration` trong `components/**` + `app/**/_components/**` (loại trừ `page.tsx`, `layout.tsx`).
+- Tên file: script kiểm tra trong CI (ESLint không lint tên file CSS).
 
 ---
 
@@ -686,5 +733,136 @@ Rule: .agent/rule.md §[liên quan]
 - Mặc định: **chỉ** `apps/web/` + path feature được nhắc trong task.
 - Không đoán mở rộng sang API/backend.
 - Nếu cần sửa ngoài web → **hỏi user** trước.
+
+---
+
+## 7. Lint & Enforcement
+
+> Rule §1–§6 được **enforce tự động** qua ESLint (`apps/web/eslint.config.mjs`) + CI. Máy chặn, không dựa vào trí nhớ. Code mới đỏ lint = không merge.
+
+### 7.1 Hai mức luật
+
+| Mức | Ý nghĩa | Dùng cho |
+|-----|---------|----------|
+| **`error`** | ESLint thoát mã `1` → **CI chặn merge** | Luật ta cam kết giữ sạch 100% |
+| **`warn`** | Hiện ra nhưng thoát mã `0` → **không chặn** | Nợ kỹ thuật — visible, dọn dần |
+
+Nguyên tắc **ratchet (bánh cóc)**: lỗi cũ để `warn`, luật mới đặt `error`, vi phạm chỉ giảm không tăng.
+
+### 7.2 Luật cứng (`error`) — không được vi phạm
+
+| Luật | Nội dung | Rule gốc |
+|------|----------|----------|
+| `@typescript-eslint/no-explicit-any` | Cấm `any` — dùng `unknown` + Zod | §1.3, §5 |
+| `@typescript-eslint/ban-ts-comment` | Cấm `@ts-ignore`, `@ts-nocheck` (cho `@ts-expect-error` kèm mô tả) | §1.3, §5 |
+| `no-restricted-globals: fetch` (UI/hook/utils) | Cấm `fetch` thô — qua `lib/api/*` | §4.1 |
+| `no-restricted-imports: axios` (UI/hook/utils) | Cấm `axios` thô — qua `lib/api/*` | §4.1 |
+| Ranh giới `utils/**` | Cấm import value: react, hooks, components, app, stores, `lib/api`, `lib/http/axios`, `lib/chat`. **Cho** `import type` + `lib/http/api-base-url` (hàm thuần) | §2.1, §3.E |
+| Ranh giới `lib/api/**` | Cấm import value: react, hooks, components, app, stores, `lib/http/server-api` | §3.F, §4.2 |
+| Ranh giới `hooks/**` | Cấm import value: components, app; cấm `fetch`/`axios` | §3.D |
+
+> **Component được phép** import `lib/api/*` trực tiếp (action 1 phát: toggle, submit) — chốt theo §4.5. Chỉ cấm `fetch`/`axios` thô. Logic fetch dùng lại ≥2 nơi vẫn nên tách `hooks/<domain>/` (guideline, không lint).
+>
+> **Ngoại lệ legacy** dùng `// eslint-disable-next-line <rule> -- <lý do + §7>` kèm TODO; ghi vào §7.4. Không lạm dụng cho code mới.
+
+### 7.3 Nới luật
+
+- **Story / test / script** (`*.stories.tsx`, `*.spec.ts`, `scripts/**`): tắt `no-explicit-any`, `no-restricted-*` (code công cụ, không phải sản phẩm).
+
+### 7.4 Nợ kỹ thuật (`warn`) — dọn dần, code mới không thêm
+
+**Snapshot:** sau đợt dọn "Nhóm A" (warning cơ học, 0 rủi ro runtime): **120 → 96 warning, 0 error**. 96 còn lại đều thuộc họ `react-hooks` / React Compiler (rủi ro hành vi → xử lý boy-scout từng case, không quét hàng loạt).
+
+**Còn nợ (warn) — Nhóm B: rủi ro hành vi, KHÔNG nên fix hàng loạt (~94 warning)**
+
+| Rule | Số | Vì sao nguy hiểm |
+|------|----|------------------|
+| `react-hooks/set-state-in-effect` | 62 | Sửa effect dễ gây render-loop/regression; lõi data-loading; chưa có test |
+| `react-hooks/exhaustive-deps` | 27 | Thêm dep có thể gây chạy lại vòng lặp; phải xét từng case |
+| `react-hooks/refs` / `static-components` / memoization | 5 | Đặc thù React Compiler — xử lý từng chỗ một |
+
+> **Tổng snapshot:** 96 warning (94 react-hooks ở bảng trên + ~2 mục khác — xem bảng chi tiết). Chi tiết từng luật, mẫu code, công thức fix → §7.4.2.
+
+**Chi tiết theo luật (warn):**
+
+| Luật (warn) | Số chỗ | Hướng xử lý |
+|-------------|--------|-------------|
+| `react-hooks/set-state-in-effect` | ~62 | React Compiler — bỏ `setState` đồng bộ trong effect, xem từng case (dễ gây render-loop) |
+| `react-hooks/exhaustive-deps` | ~27 | Bổ sung/điều chỉnh deps — xét từng case (thêm dep có thể gây chạy lại vòng) |
+| `react-hooks/refs` | 3 | Không đụng ref lúc render |
+| `react-hooks/preserve-manual-memoization`, `incompatible-library` | 3 | Xem cảnh báo React Compiler |
+| `react-hooks/static-components` | 1 | Đưa định nghĩa component ra ngoài render |
+| `utils/agent/agent-collaboration.ts` gọi `projectApi` | 1 | Đã `eslint-disable` tạm; chuyển `hooks/agent/` hoặc `lib/api/project` |
+
+**Đã dọn (Nhóm A):**
+
+| Luật | Số | Cách đã làm |
+|------|----|-------------|
+| ~~`storybook/no-renderer-packages`~~ | 14 | ✅ đổi import `@storybook/react` → `@storybook/nextjs-vite` |
+| ~~`@typescript-eslint/no-empty-object-type`~~ | 3 | ✅ `interface X extends … {}` → `type X = …` (`CardSection`) |
+| ~~`@typescript-eslint/no-unused-vars`~~ | 3 | ✅ gỡ import/biến thừa (`projectConnectData`, `ClientSetupPage`, script) |
+| ~~`@next/next/*` font + `no-img-element`~~ | 3 | ✅ `eslint-disable` có ghi chú lý do (icon font trong `<head>`; favicon remote) |
+| ~~`react/no-unescaped-entities`~~ | 1 | ✅ chỉnh rule chỉ cấm `>`/`}` (ký tự thật sự nguy hiểm); cho phép `'`/`"` render thẳng — KHÔNG ép `&apos;`/`&quot;` |
+
+**Quy ước boy-scout:** đụng file nào có warn thì dọn warn của file đó luôn (vẫn giữ diff tối thiểu theo §6). Không “dọn cả codebase” trong 1 task.
+
+#### 7.4.1 Migrate chuẩn hoá (Phase 2 — §3.M, §3.C) — code mới theo chuẩn ngay
+
+| Việc | Hiện trạng | Hướng xử lý |
+|------|-----------|-------------|
+| ~~Export default → named (§3.M.2)~~ | ✅ **Xong** — 8 `ClientXxxPage` đã đổi | Đã enforce: lint `no-restricted-syntax` cấm `ExportDefaultDeclaration` |
+| ~~Tên file kebab (§3.M.1)~~ | ✅ **Xong** — `use-project-navigation.ts`, `agent-form.schema.ts` đã rename | `git mv` + cập nhật 8 import |
+| ~~CSS `ComponentName.module.css` (§3.M.1)~~ | ✅ **Xong** — 4 file (`NoApiKey`, `ActiveConnection`, `ClientConnectorPage`, `NoConnection`) đã rename; `setup-shared` giữ kebab (ngoại lệ shared) | `git mv` + sửa import |
+| ~~`page.tsx` bọc layout (§3.B.2)~~ | ✅ **Xong** — `profile` + `chat` dời shell từ ClientXxxPage lên `page.tsx` (chat full-bleed, không Container); `agent` root/collaboration/heartbeat/schedules vốn đã chuẩn qua `agent/layout.tsx` dùng chung (không đụng) | Relocate shell + ghi nhận pattern layout chung |
+| ~~Gom UI chat vào `components/chat/` (§3.C)~~ | ✅ **Xong** — `MessageBox/` (kèm `AttachmentPreviewRow/`, `ContextUsageRing/`) đã dời `components/dashboard/` → `components/chat/MessageBox/`; cập nhật 4 import + gỡ barrel `components/dashboard/index.ts` | Story chuẩn hoá: xem hàng "Thiếu `.stories.tsx`" |
+| ~~Thiếu `.stories.tsx`~~ | ✅ **Xong** — `MessageBox`, `TitleHeader`, `SidebarFooter` đã có story co-located | CSF3 + `I18nProvider` decorator |
+| ~~Tách `use-client-chat-page.ts` (>1k dòng)~~ | ✅ **Xong** — giữ co-located + tiền tố `use-`; tách 3 hook con thuần co-located (`use-chat-session-search`, `use-sidebar-preference`, `use-chat-derivations`); orchestrator 1071→936 dòng; lõi WebSocket/streaming giữ nguyên | Theo §3.M.1 (hook page-local) |
+
+#### 7.4.2 Đánh giá Nhóm B (react-hooks / React Compiler) — nghiên cứu fix sau
+
+> Mục tiêu phần này: ghi lại **bản chất từng luật**, **mẫu code gây ra**, **mức rủi ro khi sửa**, và **công thức fix theo case** để fix dần an toàn. **Không quét hàng loạt** — chưa có test cho phần lõi.
+
+**Bối cảnh:** đây là bộ luật của `eslint-plugin-react-hooks` v6 (đi kèm React Compiler ở Next 16). Chúng cảnh báo các mẫu khiến React Compiler **không tối ưu được** hoặc **không an toàn với concurrent rendering**. Chạy bình thường ở hiện tại, nhưng nên dọn dần trước khi bật React Compiler.
+
+**1. `react-hooks/set-state-in-effect` (~62) — rủi ro CAO khi sửa**
+- *Bản chất:* gọi `setState(...)` **đồng bộ** trong thân `useEffect` → có thể tạo render thừa (render → effect → setState → render lại).
+- *Mẫu trong repo:* (a) đồng bộ giá trị dẫn xuất từ props/state (`setThinkingLevel(target)`, `setSidebarCollapsed(load())`); (b) reset state khi đổi key (`setMessages([])` khi đổi `sessionKey`); (c) set sau `await` trong loader (`status/models/sessions`).
+- *Công thức fix theo case:*
+  - (a) **derive khi render** hoặc `useMemo` thay vì effect + setState (xoá hẳn effect).
+  - (b) cân nhắc đổi sang **`key` prop để remount** component con, hoặc giữ effect nếu rõ ràng.
+  - (c) set sau `await` thường **chấp nhận được** — để lại, hoặc dời sang data-fetching lib (React Query/SWR) ở refactor riêng.
+  - khởi tạo từ storage → **lazy initializer** `useState(() => load())` thay vì effect.
+
+**2. `react-hooks/exhaustive-deps` (~27) — rủi ro TRUNG BÌNH**
+- *Bản chất:* `useEffect/useCallback/useMemo` thiếu hoặc dư dependency.
+- *Công thức fix:* thiếu dep thật → thêm; cố tình (mount-once / ref-like) → `// eslint-disable-next-line react-hooks/exhaustive-deps` **kèm lý do**, hoặc chuyển giá trị sang `useRef`. Cẩn thận: thêm dep mà dep đó bị set trong chính effect → vòng lặp.
+
+**3. `react-hooks/refs` (3) — rủi ro THẤP–TRUNG BÌNH**
+- *Bản chất:* đọc/ghi `ref.current` trong **thân render** (không phải trong effect/handler) → không an toàn concurrent.
+- *Fix:* chuyển truy cập ref vào `useEffect`/event handler, hoặc dùng state nếu giá trị ảnh hưởng render.
+
+**4. `react-hooks/preserve-manual-memoization` + `incompatible-library` (3) — để sau**
+- *Bản chất:* compiler không bảo toàn được `useMemo/useCallback` thủ công, hoặc thư viện không tương thích compiler. Thường **để nguyên**; xử lý khi bật React Compiler chính thức.
+
+**5. `react-hooks/static-components` (1) — rủi ro THẤP, nên fix sớm**
+- *Bản chất:* định nghĩa component **bên trong** render → mỗi lần render tạo type mới → remount + mất state con.
+- *Fix:* đưa định nghĩa component ra **module scope** (ngoài hàm render).
+
+**Hotspot (ưu tiên nghiên cứu):**
+- `chat/_components/ClientChatPage/use-client-chat-page.ts` — đậm đặc nhất (~10), nhưng là **lõi WebSocket/streaming nhạy cảm → để cuối**, fix kèm test thủ công kỹ.
+- `agent/[agentId]/_components/CardIntegrations.tsx`, `AgentPanel.tsx`, `ai-model/[providerId]/_components/ClientProviderIdPage.tsx` — mỗi file vài chỗ, **bắt đầu từ đây** (component nhỏ, dễ kiểm chứng).
+- Phần lớn `ClientXxxPage.tsx` + `Card*/Modal*` còn 1–2 chỗ → dọn **boy-scout** khi đụng tới feature.
+
+**Quy trình fix an toàn (mỗi lượt 1 file):** sửa 1 file → `pnpm typecheck` + `pnpm lint` → tự bấm thử màn liên quan trên `pnpm dev` → commit nhỏ. Không gộp nhiều file lõi trong 1 commit.
+
+### 7.5 Lệnh verify (từ `aucobot/`)
+
+```bash
+pnpm --filter @aucobot/web lint        # 0 error mới được merge
+pnpm --filter @aucobot/web typecheck   # tsc --noEmit, 0 error
+pnpm --filter @aucobot/web build       # §6.4
+```
+
+- CI tự chạy 3 lệnh này trên mỗi PR — xem `.github/workflows/web-ci.yml`.
 
 ---

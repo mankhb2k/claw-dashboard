@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AgentFormInput } from '@/schemas/agentForm.schema';
+import type { AgentFormInput } from '@/schemas/agent-form.schema';
 
 export type AgentEditTab =
   | 'identity'

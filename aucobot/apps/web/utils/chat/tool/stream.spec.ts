@@ -323,7 +323,7 @@ describe('tool output helpers', () => {
 describe('mergeLiveAssistantText', () => {
   it('joins flushed segments and trailing stream text', () => {
     const merged = mergeLiveAssistantText(
-      [{ type: 'text', id: '1', text: 'Let me check.' }],
+      [{ type: 'text', text: 'Let me check.' }],
       'Here is the answer.',
     )
     assert.equal(merged, 'Let me check.\n\nHere is the answer.')

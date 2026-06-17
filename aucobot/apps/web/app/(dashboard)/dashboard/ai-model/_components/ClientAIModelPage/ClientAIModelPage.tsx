@@ -12,7 +12,7 @@ import type {
 } from "@/schemas/project.schema";
 import { mergeProviderCatalog, type MergedProviderCard } from "@/utils/ai-model/merge-provider-catalog";
 import { CardProvider } from "../CardProvider/CardProvider";
-import { I18nTitleHeader, SearchItem } from "@/components/dashboard";
+import { SearchItem, TitleHeader } from "@/components/dashboard";
 import styles from "./ClientAIModelPage.module.css";
 
 function filterProviderCards(
@@ -49,7 +49,7 @@ function ProviderGrid({ cards }: { cards: MergedProviderCard[] }) {
   );
 }
 
-export default function ClientAIModelPage() {
+export function ClientAIModelPage() {
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const [definitions, setDefinitions] = useState<ProviderDefinition[]>([]);
@@ -101,7 +101,7 @@ export default function ClientAIModelPage() {
 
   return (
     <div className={styles.container}>
-      <I18nTitleHeader
+      <TitleHeader
         titleKey="aiModel.page.title"
         descriptionKey="aiModel.page.description"
         showBorder

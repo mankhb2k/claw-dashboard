@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { Button, Typography, Spinner } from "@/components/ui";
 import { Flex } from "@/components/layout";
-import styles from "./no-api-key.module.css";
+import styles from "./NoApiKey.module.css";
 
 interface NoApiKeyProps {
   isLoading?: boolean;

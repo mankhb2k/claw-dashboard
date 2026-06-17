@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Flex } from "@/components/layout";
 import { Typography, Button, Card, Switch, Spinner } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import type { CronJob } from "@/schemas/cron.schema";
 import {
   cronJobMessage,
@@ -43,6 +44,8 @@ export function CardSchedulesJobs({
   onToggleEnabled,
   onRemove,
 }: CardSchedulesJobsProps) {
+  const { t } = useI18n();
+
   return (
     <Card className={styles.card} disableHover>
       {error ? (
@@ -50,7 +53,7 @@ export function CardSchedulesJobs({
           <Typography variant="small">{error}</Typography>
           {error.includes("not available") || error.includes("GATEWAY") ? (
             <Typography variant="small" color="muted">
-              Start the project gateway, then try again.
+              {t("agent.schedules.jobs.gatewayHint")}
             </Typography>
           ) : null}
         </div>
@@ -65,8 +68,8 @@ export function CardSchedulesJobs({
           <CalendarClock size={28} aria-hidden />
           <Typography variant="small" color="muted">
             {jobs.length === 0
-              ? "No schedules in this project yet. Open an agent and use the Schedules tab to add one."
-              : "No schedules match your filters."}
+              ? t("agent.schedules.jobs.empty")
+              : t("agent.schedules.jobs.noMatch")}
           </Typography>
         </div>
       ) : (
@@ -76,7 +79,7 @@ export function CardSchedulesJobs({
             const slug = job.agentId?.trim();
             const agentName = slug
               ? (agentNameBySlug.get(slug) ?? slug)
-              : "Unassigned";
+              : t("agent.schedules.jobs.unassigned");
 
             return (
               <div key={job.id} className={styles.jobRow}>
@@ -101,13 +104,19 @@ export function CardSchedulesJobs({
                       {formatCronSchedule(job)}
                     </span>
                     <Typography variant="small" color="muted">
-                      Next: {formatNextRun(job)}
+                      {t("agent.schedules.jobs.next", {
+                        time: formatNextRun(job),
+                      })}
                     </Typography>
                     {status === "ok" ? (
-                      <span className={styles.statusOk}>Last run OK</span>
+                      <span className={styles.statusOk}>
+                        {t("agent.schedules.jobs.lastOk")}
+                      </span>
                     ) : null}
                     {isCronJobFailed(job) ? (
-                      <span className={styles.statusError}>Last run failed</span>
+                      <span className={styles.statusError}>
+                        {t("agent.schedules.jobs.lastFailed")}
+                      </span>
                     ) : null}
                   </div>
                   {job.state?.lastError ? (
@@ -124,7 +133,7 @@ export function CardSchedulesJobs({
                     iconOnly
                     disabled={busyJobId === job.id}
                     onClick={() => onRunNow(job.id)}
-                    aria-label={`Run ${job.name} now`}
+                    aria-label={t("agent.schedules.jobs.runNowAria", { name: job.name })}
                   >
                     <Play size={14} />
                   </Button>
@@ -132,7 +141,7 @@ export function CardSchedulesJobs({
                     checked={job.enabled}
                     disabled={busyJobId === job.id}
                     onCheckedChange={() => onToggleEnabled(job)}
-                    aria-label={`Enable ${job.name}`}
+                    aria-label={t("agent.schedules.jobs.enableAria", { name: job.name })}
                   />
                   <Button
                     type="button"
@@ -141,7 +150,7 @@ export function CardSchedulesJobs({
                     iconOnly
                     disabled={busyJobId === job.id}
                     onClick={() => onRemove(job.id)}
-                    aria-label={`Delete ${job.name}`}
+                    aria-label={t("agent.schedules.jobs.deleteAria", { name: job.name })}
                   >
                     <Trash2 size={14} />
                   </Button>

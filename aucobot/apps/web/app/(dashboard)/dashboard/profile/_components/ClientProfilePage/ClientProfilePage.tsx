@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Flex, Container } from "@/components/layout";
 import { Spinner, Typography } from "@/components/ui";
 import { usersApi } from "@/lib/api/users";
 import { useI18n } from "@/lib/i18n";
@@ -46,45 +45,37 @@ export function ClientProfilePage() {
 
   if (error || !user) {
     return (
-      <Flex direction="column" align="stretch" className={styles.page}>
-        <Container size="sm" className={styles.content}>
-          <Typography variant="small" color="muted">
-            {error ?? t("profile.unavailable")}
-          </Typography>
-        </Container>
-      </Flex>
+      <Typography variant="small" color="muted">
+        {error ?? t("profile.unavailable")}
+      </Typography>
     );
   }
 
   return (
-    <Flex direction="column" align="stretch" className={styles.page}>
-      <Container size="sm" display="flex" className={styles.content}>
-        <div className={styles.sections}>
-          <TitleSection
-            title={t("profile.title")}
-            description={t("profile.description")}
-          />
+    <div className={styles.sections}>
+      <TitleSection
+        title={t("profile.title")}
+        description={t("profile.description")}
+      />
 
-          <div className={styles.hero}>
-            <ProfileHeroAvatar
-              user={user}
-              onUserUpdated={setUser}
-              onUploadError={setAvatarError}
-            />
-            <div className={styles.heroText}>
-              <Typography variant="h3" weight="medium">
-                {user.name}
-              </Typography>
-              {avatarError && (
-                <span className={styles.heroAvatarError}>{avatarError}</span>
-              )}
-            </div>
-          </div>
-
-          <ProfileAccountSection user={user} onUserUpdated={setUser} />
-          <ProfileSecuritySection />
+      <div className={styles.hero}>
+        <ProfileHeroAvatar
+          user={user}
+          onUserUpdated={setUser}
+          onUploadError={setAvatarError}
+        />
+        <div className={styles.heroText}>
+          <Typography variant="h3" weight="medium">
+            {user.name}
+          </Typography>
+          {avatarError && (
+            <span className={styles.heroAvatarError}>{avatarError}</span>
+          )}
         </div>
-      </Container>
-    </Flex>
+      </div>
+
+      <ProfileAccountSection user={user} onUserUpdated={setUser} />
+      <ProfileSecuritySection />
+    </div>
   );
 }

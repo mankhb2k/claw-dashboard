@@ -9,14 +9,14 @@ import { CardChannel } from "../CardChannel/CardChannel";
 import styles from "./ClientChannelPage.module.css";
 import { Flex, Grid } from "@/components/layout";
 import { Button, Spinner, Typography } from "@/components/ui";
-import { BackButton, I18nTitleHeader, SearchItem } from "@/components/dashboard";
+import { BackButton, SearchItem, TitleHeader } from "@/components/dashboard";
 import { useI18n } from "@/lib/i18n";
 
 interface ClientChannelPageProps {
   projectId: string;
 }
 
-export default function ClientChannelPage({ projectId: projectIdProp }: ClientChannelPageProps) {
+export function ClientChannelPage({ projectId: projectIdProp }: ClientChannelPageProps) {
   const { t } = useI18n();
   const projects = useProjectStore((s) => s.projects);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
@@ -68,7 +68,7 @@ export default function ClientChannelPage({ projectId: projectIdProp }: ClientCh
   const loading = !projectsFetched || (Boolean(projectId) && channelsLoading);
 
   const pageHeader = (
-    <I18nTitleHeader
+    <TitleHeader
       titleKey="channels.page.title"
       descriptionKey="channels.page.description"
       showBorder

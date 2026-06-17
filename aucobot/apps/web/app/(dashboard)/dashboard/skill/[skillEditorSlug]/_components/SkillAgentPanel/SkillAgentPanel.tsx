@@ -10,7 +10,7 @@ import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
 import { useProjectStore } from "@/stores/project.store";
 import { useSkillModelSelect } from "@/hooks/skill/use-skill-model-select";
 import { projectApi } from "@/lib/api/project";
-import { MessageBox } from "@/components/dashboard/MessageBox";
+import { MessageBox } from "@/components/chat/MessageBox";
 import { SkillAgentPanelNoModelBanner } from "./SkillAgentPanelModelBar";
 import styles from "./SkillAgentPanel.module.css";
 import panelStyles from "./SkillAgentPanelLayout.module.css";

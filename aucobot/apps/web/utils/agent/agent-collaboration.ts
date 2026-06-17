@@ -1,3 +1,6 @@
+// LEGACY (rule .agent/rule.md §3.E + §7 nợ kỹ thuật): util này gọi API trực tiếp.
+// TODO: chuyển sang hooks/agent/ hoặc thêm method vào lib/api/project. Không tạo thêm util kiểu này.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { projectApi } from '@/lib/api/project'
 import { notifyCollaborationUpdated } from '@/utils/agent/collaboration-events'
 

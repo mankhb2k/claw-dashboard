@@ -1,31 +1,46 @@
+"use client";
+
 import * as React from "react";
-import { Flex, Box } from "../../layout";
+import { Flex } from "../../layout";
 import { Typography } from "../../ui";
+import { useI18n } from "@/lib/i18n";
 import styles from "./TitleHeader.module.css";
 
-interface TitleHeaderProps {
-  title: string;
+type TitleHeaderBaseProps = {
   badge?: string;
   description?: string;
+  descriptionKey?: string;
   actions?: React.ReactNode;
   showBorder?: boolean;
   sticky?: boolean;
   className?: string;
-}
+};
+
+type TitleHeaderProps = TitleHeaderBaseProps &
+  (
+    | { title: string; titleKey?: never }
+    | { titleKey: string; title?: never }
+  );
 
 /**
  * Page title block with optional description and primary actions.
- * Used at the top of dashboard list pages.
+ * Pass `title` / `description` for plain strings, or `titleKey` / `descriptionKey` for i18n.
  */
 export function TitleHeader({
   title,
+  titleKey,
   badge,
   description,
+  descriptionKey,
   actions,
   showBorder = false,
   sticky = false,
   className = "",
 }: TitleHeaderProps) {
+  const { t } = useI18n();
+  const resolvedTitle = titleKey ? t(titleKey) : title;
+  const resolvedDescription = descriptionKey ? t(descriptionKey) : description;
+
   const rootClasses = [
     styles.root,
     sticky ? styles.sticky : "",
@@ -40,22 +55,22 @@ export function TitleHeader({
       <Flex direction="column" gap={8} className={styles.content}>
         <Flex align="center" gap={8} className={styles.titleRow}>
           <Typography variant="h3" weight="bold">
-            {title}
+            {resolvedTitle}
           </Typography>
           {badge ? <span className={styles.badge}>{badge}</span> : null}
         </Flex>
-        {description && (
+        {resolvedDescription ? (
           <Typography variant="p" color="muted" className={styles.description}>
-            {description}
+            {resolvedDescription}
           </Typography>
-        )}
+        ) : null}
       </Flex>
 
-      {actions && (
+      {actions ? (
         <Flex align="center" gap={12} className={styles.actions}>
           {actions}
         </Flex>
-      )}
+      ) : null}
     </div>
   );
 }

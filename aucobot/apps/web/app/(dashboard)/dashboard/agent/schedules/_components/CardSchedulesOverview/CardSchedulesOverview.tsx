@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Flex } from "@/components/layout";
 import { Typography, Card } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import { dashboardPath } from "@/lib/routing/dashboard-route";
 import styles from "./CardSchedulesOverview.module.css";
 
@@ -16,23 +17,27 @@ export function CardSchedulesOverview({
   quotaTotal,
   quotaLimit,
 }: CardSchedulesOverviewProps) {
+  const { t } = useI18n();
+
   return (
     <Card className={styles.card} disableHover>
       <Flex justify="between" align="start" gap={4} className={styles.headerRow}>
         <div className={styles.header}>
           <Typography variant="h2" weight="bold">
-            Project schedules
+            {t("agent.schedules.overview.title")}
           </Typography>
           <Typography variant="small" color="muted">
-            All cron jobs in this project. Create or edit schedules per agent
-            from each agent&apos;s Schedules tab.
+            {t("agent.schedules.overview.description")}
           </Typography>
           <Typography variant="small" className={styles.quota}>
-            {quotaTotal} / {quotaLimit} jobs used
+            {t("agent.schedules.overview.jobsUsed", {
+              total: String(quotaTotal),
+              limit: String(quotaLimit),
+            })}
           </Typography>
         </div>
         <Link href={dashboardPath("agent")} className={styles.agentLink}>
-          Manage agents
+          {t("agent.schedules.overview.manageAgents")}
         </Link>
       </Flex>
     </Card>

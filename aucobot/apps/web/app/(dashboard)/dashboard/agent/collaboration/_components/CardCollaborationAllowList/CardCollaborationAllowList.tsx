@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { Typography, Card } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import styles from "./CardCollaborationAllowList.module.css";
 
@@ -20,6 +21,8 @@ export function CardCollaborationAllowList({
   effectiveAllow,
   agents,
 }: CardCollaborationAllowListProps) {
+  const { t } = useI18n();
+
   const previewSlugs = useMemo(() => {
     if (!enabled) return [];
 
@@ -38,12 +41,12 @@ export function CardCollaborationAllowList({
   return (
     <Card className={styles.card} disableHover>
       <Typography variant="small" weight="medium">
-        Gateway allow list (preview)
+        {t("agent.collaboration.allowList.title")}
       </Typography>
       <Typography variant="small" color="muted" className={styles.previewHint}>
         {enabled
-          ? "After save, these agents (plus main) can use agent-to-agent tools."
-          : "Collaboration is off — allow list will be empty."}
+          ? t("agent.collaboration.allowList.on")
+          : t("agent.collaboration.allowList.off")}
       </Typography>
       <div className={styles.chips}>
         {previewSlugs.length === 0 ? (

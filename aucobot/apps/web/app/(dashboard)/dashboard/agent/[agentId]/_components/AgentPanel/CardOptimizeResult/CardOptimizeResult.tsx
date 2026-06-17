@@ -3,6 +3,7 @@
 import { FileText, X } from "lucide-react";
 import { Box, Flex } from "@/components/layout";
 import { Button, Card, Typography } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import styles from "./CardOptimizeResult.module.css";
 
 export type CardOptimizeResultProps = {
@@ -20,12 +21,14 @@ export function CardOptimizeResult({
   onDismiss,
   applying = false,
 }: CardOptimizeResultProps) {
+  const { t } = useI18n();
+
   return (
     <Card disableHover className={styles.card}>
       <Flex justify="between" align="start" gap={8}>
         <Box>
           <Typography variant="p" weight="bold">
-            Optimized AGENTS.md
+            {t("agent.panel.optimize.title")}
           </Typography>
           {summary ? (
             <Typography variant="small" color="muted" className={styles.summary}>
@@ -38,7 +41,7 @@ export function CardOptimizeResult({
           variant="ghost"
           size="sm"
           iconOnly
-          title="Dismiss"
+          title={t("agent.panel.optimize.dismiss")}
           onClick={onDismiss}
           disabled={applying}
         >
@@ -51,7 +54,9 @@ export function CardOptimizeResult({
       <Flex gap={8} className={styles.actions}>
         <Button type="button" size="sm" onClick={onApply} disabled={applying}>
           <FileText size={14} aria-hidden />
-          {applying ? "Applying…" : "Apply to Instructions"}
+          {applying
+            ? t("agent.panel.optimize.applying")
+            : t("agent.panel.optimize.apply")}
         </Button>
         <Button
           type="button"
@@ -60,12 +65,12 @@ export function CardOptimizeResult({
           onClick={onDismiss}
           disabled={applying}
         >
-          Dismiss
+          {t("agent.panel.optimize.dismiss")}
         </Button>
       </Flex>
 
       <Typography variant="xs" color="muted">
-        Applying overwrites the Instructions tab (Advanced markdown). Remember to save the agent afterward.
+        {t("agent.panel.optimize.hint")}
       </Typography>
     </Card>
   );

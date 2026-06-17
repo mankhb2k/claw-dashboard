@@ -9,6 +9,7 @@ import {
   Card,
 } from "@/components/ui";
 import { Globe, FileText, Terminal } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import { useModelCatalog } from "@/hooks/chat/use-model-catalog";
 import styles from "./CardCapabilities.module.css";
 
@@ -67,6 +68,7 @@ export function CardCapabilities({
   shellExecEnabled,
   setShellExecEnabled,
 }: CardCapabilitiesProps) {
+  const { t } = useI18n();
   const {
     modelsLoading,
     loadError,
@@ -96,37 +98,45 @@ export function CardCapabilities({
     <Card className={styles.card} disableHover>
       <div className={styles.header}>
         <Typography variant="p" weight="bold">
-          Agent runtime
+          {t("agent.capabilities.title")}
         </Typography>
         <Typography variant="small" color="muted">
-          Model and shell access for this agent — synced to openclaw.json.
+          {t("agent.capabilities.description")}
         </Typography>
       </div>
 
       <div className={styles.modelFields}>
         <Select
           id="agent-model-provider"
-          label="Provider"
+          label={t("agent.capabilities.provider")}
           options={providerSelectOptions}
           value={providerId}
           onValueChange={handleProviderChange}
           disabled={modelsLoading || !hasProviders}
-          placeholder={modelsLoading ? "Loading…" : "No API key"}
+          placeholder={
+            modelsLoading
+              ? t("agent.capabilities.loading")
+              : t("agent.capabilities.noApiKey")
+          }
         />
         <Select
           id="agent-model"
-          label="Default model"
+          label={t("agent.capabilities.defaultModel")}
           options={modelSelectOptions}
           value={modelId ?? model}
           onValueChange={onModelChange}
           disabled={
             modelsLoading || !hasProviders || modelSelectOptions.length === 0
           }
-          placeholder={modelsLoading ? "Loading…" : "Model"}
+          placeholder={
+            modelsLoading
+              ? t("agent.capabilities.loading")
+              : t("agent.capabilities.modelPlaceholder")
+          }
         />
       </div>
       <Typography variant="small" color="muted">
-        Used on Telegram, Discord, and as the Chat default for this agent.
+        {t("agent.capabilities.channelHint")}
       </Typography>
       {loadError ? (
         <Typography variant="small" color="muted">
@@ -137,28 +147,28 @@ export function CardCapabilities({
       <hr className={styles.divider} />
 
       <Typography variant="p" weight="bold" className={styles.sectionTitle}>
-        Native tools
+        {t("agent.capabilities.nativeTools")}
       </Typography>
 
       <Flex direction="column" gap={3}>
         <ToolRow
           icon={<Globe size={20} />}
-          title="Browser & web search"
-          description="Lets the agent browse the web and fetch realtime information."
+          title={t("agent.capabilities.browser.title")}
+          description={t("agent.capabilities.browser.description")}
           checked
           disabled
         />
         <ToolRow
           icon={<FileText size={20} />}
-          title="Read/write workspace files"
-          description="Access files uploaded in the project."
+          title={t("agent.capabilities.files.title")}
+          description={t("agent.capabilities.files.description")}
           checked
           disabled
         />
         <ToolRow
           icon={<Terminal size={20} />}
-          title="Allow shell commands"
-          description="When off, this agent cannot run shell commands. Project shell policy in Settings does not apply."
+          title={t("agent.capabilities.shell.title")}
+          description={t("agent.capabilities.shell.description")}
           checked={shellExecEnabled}
           onCheckedChange={setShellExecEnabled}
         />

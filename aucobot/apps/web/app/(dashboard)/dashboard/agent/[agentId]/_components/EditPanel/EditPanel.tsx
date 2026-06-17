@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Container, Flex } from "@/components/layout";
@@ -10,7 +10,7 @@ import {
   agentTemplateToDefaults,
   buildAgentFormDefaults,
   type AgentFormInput,
-} from "@/schemas/agentForm.schema";
+} from "@/schemas/agent-form.schema";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import { useAgentEditorStore, type AgentEditTab } from "@/stores/agent/agent-editor.store";
@@ -44,6 +44,7 @@ import { CardSchedules } from "../CardSchedules/CardSchedules";
 import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
 import { JoinCollaborationOnCreate } from "../JoinCollaborationOnCreate/JoinCollaborationOnCreate";
 import { addAgentToProjectCollaboration } from "@/utils/agent/agent-collaboration";
+import { useI18n } from "@/lib/i18n";
 import styles from "./EditPanel.module.css";
 
 interface EditPanelProps {
@@ -81,31 +82,22 @@ function tabFromSearchParams(params: URLSearchParams): EditTab {
   return "identity";
 }
 
-const TABS_LIST: { id: EditTab; label: string; icon: LucideIcon }[] = [
-  { id: "identity", label: "Identity", icon: UserRoundPen },
-  { id: "instructions", label: "Instructions", icon: Brain },
-  { id: "capabilities", label: "Capabilities", icon: Wrench },
-  { id: "integrations", label: "Integrations", icon: Rocket },
-  { id: "schedules", label: "Schedules", icon: CalendarClock },
-  { id: "heartbeat", label: "Heartbeat", icon: Activity },
+const TABS_LIST: { id: EditTab; labelKey: string; icon: LucideIcon }[] = [
+  { id: "identity", labelKey: "agent.editPanel.tabs.identity", icon: UserRoundPen },
+  { id: "instructions", labelKey: "agent.editPanel.tabs.instructions", icon: Brain },
+  { id: "capabilities", labelKey: "agent.editPanel.tabs.capabilities", icon: Wrench },
+  { id: "integrations", labelKey: "agent.editPanel.tabs.integrations", icon: Rocket },
+  { id: "schedules", labelKey: "agent.editPanel.tabs.schedules", icon: CalendarClock },
+  { id: "heartbeat", labelKey: "agent.editPanel.tabs.heartbeat", icon: Activity },
 ];
 
-const PANEL_TAB_ITEMS: TabItem[] = TABS_LIST.map((tab) => {
-  const Icon = tab.icon;
-  return {
-    value: tab.id,
-    label: tab.label,
-    icon: <Icon size={16} aria-hidden />,
-  };
-});
-
-/** Left panel: edit / create agent form (header + tabs + card content). */
 export function EditPanel({
   agentId,
   isEditing,
   previewOpen = true,
   onTogglePreview,
 }: EditPanelProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
@@ -130,6 +122,19 @@ export function EditPanel({
     return () => sub.unsubscribe();
   }, [watch, setFormSnapshot]);
 
+  const panelTabItems = useMemo<TabItem[]>(
+    () =>
+      TABS_LIST.map((tab) => {
+        const Icon = tab.icon;
+        return {
+          value: tab.id,
+          label: t(tab.labelKey),
+          icon: <Icon size={16} aria-hidden />,
+        };
+      }),
+    [t],
+  );
+
   useEffect(() => {
     const onApply = (event: Event) => {
       const detail = (event as CustomEvent<AgentPanelApplyAgentsMdDetail>).detail;
@@ -137,7 +142,10 @@ export function EditPanel({
       if (detail.mode === "advanced") {
         setValue("instructionsMode", "advanced", { shouldDirty: true });
         setValue("instructionsAdvanced", detail.markdown, { shouldDirty: true });
-        toast.success("Applied", "AGENTS.md → Instructions (Advanced markdown).");
+        toast.success(
+          t("agent.editPanel.toast.applied"),
+          t("agent.editPanel.toast.appliedAdvanced"),
+        );
         return;
       }
       setValue("instructionsMode", "simple", { shouldDirty: true });
@@ -165,12 +173,15 @@ export function EditPanel({
           { shouldDirty: true },
         );
       }
-      toast.success("Applied", "Content applied → Instructions (Editor).");
+      toast.success(
+        t("agent.editPanel.toast.applied"),
+        t("agent.editPanel.toast.appliedEditor"),
+      );
     };
     window.addEventListener(AGENT_PANEL_APPLY_AGENTS_MD, onApply);
     return () =>
       window.removeEventListener(AGENT_PANEL_APPLY_AGENTS_MD, onApply);
-  }, [setValue]);
+  }, [setValue, t]);
 
   useEffect(() => {
     void fetchProjects({ silent: true });
@@ -189,7 +200,7 @@ export function EditPanel({
         })
         .catch((err) => {
           setLoadError(
-            err instanceof Error ? err.message : "Cannot load agent",
+            err instanceof Error ? err.message : t("agent.editPanel.errors.loadAgent"),
           );
         })
         .finally(() => setFormReady(true));
@@ -207,7 +218,7 @@ export function EditPanel({
         .catch((err) => {
           reset(buildAgentFormDefaults());
           setLoadError(
-            err instanceof Error ? err.message : "Cannot load template",
+            err instanceof Error ? err.message : t("agent.editPanel.errors.loadTemplate"),
           );
         })
         .finally(() => setFormReady(true));
@@ -239,7 +250,10 @@ export function EditPanel({
 
   const onSubmit = async (data: AgentFormInput) => {
     if (!projectId) {
-      toast.error("No project selected", "Create a project first.");
+      toast.error(
+        t("agent.editPanel.toast.noProject"),
+        t("agent.editPanel.toast.createProjectFirst"),
+      );
       return;
     }
     setIsSaving(true);
@@ -248,7 +262,10 @@ export function EditPanel({
     try {
       if (isEditing && agentId) {
         await projectApi.updateAgent(projectId, agentId, { formData: data });
-        toast.success("Agent updated", "Changes saved successfully.");
+        toast.success(
+          t("agent.editPanel.toast.updated"),
+          t("agent.editPanel.toast.updatedDetail"),
+        );
       } else {
         const created = await projectApi.createAgent(projectId, {
           formData: data,
@@ -261,13 +278,16 @@ export function EditPanel({
             /* agent created; collaboration update is best-effort */
           }
         }
-        toast.success("Agent created", "New agent saved successfully.");
+        toast.success(
+          t("agent.editPanel.toast.created"),
+          t("agent.editPanel.toast.createdDetail"),
+        );
         router.replace(`/dashboard/agent/${created.slug}`);
       }
     } catch (err) {
       toast.error(
-        "Save failed",
-        err instanceof Error ? err.message : "Could not save agent.",
+        t("agent.editPanel.toast.saveFailed"),
+        err instanceof Error ? err.message : t("agent.editPanel.toast.saveFailedDetail"),
       );
     } finally {
       setIsSaving(false);
@@ -285,7 +305,7 @@ export function EditPanel({
                 className={styles.collaborationLink}
               >
                 <Users size={14} aria-hidden />
-                Collaboration
+                {t("agent.editPanel.collaborationLink")}
               </Link>
             ) : undefined
           }
@@ -341,7 +361,7 @@ export function EditPanel({
           className={styles.shell}
         >
           <Typography variant="small" color="muted">
-            Loading…
+            {t("agent.editPanel.loading")}
           </Typography>
         </Container>
       </Flex>
@@ -356,7 +376,7 @@ export function EditPanel({
         </Typography>
       )}
       <div className={styles.header}>
-        <BackButton href="/dashboard/agent">Back to Agents</BackButton>
+        <BackButton href="/dashboard/agent">{t("agent.editPanel.backToAgents")}</BackButton>
         <Flex align="center" gap={8}>
           <Button
             type="submit"
@@ -366,7 +386,7 @@ export function EditPanel({
             disabled={isSaving || !projectId}
           >
             <Save size={16} />
-            {isSaving ? "Saving..." : "Save changes"}
+            {isSaving ? t("agent.editPanel.saving") : t("agent.editPanel.saveChanges")}
           </Button>
         </Flex>
       </div>
@@ -378,7 +398,7 @@ export function EditPanel({
         noValidate
       >
         <Tabs
-          items={PANEL_TAB_ITEMS}
+          items={panelTabItems}
           value={activeTab}
           onValueChange={(next) => {
             const tab = next as EditTab;
@@ -387,7 +407,7 @@ export function EditPanel({
           }}
           variant="panel"
           showIndicator={false}
-          aria-label="Agent form sections"
+          aria-label={t("agent.editPanel.tabsAria")}
           trailing={
             onTogglePreview ? (
               <Button
@@ -396,9 +416,17 @@ export function EditPanel({
                 size="md"
                 iconOnly
                 onClick={onTogglePreview}
-                aria-label={previewOpen ? "Hide agent assistant" : "Show agent assistant"}
+                aria-label={
+                  previewOpen
+                    ? t("agent.editPanel.hideAssistant")
+                    : t("agent.editPanel.showAssistant")
+                }
                 aria-pressed={previewOpen}
-                title={previewOpen ? "Hide agent assistant" : "Show agent assistant"}
+                title={
+                  previewOpen
+                    ? t("agent.editPanel.hideAssistant")
+                    : t("agent.editPanel.showAssistant")
+                }
               >
                 {previewOpen ? (
                   <PanelRightClose size={18} />

@@ -60,7 +60,8 @@ export const INITIAL_TEMPLATES: AgentTemplate[] = [
     id: "empty",
     name: "Custom Agent",
     avatar: "⚙️",
-    description: "Configure everything from scratch. Best for experts who want their own logic.",
+    description:
+      "Configure everything from scratch. Best for experts who want their own logic.",
     model: "claude-3-5-sonnet",
     vibe: "professional",
     toolsProfile: "minimal",
@@ -75,60 +76,76 @@ export const INITIAL_TEMPLATES: AgentTemplate[] = [
     id: "customer-support",
     name: "Customer Support Assistant",
     avatar: "🤖",
-    description: "Polite communication, Q&A, request triage, and strong conversation memory.",
+    description:
+      "Polite communication, Q&A, request triage, and strong conversation retention.",
     model: "gemini-1-5-pro",
     vibe: "friendly",
     toolsProfile: "messaging",
     sandboxEnabled: false,
     bootstrapFiles: {
-      identity: "# Customer Support Assistant\n- Emoji: 🤖\n- Style: Kind, attentive, thorough.",
-      soul: "# SOUL.md\n- You represent OpenClaw technical support and customer care.\n- Stay patient, empathetic, and calm frustrated customers.",
-      agents: "# AGENTS.md\n- Answer product and service questions.\n- Triage user requests and escalate to engineering when needed.\n- Use memory_search to recall customer history across sessions.",
+      identity:
+        "# Customer Support Assistant\n- Emoji: 🤖\n- Style: Kind, attentive, thoughtful.",
+      soul:
+        "# SOUL.md\n- You represent OpenClaw technical and customer support.\n- Stay patient, empathetic, and calm with frustrated customers.",
+      agents:
+        "# AGENTS.md\n- Answer product and service questions.\n- Triage user requests and escalate to engineering when needed.\n- Use memory_search to recall customer history across sessions.",
     },
   },
   {
     id: "coding-assistant",
     name: "AI Software Engineer",
     avatar: "💻",
-    description: "Read, edit, and write clean code with deep filesystem integration for automation and debugging.",
+    description:
+      "Read, edit, and write clean code. Deep file-system integration for automation and debugging.",
     model: "claude-3-5-sonnet",
     vibe: "strict",
     toolsProfile: "coding",
     sandboxEnabled: true,
     bootstrapFiles: {
-      identity: "# AI Software Engineer\n- Emoji: 💻\n- Style: Concise, technical, logical.",
-      soul: "# SOUL.md\n- You are a senior engineer writing clean, industry-standard code.\n- Go straight to the technical solution; avoid filler language.",
-      agents: "# AGENTS.md\n- Use filesystem tools (read/write/edit/apply_patch) to inspect and change source code.\n- Verify integrity and run code before marking a task complete.\n- Add brief inline comments where helpful.",
+      identity:
+        "# AI Software Engineer\n- Emoji: 💻\n- Style: Very concise, technical, logical.",
+      soul:
+        "# SOUL.md\n- You are a senior engineer writing clean, industry-standard code.\n- Go straight to technical solutions; avoid filler.",
+      agents:
+        "# AGENTS.md\n- Use file tools (read/write/edit/apply_patch) to inspect and change source code.\n- Verify integrity and run code before finishing a task.\n- Add brief inline comments where helpful.",
     },
   },
   {
     id: "data-analyst",
-    name: "Research & Analytics Specialist",
+    name: "Research & Data Analyst",
     avatar: "📊",
-    description: "Real-time web research, document reading, data analysis, and visual reporting.",
+    description:
+      "Realtime web research, document understanding, data analysis, and visual reports.",
     model: "gpt-4o",
     vibe: "professional",
     toolsProfile: "full",
     sandboxEnabled: true,
     bootstrapFiles: {
-      identity: "# Research & Analytics Specialist\n- Emoji: 📊\n- Style: Scientific, objective, evidence-based.",
-      soul: "# SOUL.md\n- You are a market researcher and data analyst.\n- Only state verifiable facts; avoid subjective guesses.",
-      agents: "# AGENTS.md\n- Use web_search for up-to-date information.\n- Use browser for deep scraping and code_execution for CSV/Excel analysis.\n- Deliver structured reports with clear tables.",
+      identity:
+        "# Research & Data Analyst\n- Emoji: 📊\n- Style: Scientific, objective, evidence-based.",
+      soul:
+        "# SOUL.md\n- You are a market researcher and data analyst.\n- Only state verifiable facts; avoid subjective guesses.",
+      agents:
+        "# AGENTS.md\n- Use web_search for up-to-date information.\n- Use browser for deep scraping and code_execution for CSV/Excel analysis.\n- Output clear tables and structured reports.",
     },
   },
   {
     id: "orchestrator",
     name: "Multi-Agent Orchestrator",
     avatar: "🧠",
-    description: "Break complex work into subtasks and delegate to the right sub-agents.",
+    description:
+      "Break complex work into tasks and delegate to the right sub-agents.",
     model: "gemini-1-5-pro",
     vibe: "professional",
     toolsProfile: "full",
     sandboxEnabled: false,
     bootstrapFiles: {
-      identity: "# Multi-Agent Orchestrator\n- Emoji: 🧠\n- Style: Visionary, organized, strong coordinator.",
-      soul: "# SOUL.md\n- You lead a multi-agent system.\n- Maximize efficiency by delegating to specialized sub-agents.",
-      agents: "# AGENTS.md\n- Split complex user requests into subtasks.\n- Use subagents to call specialists (e.g. coding or research agents).\n- Cross-check sub-agent results before delivering the final report.",
+      identity:
+        "# Multi-Agent Orchestrator\n- Emoji: 🧠\n- Style: Visionary, organized, strong coordinator.",
+      soul:
+        "# SOUL.md\n- You are the lead dispatcher for a multi-agent system.\n- Maximize efficiency by delegating to specialized sub-agents.",
+      agents:
+        "# AGENTS.md\n- Split complex user requests into subtasks.\n- Use subagents to call specialists (e.g. coding or research agents).\n- Cross-check sub-agent results before delivering the final report.",
     },
   },
 ];

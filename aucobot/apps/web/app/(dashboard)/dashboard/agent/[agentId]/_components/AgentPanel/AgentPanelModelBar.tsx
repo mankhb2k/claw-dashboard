@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 import styles from "./AgentPanelModelBar.module.css";
 
 export function AgentPanelNoModelBanner() {
+  const { t } = useI18n();
+
   return (
     <div className={styles.noModelBanner} role="status">
       <p className={styles.noModelText}>
-        No LLM API key yet.{" "}
+        {t("agent.panel.modelBar.noKey")}{" "}
         <Link href="/dashboard/ai-model" className={styles.noModelLink}>
-          Connect AI Model
+          {t("agent.panel.modelBar.connect")}
         </Link>{" "}
-        to use Optimize with AI and AI chat.
+        {t("agent.panel.modelBar.suffix")}
       </p>
     </div>
   );

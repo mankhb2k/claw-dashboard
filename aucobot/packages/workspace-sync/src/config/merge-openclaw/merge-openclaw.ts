@@ -39,9 +39,17 @@ export async function readOpenClawConfigJson(
 
 /** OpenClaw plugin id per SaaS provider (gateway plugins.entries). */
 const PLUGIN_ENTRY_BY_PROVIDER: Record<string, string> = {
+  openai: 'openai',
+  anthropic: 'anthropic',
   gemini: 'google',
   google: 'google',
-  openai: 'openai',
+  deepseek: 'deepseek',
+  groq: 'groq',
+  mistral: 'mistral',
+  openrouter: 'openrouter',
+  together: 'together',
+  'vercel-ai-gateway': 'vercel-ai-gateway',
+  kilocode: 'kilocode',
 };
 
 function mergePluginEntriesFromProviders(
@@ -56,8 +64,14 @@ function mergePluginEntriesFromProviders(
     entries[key] = { enabled: value?.enabled === true };
   }
 
+  const pluginEnabled = new Map<string, boolean>();
   for (const [providerId, pluginId] of Object.entries(PLUGIN_ENTRY_BY_PROVIDER)) {
-    entries[pluginId] = { enabled: enabledProviderIds.has(providerId) };
+    const prev = pluginEnabled.get(pluginId) ?? false;
+    pluginEnabled.set(pluginId, prev || enabledProviderIds.has(providerId));
+  }
+
+  for (const [pluginId, enabled] of pluginEnabled) {
+    entries[pluginId] = { enabled };
   }
 
   plugins.entries = entries;
@@ -193,19 +207,6 @@ function normalizeAgentSkillAllowlist(formData: AgentFormInput): string[] {
   );
 }
 
-/** Deduplicate skill names while preserving input order (for main agent allowlist). */
-export function normalizeSkillNameListPreservingOrder(names: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of names) {
-    const name = String(raw ?? '').trim();
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    out.push(name);
-  }
-  return out;
-}
-
 export type ProjectAgentMergeRow = {
   slug: string;
   name: string;
@@ -312,8 +313,6 @@ export function mergeAgentsIntoConfig(
   collaboration: ProjectCollaborationSettings,
   projectSandboxPolicy?: ProjectSandboxPolicy,
   projectExecPolicy?: ProjectExecPolicy,
-  /** Main agent allowlist — all enabled project skills (OpenClaw `agents.list` id `main`). */
-  mainAgentSkillNames?: string[],
 ): Record<string, unknown> {
   const policy: ProjectSandboxPolicy = projectSandboxPolicy ?? {
     enabled: false,
@@ -337,7 +336,7 @@ export function mergeAgentsIntoConfig(
     id: 'main',
     name: 'Main',
     workspace: CONTAINER_WORKSPACE_DIR,
-    skills: normalizeSkillNameListPreservingOrder(mainAgentSkillNames ?? []),
+    skills: [],
     tools: { profile: 'messaging' },
   };
   applyProjectSandboxToEntry(mainEntry, 'main', policy, exemptSet, appliedSet);

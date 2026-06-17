@@ -185,7 +185,7 @@ Hosted MCP service ở sibling [`../mcp/`](../mcp/) — service thứ 5 trong OS
 flowchart LR
   API[apps/api] -->|sync url + JWT| VOL[openclaw.json]
   VOL --> GW[gateway]
-  GW -->|POST streamable-http| MCP[mcp :8080]
+  GW -->|POST streamable-http| MCP[mcp :8388]
   MCP -->|X-Mcp-Service-Secret| API
   MCP --> GOOG[Google APIs]
 ```

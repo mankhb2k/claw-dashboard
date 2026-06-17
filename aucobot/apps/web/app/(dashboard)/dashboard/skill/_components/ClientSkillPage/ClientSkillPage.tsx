@@ -27,7 +27,7 @@ import { projectApi } from "@/lib/api/project";
 import type { ProjectSkillListRow } from "@/schemas/project.schema";
 import { useProjectSkills } from "@/hooks/skill/use-project-skills";
 import { useProjectStore } from "@/stores/project.store";
-import { SearchItem, I18nTitleHeader } from "@/components/dashboard";
+import { SearchItem, TitleHeader } from "@/components/dashboard";
 import { CardSkill } from "../CardSkill/CardSkill";
 import { ModalCreateSkill } from "../ModalCreateSkill/ModalCreateSkill";
 import { ModalSkillStore } from "../ModalSkillStore/ModalSkillStore";
@@ -256,7 +256,7 @@ export function ClientSkillPage() {
   if (loading) {
     return (
       <>
-        <I18nTitleHeader
+        <TitleHeader
           titleKey="skills.page.title"
           descriptionKey="skills.page.description"
           showBorder
@@ -280,7 +280,7 @@ export function ClientSkillPage() {
   if (!projectId) {
     return (
       <>
-        <I18nTitleHeader
+        <TitleHeader
           titleKey="skills.page.title"
           descriptionKey="skills.page.description"
           showBorder
@@ -294,7 +294,7 @@ export function ClientSkillPage() {
 
   return (
     <>
-      <I18nTitleHeader
+      <TitleHeader
         titleKey="skills.page.title"
         descriptionKey="skills.page.description"
         showBorder

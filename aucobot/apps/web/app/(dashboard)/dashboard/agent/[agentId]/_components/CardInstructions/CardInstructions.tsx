@@ -24,26 +24,27 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
-import type { AgentFormInput } from "@/schemas/agentForm.schema";
+import type { AgentFormInput } from "@/schemas/agent-form.schema";
 import styles from "./CardInstructions.module.css";
 
 type InstructionsView = "editor" | "markdown";
 
 type SimpleSection = "rules" | "constraints" | "output" | "tools";
 
-const SIMPLE_SECTIONS: {
-  id: SimpleSection;
-  label: string;
-  icon: LucideIcon;
-}[] = [
-  { id: "rules", label: "Rules", icon: ListChecks },
-  { id: "constraints", label: "Constraints", icon: ShieldAlert },
-  { id: "output", label: "Output format", icon: TextQuote },
-  { id: "tools", label: "Environment notes", icon: Wrench },
-];
-
 export function CardInstructions() {
+  const { t } = useI18n();
+  const simpleSections = useMemo(
+    (): { id: SimpleSection; label: string; icon: LucideIcon }[] => [
+      { id: "rules", label: t("agent.instructions.sections.rules"), icon: ListChecks },
+      { id: "constraints", label: t("agent.instructions.sections.constraints"), icon: ShieldAlert },
+      { id: "output", label: t("agent.instructions.sections.outputFormat"), icon: TextQuote },
+      { id: "tools", label: t("agent.instructions.sections.environmentNotes"), icon: Wrench },
+    ],
+    [t],
+  );
+
   const requestOptimizeFlow = useAgentEditorStore(
     (s) => s.requestOptimizeFlow,
   );
@@ -110,11 +111,11 @@ export function CardInstructions() {
         >
           <ToggleGroupItem value="editor" className={styles.modeItem}>
             <LayoutList size={14} aria-hidden />
-            Editor
+            {t("agent.instructions.editor")}
           </ToggleGroupItem>
           <ToggleGroupItem value="markdown" className={styles.modeItem}>
             <FileText size={14} aria-hidden />
-            Markdown
+            {t("agent.instructions.markdownView")}
           </ToggleGroupItem>
         </ToggleGroup>
 
@@ -126,11 +127,11 @@ export function CardInstructions() {
           onClick={() => requestOptimizeFlow()}
         >
           <Zap size={14} />
-          Optimize with AI
+          {t("agent.instructions.optimizeWithAi")}
         </Button>
       </Flex>
       <Typography variant="p" weight="bold" className={styles.cardTitle}>
-        Instructions for operation agent (AGENTS.md)
+        {t("agent.instructions.title")}
       </Typography>
 
       {view === "editor" ? (
@@ -145,18 +146,18 @@ export function CardInstructions() {
               className={styles.roleBlock}
             >
               <Typography variant="h4" weight="medium">
-                Agent Role
+                {t("agent.instructions.role.label")}
               </Typography>
               <Input
                 id="instructions-role"
-                placeholder="What does this agent do? Serving for whom?"
+                placeholder={t("agent.instructions.role.placeholder")}
                 error={errors.instructionsRole?.message}
                 {...register("instructionsRole")}
               />
             </Flex>
 
             <ButtonGroup className={styles.sectionGroup}>
-              {SIMPLE_SECTIONS.map(({ id, label, icon: Icon }) => (
+              {simpleSections.map(({ id, label, icon: Icon }) => (
                 <Button
                   key={id}
                   type="button"
@@ -176,10 +177,8 @@ export function CardInstructions() {
               <Textarea
                 fill
                 id="instructions-rules"
-                label="Rules (one line per rule)"
-                placeholder={
-                  "Always confirm before deleting data\nPrefer concise answers"
-                }
+                label={t("agent.instructions.rules.label")}
+                placeholder={t("agent.instructions.rules.placeholder")}
                 {...register("instructionsRules")}
               />
             ) : null}
@@ -188,8 +187,8 @@ export function CardInstructions() {
               <Textarea
                 fill
                 id="instructions-constraints"
-                label="Constraints (one line per constraint)"
-                placeholder={"Do not expose API keys\nDo not run dangerous commands"}
+                label={t("agent.instructions.constraints.label")}
+                placeholder={t("agent.instructions.constraints.placeholder")}
                 {...register("instructionsConstraints")}
               />
             ) : null}
@@ -198,8 +197,8 @@ export function CardInstructions() {
               <Textarea
                 fill
                 id="instructions-output"
-                label="Output format (optional)"
-                placeholder="e.g. Reply in English, use bullets when listing."
+                label={t("agent.instructions.outputFormat.label")}
+                placeholder={t("agent.instructions.outputFormat.placeholder")}
                 {...register("instructionsOutputFormat")}
               />
             ) : null}
@@ -208,9 +207,9 @@ export function CardInstructions() {
               <Textarea
                 fill
                 id="tools-notes"
-                label="Environment notes (optional)"
-                placeholder="e.g. Camera name, SSH host, preferred TTS voice..."
-                hint="Setup-specific notes — does not replace openclaw.json configuration."
+                label={t("agent.instructions.environmentNotes.label")}
+                placeholder={t("agent.instructions.environmentNotes.placeholder")}
+                hint={t("agent.instructions.environmentNotes.hint")}
                 {...register("toolsNotes")}
               />
           ) : null}
@@ -220,9 +219,9 @@ export function CardInstructions() {
           <Textarea
             fill
             id="instructions-advanced"
-            label="AGENTS.md (Markdown)"
+            label={t("agent.instructions.markdown.label")}
             className={styles.textareaTall}
-            placeholder={"# Role\n..."}
+            placeholder={t("agent.instructions.markdown.placeholder")}
             error={errors.instructionsAdvanced?.message}
             {...register("instructionsAdvanced")}
           />
@@ -233,10 +232,10 @@ export function CardInstructions() {
             fill
             readOnly
             id="instructions-preview"
-            label="AGENTS.md (preview)"
+            label={t("agent.instructions.markdown.preview")}
             className={`${styles.textareaTall} ${styles.preview}`}
             value={agentsMdPreview}
-            hint="Preview — on save, the backend compiles from Editor fields."
+            hint={t("agent.instructions.markdown.previewHint")}
           />
         </Flex>
       )}

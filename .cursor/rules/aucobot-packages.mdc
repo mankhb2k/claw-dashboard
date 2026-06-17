@@ -16,7 +16,7 @@ alwaysApply: false
 
 - `@nestjs/common`, `@nestjs/core`, Fastify, Express adapters
 - Import from `apps/api` or `apps/web`
-- Import from `cloud/packages/*` (OSS packages stay public)
+- Import from sibling `cloud/packages/*` (OSS packages stay public)
 
 ## Nest exceptions stay in apps/api
 

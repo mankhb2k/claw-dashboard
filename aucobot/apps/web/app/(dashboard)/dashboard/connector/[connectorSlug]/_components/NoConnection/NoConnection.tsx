@@ -3,10 +3,11 @@
 import { Button, Typography } from "@/components/ui";
 import { Container, Flex, Box } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
-import styles from "./no-connection.module.css";
+import { type ServiceConnectData } from "../../../projectConnectData";
+import styles from "./NoConnection.module.css";
 
 interface Props {
-  service: any;
+  service: ServiceConnectData;
   isConnecting: boolean;
   onConnect: () => void;
 }

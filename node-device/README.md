@@ -2,7 +2,7 @@
 
 Desktop companion node for OpenClaw — wraps the OpenClaw CLI (`openclaw node run`) and connects to your gateway as a **node** role device. Pair and manage nodes from the AucoBot dashboard (**Companion Nodes**).
 
-Standalone package (not part of the `aucobot/` monorepo).
+**Repo:** `git@github.com:aucobot/node-device.git` — standalone (not part of the `aucobot` monorepo).
 
 ## Requirements
 

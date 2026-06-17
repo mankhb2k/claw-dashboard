@@ -7,6 +7,7 @@ import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-rout
 import { projectApi } from "@/lib/api/project";
 import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
 import { useProjectStore } from "@/stores/project.store";
+import { useI18n } from "@/lib/i18n";
 import styles from "./AgentSectionNav.module.css";
 
 const AGENTS_HREF = `${DASHBOARD_BASE_PATH}/agent`;
@@ -15,6 +16,7 @@ const SCHEDULES_HREF = dashboardPath("agent", "schedules");
 const HEARTBEAT_HREF = dashboardPath("agent", "heartbeat");
 
 export function AgentSectionNav() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [memberCount, setMemberCount] = useState(0);
@@ -75,23 +77,23 @@ export function AgentSectionNav() {
 
   const items = useMemo<TabItem[]>(
     () => [
-      { value: "agents", label: "Agents", href: AGENTS_HREF },
+      { value: "agents", label: t("agent.sectionNav.agents"), href: AGENTS_HREF },
       {
         value: "collaboration",
-        label: "Collaboration",
+        label: t("agent.sectionNav.collaboration"),
         href: COLLABORATION_HREF,
         badge: collaborationOn && memberCount > 0 ? memberCount : undefined,
       },
       {
         value: "schedules",
-        label: "Schedules",
+        label: t("agent.sectionNav.schedules"),
         href: SCHEDULES_HREF,
         badge: failedCount > 0 ? failedCount : undefined,
         badgeTone: failedCount > 0 ? "danger" : undefined,
       },
-      { value: "heartbeat", label: "Heartbeat", href: HEARTBEAT_HREF },
+      { value: "heartbeat", label: t("agent.sectionNav.heartbeat"), href: HEARTBEAT_HREF },
     ],
-    [collaborationOn, memberCount, failedCount],
+    [collaborationOn, memberCount, failedCount, t],
   );
 
   return (
@@ -101,7 +103,7 @@ export function AgentSectionNav() {
       variant="section"
       showIndicator
       className={styles.root}
-      aria-label="Agent section"
+      aria-label={t("agent.sectionNav.ariaLabel")}
     />
   );
 }

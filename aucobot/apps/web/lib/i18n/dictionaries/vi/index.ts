@@ -1,3 +1,4 @@
+import { viAgent } from './agent'
 import { viAiModel } from './aiModel'
 import { viChannels } from './channels'
 import { viChatToolActivity } from './chat/toolActivity'
@@ -15,6 +16,7 @@ import { viSidebarProject } from './sidebarProject'
  * Cấu trúc này là "nguồn chuẩn" cho toàn bộ key i18n.
  */
 export const vi = {
+  agent: viAgent,
   aiModel: viAiModel,
   channels: viChannels,
   chat: {

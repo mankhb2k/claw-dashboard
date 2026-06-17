@@ -17,7 +17,7 @@
     "db:generate": "pnpm --filter @aucobot/database db:generate",
     "db:migrate": "pnpm --filter @aucobot/database db:migrate",
     "db:seed": "pnpm --filter @aucobot/database db:seed",
-    "postinstall": "pnpm db:generate && pnpm --filter @aucobot/runtime-contracts --filter @aucobot/control-plane-core --filter @aucobot/clawhub-client run build"
+    "postinstall": "pnpm db:generate && pnpm --filter @aucobot/runtime-contracts --filter @aucobot/control-plane-core --filter @aucobot/clawhub-client --filter @aucobot-cloud/avatar-storage --filter @aucobot-cloud/chat-attachment-storage run build"
   },
   "devDependencies": {
     "dotenv": "^16.6.1",

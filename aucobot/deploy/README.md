@@ -1,27 +1,58 @@
 # OSS deploy — full stack
 
-Mục tiêu: **một lệnh** dựng 4 service + volume dùng chung (Supabase-style).
+Mục tiêu: **một lệnh** dựng 5 service + volume dùng chung (Supabase-style).
 
 | Service | Port | Image |
 | ------- | ---- | ----- |
 | `postgres` | 5432 | `postgres:16-alpine` |
-| `api` | 8387 | build `Dockerfile.api` |
-| `web` | 8386 | build `Dockerfile.web` |
-| `gateway` | 18789 | `alpine/openclaw:latest` (official release, Docker Hub mirror) |
+| `api` | 8387 | Hub `aucobot/api` (pull) · hoặc `--build api` |
+| `web` | 8386 | Hub `aucobot/web` (pull) · hoặc `--build web` |
+| `mcp` | 8388 | Hub `aucobot/mcp` — **pull only**, không build |
+| `gateway` | 18789 | `alpine/openclaw:latest` |
 
 Volume **`openclaw_data`**: API ghi `/data/projects/{projectId}/…`, gateway đọc cùng dữ liệu.
 
-## Quick start
+File compose duy nhất: [`docker-compose.yml`](./docker-compose.yml)
+
+## Quick start — pull Hub (khuyến nghị)
+
+Images: https://hub.docker.com/u/aucobot
 
 ```powershell
 cd aucobot
 copy deploy\.env.example deploy\.env
 # Sửa JWT_SECRET, OPENCLAW_GATEWAY_TOKEN, POSTGRES_PASSWORD trong deploy\.env
 
-docker compose -f deploy/docker-compose.yml up -d --build
+docker compose -f deploy/docker-compose.yml pull
+docker compose -f deploy/docker-compose.yml up -d
 ```
 
-Mở http://localhost:8386 → đăng nhập (`SELF_HOST_USER_*`) → tạo project lần đầu.
+Pin tag (tuỳ chọn):
+
+```powershell
+$env:AUCOBOT_IMAGE_TAG="latest"
+docker compose -f deploy/docker-compose.yml pull
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+Mở http://localhost:8386 → đăng nhập **`admin` / `admin123`** → tạo project lần đầu.
+
+**Cập nhật image mới:**
+
+```powershell
+docker compose -f deploy/docker-compose.yml pull
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+## Build api/web từ source (dev)
+
+MCP **luôn pull Hub** — không cần clone repo `mcp` cho compose:
+
+```powershell
+docker compose -f deploy/docker-compose.yml up -d --build api web
+docker compose -f deploy/docker-compose.yml pull mcp
+docker compose -f deploy/docker-compose.yml up -d mcp
+```
 
 Gateway **chờ** đến khi có `openclaw.json` trong volume (script `scripts/gateway-entrypoint.sh`), sau đó tự bind `:18789`.
 
@@ -29,11 +60,12 @@ Gateway **chờ** đến khi có `openclaw.json` trong volume (script `scripts/g
 
 | File | Mục đích |
 | ---- | -------- |
-| `docker-compose.deps.yml` | Chỉ Postgres |
+| `docker-compose.postgres.dev.yml` | Chỉ Postgres |
 | `docker-compose.gateway.dev.yml` | Gateway + bind project folder legacy |
+| `docker-compose.runtime.yml` | Postgres + gateway |
 
 ```powershell
-pnpm dev:deps
+pnpm dev:db
 docker compose -f deploy/docker-compose.gateway.dev.yml --env-file deploy/.env.gateway up -d
 pnpm dev   # api + web trên host
 ```
@@ -45,13 +77,17 @@ pnpm dev   # api + web trên host
 | `OPENCLAW_GATEWAY_TOKEN` | Khớp giữa `api` và `gateway` |
 | `OPENCLAW_DATA_ROOT` | Trong compose: `/data/projects` (cả api + gateway) |
 | `OSS_PROJECT_ID` | Tuỳ chọn — pin một project; để trống = auto project đầu tiên |
-| `NEXT_PUBLIC_API_URL` | URL API **từ trình duyệt** (build-time cho web) |
+| `MCP_SERVICE_SECRET` | Khớp giữa `api` và `mcp` |
+| `AUCOMCP_BASE_URL` | `http://mcp:8388` trong compose |
+| `AUCOBOT_IMAGE_TAG` | Tag Hub cho api/web/mcp (mặc định `latest`) |
+| `NEXT_PUBLIC_API_URL` | URL API **từ trình duyệt** (chỉ khi `--build web`) |
 
 ## Lệnh hữu ích
 
 ```powershell
 docker compose -f deploy/docker-compose.yml ps
-docker compose -f deploy/docker-compose.yml logs -f api gateway
+docker compose -f deploy/docker-compose.yml logs -f api gateway mcp
+curl.exe http://127.0.0.1:8388/healthz
 curl.exe http://127.0.0.1:18789/healthz
 curl.exe http://127.0.0.1:8387/api/health
 docker compose -f deploy/docker-compose.yml down
@@ -60,5 +96,6 @@ docker compose -f deploy/docker-compose.yml down
 ## Ghi chú
 
 - API **không** mount `docker.sock` (OSS mode).
-- Cloud spawn / per-project container: `RUNTIME_MODE=cloud` — `cloud/api` + `cloud/deploy`.
-- Chi tiết kiến trúc: `docs/monorepoplan.md` §9.
+- `mcp` service: **pull only** từ `docker.io/aucobot/mcp`.
+- `api` / `web`: pull mặc định; thêm `--build api web` khi dev.
+- Chi tiết kiến trúc: `docs/monorepoplan.md` §2.

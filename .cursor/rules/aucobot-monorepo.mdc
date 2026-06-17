@@ -15,7 +15,7 @@ Read first: `aucobot/docs/monorepoplan.md`, `aucobot/docs/monorepo-diagram.md` (
 | `aucobot/apps/api` | Nest wiring, controllers, DTOs, guards — **thin** |
 | `aucobot/apps/web` | Next.js UI |
 | `aucobot/packages/*` | Shared libs (OSS + cloud import contracts) |
-| `aucobot/cloud/*` | Hosted cloud only — **do not** import into OSS apps |
+| Sibling `cloud/` repo (`../cloud/*`) | Hosted cloud only — **do not** import into OSS apps |
 | `aucobot/deploy/` | OSS compose + Dockerfiles (api/web) |
 | Gateway/postgres | **Pull images** — not vendored in repo |
 
@@ -50,4 +50,4 @@ Compose E2E: `docker compose -f deploy/docker-compose.yml up -d --build`
 
 - Interfaces → `packages/runtime-contracts`
 - OSS gateway URL/health → `packages/runtime-oss`
-- Cloud spawn → `cloud/packages/fleet` (later) — **never** `runtime-oss`
+- Cloud spawn → `@aucobot-cloud/fleet` in sibling `cloud/` repo — **never** `runtime-oss`

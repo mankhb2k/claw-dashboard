@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import React from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar/Sidebar';
 import { I18nProvider } from '@/lib/i18n';

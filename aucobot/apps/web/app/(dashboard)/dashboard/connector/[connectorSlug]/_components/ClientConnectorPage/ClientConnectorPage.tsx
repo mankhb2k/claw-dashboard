@@ -15,7 +15,7 @@ import { Container, Flex } from "@/components/layout";
 import { BackButton } from "@/components/dashboard";
 import { NoConnection } from "../NoConnection/NoConnection";
 import { ActiveConnection } from "../ActiveConnection/ActiveConnection";
-import styles from "./client-connector.module.css";
+import styles from "./ClientConnectorPage.module.css";
 
 export type PermissionMode = "allow" | "ask" | "block";
 

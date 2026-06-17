@@ -10,6 +10,7 @@ import {
   Button,
 } from "@/components/ui";
 import { SearchItem } from "@/components/dashboard";
+import { useI18n } from "@/lib/i18n";
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import styles from "./CardCollaborationMembers.module.css";
 
@@ -38,6 +39,7 @@ export function CardCollaborationMembers({
   onMemberToggle,
   onSelectAllEnabled,
 }: CardCollaborationMembersProps) {
+  const { t } = useI18n();
   const listDisabled = !enabled;
 
   return (
@@ -45,7 +47,7 @@ export function CardCollaborationMembers({
       <Flex justify="between" align="center" gap={3} className={styles.toolbar}>
         <SearchItem
           id="collaboration-agent-search"
-          placeholder="Search agents..."
+          placeholder={t("agent.collaboration.members.searchPlaceholder")}
           value={searchQuery}
           onChange={onSearchChange}
           className={styles.search}
@@ -57,7 +59,7 @@ export function CardCollaborationMembers({
           disabled={listDisabled || agents.every((a) => !a.enabled)}
           onClick={onSelectAllEnabled}
         >
-          Select all enabled
+          {t("agent.collaboration.members.selectAll")}
         </Button>
       </Flex>
 
@@ -65,17 +67,17 @@ export function CardCollaborationMembers({
         className={`${styles.listPanel} ${listDisabled ? styles.listPanelDisabled : ""}`}
       >
         <Typography variant="small" weight="medium" className={styles.listTitle}>
-          Members
+          {t("agent.collaboration.members.title")}
           {enabled && memberSlugs.length > 0 ? ` (${memberSlugs.length})` : ""}
         </Typography>
 
         {agents.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.listState}>
-            No agents in this project yet. Create agents first.
+            {t("agent.collaboration.members.empty")}
           </Typography>
         ) : filteredAgents.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.listState}>
-            No matching agents found.
+            {t("agent.collaboration.members.noMatch")}
           </Typography>
         ) : (
           <ul className={styles.list}>
@@ -104,7 +106,9 @@ export function CardCollaborationMembers({
                     onCheckedChange={(val) =>
                       onMemberToggle(agent.slug, val === true)
                     }
-                    aria-label={`Include ${agent.name} in collaboration`}
+                    aria-label={t("agent.collaboration.members.includeAria", {
+                      name: agent.name,
+                    })}
                   />
                 </li>
               );
@@ -115,7 +119,7 @@ export function CardCollaborationMembers({
 
       {!enabled ? (
         <Typography variant="small" color="muted">
-          Turn on collaboration to select members.
+          {t("agent.collaboration.members.disabledHint")}
         </Typography>
       ) : null}
 

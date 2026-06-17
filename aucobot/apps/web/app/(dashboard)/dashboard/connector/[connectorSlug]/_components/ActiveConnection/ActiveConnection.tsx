@@ -23,12 +23,13 @@ import {
   MOCK_PERMISSION_GROUPS,
   PERMISSION_GROUP_LABELS,
   type PermissionGroupData,
+  type ServiceConnectData,
 } from "../../../projectConnectData";
 import { type PermissionMode } from "../ClientConnectorPage/ClientConnectorPage";
-import styles from "./active-connection.module.css";
+import styles from "./ActiveConnection.module.css";
 
 interface Props {
-  service: any;
+  service: ServiceConnectData;
   groupMode: Record<string, PermissionMode>;
   toolMode: Record<string, PermissionMode>;
   groupExpanded: Record<string, boolean>;

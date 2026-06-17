@@ -103,7 +103,7 @@ describe('mergeConnectorsIntoConfig', () => {
     const options: ConnectorMergeOptions = {
       projectId: 'project-1',
       remoteMcp: {
-        baseUrl: 'http://mcp:8080',
+        baseUrl: 'http://mcp:8388',
         signProjectToken: () => 'signed-jwt',
       },
     };
@@ -119,7 +119,7 @@ describe('mergeConnectorsIntoConfig', () => {
     const entry = (result.mcp as { servers: Record<string, Record<string, unknown>> }).servers[
       'google-drive'
     ];
-    assert.equal(entry.url, 'http://mcp:8080/connectors/google-drive/mcp');
+    assert.equal(entry.url, 'http://mcp:8388/connectors/google-drive/mcp');
     assert.equal(entry.transport, 'streamable-http');
     assert.equal(entry.headers?.Authorization, 'Bearer signed-jwt');
     assert.equal(await pathExists(join(dataDir, 'connectors', 'google-drive')), false);

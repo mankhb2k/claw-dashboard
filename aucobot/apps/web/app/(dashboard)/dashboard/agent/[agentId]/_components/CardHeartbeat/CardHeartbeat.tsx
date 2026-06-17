@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Flex } from "@/components/layout";
 import {
@@ -11,6 +11,7 @@ import {
   Select,
   Spinner,
 } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import { projectApi } from "@/lib/api/project";
 import { useProjectStore } from "@/stores/project.store";
 import { dashboardPath } from "@/lib/routing/dashboard-route";
@@ -27,20 +28,8 @@ interface CardHeartbeatProps {
   isEditing?: boolean;
 }
 
-const MODE_OPTIONS = [
-  { value: "off", label: "Off" },
-  { value: "inherit", label: "Same as Main" },
-  { value: "custom", label: "Custom interval" },
-];
-
-const PRESET_OPTIONS: { value: HeartbeatIntervalPreset; label: string }[] = [
-  { value: "15m", label: "Every 15 minutes" },
-  { value: "30m", label: "Every 30 minutes" },
-  { value: "1h", label: "Every 1 hour" },
-  { value: "custom", label: "Custom" },
-];
-
 export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,6 +42,25 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
   const [mainEnabled, setMainEnabled] = useState(false);
   const [mainEvery, setMainEvery] = useState("30m");
   const [effectiveEvery, setEffectiveEvery] = useState<string | null>(null);
+
+  const modeOptions = useMemo(
+    () => [
+      { value: "off", label: t("agent.heartbeat.tab.modeOff") },
+      { value: "inherit", label: t("agent.heartbeat.tab.modeSameAsMain") },
+      { value: "custom", label: t("agent.heartbeat.tab.modeCustom") },
+    ],
+    [t],
+  );
+
+  const presetOptions = useMemo(
+    (): { value: HeartbeatIntervalPreset; label: string }[] => [
+      { value: "15m", label: t("agent.heartbeat.config.every15") },
+      { value: "30m", label: t("agent.heartbeat.config.every30") },
+      { value: "1h", label: t("agent.heartbeat.config.every1h") },
+      { value: "custom", label: t("agent.heartbeat.config.custom") },
+    ],
+    [t],
+  );
 
   const load = useCallback(async () => {
     if (!projectId || !isEditing || agentId === "new-agent") {
@@ -75,11 +83,13 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
         setCustomUnit(mapped.customUnit);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot load heartbeat settings");
+      setError(
+        err instanceof Error ? err.message : t("agent.heartbeat.errors.load"),
+      );
     } finally {
       setLoading(false);
     }
-  }, [projectId, isEditing, agentId]);
+  }, [projectId, isEditing, agentId, t]);
 
   useEffect(() => {
     void load();
@@ -102,7 +112,9 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
       setEffectiveEvery(data.effectiveEvery);
       setMode(data.mode);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot save heartbeat settings");
+      setError(
+        err instanceof Error ? err.message : t("agent.heartbeat.errors.save"),
+      );
     } finally {
       setSaving(false);
     }
@@ -112,7 +124,7 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
     return (
       <Card className={styles.card}>
         <Typography variant="p" color="muted">
-          Save the agent first, then configure heartbeat overrides for this bot.
+          {t("agent.heartbeat.tab.saveFirst")}
         </Typography>
       </Card>
     );
@@ -129,12 +141,16 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
   return (
     <Card className={styles.card}>
       <Typography variant="p" weight="medium">
-        Heartbeat override
+        {t("agent.heartbeat.tab.title")}
       </Typography>
       <Typography variant="small" color="muted">
-        Custom agents are off by default.{" "}
-        <Link href={dashboardPath("agent", "heartbeat")}>Project heartbeat (Main)</Link>{" "}
-        is currently {mainEnabled ? `on (${mainEvery})` : "off"}.
+        {t("agent.heartbeat.tab.customOff")}{" "}
+        <Link href={dashboardPath("agent", "heartbeat")}>
+          {t("agent.heartbeat.tab.projectLink")}
+        </Link>{" "}
+        {mainEnabled
+          ? t("agent.heartbeat.tab.projectOn", { interval: mainEvery })
+          : t("agent.heartbeat.tab.projectOff")}
       </Typography>
 
       {error ? (
@@ -149,13 +165,13 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
         onValueChange={(value) =>
           setMode(value === "inherit" || value === "custom" ? value : "off")
         }
-        options={MODE_OPTIONS}
+        options={modeOptions}
       />
 
       {mode === "custom" ? (
         <>
           <div className={styles.presetRow}>
-            {PRESET_OPTIONS.map((option) => (
+            {presetOptions.map((option) => (
               <label key={option.value} className={styles.presetOption}>
                 <input
                   type="radio"
@@ -170,21 +186,21 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
           {preset === "custom" ? (
             <Flex align="end" gap={8} className={styles.customRow}>
               <Input
-                label="Custom interval"
+                label={t("agent.heartbeat.config.customInterval")}
                 type="number"
                 min={1}
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
               />
               <Select
-                label="Unit"
+                label={t("agent.heartbeat.config.unit")}
                 value={customUnit}
                 onValueChange={(value) =>
                   setCustomUnit(value === "h" ? "h" : "m")
                 }
                 options={[
-                  { value: "m", label: "Minutes" },
-                  { value: "h", label: "Hours" },
+                  { value: "m", label: t("agent.heartbeat.config.minutes") },
+                  { value: "h", label: t("agent.heartbeat.config.hours") },
                 ]}
               />
             </Flex>
@@ -194,7 +210,7 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
 
       <div className={styles.fieldGroup}>
         <Typography variant="small" weight="medium">
-          HEARTBEAT.md for this agent
+          {t("agent.heartbeat.tab.agentChecklist")}
         </Typography>
         <textarea
           className={styles.textarea}
@@ -208,10 +224,12 @@ export function CardHeartbeat({ agentId, isEditing }: CardHeartbeatProps) {
 
       <Flex justify="between" align="center">
         <Typography variant="small" color="muted">
-          Effective: {effectiveEvery ?? "disabled"}
+          {t("agent.heartbeat.config.effective", {
+            value: effectiveEvery ?? t("agent.heartbeat.config.disabled"),
+          })}
         </Typography>
         <Button variant="primary" size="sm" onClick={() => void handleSave()} disabled={saving}>
-          {saving ? "Saving…" : "Save heartbeat"}
+          {saving ? t("agent.heartbeat.config.saving") : t("agent.heartbeat.config.save")}
         </Button>
       </Flex>
     </Card>

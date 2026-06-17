@@ -20,7 +20,10 @@ export const ToggleGroup = React.forwardRef<
   const rootRef = React.useRef<HTMLDivElement>(null)
   const [indicatorStyle, setIndicatorStyle] = React.useState<React.CSSProperties>({})
 
-  React.useImperativeHandle(ref, () => rootRef.current as any)
+  React.useImperativeHandle(
+    ref,
+    () => rootRef.current as React.ElementRef<typeof ToggleGroupPrimitive.Root>,
+  )
 
   React.useEffect(() => {
     if (type === 'single' && rootRef.current) {
@@ -52,14 +55,16 @@ export const ToggleGroup = React.forwardRef<
 
   const isSingle = type === 'single'
 
-  const handleValueChange = (value: any) => {
+  const handleValueChange = (value: string | string[]) => {
     if (isSingle && !value) return
-    props.onValueChange?.(value)
+    ;(props.onValueChange as ((value: string | string[]) => void) | undefined)?.(value)
   }
 
   return (
     <ToggleGroupPrimitive.Root
       ref={rootRef}
+      // Radix Root là discriminated union (single|multiple) khó biểu diễn khi spread props.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       type={type as any}
       className={`${styles.root} ${styles[`root--${size}`]} ${isSingle ? styles.singleSelect : ''} ${className || ''}`}
       style={style}

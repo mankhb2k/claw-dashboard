@@ -3,6 +3,7 @@
 import React from "react";
 import { Card, Select } from "@/components/ui";
 import { SearchItem } from "@/components/dashboard";
+import { useI18n } from "@/lib/i18n";
 import styles from "./CardSchedulesFilters.module.css";
 
 type AgentFilterOption = {
@@ -25,6 +26,8 @@ export function CardSchedulesFilters({
   onSearchChange,
   onAgentFilterChange,
 }: CardSchedulesFiltersProps) {
+  const { t } = useI18n();
+
   return (
     <Card className={styles.card} disableHover>
       <div className={styles.filters}>
@@ -33,14 +36,14 @@ export function CardSchedulesFilters({
             id="project-schedule-search"
             value={search}
             onChange={onSearchChange}
-            placeholder="Search schedules..."
+            placeholder={t("agent.schedules.filters.searchPlaceholder")}
             maxWidth="100%"
           />
         </div>
         <div className={styles.agentFilter}>
           <Select
             id="project-schedule-agent-filter"
-            label="Agent"
+            label={t("agent.schedules.filters.agentLabel")}
             options={agentFilterOptions}
             value={agentFilter}
             onValueChange={onAgentFilterChange}

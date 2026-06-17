@@ -1,15 +1,20 @@
 # AucoBot OSS — full stack: postgres + api + web + gateway + mcp
 #
-# Requires sibling repo: git clone git@github.com:aucobot/mcp.git ../mcp
-#
-# From aucobot/:
+# Pull pre-built images (recommended — no --build):
 #   cp deploy/.env.example deploy/.env
-#   docker compose -f deploy/docker-compose.yml up -d --build
+#   docker compose -f deploy/docker-compose.yml pull
+#   docker compose -f deploy/docker-compose.yml up -d
+#
+# Build api/web from source (dev — mcp always pulls from Hub):
+#   docker compose -f deploy/docker-compose.yml up -d --build api web
+#
+# Images: https://hub.docker.com/u/aucobot
 #
 # URLs:
 #   Web:     http://localhost:8386
 #   API:     http://localhost:8387
-#   Gateway: http://localhost:18789  (internal: http://gateway:18789)
+#   MCP:     http://localhost:8388
+#   Gateway: http://localhost:18789
 
 services:
   postgres:
@@ -66,10 +71,11 @@ services:
     restart: unless-stopped
 
   api:
+    image: ${AUCOBOT_API_IMAGE:-docker.io/aucobot/api:${AUCOBOT_IMAGE_TAG:-latest}}
+    pull_policy: always
     build:
       context: ..
       dockerfile: deploy/Dockerfile.api
-    image: aucobot-api:local
     container_name: aucobot-api
     environment:
       NODE_ENV: production
@@ -95,7 +101,7 @@ services:
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
       GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:8387/api/connectors/oauth/callback}
       MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-change-me-mcp-service-secret}
-      AUCOMCP_BASE_URL: ${AUCOMCP_BASE_URL:-http://mcp:8080}
+      AUCOMCP_BASE_URL: ${AUCOMCP_BASE_URL:-http://mcp:8388}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:
       - openclaw_data:/data/projects
@@ -109,32 +115,32 @@ services:
     restart: unless-stopped
 
   mcp:
-    build:
-      context: ../../mcp
-      dockerfile: deploy/Dockerfile
-    image: aucobot-mcp:local
+    image: ${AUCOBOT_MCP_IMAGE:-docker.io/aucobot/mcp:${AUCOBOT_IMAGE_TAG:-latest}}
+    pull_policy: always
     container_name: aucobot-mcp
     environment:
-      PORT: 8080
+      PORT: 8388
       HOST: 0.0.0.0
       MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-change-me-mcp-service-secret}
       AUCOBOT_INTERNAL_API_URL: http://api:8387
+    ports:
+      - "127.0.0.1:8388:8388"
     depends_on:
       api:
         condition: service_started
     restart: unless-stopped
 
   web:
+    image: ${AUCOBOT_WEB_IMAGE:-docker.io/aucobot/web:${AUCOBOT_IMAGE_TAG:-latest}}
+    pull_policy: always
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
       args:
-        # Empty = browser uses same-origin /api rewrite (cookies work for chat WebSocket).
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
         API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:8387}
         NEXT_PUBLIC_RUNTIME_MODE: ${NEXT_PUBLIC_RUNTIME_MODE:-oss}
         NEXT_PUBLIC_MOCK_API: ${NEXT_PUBLIC_MOCK_API:-false}
-    image: aucobot-web:local
     container_name: aucobot-web
     environment:
       NODE_ENV: production

@@ -1,3 +1,4 @@
+import { enAgent } from './agent'
 import { enAiModel } from './aiModel'
 import { enChannels } from './channels'
 import { enChatToolActivity } from './chat/toolActivity'
@@ -15,6 +16,7 @@ import { enSidebarProject } from './sidebarProject'
  * Keep keys in sync with `vi` locale.
  */
 export const en = {
+  agent: enAgent,
   aiModel: enAiModel,
   channels: enChannels,
   chat: {

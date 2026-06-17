@@ -28,15 +28,15 @@ AucoBot là monorepo **pnpm** gồm:
 
 ## 2. Ranh giới service OSS (5 container + volume)
 
-OSS self-host **đủ** với **năm container** trong `docker compose`. **`web`** và **`api`** là **code AucoBot** — build từ repo. **`mcp`** build từ sibling [`mcp/`](../mcp/). **`postgres`** và **`gateway`** (OpenClaw) **pull image upstream**.
+OSS self-host **đủ** với **năm container** trong `docker compose`. **`web`** và **`api`** — pull Hub hoặc `--build` từ repo. **`mcp`** — **pull Hub only** (`docker.io/aucobot/mcp`). **`postgres`** và **`gateway`** (OpenClaw) **pull image upstream**.
 
 ### 2.1 Năm service compose
 
 | Service | Tên compose gợi ý | Image | Sở hữu | Port mặc định | Vai trò |
 | ------- | ----------------- | ----- | ------- | ------------- | ------- |
-| Dashboard | `web` | Build `apps/web` | **AucoBot** | 8386 | UI; gọi API (`NEXT_PUBLIC_API_URL`) |
-| Control plane | `api` | Build `apps/api` | **AucoBot** | 8387 | JWT, CRUD, sync file, proxy WS chat → gateway |
-| MCP connectors | `mcp` | Build `../mcp` | **MCP** | 8080 (internal) | Hosted MCP HTTP — Drive, Calendar tools |
+| Dashboard | `web` | Hub `aucobot/web` hoặc build `apps/web` | **AucoBot** | 8386 | UI; gọi API (`NEXT_PUBLIC_API_URL`) |
+| Control plane | `api` | Hub `aucobot/api` hoặc build `apps/api` | **AucoBot** | 8387 | JWT, CRUD, sync file, proxy WS chat → gateway |
+| MCP connectors | `mcp` | Pull `docker.io/aucobot/mcp` | **MCP** | 8388 | Hosted MCP HTTP — Drive, Calendar tools |
 | Gateway | `gateway` | Pull OpenClaw (fork pin) | **Upstream** | **18789** | Agent, kênh chat, gọi MCP qua `openclaw.json` |
 | Database | `postgres` | `postgres:16-alpine` | **Upstream** | 5432 | Users, projects, skills metadata… |
 
@@ -48,7 +48,7 @@ flowchart LR
     API -->|sync| VOL[openclaw_data]
     API -->|OPENCLAW_GATEWAY_URL| GW[gateway :18789]
     VOL --> GW
-    GW -->|streamable-http| MCP[mcp :8080]
+    GW -->|streamable-http| MCP[mcp :8388]
     MCP -->|internal API| API
     GW <-->|channels| EXT[Internet]
 ```
@@ -61,7 +61,7 @@ flowchart LR
 | Thành phần | Mô tả |
 | ---------- | ----- |
 | **Volume `openclaw_data`** | `api` ghi `{OPENCLAW_DATA_ROOT}/{projectId}/…`; `gateway` đọc cùng dữ liệu (`openclaw.json`, `workspace/`). Thiếu volume chung → gateway chạy nhưng không thấy config. |
-| **Env nối stack** | `DATABASE_URL`, `JWT_SECRET`, `OPENCLAW_GATEWAY_URL=http://gateway:18789`, `OPENCLAW_GATEWAY_TOKEN`, `OPENCLAW_DATA_ROOT`, `MCP_SERVICE_SECRET`, `AUCOMCP_BASE_URL=http://mcp:8080`, `NEXT_PUBLIC_API_URL` |
+| **Env nối stack** | `DATABASE_URL`, `JWT_SECRET`, `OPENCLAW_GATEWAY_URL=http://gateway:18789`, `OPENCLAW_GATEWAY_TOKEN`, `OPENCLAW_DATA_ROOT`, `MCP_SERVICE_SECRET`, `AUCOMCP_BASE_URL=http://mcp:8388`, `NEXT_PUBLIC_API_URL` |
 
 ### 2.3 Ranh giới sở hữu code
 
@@ -70,8 +70,8 @@ AucoBot (build image)
 ├── apps/web/   → service web
 └── apps/api/   → service api (+ Prisma migrate/seed)
 
-Aucomcp (build image — sibling repo folder)
-└── mcp/    → service mcp (hosted MCP connectors)
+MCP (pull image Hub — repo `aucobot/mcp` publish only)
+└── docker.io/aucobot/mcp  → service mcp (hosted MCP connectors)
 
 Upstream (pull image — fork pin, không patch runtime)
 ├── postgres:16-alpine

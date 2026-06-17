@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -p 8386",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test utils/chat/**/*.spec.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

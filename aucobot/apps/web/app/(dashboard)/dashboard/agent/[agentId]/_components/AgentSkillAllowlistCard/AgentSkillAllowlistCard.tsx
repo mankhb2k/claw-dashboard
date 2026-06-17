@@ -6,12 +6,14 @@ import { useFormContext } from "react-hook-form";
 import { Flex } from "@/components/layout";
 import { Typography, Switch, Card, Button } from "@/components/ui";
 import { Sparkles } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import { useProjectStore } from "@/stores/project.store";
 import { useProjectSkills } from "@/hooks/skill/use-project-skills";
-import type { AgentFormInput } from "@/schemas/agentForm.schema";
+import type { AgentFormInput } from "@/schemas/agent-form.schema";
 import styles from "./AgentSkillAllowlistCard.module.css";
 
 export function AgentSkillAllowlistCard() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const { watch, setValue } = useFormContext<AgentFormInput>();
   const skillNames = watch("skillNames");
@@ -47,10 +49,10 @@ export function AgentSkillAllowlistCard() {
         <div className={styles.headerRow}>
           <div>
             <Typography variant="p" weight="bold">
-              Agent Skills
+              {t("agent.skills.title")}
             </Typography>
             <Typography variant="small" color="muted">
-              Only skills you enable here are visible to this agent.
+              {t("agent.skills.description")}
             </Typography>
           </div>
           {enabledSkills.length > 0 ? (
@@ -62,7 +64,7 @@ export function AgentSkillAllowlistCard() {
                 onClick={handleDisableAll}
                 disabled={skillNames.length === 0}
               >
-                Disable all
+                {t("agent.skills.disableAll")}
               </Button>
               <Button
                 type="button"
@@ -71,7 +73,7 @@ export function AgentSkillAllowlistCard() {
                 onClick={handleEnableAll}
                 disabled={skillNames.length === enabledSkills.length}
               >
-                Enable all
+                {t("agent.skills.enableAll")}
               </Button>
             </div>
           ) : null}
@@ -86,16 +88,16 @@ export function AgentSkillAllowlistCard() {
 
       {loading ? (
         <Typography variant="small" color="muted">
-          Loading skills…
+          {t("agent.skills.loading")}
         </Typography>
       ) : enabledSkills.length === 0 ? (
         <div className={styles.emptyState}>
           <Typography variant="small" color="muted">
-            No published skills yet.{" "}
+            {t("agent.skills.empty")}{" "}
             <Link href="/dashboard/skill" className={styles.emptyLink}>
-              Create and enable skills
+              {t("agent.skills.createLink")}
             </Link>{" "}
-            in the Skills section first.
+            {t("agent.skills.createSuffix")}
           </Typography>
         </div>
       ) : (
@@ -120,7 +122,7 @@ export function AgentSkillAllowlistCard() {
                 onCheckedChange={(checked) =>
                   setSkillEnabled(skill.name, checked)
                 }
-                aria-label={`${skill.name} skill for this agent`}
+                aria-label={t("agent.skills.toggleAria", { name: skill.name })}
               />
             </div>
           ))}

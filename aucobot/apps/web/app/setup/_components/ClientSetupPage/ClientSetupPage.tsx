@@ -23,7 +23,6 @@ import { SetupCreateForm } from "../SetupCreateForm/SetupCreateForm";
 import { SetupOssRecover } from "../SetupOssRecover/SetupOssRecover";
 import { SetupCloudRecreate } from "../SetupCloudRecreate/SetupCloudRecreate";
 import { SetupResume } from "../SetupResume/SetupResume";
-import { Flex } from "@/components/layout";
 import { Card, Typography } from "@/components/ui";
 import { SetupFooterMeta } from "../SetupFooterMeta/SetupFooterMeta";
 

@@ -14,9 +14,11 @@ import {
 import { CardHeartbeatOverview } from "../CardHeartbeatOverview/CardHeartbeatOverview";
 import { CardHeartbeatConfig } from "../CardHeartbeatConfig/CardHeartbeatConfig";
 import { CardHeartbeatAgents } from "../CardHeartbeatAgents/CardHeartbeatAgents";
+import { useI18n } from "@/lib/i18n";
 import styles from "./ClientProjectHeartbeatPage.module.css";
 
-export default function ClientProjectHeartbeatPage() {
+export function ClientProjectHeartbeatPage() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,7 +48,7 @@ export default function ClientProjectHeartbeatPage() {
       setEffectiveEvery(data.effectiveEvery);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Cannot load heartbeat settings",
+        err instanceof Error ? err.message : t("agent.heartbeat.errors.load"),
       );
     } finally {
       setLoading(false);
@@ -78,7 +80,7 @@ export default function ClientProjectHeartbeatPage() {
       setEffectiveEvery(data.effectiveEvery);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Cannot save heartbeat settings",
+        err instanceof Error ? err.message : t("agent.heartbeat.errors.save"),
       );
     } finally {
       setSaving(false);

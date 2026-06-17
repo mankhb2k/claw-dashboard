@@ -1,5 +1,5 @@
 import { compileAgentsMd } from '@aucobot/workspace-sync/agent-workspace-compile';
-import type { AgentFormInput } from '@/schemas/agentForm.schema';
+import type { AgentFormInput } from '@/schemas/agent-form.schema';
 import type { AgentEditTab } from '@/stores/agent/agent-editor.store';
 import type { AgentAiEditorCompleteInput } from '@/schemas/project.schema';
 

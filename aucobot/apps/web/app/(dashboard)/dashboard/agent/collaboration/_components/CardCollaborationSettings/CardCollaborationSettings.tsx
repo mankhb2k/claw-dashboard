@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Typography, Switch, Card } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import styles from "./CardCollaborationSettings.module.css";
 
 type CardCollaborationSettingsProps = {
@@ -13,16 +14,17 @@ export function CardCollaborationSettings({
   enabled,
   onEnabledChange,
 }: CardCollaborationSettingsProps) {
+  const { t } = useI18n();
+
   return (
     <Card className={styles.card} disableHover>
       <div className={styles.header}>
         <div className={styles.headerText}>
           <Typography variant="p" weight="bold">
-            Agent collaboration
+            {t("agent.collaboration.settings.title")}
           </Typography>
           <Typography variant="small" color="muted">
-            Members can message and spawn each other. OpenClaw uses one shared
-            allow list for the project (not one-way permissions).
+            {t("agent.collaboration.settings.description")}
           </Typography>
         </div>
         <Switch checked={enabled} onCheckedChange={onEnabledChange} />

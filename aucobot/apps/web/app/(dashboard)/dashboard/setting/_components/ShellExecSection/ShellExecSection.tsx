@@ -12,7 +12,7 @@ import { Flex } from "@/components/layout";
 import { X } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
-import { INTERPRETER_SAFE_BINS } from "@/schemas/agentForm.schema";
+import { INTERPRETER_SAFE_BINS } from "@/schemas/agent-form.schema";
 import styles from "./ShellExecSection.module.css";
 import { CardSection } from "../CardSection/CardSection";
 import { TitleSection } from "../TitleSection/TitleSection";

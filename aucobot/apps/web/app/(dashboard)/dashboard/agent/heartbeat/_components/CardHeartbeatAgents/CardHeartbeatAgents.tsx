@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import { Typography, Card } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 import type { HeartbeatSummaryEntry } from "@/schemas/project.schema";
 import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-route";
 import styles from "./CardHeartbeatAgents.module.css";
@@ -14,24 +15,30 @@ function agentHeartbeatHref(agentId: string): string {
   return `${DASHBOARD_BASE_PATH}/agent/${encodeURIComponent(agentId)}?tab=heartbeat`;
 }
 
-function sourceLabel(source: HeartbeatSummaryEntry["source"]): string {
-  switch (source) {
-    case "main":
-      return "Main default";
-    case "inherit":
-      return "Same as Main";
-    case "custom":
-      return "Custom";
-    default:
-      return "Off";
-  }
-}
-
 type CardHeartbeatAgentsProps = {
   agents: HeartbeatSummaryEntry[];
 };
 
 export function CardHeartbeatAgents({ agents }: CardHeartbeatAgentsProps) {
+  const { t } = useI18n();
+
+  const sourceLabel = useMemo(
+    () =>
+      (source: HeartbeatSummaryEntry["source"]): string => {
+        switch (source) {
+          case "main":
+            return t("agent.heartbeat.agents.sourceMain");
+          case "inherit":
+            return t("agent.heartbeat.agents.sourceSameAsMain");
+          case "custom":
+            return t("agent.heartbeat.agents.sourceCustom");
+          default:
+            return t("agent.heartbeat.agents.sourceOff");
+        }
+      },
+    [t],
+  );
+
   const customAgents = useMemo(
     () => agents.filter((row) => row.agentId !== "main"),
     [agents],
@@ -40,25 +47,28 @@ export function CardHeartbeatAgents({ agents }: CardHeartbeatAgentsProps) {
   return (
     <Card className={styles.card}>
       <Typography variant="p" weight="medium">
-        Agents
+        {t("agent.heartbeat.agents.title")}
       </Typography>
       <Typography variant="small" color="muted">
-        Custom agents are off by default. Override on each agent&apos;s Heartbeat
-        tab.
+        {t("agent.heartbeat.agents.description")}
       </Typography>
 
       <div className={styles.agentTable}>
         <div className={`${styles.agentRow} ${styles.agentRowHead}`}>
-          <span>Agent</span>
-          <span>Status</span>
-          <span>Interval</span>
-          <span>Source</span>
+          <span>{t("agent.heartbeat.agents.headers.agent")}</span>
+          <span>{t("agent.heartbeat.agents.headers.status")}</span>
+          <span>{t("agent.heartbeat.agents.headers.interval")}</span>
+          <span>{t("agent.heartbeat.agents.headers.source")}</span>
           <span />
         </div>
         {agents.map((row) => (
           <div key={row.agentId} className={styles.agentRow}>
             <span>{row.name}</span>
-            <span>{row.enabled ? "On" : "Off"}</span>
+            <span>
+              {row.enabled
+                ? t("agent.heartbeat.agents.on")
+                : t("agent.heartbeat.agents.off")}
+            </span>
             <span>{row.every ?? "—"}</span>
             <span>{sourceLabel(row.source)}</span>
             <span>
@@ -66,7 +76,7 @@ export function CardHeartbeatAgents({ agents }: CardHeartbeatAgentsProps) {
                 <span className={styles.muted}>—</span>
               ) : (
                 <Link href={agentHeartbeatHref(row.agentId)} className={styles.link}>
-                  Configure
+                  {t("agent.heartbeat.agents.configure")}
                 </Link>
               )}
             </span>
@@ -74,7 +84,7 @@ export function CardHeartbeatAgents({ agents }: CardHeartbeatAgentsProps) {
         ))}
         {customAgents.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.emptyAgents}>
-            No custom agents yet.
+            {t("agent.heartbeat.agents.empty")}
           </Typography>
         ) : null}
       </div>

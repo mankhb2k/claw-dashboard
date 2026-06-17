@@ -43,6 +43,7 @@ import {
   type ChannelCatalogCard,
 } from "@/utils/channels/merge-channel-catalog";
 import { isChannelReadyForAgent } from "@/utils/channels/channel-agent-status";
+import { useI18n } from "@/lib/i18n";
 import styles from "./CardIntegrations.module.css";
 
 interface CardIntegrationsProps {
@@ -96,6 +97,7 @@ function ProviderRow({
   onActiveChange,
   meta,
   trailing,
+  enableAria,
 }: {
   name: string;
   iconSrc?: string;
@@ -105,6 +107,7 @@ function ProviderRow({
   onActiveChange: () => void;
   meta: React.ReactNode;
   trailing?: React.ReactNode;
+  enableAria: string;
 }) {
   return (
     <div
@@ -128,13 +131,14 @@ function ProviderRow({
         checked={active && connected}
         onCheckedChange={() => connected && onActiveChange()}
         disabled={!connected}
-        aria-label={`Enable ${name}`}
+        aria-label={enableAria}
       />
     </div>
   );
 }
 
 export function CardIntegrations({ agentId }: CardIntegrationsProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
 
@@ -190,7 +194,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setChannelCatalog(mergeChannelCatalog(definitions, rows));
     } catch (err) {
       setChannelsError(
-        err instanceof Error ? err.message : "Failed to load channels",
+        err instanceof Error ? err.message : t("agent.integrations.errors.loadChannels"),
       );
     } finally {
       setChannelsLoading(false);
@@ -213,7 +217,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setProjectConnectors(connectors);
     } catch (err) {
       setConnectorsError(
-        err instanceof Error ? err.message : "Failed to load connectors",
+        err instanceof Error ? err.message : t("agent.integrations.errors.loadConnectors"),
       );
     } finally {
       setConnectorsLoading(false);
@@ -232,7 +236,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setApiKeys(items);
     } catch (err) {
       setApiKeysError(
-        err instanceof Error ? err.message : "Failed to load API keys",
+        err instanceof Error ? err.message : t("agent.integrations.errors.loadApiKeys"),
       );
     } finally {
       setApiKeysLoading(false);
@@ -302,7 +306,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       await loadAgentApiKeys();
     } catch (err) {
       setApiKeysError(
-        err instanceof Error ? err.message : "Failed to create API key",
+        err instanceof Error ? err.message : t("agent.integrations.errors.createApiKey"),
       );
     } finally {
       setIsGenerating(false);
@@ -320,7 +324,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
     } catch (err) {
       setApiKeysError(
-        err instanceof Error ? err.message : "Failed to revoke API key",
+        err instanceof Error ? err.message : t("agent.integrations.errors.revokeApiKey"),
       );
     } finally {
       setDeletingKeyId(null);
@@ -379,7 +383,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
             name: connector.displayName || connector.connectorName,
             slug: connector.connectorSlug,
             type: connector.connectorKind,
-            author: "Third party",
+            author: t("agent.integrations.thirdParty"),
             description: connector.definition?.description ?? "",
           };
 
@@ -451,8 +455,8 @@ print(response.json()["choices"][0]["message"]["content"])`,
     <div className={styles.stack}>
       <Card className={styles.card} disableHover>
         <SectionHeader
-          title="API keys"
-          description="Access tokens for external apps to call this agent via REST API."
+          title={t("agent.integrations.apiKeys.title")}
+          description={t("agent.integrations.apiKeys.description")}
           action={
             <Button
               type="button"
@@ -461,14 +465,14 @@ print(response.json()["choices"][0]["message"]["content"])`,
               disabled={!isAgentPersisted}
             >
               <Plus size={14} aria-hidden />
-              Create API key
+              {t("agent.integrations.apiKeys.create")}
             </Button>
           }
         />
 
         {!isAgentPersisted ? (
           <Typography variant="small" color="muted" className={styles.emptyTable}>
-            Save the agent first to create API keys.
+            {t("agent.integrations.apiKeys.saveFirst")}
           </Typography>
         ) : apiKeysLoading ? (
           <div className={styles.apiKeysLoading}>
@@ -480,17 +484,19 @@ print(response.json()["choices"][0]["message"]["content"])`,
           </Typography>
         ) : apiKeys.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.emptyTable}>
-            No API keys yet.
+            {t("agent.integrations.apiKeys.empty")}
           </Typography>
         ) : (
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Token</th>
-                  <th>Created</th>
-                  <th className={styles.colActions}>Delete</th>
+                  <th>{t("agent.integrations.apiKeys.headers.name")}</th>
+                  <th>{t("agent.integrations.apiKeys.headers.token")}</th>
+                  <th>{t("agent.integrations.apiKeys.headers.created")}</th>
+                  <th className={styles.colActions}>
+                    {t("agent.integrations.apiKeys.headers.delete")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -509,7 +515,9 @@ print(response.json()["choices"][0]["message"]["content"])`,
                         iconOnly
                         loading={deletingKeyId === key.id}
                         onClick={() => void handleRevokeKey(key.id)}
-                        aria-label={`Delete ${key.label}`}
+                        aria-label={t("agent.integrations.apiKeys.deleteAria", {
+                          name: key.label,
+                        })}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -529,7 +537,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create API key</DialogTitle>
+            <DialogTitle>{t("agent.integrations.apiKeys.createDialog.title")}</DialogTitle>
           </DialogHeader>
           <form
             className={styles.dialogForm}
@@ -540,8 +548,8 @@ print(response.json()["choices"][0]["message"]["content"])`,
           >
             <Input
               id="new-api-key-name"
-              label="Key name"
-              placeholder="e.g. CRM integration"
+              label={t("agent.integrations.apiKeys.createDialog.nameLabel")}
+              placeholder={t("agent.integrations.apiKeys.createDialog.namePlaceholder")}
               value={dialogKeyName}
               onChange={(e) => setDialogKeyName(e.target.value)}
               autoFocus
@@ -553,7 +561,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
                 size="sm"
                 onClick={closeCreateDialog}
               >
-                Cancel
+                {t("agent.integrations.apiKeys.createDialog.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -562,7 +570,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
                 loading={isGenerating}
                 disabled={!dialogKeyName.trim()}
               >
-                Create
+                {t("agent.integrations.apiKeys.createDialog.submit")}
               </Button>
             </DialogFooter>
           </form>
@@ -575,10 +583,10 @@ print(response.json()["choices"][0]["message"]["content"])`,
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>API key created</DialogTitle>
+            <DialogTitle>{t("agent.integrations.apiKeys.createdDialog.title")}</DialogTitle>
           </DialogHeader>
           <Typography variant="small" color="muted">
-            Copy this token now. You will not be able to see it again.
+            {t("agent.integrations.apiKeys.createdDialog.description")}
           </Typography>
           {createdKeyDialog ? (
             <div className={styles.createdTokenRow}>
@@ -589,7 +597,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
                 size="sm"
                 iconOnly
                 onClick={handleCopyCreatedToken}
-                aria-label="Copy API key"
+                aria-label={t("agent.integrations.apiKeys.createdDialog.copyAria")}
               >
                 {copiedCreatedToken ? <Check size={14} /> : <Copy size={14} />}
               </Button>
@@ -602,7 +610,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
               size="sm"
               onClick={() => setCreatedKeyDialog(null)}
             >
-              Done
+              {t("agent.integrations.apiKeys.createdDialog.done")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -610,12 +618,12 @@ print(response.json()["choices"][0]["message"]["content"])`,
 
       <Card className={styles.card} disableHover>
         <SectionHeader
-          title="Widget embed & REST API"
-          description="Embed a chat bubble on your site or call the OpenAI-compatible REST API."
+          title={t("agent.integrations.widget.title")}
+          description={t("agent.integrations.widget.description")}
         />
 
         <CodeBlock
-          title="Chat widget script"
+          title={t("agent.integrations.widget.scriptTitle")}
           icon={<Rocket size={16} aria-hidden />}
           code={widgetScript}
         />
@@ -623,9 +631,9 @@ print(response.json()["choices"][0]["message"]["content"])`,
         <CodeBlock
           code={snippets[snippetTab]}
           tabs={[
-            { value: "curl", label: "cURL", icon: <Terminal size={12} aria-hidden /> },
-            { value: "node", label: "Node.js", icon: <Code size={12} aria-hidden /> },
-            { value: "python", label: "Python", icon: <FileCode size={12} aria-hidden /> },
+            { value: "curl", label: t("agent.integrations.widget.curl"), icon: <Terminal size={12} aria-hidden /> },
+            { value: "node", label: t("agent.integrations.widget.node"), icon: <Code size={12} aria-hidden /> },
+            { value: "python", label: t("agent.integrations.widget.python"), icon: <FileCode size={12} aria-hidden /> },
           ]}
           activeTab={snippetTab}
           onTabChange={setSnippetTab}
@@ -634,8 +642,8 @@ print(response.json()["choices"][0]["message"]["content"])`,
 
       <Card className={styles.card} disableHover>
         <SectionHeader
-          title="Messaging channels"
-          description="All project channels from the Channel tab. Enable each channel for this agent after it is connected."
+          title={t("agent.integrations.channels.title")}
+          description={t("agent.integrations.channels.description")}
           action={
             <Button
               type="button"
@@ -644,7 +652,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
               onClick={() => router.push("/dashboard/channel")}
             >
               <ArrowUpRight size={14} aria-hidden />
-              Manage channels
+              {t("agent.integrations.channels.manage")}
             </Button>
           }
         />
@@ -661,7 +669,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
           </Flex>
         ) : channelAgentRows.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.emptyConnectors}>
-            No channels available on this project.
+            {t("agent.integrations.channels.empty")}
           </Typography>
         ) : (
           <div className={styles.providerList}>
@@ -674,9 +682,14 @@ print(response.json()["choices"][0]["message"]["content"])`,
                 connected={channel.isReady}
                 active={channel.agentEnabled}
                 onActiveChange={() => toggleChannel(channel.channelId)}
+                enableAria={t("agent.integrations.channels.enableAria", {
+                  name: channel.name,
+                })}
                 meta={
                   !channel.isActive ? (
-                    <span className={styles.statusMuted}>Coming soon</span>
+                    <span className={styles.statusMuted}>
+                      {t("agent.integrations.channels.comingSoon")}
+                    </span>
                   ) : channel.isReady ? (
                     <span className={styles.statusOk}>{channel.statusLabel}</span>
                   ) : (
@@ -689,7 +702,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
                         router.push(`/dashboard/channel/${channel.channelId}`)
                       }
                     >
-                      Not connected — configure
+                      {t("agent.integrations.channels.notConnected")}
                     </Button>
                   )
                 }
@@ -701,8 +714,8 @@ print(response.json()["choices"][0]["message"]["content"])`,
 
       <Card className={styles.card} disableHover>
         <SectionHeader
-          title="Data sources & tools"
-          description="Choose which connectors added in Connect this agent may call as tools. Permissions are configured on each connector in Connect."
+          title={t("agent.integrations.connectors.title")}
+          description={t("agent.integrations.connectors.description")}
           action={
             <Button
               type="button"
@@ -711,7 +724,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
               onClick={() => router.push("/dashboard/connector")}
             >
               <ArrowUpRight size={14} aria-hidden />
-              Manage connectors
+              {t("agent.integrations.connectors.manage")}
             </Button>
           }
         />
@@ -720,7 +733,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
           id="connector-tool-search"
           value={connectorSearch}
           onChange={setConnectorSearch}
-          placeholder="Search connectors..."
+          placeholder={t("agent.integrations.connectors.searchPlaceholder")}
           className={styles.connectorSearch}
           maxWidth="100%"
         />
@@ -738,7 +751,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
         ) : projectConnectors.length === 0 ? (
           <div className={styles.emptyConnectors}>
             <Typography variant="small" color="muted">
-              No connectors added yet. Add connectors in Connect, then enable them for this agent.
+              {t("agent.integrations.connectors.empty")}
             </Typography>
             <Button
               type="button"
@@ -746,12 +759,12 @@ print(response.json()["choices"][0]["message"]["content"])`,
               size="sm"
               onClick={() => router.push("/dashboard/connector")}
             >
-              Go to Connect
+              {t("agent.integrations.connectors.goToConnect")}
             </Button>
           </div>
         ) : filteredConnectorRows.length === 0 ? (
           <Typography variant="small" color="muted" className={styles.emptyConnectors}>
-            No connectors match your search.
+            {t("agent.integrations.connectors.noMatch")}
           </Typography>
         ) : (
           <div className={styles.providerList}>
@@ -764,11 +777,16 @@ print(response.json()["choices"][0]["message"]["content"])`,
                 connected={isConnected}
                 active={isActive}
                 onActiveChange={() => toggleConnectorTool(service.slug)}
+                enableAria={t("agent.integrations.channels.enableAria", {
+                  name: service.name,
+                })}
                 meta={
                   <>
                     <span className={styles.typeBadge}>{service.type}</span>
                     {isConnected ? (
-                      <span className={styles.statusOk}>Connected</span>
+                      <span className={styles.statusOk}>
+                        {t("agent.integrations.connectors.connected")}
+                      </span>
                     ) : (
                       <Button
                         type="button"
@@ -779,7 +797,7 @@ print(response.json()["choices"][0]["message"]["content"])`,
                           router.push(`/dashboard/connector/${service.slug}`)
                         }
                       >
-                        Not connected — connect now
+                        {t("agent.integrations.connectors.notConnected")}
                       </Button>
                     )}
                   </>

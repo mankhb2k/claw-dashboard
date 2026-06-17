@@ -92,6 +92,42 @@ describe('mergeProviderKeysIntoConfig', () => {
 
     const entries = (result.plugins as { entries: Record<string, { enabled: boolean }> }).entries;
     assert.equal(entries.openai.enabled, true);
+    assert.equal(entries.google.enabled, true);
+  });
+
+  it('enables deepseek plugin when deepseek provider is enabled', () => {
+    const result = mergeProviderKeysIntoConfig(
+      {},
+      [
+        providerRow({
+          providerId: 'deepseek',
+          envKey: 'DEEPSEEK_API_KEY',
+          defaultModel: 'deepseek/deepseek-v4-flash',
+        }),
+      ],
+      () => 'sk-test',
+    );
+
+    const entries = (result.plugins as { entries: Record<string, { enabled: boolean }> }).entries;
+    assert.equal(entries.deepseek.enabled, true);
+    assert.equal(entries.google.enabled, false);
+  });
+
+  it('does not disable google when only gemini id is enabled (not google alias)', () => {
+    const result = mergeProviderKeysIntoConfig(
+      { plugins: { entries: { google: { enabled: true } } } },
+      [
+        providerRow({
+          providerId: 'gemini',
+          envKey: 'GEMINI_API_KEY',
+          defaultModel: 'google/gemini-3.5-flash',
+        }),
+      ],
+      () => 'key',
+    );
+
+    const entries = (result.plugins as { entries: Record<string, { enabled: boolean }> }).entries;
+    assert.equal(entries.google.enabled, true);
   });
 
   it('adds foundation allowlist models without dropping existing entries', () => {
@@ -237,23 +273,6 @@ describe('mergeAgentsIntoConfig', () => {
     assert.match(String(list[1].workspace), /workspace-researcher$/);
     assert.deepEqual(list[1].skills, ['web-search']);
     assert.ok((result.skills as { load: { extraDirs: string[] } }).load.extraDirs.length >= 1);
-  });
-
-  it('main agent allowlists all enabled project skills when provided', () => {
-    const config: Record<string, unknown> = {};
-    const result = mergeAgentsIntoConfig(
-      config,
-      [],
-      NO_COLLABORATION,
-      undefined,
-      undefined,
-      ['github', 'weather', 'github'],
-    );
-
-    const list = (result.agents as { list: Array<Record<string, unknown>> }).list;
-    assert.equal(list.length, 1);
-    assert.equal(list[0].id, 'main');
-    assert.deepEqual(list[0].skills, ['github', 'weather']);
   });
 
   it('denies exec tools when shellExecEnabled is false', () => {

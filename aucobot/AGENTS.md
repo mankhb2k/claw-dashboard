@@ -19,7 +19,7 @@ Cursor rules: [../.cursor/rules/](../.cursor/rules/) (`aucobot-monorepo.mdc`, `a
 ```text
 apps/api, apps/web     → runnable OSS apps
 packages/*             → shared libraries (OSS public)
-cloud/{api,web,packages,deploy} → hosted cloud (private skeleton)
+Sibling `../cloud/` (repo `git@github.com:aucobot/cloud.git`) → hosted cloud: api, web, `@aucobot-cloud/*` packages, deploy
 deploy/                → OSS docker compose (postgres, api, web, gateway pull)
 ```
 
@@ -52,7 +52,7 @@ Env (local): `aucobot/.env` from `.env.example` (API + Web). Optional `aucobot/.
 |---------|---------|
 | Types, `GatewayEndpointResolver`, `PlanGuard` | `@aucobot/runtime-contracts` |
 | OSS fixed gateway `:18789`, health poll | `@aucobot/runtime-oss` |
-| Cloud docker per project | `@aucobot-cloud/fleet` in `cloud/packages/` (future) |
+| Cloud docker per project | `@aucobot-cloud/fleet` in sibling `../cloud/packages/` |
 | Cloud branch in API (temporary) | `apps/api/src/features/projects/runtime/gateway-endpoint.ts` |
 
 ## PR / task template for agents

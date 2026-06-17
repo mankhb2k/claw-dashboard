@@ -1,5 +1,5 @@
 import { getCurrentProjectId } from "@/lib/current-project";
-import ClientChannelPage from "./_components/ClientChannelPage/ClientChannelPage";
+import { ClientChannelPage } from "./_components/ClientChannelPage/ClientChannelPage";
 import { Container, Flex } from "@/components/layout";
 import styles from "./channel.module.css";
 

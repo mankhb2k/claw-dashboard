@@ -14,6 +14,7 @@ import {
 import { Flex, Grid } from "@/components/layout";
 import { Bot, Code, BarChart2, Brain, Settings } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import type { AgentTemplateRow } from "@/schemas/project.schema";
 import styles from "./ModalTemplate.module.css";
 
@@ -28,6 +29,7 @@ export function ModalTemplate({
   onClose,
   projectId,
 }: ModalTemplateProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [templates, setTemplates] = useState<AgentTemplateRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,9 +47,7 @@ export function ModalTemplate({
       })
       .catch(() => {
         setTemplates([]);
-        setLoadError(
-          "Could not load templates. Check that the API is running and the database is seeded (pnpm db:seed).",
-        );
+        setLoadError(t("agent.modalTemplate.loadError"));
       })
       .finally(() => setLoading(false));
   }, [isOpen, projectId]);
@@ -76,11 +76,9 @@ export function ModalTemplate({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={styles.modalContent} showClose={true}>
         <DialogHeader className={styles.dialogHeader}>
-          <DialogTitle>Choose a template to start your project</DialogTitle>
+          <DialogTitle>{t("agent.modalTemplate.title")}</DialogTitle>
           <DialogDescription>
-            Start your project faster by choosing from the optimized templates
-            available in the OpenClaw library, or start from scratch with no
-            number.
+            {t("agent.modalTemplate.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -94,8 +92,7 @@ export function ModalTemplate({
           </Typography>
         ) : templates.length === 0 ? (
           <Typography variant="small" color="muted">
-            No templates in the system. Run database seed from{" "}
-            <code>packages/database</code>: <code>pnpm db:seed</code>
+            {t("agent.modalTemplate.empty")}
           </Typography>
         ) : (
           <Grid columns={2} gap={12} className={styles.templateList}>

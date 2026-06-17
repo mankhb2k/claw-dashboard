@@ -11,11 +11,13 @@ import { cronJobMessage, formatCronSchedule } from "@/utils/agent/cron-format";
 import { CardSchedulesOverview } from "../CardSchedulesOverview/CardSchedulesOverview";
 import { CardSchedulesFilters } from "../CardSchedulesFilters/CardSchedulesFilters";
 import { CardSchedulesJobs } from "../CardSchedulesJobs/CardSchedulesJobs";
+import { useI18n } from "@/lib/i18n";
 import styles from "./ClientProjectSchedulesPage.module.css";
 
 const ALL_AGENTS = "__all__";
 
-export default function ClientProjectSchedulesPage() {
+export function ClientProjectSchedulesPage() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
 
@@ -43,10 +45,10 @@ export default function ClientProjectSchedulesPage() {
 
   const agentFilterOptions = useMemo(
     () => [
-      { value: ALL_AGENTS, label: "All agents" },
+      { value: ALL_AGENTS, label: t("agent.schedules.filters.allAgents") },
       ...agents.map((agent) => ({ value: agent.slug, label: agent.name })),
     ],
-    [agents],
+    [agents, t],
   );
 
   const load = useCallback(async () => {
@@ -70,7 +72,7 @@ export default function ClientProjectSchedulesPage() {
       setJobs(list.jobs);
       setAgents(agentRows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot load schedules");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.load"));
       setJobs([]);
     } finally {
       setLoading(false);
@@ -113,7 +115,7 @@ export default function ClientProjectSchedulesPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot update schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.update"));
     } finally {
       setBusyJobId(null);
     }
@@ -128,7 +130,7 @@ export default function ClientProjectSchedulesPage() {
       await projectApi.runCronJob(projectId, jobId);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot run schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.run"));
     } finally {
       setBusyJobId(null);
     }
@@ -143,7 +145,7 @@ export default function ClientProjectSchedulesPage() {
       await projectApi.deleteCronJob(projectId, jobId);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot delete schedule");
+      setError(err instanceof Error ? err.message : t("agent.schedules.errors.delete"));
     } finally {
       setBusyJobId(null);
     }

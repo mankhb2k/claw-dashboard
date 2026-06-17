@@ -31,6 +31,7 @@ import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import type { ChatModelsResponse } from "@/lib/api/chat";
 import { resolveModelDisplayName } from "@/utils/chat/model-catalog";
 import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
+import { useI18n } from "@/lib/i18n";
 
 function toAgentItem(
   row: ProjectAgentListRow,
@@ -48,7 +49,8 @@ function toAgentItem(
   };
 }
 
-export default function ClientAgentPage() {
+export function ClientAgentPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
@@ -91,7 +93,9 @@ export default function ClientAgentPage() {
     void loadList()
       .catch((err) => {
         setAgents([]);
-        setError(err instanceof Error ? err.message : "Cannot load agent list");
+        setError(
+          err instanceof Error ? err.message : t("agent.list.errors.loadList"),
+        );
       })
       .finally(() => setLoading(false));
   }, [projectId, loadList]);
@@ -116,7 +120,9 @@ export default function ClientAgentPage() {
     try {
       await loadList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cannot load agent list");
+      setError(
+        err instanceof Error ? err.message : t("agent.list.errors.loadList"),
+      );
     }
   }, [projectId, loadList]);
 
@@ -154,7 +160,9 @@ export default function ClientAgentPage() {
       .duplicateAgent(projectId, agent.id)
       .then(() => reloadAgents())
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Duplicate agent failed");
+        setError(
+          err instanceof Error ? err.message : t("agent.list.errors.duplicate"),
+        );
       });
   };
 
@@ -171,7 +179,9 @@ export default function ClientAgentPage() {
         setDeleteAgentId(null);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Delete agent failed");
+        setError(
+          err instanceof Error ? err.message : t("agent.list.errors.delete"),
+        );
       });
   };
 
@@ -200,7 +210,7 @@ export default function ClientAgentPage() {
         <Flex align="center" gap={3} className={styles.toolbarStart}>
           <SearchItem
             id="agent-search"
-            placeholder="Search agent..."
+            placeholder={t("agent.list.searchPlaceholder")}
             value={searchQuery}
             onChange={setSearchQuery}
           />
@@ -213,7 +223,7 @@ export default function ClientAgentPage() {
                 }`}
                 onClick={() => setListFilter("all")}
               >
-                All ({agents.length})
+                {t("agent.list.filterAll", { count: String(agents.length) })}
               </button>
               <button
                 type="button"
@@ -223,7 +233,9 @@ export default function ClientAgentPage() {
                 onClick={() => setListFilter("collaboration")}
               >
                 <Users size={14} aria-hidden />
-                Collaboration ({collaborationCount})
+                {t("agent.list.filterCollaboration", {
+                  count: String(collaborationCount),
+                })}
               </button>
             </Flex>
           ) : null}
@@ -231,7 +243,7 @@ export default function ClientAgentPage() {
 
         <Button onClick={handleCreateNew} disabled={!projectId}>
           <Plus size={18} />
-          Create New Agent
+          {t("agent.list.createNew")}
         </Button>
       </Flex>
 
@@ -261,19 +273,18 @@ export default function ClientAgentPage() {
         >
           <Bot size={48} className={styles.emptyIcon} />
           <Typography variant="h3" className={styles.emptyTitle}>
-            No agents yet
+            {t("agent.list.emptyTitle")}
           </Typography>
           <Typography
             variant="small"
             color="muted"
             className={styles.emptyDesc}
           >
-            Create your first agent, then configure collaboration so they can
-            work together.
+            {t("agent.list.emptyDescription")}
           </Typography>
           <Button onClick={handleCreateNew} disabled={!projectId}>
             <Plus size={18} />
-            Create first agent
+            {t("agent.list.createFirst")}
           </Button>
         </Flex>
       ) : (
@@ -286,8 +297,8 @@ export default function ClientAgentPage() {
           <Bot size={48} className={styles.emptyIcon} />
           <Typography variant="h3" className={styles.emptyTitle}>
             {listFilter === "collaboration"
-              ? "No agents in collaboration"
-              : "No matching agents"}
+              ? t("agent.list.noCollaborationTitle")
+              : t("agent.list.noMatchTitle")}
           </Typography>
           <Typography
             variant="small"
@@ -295,15 +306,15 @@ export default function ClientAgentPage() {
             className={styles.emptyDesc}
           >
             {listFilter === "collaboration"
-              ? "Add agents on the Collaboration page or clear the filter."
-              : "Try a different search query."}
+              ? t("agent.list.noCollaborationDescription")
+              : t("agent.list.noMatchDescription")}
           </Typography>
           {listFilter === "collaboration" ? (
             <Link
               href={`${DASHBOARD_BASE_PATH}/agent/collaboration`}
               className={styles.collaborationLink}
             >
-              Open collaboration settings
+              {t("agent.list.openCollaboration")}
             </Link>
           ) : (
             <Button
@@ -311,7 +322,7 @@ export default function ClientAgentPage() {
               variant="ghost"
               onClick={() => setSearchQuery("")}
             >
-              Clear search
+              {t("agent.list.clearSearch")}
             </Button>
           )}
         </Flex>
@@ -325,16 +336,15 @@ export default function ClientAgentPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete agent permanently?</AlertDialogTitle>
+            <AlertDialogTitle>{t("agent.list.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The AI assistant and all related
-              configuration will be removed from the system.
+              {t("agent.list.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("agent.list.cancel")}</AlertDialogCancel>
             <AlertDialogAction variant="danger" onClick={confirmDelete}>
-              Yes, delete
+              {t("agent.list.confirmDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -10,11 +10,13 @@ import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 import type { LiveThreadItem } from "@/utils/chat/tool/types";
-import { ChatComposer } from "../ChatComposer/ChatComposer";
-import { ChatMessageList } from "../ChatMessageList/ChatMessageList";
+import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
+import { ChatLiveThread } from "../ChatLiveThread/ChatLiveThread";
 import { ContentArea } from "../ContentArea/ContentArea";
-import type { ComposerSendPayload } from "@/components/dashboard/MessageBox";
-import type { SlashCommandItem } from "@/utils/chat/slash-command";
+import {
+  MessageBox,
+  type ComposerSendPayload,
+} from "@/components/chat/MessageBox";
 import styles from "./ChatPanel.module.css";
 
 export type ChatPanelMessage = {
@@ -70,6 +72,8 @@ export type ChatPanelProps = {
   messages: ChatPanelMessage[];
   streamText: string;
   sending: boolean;
+  input: string;
+  onInputChange: (value: string) => void;
   onSend: (payload: ComposerSendPayload) => void;
   onAbort: () => void;
   sessionActionsDisabled: boolean;
@@ -86,7 +90,6 @@ export type ChatPanelProps = {
   sessionKey?: string;
   liveItems?: LiveThreadItem[];
   showToolPreparing?: boolean;
-  slashCommands?: SlashCommandItem[];
 };
 
 export function ChatPanel({
@@ -118,6 +121,8 @@ export function ChatPanel({
   messages,
   streamText,
   sending,
+  input,
+  onInputChange,
   onSend,
   onAbort,
   sessionActionsDisabled,
@@ -129,7 +134,6 @@ export function ChatPanel({
   sessionKey,
   liveItems = [],
   showToolPreparing = false,
-  slashCommands,
 }: ChatPanelProps) {
   const showEmpty =
     messages.length === 0 &&
@@ -275,8 +279,10 @@ export function ChatPanel({
           ) : undefined
         }
         footer={
-          <ChatComposer
-            draftResetKey={sessionKey}
+          <MessageBox
+            enableAttachments
+            value={input}
+            onChange={onInputChange}
             onSend={onSend}
             onAbort={onAbort}
             sending={sending}
@@ -290,7 +296,6 @@ export function ChatPanel({
                 ? "Type a message…"
                 : "Connect to the gateway to chat…"
             }
-            slashCommands={slashCommands}
             providerId={providerId}
             providerOptions={providerOptions}
             onProviderChange={onProviderChange}
@@ -310,12 +315,22 @@ export function ChatPanel({
           />
         }
       >
-        <ChatMessageList
-          messages={messages}
-          streamText={streamText}
+        {messages.map((message) => (
+          <ChatMessageBubble
+            key={message.id}
+            role={message.role}
+            text={message.text}
+          />
+        ))}
+
+        <ChatLiveThread
           liveItems={liveItems}
           showToolPreparing={showToolPreparing}
         />
+
+        {streamText ? (
+          <ChatMessageBubble role="assistant" text={streamText} streaming />
+        ) : null}
       </ContentArea>
     </Box>
   );

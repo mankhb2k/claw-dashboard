@@ -1,7 +1,7 @@
 import * as React from "react";
 import styles from "./CardSection.module.css";
 
-interface CardSectionProps extends React.HTMLAttributes<HTMLDivElement> {}
+type CardSectionProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function CardSection({ children, className = "", ...props }: CardSectionProps) {
   return (
@@ -23,7 +23,7 @@ CardSection.Row = function CardRow({ children, className = "", noBorder, ...prop
   );
 };
 
-interface RowInfoProps extends React.HTMLAttributes<HTMLDivElement> {}
+type RowInfoProps = React.HTMLAttributes<HTMLDivElement>;
 
 CardSection.Info = function RowInfo({ children, className = "", ...props }: RowInfoProps) {
   return (
@@ -33,7 +33,7 @@ CardSection.Info = function RowInfo({ children, className = "", ...props }: RowI
   );
 };
 
-interface RowActionProps extends React.HTMLAttributes<HTMLDivElement> {}
+type RowActionProps = React.HTMLAttributes<HTMLDivElement>;
 
 CardSection.Action = function RowAction({ children, className = "", ...props }: RowActionProps) {
   return (

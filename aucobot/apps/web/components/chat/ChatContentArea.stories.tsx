@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 import { ChatLiveThread } from '@/app/(dashboard)/dashboard/chat/_components/ChatLiveThread/ChatLiveThread'
 import { ChatMessageBubble } from '@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble'

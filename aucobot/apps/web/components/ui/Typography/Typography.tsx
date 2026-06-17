@@ -25,7 +25,7 @@ export const Typography = React.forwardRef<HTMLElement, TypographyProps>(
     style,
     ...props 
   }, ref) => {
-    const Comp = asChild ? Slot : (as || (['h1', 'h2', 'h3', 'h4'].includes(variant) ? variant : 'p')) as any
+    const Comp = (asChild ? Slot : (as || (['h1', 'h2', 'h3', 'h4'].includes(variant) ? variant : 'p'))) as React.ElementType
     const weightClass = weight ? styles[weight] : ''
 
     const classes = [

@@ -32,7 +32,7 @@ import { CardCreateInvite } from "../CardCreateInvite/CardCreateInvite";
 import { CardInviteHistory } from "../CardInviteHistory/CardInviteHistory";
 import { CardGuide } from "../CardGuide/CardGuide";
 import { CardDeviceManager } from "../CardDeviceManager/CardDeviceManager";
-import { I18nTitleHeader } from "@/components/dashboard";
+import { TitleHeader } from "@/components/dashboard";
 import styles from "./ClientNodesPage.module.css";
 
 const POLL_MS = 4_000;
@@ -77,7 +77,7 @@ interface ClientNodesPageProps {
   projectId: string;
 }
 
-export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
+export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nodes, setNodes] = useState<NodeEntry[]>([]);
@@ -312,7 +312,7 @@ export default function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   const confirmCopy = confirmAction ? nodesConfirmCopy(confirmAction) : null;
 
   const pageHeader = (
-    <I18nTitleHeader
+    <TitleHeader
       titleKey="nodes.page.title"
       descriptionKey="nodes.page.description"
       showBorder

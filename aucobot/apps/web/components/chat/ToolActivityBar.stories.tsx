@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 import { ToolActivityBar } from '@/app/(dashboard)/dashboard/chat/_components/ToolActivityBar/ToolActivityBar'
 
