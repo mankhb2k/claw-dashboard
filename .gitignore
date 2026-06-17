@@ -10,4 +10,7 @@
 *.log
 openclaw-worker/
 .DS_Store
+/cloud
+/mcp
+/node-device
 
