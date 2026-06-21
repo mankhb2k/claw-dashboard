@@ -1,19 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@aucobot/database';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { computeCostUsd } from '../../lib/compute-cost-usd';
+import { findModelPricing } from '../../lib/model-pricing.catalog';
 import {
   consumePendingRun,
   mergeSessionEnrichment,
   parseGatewayUsageFrame,
 } from '../../lib/parse-gateway-usage';
-import type { ParsedGatewayUsage } from '../../lib/parse-gateway-usage';
 import {
   computeSessionUsageDelta,
   readSessionUsageRow,
   type SessionUsageRow,
 } from '../../lib/session-usage-snapshot';
-import type { GatewayTapContext, RecordUsageInput } from '../../lib/usage-record.types';
+import { Prisma } from '@aucobot/database';
+
+import type { ParsedGatewayUsage } from '../../lib/parse-gateway-usage';
+import type {
+  GatewayTapContext,
+  RecordUsageInput,
+} from '../../lib/usage-record.types';
 
 const SESSION_ENRICH_DELAY_MS = 250;
 
@@ -37,7 +43,7 @@ export class ModelUsageRecorderService {
   async record(input: RecordUsageInput): Promise<void> {
     const inputTokens = input.inputTokens ?? 0;
     const outputTokens = input.outputTokens ?? 0;
-    const costUsd = await this.resolveCostUsd(
+    const costUsd = this.resolveCostUsd(
       input.providerId,
       input.modelId,
       inputTokens,
@@ -168,40 +174,24 @@ export class ModelUsageRecorderService {
     }
   }
 
-  private async resolveCostUsd(
+  private resolveCostUsd(
     providerId: string | null | undefined,
     modelId: string,
     inputTokens: number,
     outputTokens: number,
-  ): Promise<string> {
-    if (!providerId?.trim()) {
+  ): string {
+    const provider = providerId?.trim();
+    if (!provider) {
       return '0';
     }
 
-    const pricing = await this.prisma.modelPricing.findUnique({
-      where: {
-        providerId_modelId: {
-          providerId: providerId.trim(),
-          modelId: modelId.trim(),
-        },
-      },
-    });
-
+    const model = modelId.trim();
+    let pricing = findModelPricing(provider, model);
     if (!pricing) {
-      const slash = modelId.indexOf('/');
+      const slash = model.indexOf('/');
       if (slash > 0) {
-        const nativeId = modelId.slice(slash + 1);
-        const fallback = await this.prisma.modelPricing.findUnique({
-          where: {
-            providerId_modelId: {
-              providerId: providerId.trim(),
-              modelId: nativeId,
-            },
-          },
-        });
-        return computeCostUsd(inputTokens, outputTokens, fallback);
+        pricing = findModelPricing(provider, model.slice(slash + 1));
       }
-      return '0';
     }
 
     return computeCostUsd(inputTokens, outputTokens, pricing);

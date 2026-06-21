@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo, useState } from 'react'
 import {
   AlertCircle,
   ChevronDown,
@@ -12,11 +11,13 @@ import {
   Terminal,
   Wrench,
 } from 'lucide-react'
-
-import { useI18n } from '@/lib/i18n'
-import type { ToolStep, ToolStreamEntry } from '@/utils/chat/tool/types'
+import { useMemo, useState } from 'react'
 
 import styles from './ToolResearchBlock.module.css'
+import { useI18n } from '@/lib/i18n'
+
+import type { ToolStep, ToolStreamEntry } from '@/utils/chat/tool/types'
+
 
 type ToolResearchBlockProps = {
   entries: ToolStreamEntry[]

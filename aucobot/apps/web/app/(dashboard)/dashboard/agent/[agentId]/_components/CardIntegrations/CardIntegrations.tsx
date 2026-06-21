@@ -1,9 +1,24 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Copy,
+  Plus,
+  Trash2,
+  Check,
+  Code,
+  Terminal,
+  FileCode,
+  ArrowUpRight,
+  Rocket,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Flex } from "@/components/layout";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
+import styles from "./CardIntegrations.module.css";
+import { toServiceConnectData } from "../../../../connector/connect-display";
+import { MOCK_AGENT_CHANNEL_TOOLS, MOCK_AGENT_CONNECTOR_TOOLS } from "../../../agentMockData";
 import { SearchItem } from "@/components/dashboard";
+import { Flex } from "@/components/layout";
 import {
   Typography,
   Input,
@@ -20,31 +35,21 @@ import {
   DialogFooter,
 } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import { useProjectStore } from "@/stores/project.store";
-import { toServiceConnectData } from "../../../../connector/connect-display";
-import type { ServiceConnectData } from "../../../../connector/projectConnectData";
-import { isProjectConnectorConnected } from "@/utils/connectors/project-connector-status";
-import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
-import {
-  Copy,
-  Plus,
-  Trash2,
-  Check,
-  Code,
-  Terminal,
-  FileCode,
-  ArrowUpRight,
-  Rocket,
-} from "lucide-react";
-import { MOCK_AGENT_CHANNEL_TOOLS, MOCK_AGENT_CONNECTOR_TOOLS } from "../../../agentMockData";
-import type { AgentApiKeyListItem } from "@/schemas/project.schema";
+import { isChannelReadyForAgent } from "@/utils/channels/channel-agent-status";
 import {
   mergeChannelCatalog,
   type ChannelCatalogCard,
 } from "@/utils/channels/merge-channel-catalog";
-import { isChannelReadyForAgent } from "@/utils/channels/channel-agent-status";
-import { useI18n } from "@/lib/i18n";
-import styles from "./CardIntegrations.module.css";
+import { isProjectConnectorConnected } from "@/utils/connectors/project-connector-status";
+
+import type { ServiceConnectData } from "../../../../connector/projectConnectData";
+import type {
+  AgentApiKeyListItem,
+  ConnectorDefinition,
+  ProjectConnector,
+} from "@/schemas/project.schema";
 
 interface CardIntegrationsProps {
   agentId: string;
@@ -180,6 +185,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
   );
 
   const loadProjectChannels = useCallback(async () => {
+    await Promise.resolve();
     if (!projectId) {
       setChannelCatalog([]);
       return;
@@ -199,9 +205,10 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     } finally {
       setChannelsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   const loadProjectConnectors = useCallback(async () => {
+    await Promise.resolve();
     if (!projectId) {
       setProjectConnectors([]);
       return;
@@ -222,9 +229,10 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     } finally {
       setConnectorsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   const loadAgentApiKeys = useCallback(async () => {
+    await Promise.resolve();
     if (!isAgentPersisted) {
       setApiKeys([]);
       return;
@@ -241,15 +249,23 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     } finally {
       setApiKeysLoading(false);
     }
-  }, [isAgentPersisted, projectId, agentId]);
+  }, [isAgentPersisted, projectId, agentId, t]);
 
   useEffect(() => {
-    void loadProjectChannels();
-    void loadProjectConnectors();
-    void loadAgentApiKeys();
+    void (async () => {
+      await Promise.resolve();
+      await Promise.all([
+        loadProjectChannels(),
+        loadProjectConnectors(),
+        loadAgentApiKeys(),
+      ]);
+    })();
   }, [loadProjectChannels, loadProjectConnectors, loadAgentApiKeys]);
 
-  useEffect(() => {
+  const [trackedChannelCatalog, setTrackedChannelCatalog] =
+    useState(channelCatalog);
+  if (channelCatalog !== trackedChannelCatalog) {
+    setTrackedChannelCatalog(channelCatalog);
     setEnabledChannels((prev) => {
       const next = { ...prev };
       for (const channel of channelCatalog) {
@@ -263,9 +279,12 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       }
       return next;
     });
-  }, [channelCatalog]);
+  }
 
-  useEffect(() => {
+  const [trackedProjectConnectors, setTrackedProjectConnectors] =
+    useState(projectConnectors);
+  if (projectConnectors !== trackedProjectConnectors) {
+    setTrackedProjectConnectors(projectConnectors);
     setEnabledTools((prev) => {
       const next = { ...prev };
       for (const connector of projectConnectors) {
@@ -279,7 +298,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
       }
       return next;
     });
-  }, [projectConnectors]);
+  }
 
   const closeCreateDialog = () => {
     setCreateDialogOpen(false);
@@ -331,13 +350,21 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
     }
   };
 
-  const handleCopyCreatedToken = () => {
+  const handleCopyCreatedToken = async () => {
     if (!createdKeyDialog) {
       return;
     }
-    void navigator.clipboard.writeText(createdKeyDialog.token);
-    setCopiedCreatedToken(true);
-    setTimeout(() => setCopiedCreatedToken(false), 2000);
+    try {
+      await navigator.clipboard.writeText(createdKeyDialog.token);
+      setCopiedCreatedToken(true);
+      setTimeout(() => setCopiedCreatedToken(false), 2000);
+    } catch (err) {
+      setApiKeysError(
+        err instanceof Error
+          ? err.message
+          : t("agent.integrations.errors.copyApiKey"),
+      );
+    }
   };
 
   const formatKeyDate = (iso: string) => iso.split("T")[0] ?? iso;
@@ -394,7 +421,7 @@ export function CardIntegrations({ agentId }: CardIntegrationsProps) {
         isActive: enabledTools[connector.connectorSlug] ?? false,
       };
     });
-  }, [projectConnectors, definitionBySlug, enabledTools]);
+  }, [projectConnectors, definitionBySlug, enabledTools, t]);
 
   const filteredConnectorRows = useMemo(() => {
     const query = connectorSearch.trim().toLowerCase();

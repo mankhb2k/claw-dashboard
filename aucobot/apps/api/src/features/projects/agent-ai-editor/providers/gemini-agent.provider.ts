@@ -1,13 +1,14 @@
+import { toNativeModelId } from '../../skill-ai-editor/providers/model-id.util';
 import {
   AGENT_AI_EDITOR_MAX_OUTPUT_TOKENS,
   AGENT_AI_EDITOR_TIMEOUT_MS,
 } from '../lib/agent-ai-editor.constants';
+
 import type {
   AgentAiEditorCompleteInput,
   AgentAiEditorProviderAdapter,
   LlmCompleteResult,
 } from '../lib/agent-ai-editor.types';
-import { toNativeModelId } from '../../skill-ai-editor/providers/model-id.util';
 
 type GeminiGenerateResponse = {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -21,12 +22,15 @@ type GeminiGenerateResponse = {
 export class GeminiAgentProvider implements AgentAiEditorProviderAdapter {
   readonly id = 'gemini';
 
-  async complete(input: AgentAiEditorCompleteInput): Promise<LlmCompleteResult> {
+  async complete(
+    input: AgentAiEditorCompleteInput,
+  ): Promise<LlmCompleteResult> {
     const startedAt = Date.now();
     const modelId = toNativeModelId(input.model, 'google');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(input.apiKey)}`;
 
-    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> =
+      [];
     for (const msg of input.messages) {
       contents.push({
         role: msg.role === 'assistant' ? 'model' : 'user',
@@ -61,8 +65,10 @@ export class GeminiAgentProvider implements AgentAiEditorProviderAdapter {
     if (blockReason) throw new Error(`Gemini blocked: ${blockReason}`);
 
     const reply =
-      parsed.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim() ??
-      '';
+      parsed.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? '')
+        .join('')
+        .trim() ?? '';
     if (!reply) throw new Error('Empty response from Gemini');
     return {
       text: reply,

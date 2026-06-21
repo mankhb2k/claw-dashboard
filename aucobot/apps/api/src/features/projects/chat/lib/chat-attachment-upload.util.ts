@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import type { FastifyRequest } from 'fastify';
+
 import {
   CHAT_ATTACHMENT_MAX_DOC_BYTES,
   CHAT_ATTACHMENT_MAX_IMAGE_BYTES,
@@ -7,14 +7,20 @@ import {
   maxBytesForChatKind,
 } from '@aucobot/runtime-contracts';
 
-const MAX_UPLOAD = Math.max(CHAT_ATTACHMENT_MAX_IMAGE_BYTES, CHAT_ATTACHMENT_MAX_DOC_BYTES);
+import type { MultipartFile } from '@fastify/multipart';
+import type { FastifyRequest } from 'fastify';
+
+const MAX_UPLOAD = Math.max(
+  CHAT_ATTACHMENT_MAX_IMAGE_BYTES,
+  CHAT_ATTACHMENT_MAX_DOC_BYTES,
+);
 
 export async function readChatAttachmentUpload(req: FastifyRequest): Promise<{
   data: Buffer;
   mimeType: string;
   originalName: string;
 }> {
-  let part;
+  let part: MultipartFile | undefined;
   try {
     part = await req.file({ limits: { fileSize: MAX_UPLOAD } });
   } catch {
@@ -37,7 +43,9 @@ export async function readChatAttachmentUpload(req: FastifyRequest): Promise<{
   }
   const maxBytes = maxBytesForChatKind(kind);
   if (data.length > maxBytes) {
-    throw new BadRequestException(`File exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
+    throw new BadRequestException(
+      `File exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`,
+    );
   }
   return { data, mimeType, originalName };
 }

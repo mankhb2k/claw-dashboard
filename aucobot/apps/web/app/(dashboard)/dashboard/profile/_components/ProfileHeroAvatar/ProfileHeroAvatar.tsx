@@ -1,14 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { Camera } from "lucide-react";
+import { useRef, useState } from "react";
+
+import styles from "../../profile.module.css";
 import { Avatar, Spinner } from "@/components/ui";
 import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
+import { useAuthStore } from "@/stores/auth.store";
 import { prepareAvatarFile } from "@/utils/profile/avatar-upload";
 import { resolveUserAvatarSrc } from "@/utils/profile/user-avatar";
-import { useAuthStore } from "@/stores/auth.store";
+
 import type { PublicUser } from "@/schemas/user.schema";
-import styles from "../../profile.module.css";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
 
@@ -23,6 +26,7 @@ export function ProfileHeroAvatar({
   onUserUpdated,
   onUploadError,
 }: ProfileHeroAvatarProps) {
+  const { t } = useI18n();
   const setAuthUser = useAuthStore((s) => s.setUser);
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -62,7 +66,7 @@ export function ProfileHeroAvatar({
       URL.revokeObjectURL(localPreview);
       setPreviewUrl(null);
       onUploadError?.(
-        err instanceof Error ? err.message : "Failed to upload avatar",
+        err instanceof Error ? err.message : t("profile.avatar.uploadFailed"),
       );
     } finally {
       setUploading(false);
@@ -85,7 +89,7 @@ export function ProfileHeroAvatar({
         className={styles.cameraBtn}
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
-        aria-label="Change avatar"
+        aria-label={t("profile.avatar.changeAria")}
       >
         <Camera size={14} aria-hidden />
       </button>

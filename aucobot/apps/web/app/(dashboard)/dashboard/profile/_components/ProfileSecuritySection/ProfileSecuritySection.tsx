@@ -1,22 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Input, Typography } from "@/components/ui";
-import { Flex } from "@/components/layout";
-import { usersApi } from "@/lib/api/users";
-import { useI18n } from "@/lib/i18n";
-import {
-  changePasswordSchema,
-  type ChangePasswordInput,
-} from "@/schemas/user.schema";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+
 import { CardSection } from "../../../setting/_components/CardSection/CardSection";
 import { TitleSection } from "../../../setting/_components/TitleSection/TitleSection";
 import styles from "../../profile.module.css";
+import { Flex } from "@/components/layout";
+import { Button, Input, Typography } from "@/components/ui";
+import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
+import {
+  createChangePasswordSchema,
+  type ChangePasswordInput,
+} from "@/schemas/user.schema";
 
 export function ProfileSecuritySection() {
   const { t } = useI18n();
+  const changePasswordSchema = useMemo(() => createChangePasswordSchema(t), [t]);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );

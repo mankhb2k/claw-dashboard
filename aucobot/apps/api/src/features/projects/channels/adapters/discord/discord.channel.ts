@@ -2,6 +2,7 @@ import {
   type ChannelTestResult,
   validateDiscordAccessConfig,
 } from '@aucobot/shared';
+
 import type { ChannelAdapter } from '../../lib/channel-adapter.types';
 
 /** Discord bot tokens are three dot-separated segments. */
@@ -35,14 +36,16 @@ async function testDiscordConnection(
 
   if (!res.ok || !data.id) {
     const message =
-      typeof data.message === 'string' ? data.message : `Discord API HTTP ${res.status}`;
+      typeof data.message === 'string'
+        ? data.message
+        : `Discord API HTTP ${res.status}`;
     return { ok: false, message };
   }
 
   const tag =
     data.discriminator && data.discriminator !== '0'
       ? `${data.username}#${data.discriminator}`
-      : data.username ?? data.id;
+      : (data.username ?? data.id);
   return {
     ok: true,
     message: `Connected as ${tag}`,

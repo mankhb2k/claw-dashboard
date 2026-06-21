@@ -63,7 +63,11 @@ describe('ChatAgentsService', () => {
       const agents = await service.listAgentsForProject(PROJECT_ID);
 
       expect(agents[0]).toEqual({ id: 'main', name: 'Main', isDefault: true });
-      expect(agents[1]).toEqual({ id: 'support', name: 'Support', isDefault: false });
+      expect(agents[1]).toEqual({
+        id: 'support',
+        name: 'Support',
+        isDefault: false,
+      });
     });
 
     it('falls back to openclaw.json agents.list when db has no agents', async () => {

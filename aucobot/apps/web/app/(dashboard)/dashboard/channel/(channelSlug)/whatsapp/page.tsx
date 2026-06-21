@@ -1,6 +1,6 @@
-import { Container, Flex } from "@/components/layout";
-import { ClientWhatsappPage } from "./_components/ClientWhatsappPage/ClientWhatsappPage";
 import styles from "../channel-detail.module.css";
+import { ClientWhatsappPage } from "./_components/ClientWhatsappPage/ClientWhatsappPage";
+import { Container, Flex } from "@/components/layout";
 
 export default function WhatsAppChannelPage() {
   return (

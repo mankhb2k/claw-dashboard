@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { chatApi } from '@/lib/api/chat';
+import { translate } from '@/lib/i18n/translate';
 import {
   resolveAgentPrimaryOpenClawId,
   resolveModelSelection,
@@ -11,22 +13,34 @@ export function useModelCatalog(
   projectId: string,
   selectedOpenClawId?: string,
 ) {
+  const fetchKey = projectId || null;
+  const [trackedFetchKey, setTrackedFetchKey] = useState<string | null>(null);
   const [modelsLoading, setModelsLoading] = useState(true);
-  const [providerId, setProviderId] = useState<string | undefined>();
-  const [modelId, setModelId] = useState<string | undefined>();
   const [modelOptions, setModelOptions] = useState<
     Awaited<ReturnType<typeof chatApi.listModels>> | null
   >(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [userSelection, setUserSelection] = useState<{
+    providerId?: string;
+    modelId?: string;
+  }>({});
 
-  useEffect(() => {
-    if (!projectId) {
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    if (fetchKey) {
+      setModelsLoading(true);
+      setLoadError(null);
+    } else {
       setModelsLoading(false);
       setModelOptions(null);
-      return;
+      setLoadError(null);
+      setUserSelection({});
     }
+  }
 
-    setModelsLoading(true);
+  useEffect(() => {
+    if (!projectId) return;
+
     void chatApi
       .listModels(projectId)
       .then((res) => {
@@ -40,23 +54,32 @@ export function useModelCatalog(
           providers: [],
         });
         setLoadError(
-          err instanceof Error ? err.message : 'Failed to load model catalog',
+          err instanceof Error ? err.message : translate('chat.errors.loadModelCatalog'),
         );
       })
       .finally(() => setModelsLoading(false));
   }, [projectId]);
 
-  useEffect(() => {
-    if (!modelOptions || modelsLoading) return;
-    const selection = resolveModelSelection(
+  const defaultSelection = useMemo(() => {
+    if (!modelOptions || modelsLoading) return {};
+    return resolveModelSelection(
       modelOptions,
       selectedOpenClawId?.trim() ||
         resolveAgentPrimaryOpenClawId(modelOptions) ||
         undefined,
     );
-    setProviderId(selection.providerId);
-    setModelId(selection.modelId);
   }, [modelOptions, modelsLoading, selectedOpenClawId]);
+
+  const selectionKey = `${projectId}|${modelsLoading}|${selectedOpenClawId}|${defaultSelection.providerId}|${defaultSelection.modelId}`;
+  const [trackedSelectionKey, setTrackedSelectionKey] = useState(selectionKey);
+
+  if (selectionKey !== trackedSelectionKey) {
+    setTrackedSelectionKey(selectionKey);
+    setUserSelection({});
+  }
+
+  const providerId = userSelection.providerId ?? defaultSelection.providerId;
+  const modelId = userSelection.modelId ?? defaultSelection.modelId;
 
   const activeProvider = useMemo(
     () => modelOptions?.providers.find((row) => row.providerId === providerId),
@@ -85,21 +108,25 @@ export function useModelCatalog(
 
   const handleProviderChange = useCallback(
     (nextProviderId: string) => {
-      setProviderId(nextProviderId);
       const provider = modelOptions?.providers.find(
         (row) => row.providerId === nextProviderId,
       );
-      if (provider) {
-        const nextModel =
-          provider.defaultModel ?? provider.models[0]?.openclawId ?? '';
-        setModelId(nextModel || undefined);
-      }
+      const nextModel = provider
+        ? (provider.defaultModel ?? provider.models[0]?.openclawId ?? '')
+        : undefined;
+      setUserSelection({
+        providerId: nextProviderId,
+        modelId: nextModel || undefined,
+      });
     },
     [modelOptions],
   );
 
   const handleModelChange = useCallback((nextModelId: string) => {
-    setModelId(nextModelId);
+    setUserSelection((prev) => ({
+      ...prev,
+      modelId: nextModelId,
+    }));
   }, []);
 
   return {

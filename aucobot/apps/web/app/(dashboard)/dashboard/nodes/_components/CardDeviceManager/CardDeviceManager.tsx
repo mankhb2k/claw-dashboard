@@ -1,17 +1,19 @@
 "use client";
 
 import { Laptop, RotateCw } from "lucide-react";
+
+import styles from "./CardDeviceManager.module.css";
+import { CardNodeDevice } from "./CardNodeDevice/CardNodeDevice";
+import { CardPendingApproval } from "./CardPendingApproval/CardPendingApproval";
+import pageStyles from "../../nodes.module.css";
+import { Button, Card, Typography } from "@/components/ui";
+
 import type {
   DevicePairingPending,
   NodeEntry,
   NodePairingPending,
 } from "@/schemas/nodes.schema";
-import { Button, Card, Typography } from "@/components/ui";
 import type { ApprovalGroup } from "@/utils/nodes/nodes-utils";
-import { CardNodeDevice } from "./CardNodeDevice/CardNodeDevice";
-import { CardPendingApproval } from "./CardPendingApproval/CardPendingApproval";
-import pageStyles from "../../nodes.module.css";
-import styles from "./CardDeviceManager.module.css";
 
 export type CardDeviceManagerProps = {
   groups: ApprovalGroup[];

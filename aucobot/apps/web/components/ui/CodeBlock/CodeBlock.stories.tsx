@@ -1,9 +1,11 @@
 "use client";
 
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import React, { useState } from "react";
-import { CodeBlock } from "@/components/ui/CodeBlock/CodeBlock";
 import { Code, FileCode, Rocket, Terminal } from "lucide-react";
+import React, { useState } from "react";
+
+import { CodeBlock } from "@/components/ui/CodeBlock/CodeBlock";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const SAMPLE_SCRIPT = `<script src="https://cdn.example.com/widget.js" data-agent="agent-1"></script>`;
 

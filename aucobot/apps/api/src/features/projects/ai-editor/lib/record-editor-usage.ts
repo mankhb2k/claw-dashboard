@@ -1,4 +1,5 @@
-import { UsageSource, UsageStatus } from '@aucobot/database';
+import { UsageSource, UsageStatus } from '@aucobot/shared';
+
 import type { ModelUsageRecorderService } from '../../usage/services/model-usage-recorder/model-usage-recorder.service';
 
 type EditorUsageBase = {

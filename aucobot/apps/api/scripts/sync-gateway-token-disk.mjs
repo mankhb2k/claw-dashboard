@@ -6,18 +6,18 @@ import { readFile, writeFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config as loadEnv } from 'dotenv';
-import { syncGatewayAuthToken } from '../../../packages/workspace-sync/dist/sync-helpers.js';
+import { syncGatewayAuthToken } from '../../../packages/workspace-sync/dist/config/sync-helpers.js';
 
-const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-loadEnv({ path: path.join(root, '.env') });
+const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+loadEnv({ path: path.join(repoRoot, 'apps/.env') });
 
 const token = process.env.OPENCLAW_GATEWAY_TOKEN?.trim();
 if (!token) {
-  console.error('OPENCLAW_GATEWAY_TOKEN is not set in aucobot/.env');
+  console.error('OPENCLAW_GATEWAY_TOKEN is not set in aucobot/apps/.env');
   process.exit(1);
 }
 
-const projectsDir = path.join(root, 'apps/api/data/projects');
+const projectsDir = path.join(repoRoot, 'apps/api/data/projects');
 const entries = await readdir(projectsDir, { withFileTypes: true });
 
 for (const entry of entries) {

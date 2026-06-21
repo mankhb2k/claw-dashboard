@@ -1,5 +1,7 @@
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { authHandlers, projectHandlers } from './handlers'
+
+import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
+
 
 const MOCK_ENABLED = process.env.NEXT_PUBLIC_MOCK_API === 'true'
 

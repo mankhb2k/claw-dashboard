@@ -3,9 +3,10 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { callGatewayRpc, GatewayRpcError } from '@aucobot/control-plane-core';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+
 import { ProjectsService } from '../../../services/projects/projects.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+import { callGatewayRpc, GatewayRpcError } from '@aucobot/control-plane-core';
 
 @Injectable()
 export class GatewayRpcService {

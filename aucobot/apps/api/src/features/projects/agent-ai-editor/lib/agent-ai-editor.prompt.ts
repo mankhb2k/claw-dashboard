@@ -95,11 +95,17 @@ export function parseAgentAiEditorResponse(raw: string): {
   if (phase === 'clarify') {
     const questions = Array.isArray(obj.questions)
       ? obj.questions
-          .filter((q): q is string => typeof q === 'string' && q.trim().length > 0)
+          .filter(
+            (q): q is string => typeof q === 'string' && q.trim().length > 0,
+          )
           .map((q) => q.trim())
           .slice(0, 3)
       : [];
-    return { phase, message, questions: questions.length ? questions : undefined };
+    return {
+      phase,
+      message,
+      questions: questions.length ? questions : undefined,
+    };
   }
 
   const markdown = typeof obj.markdown === 'string' ? obj.markdown.trim() : '';

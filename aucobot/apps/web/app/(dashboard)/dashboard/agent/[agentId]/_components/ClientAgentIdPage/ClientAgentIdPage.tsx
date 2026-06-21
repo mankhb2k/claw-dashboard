@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
-import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
-import { EditPanel } from "../EditPanel/EditPanel";
-import { AgentPanel } from "../AgentPanel/AgentPanel";
 import styles from "./ClientAgentIdPage.module.css";
+import { AgentPanel } from "../AgentPanel/AgentPanel";
+import { EditPanel } from "../EditPanel/EditPanel";
+import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
 
 interface ClientAgentIdPageProps {
   agentId: string;

@@ -1,13 +1,16 @@
 import { useEffect, useRef } from 'react'
-import { authApi } from '@/lib/api/auth'
+
+import { useAuthStore } from '@/stores/auth.store'
 
 /** Poll interval — refresh before default 15m access TTL. */
 const SESSION_KEEP_ALIVE_MS = 10 * 60 * 1000
 
 /**
  * Keeps the session alive while the dashboard is open (silent refresh via GET /session).
+ * Also refreshes {@link useAuthStore} so sidebar/header show the current user profile.
  */
 export function useSessionKeepAlive(): void {
+  const fetchMe = useAuthStore((s) => s.fetchMe)
   const tickingRef = useRef(false)
 
   useEffect(() => {
@@ -17,7 +20,7 @@ export function useSessionKeepAlive(): void {
       if (tickingRef.current || cancelled) return
       tickingRef.current = true
       try {
-        await authApi.me()
+        await fetchMe()
       } catch {
         // Refresh truly expired — axios interceptor handles redirect on next API call.
       } finally {
@@ -43,5 +46,5 @@ export function useSessionKeepAlive(): void {
       window.clearInterval(intervalId)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [])
+  }, [fetchMe])
 }

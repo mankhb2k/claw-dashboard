@@ -1,8 +1,10 @@
 import * as React from "react";
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
+
 import { Flex } from "@/components/layout";
 import { Typography, Button } from "@/components/ui";
+import { Spinner } from "@/components/ui/Spinner/Spinner";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof Spinner> = {
   title: "UI/Spinner",

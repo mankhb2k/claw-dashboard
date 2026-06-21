@@ -1,10 +1,11 @@
-import type { Locale } from '../constants'
 import { DEFAULT_LOCALE } from '../constants'
 import { en } from './en'
-import type { ViDictionary } from './vi'
 import { vi } from './vi'
 
-/** Cấu trúc chuỗi theo `vi.ts`; `en.ts` phải giữ cùng keys (nội dung khác ngôn ngữ). */
+import type { ViDictionary } from './vi'
+import type { Locale } from '../constants'
+
+/** String structure follows `vi`; `en` must keep the same keys (different language content). */
 export type AppDictionary = ViDictionary
 
 const MAP: Record<Locale, AppDictionary> = {

@@ -38,7 +38,9 @@ jest.mock('@aucobot/workspace-sync', () => {
     return {
       teamEnabled: Boolean(o.teamEnabled),
       allowedAgentSlugs: Array.isArray(o.allowedAgentSlugs)
-        ? o.allowedAgentSlugs.map((s) => String(s).trim().toLowerCase()).filter(Boolean)
+        ? o.allowedAgentSlugs
+            .map((s) => String(s).trim().toLowerCase())
+            .filter(Boolean)
         : [],
     };
   }
@@ -175,10 +177,7 @@ function createService() {
   const workspace = {
     syncProjectRuntime: jest.fn().mockResolvedValue(undefined),
   };
-  const service = new CollaborationService(
-    prisma as never,
-    workspace as never,
-  );
+  const service = new CollaborationService(prisma as never, workspace as never);
   return { service, prisma, workspace };
 }
 
@@ -227,7 +226,9 @@ describe('CollaborationService', () => {
 
     expect(result.legacyDerived).toBe(false);
     expect(result.enabled).toBe(true);
-    expect(result.memberSlugs).toEqual(expect.arrayContaining(['agent-a', 'agent-b']));
+    expect(result.memberSlugs).toEqual(
+      expect.arrayContaining(['agent-a', 'agent-b']),
+    );
     expect(prisma.project.update).toHaveBeenCalled();
     expect(workspace.syncProjectRuntime).toHaveBeenCalledWith(PROJECT_ID);
   });
@@ -269,6 +270,8 @@ describe('CollaborationService', () => {
     const { service, prisma } = createService();
     prisma.project.findUnique.mockResolvedValue(null);
 
-    await expect(service.get(PROJECT_ID)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.get(PROJECT_ID)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

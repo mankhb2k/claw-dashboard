@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
+
 import { Card } from "@/components/ui/Card/Card";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof Card> = {
   title: "UI/Card",

@@ -1,6 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
-import { ToolActivityCard } from '@/app/(dashboard)/dashboard/chat/_components/ToolActivityCard/ToolActivityCard'
 
 import { withChatContentArea } from './chat-story.decorators'
 import { StoryDemoBox, StorySectionLabel } from './story-demo-ui'
@@ -12,6 +10,9 @@ import {
   toolCardDefaultArgs,
   type ToolCardStoryArgs,
 } from './tool-activity.story-controls'
+import { ToolActivityCard } from '@/app/(dashboard)/dashboard/chat/_components/ToolActivityCard/ToolActivityCard'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<ToolCardStoryArgs> = {
   title: 'Chat/ToolActivity/ToolActivityCard',

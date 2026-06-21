@@ -165,6 +165,7 @@ export const viSettings = {
       fetchToken: 'Không thể lấy token. Vui lòng thử lại.',
       openControlUi: 'Không thể mở Control UI. Thử lại sau khi gateway đang chạy.',
       copyControlUi: 'Không thể sao chép liên kết Control UI.',
+      copyClipboard: 'Không thể sao chép vào clipboard.',
     },
   },
   dangerZone: {

@@ -9,15 +9,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { RenameNodeDto, CreateNodeInviteDto } from './dto/nodes.dto';
+import { NodeInvitesService } from './services/node-invites/node-invites.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
-import { RenameNodeDto, CreateNodeInviteDto } from './dto/nodes.dto';
 import { NodesService } from './services/nodes/nodes.service';
-import { NodeInvitesService } from './services/node-invites/node-invites.service';
 
 @ApiTags('nodes')
 @ApiBearerAuth()
@@ -114,7 +115,10 @@ export class NodesController {
   }
 
   @Get(':id/nodes/invites')
-  async listInvites(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
+  async listInvites(
+    @CurrentUser() user: JwtPayloadUser,
+    @Param('id') id: string,
+  ) {
     await this.projects.assertOwned(user.sub, id);
     return this.invites.listInvites(user.sub, id);
   }

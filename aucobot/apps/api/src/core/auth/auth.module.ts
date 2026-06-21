@@ -1,10 +1,11 @@
 /** Auth HTTP + JwtAuthGuard export for feature modules */
 import { Module, forwardRef } from '@nestjs/common';
-import { UsersModule } from '../users/users.module';
+
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { SeedUserService } from './seed-user.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SeedUserService } from './seed-user.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [forwardRef(() => UsersModule)],

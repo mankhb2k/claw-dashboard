@@ -1,5 +1,6 @@
 import path from 'node:path';
-import type { PrismaService } from '../../../../core/database/prisma.service';
+
+import { resolveProvider } from '../../ai-providers/lib/provider-registry';
 import {
   GEMINI_CHAT_MODELS,
   OPENAI_CHAT_MODELS,
@@ -7,10 +8,11 @@ import {
   resolveGeminiSkillDefaultModel,
   resolveOpenAiSkillDefaultModel,
 } from '@aucobot/shared';
-import type { ChatModelProviderGroup } from '@aucobot/shared';
-import { resolveProvider } from '../../ai-providers/lib/provider-registry';
-import type { WorkspaceService } from '../../workspace/services/workspace/workspace.service';
 import { readOpenClawConfigJson } from '@aucobot/workspace-sync';
+
+import type { PrismaService } from '../../../../core/database/prisma.service';
+import type { WorkspaceService } from '../../workspace/services/workspace/workspace.service';
+import type { ChatModelProviderGroup } from '@aucobot/shared';
 
 export type { ChatModelOption, ChatModelProviderGroup } from '@aucobot/shared';
 
@@ -38,14 +40,18 @@ function catalogForProvider(providerId: string) {
   }));
 }
 
-function resolveDefaultModel(providerId: string, stored: string | null): string | null {
+function resolveDefaultModel(
+  providerId: string,
+  stored: string | null,
+): string | null {
   if (providerId === 'openai') return resolveOpenAiSkillDefaultModel(stored);
   if (providerId === 'gemini') return resolveGeminiSkillDefaultModel(stored);
   const def = resolveProvider(providerId);
   const catalogIds = (def?.models ?? []).map((m) => m.openclawId);
   const migrated = migrateFoundationOpenClawId(stored);
   if (migrated && catalogIds.includes(migrated)) return migrated;
-  if (stored?.trim() && catalogIds.includes(stored.trim())) return stored.trim();
+  if (stored?.trim() && catalogIds.includes(stored.trim()))
+    return stored.trim();
   return def?.defaultModel ?? null;
 }
 
@@ -63,14 +69,17 @@ export async function loadProjectModelCatalog(params: {
   });
 
   const dataDir = params.workspace.resolveProjectDataDir(params.projectId);
-  const config = await readOpenClawConfigJson(path.join(dataDir, 'openclaw.json'));
-  const defaults = (config?.agents as Record<string, unknown> | undefined)?.defaults as
-    | Record<string, unknown>
-    | undefined;
+  const config = await readOpenClawConfigJson(
+    path.join(dataDir, 'openclaw.json'),
+  );
+  const defaults = (config?.agents as Record<string, unknown> | undefined)
+    ?.defaults as Record<string, unknown> | undefined;
   const modelBlock = defaults?.model as Record<string, unknown> | undefined;
   const primaryModel = (() => {
     const raw =
-      typeof modelBlock?.primary === 'string' ? modelBlock.primary.trim() : null;
+      typeof modelBlock?.primary === 'string'
+        ? modelBlock.primary.trim()
+        : null;
     return raw ? migrateFoundationOpenClawId(raw) : null;
   })();
 

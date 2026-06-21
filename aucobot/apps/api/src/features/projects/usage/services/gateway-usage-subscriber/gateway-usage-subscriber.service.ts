@@ -4,16 +4,18 @@ import {
   OnApplicationShutdown,
   OnModuleInit,
 } from '@nestjs/common';
-import { ProjectStatus } from '@aucobot/database';
-import { openGatewayUpstream } from '@aucobot/control-plane-core';
-import { isOssRuntime } from '@aucobot/runtime-contracts';
-import { resolveOssGatewayEndpoint } from '@aucobot/runtime-oss';
-import type WebSocket from 'ws';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import { parseWsFrame } from '../../lib/parse-ws-frame';
-import type { PendingChatRun } from '../../lib/usage-record.types';
 import { ModelUsageRecorderService } from '../model-usage-recorder/model-usage-recorder.service';
+import { openGatewayUpstream } from '@aucobot/control-plane-core';
+import { ProjectStatus } from '@aucobot/database';
+import { isOssRuntime, type GatewayEndpoint } from '@aucobot/runtime-contracts';
+import { resolveOssGatewayEndpoint } from '@aucobot/runtime-oss';
+
+import type { PendingChatRun } from '../../lib/usage-record.types';
+import type WebSocket from 'ws';
 
 const DEFAULT_RECONCILE_MS = 60_000;
 const MIN_BACKOFF_MS = 2_000;
@@ -34,7 +36,9 @@ function wsBaseToHealthUrl(wsBaseUrl: string): string {
 async function isGatewayHealthOk(wsBaseUrl: string): Promise<boolean> {
   const url = `${wsBaseToHealthUrl(wsBaseUrl)}/healthz`;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(GATEWAY_HEALTH_TIMEOUT_MS) });
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(GATEWAY_HEALTH_TIMEOUT_MS),
+    });
     return res.ok;
   } catch {
     return false;
@@ -159,7 +163,9 @@ export class GatewayUsageSubscriberService
     }
 
     const parsed = Number.parseInt(raw, 10);
-    return Number.isFinite(parsed) && parsed >= 5_000 ? parsed : DEFAULT_RECONCILE_MS;
+    return Number.isFinite(parsed) && parsed >= 5_000
+      ? parsed
+      : DEFAULT_RECONCILE_MS;
   }
 
   private async connectProject(project: ProjectTarget): Promise<void> {
@@ -169,7 +175,7 @@ export class GatewayUsageSubscriberService
 
     this.clearReconnect(project.id);
 
-    let endpoint;
+    let endpoint: GatewayEndpoint;
     try {
       endpoint = resolveOssGatewayEndpoint(project);
     } catch (err) {
@@ -251,11 +257,16 @@ export class GatewayUsageSubscriberService
     if (this.shuttingDown || !this.targets.has(projectId)) {
       return;
     }
-    if (this.subscriptions.has(projectId) || this.reconnect.get(projectId)?.timer) {
+    if (
+      this.subscriptions.has(projectId) ||
+      this.reconnect.get(projectId)?.timer
+    ) {
       return;
     }
 
-    const state = this.reconnect.get(projectId) ?? { backoffMs: MIN_BACKOFF_MS };
+    const state = this.reconnect.get(projectId) ?? {
+      backoffMs: MIN_BACKOFF_MS,
+    };
     const project = this.targets.get(projectId);
     if (!project) {
       return;

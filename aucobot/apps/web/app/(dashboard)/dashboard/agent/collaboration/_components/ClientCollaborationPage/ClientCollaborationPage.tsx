@@ -1,20 +1,22 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+import styles from "./ClientCollaborationPage.module.css";
+import { CardCollaborationAllowList } from "../CardCollaborationAllowList/CardCollaborationAllowList";
+import { CardCollaborationMembers } from "../CardCollaborationMembers/CardCollaborationMembers";
+import { CardCollaborationSettings } from "../CardCollaborationSettings/CardCollaborationSettings";
 import { Flex } from "@/components/layout";
 import { Typography, Spinner, Button } from "@/components/ui";
-import { projectApi } from "@/lib/api/project";
-import { useProjectStore } from "@/stores/project.store";
-import type { ProjectAgentListRow } from "@/schemas/project.schema";
 import { toast } from "@/components/ui/Toast/Toast";
-import { notifyCollaborationUpdated } from "@/utils/agent/collaboration-events";
-import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
-import { CardCollaborationSettings } from "../CardCollaborationSettings/CardCollaborationSettings";
-import { CardCollaborationMembers } from "../CardCollaborationMembers/CardCollaborationMembers";
-import { CardCollaborationAllowList } from "../CardCollaborationAllowList/CardCollaborationAllowList";
+import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
-import styles from "./ClientCollaborationPage.module.css";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+import { useProjectStore } from "@/stores/project.store";
+import { notifyCollaborationUpdated } from "@/utils/agent/collaboration-events";
+
+import type { ProjectAgentListRow } from "@/schemas/project.schema";
 
 export function ClientCollaborationPage() {
   const { t } = useI18n();
@@ -32,42 +34,43 @@ export function ClientCollaborationPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+    if (!projectId) {
+      setAgents([]);
+    }
+  }
 
   useEffect(() => {
     void fetchProjects({ silent: true });
   }, [fetchProjects]);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!projectId) {
-      setAgents([]);
-      setLoading(false);
       return;
     }
-
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const [agentRows, collaboration] = await Promise.all([
-        projectApi.listAgents(projectId),
-        projectApi.getCollaboration(projectId),
-      ]);
-      setAgents(agentRows);
-      setEnabled(collaboration.enabled);
-      setMemberSlugs(collaboration.memberSlugs);
-      setEffectiveAllow(collaboration.effectiveAllow);
-      setDirty(false);
-    } catch (err) {
-      setLoadError(
-        err instanceof Error ? err.message : t("agent.collaboration.loadError"),
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+    void Promise.all([
+      projectApi.listAgents(projectId),
+      projectApi.getCollaboration(projectId),
+    ])
+      .then(([agentRows, collaboration]) => {
+        setAgents(agentRows);
+        setEnabled(collaboration.enabled);
+        setMemberSlugs(collaboration.memberSlugs);
+        setEffectiveAllow(collaboration.effectiveAllow);
+        setDirty(false);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        setLoadError(
+          err instanceof Error ? err.message : t("agent.collaboration.loadError"),
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [projectId, t]);
 
   const filteredAgents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

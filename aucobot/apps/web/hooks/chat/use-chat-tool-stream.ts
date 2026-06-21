@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { GatewayEventFrame } from '@/lib/chat/project-chat-client'
 import { isHiddenToolPayloadText } from '@/utils/chat/stream/history-filter'
 import {
   applyToolActivityPatch,
@@ -11,6 +10,8 @@ import {
   toStreamEntryList,
   toolEntryToActivity,
 } from '@/utils/chat/tool/stream'
+
+import type { GatewayEventFrame } from '@/lib/chat/project-chat-client'
 import type {
   LiveThreadItem,
   ToolActivity,
@@ -26,6 +27,7 @@ export function useChatToolStream(
     () => new Map(),
   )
   const [liveItems, setLiveItems] = useState<LiveThreadItem[]>([])
+  const [trackedSessionKey, setTrackedSessionKey] = useState(activeSessionKey)
   const sessionKeyRef = useRef(activeSessionKey)
   const flushCallbackRef = useRef<(() => string) | null>(null)
 
@@ -33,14 +35,16 @@ export function useChatToolStream(
     sessionKeyRef.current = activeSessionKey
   }, [activeSessionKey])
 
+  if (activeSessionKey !== trackedSessionKey) {
+    setTrackedSessionKey(activeSessionKey)
+    setEntryMap(new Map())
+    setLiveItems([])
+  }
+
   const resetToolStream = useCallback(() => {
     setEntryMap(new Map())
     setLiveItems([])
   }, [])
-
-  useEffect(() => {
-    resetToolStream()
-  }, [activeSessionKey, resetToolStream])
 
   const registerStreamFlush = useCallback((getStreamText: () => string) => {
     flushCallbackRef.current = getStreamText

@@ -53,7 +53,10 @@ export async function smokeTestGeminiApiKey(
 
     const candidate = parsed.candidates?.[0];
     const reply =
-      candidate?.content?.parts?.map((p) => p.text ?? '').join('').trim() ?? '';
+      candidate?.content?.parts
+        ?.map((p) => p.text ?? '')
+        .join('')
+        .trim() ?? '';
     if (reply) {
       return { ok: true, model, message: reply };
     }
@@ -66,7 +69,10 @@ export async function smokeTestGeminiApiKey(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('timeout') || message.includes('aborted')) {
-      return { ok: false, error: `Test timeout (${PROVIDER_KEY_TEST_TIMEOUT_MS}ms)` };
+      return {
+        ok: false,
+        error: `Test timeout (${PROVIDER_KEY_TEST_TIMEOUT_MS}ms)`,
+      };
     }
     return { ok: false, error: message };
   }

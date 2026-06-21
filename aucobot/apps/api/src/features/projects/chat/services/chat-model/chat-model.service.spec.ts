@@ -1,6 +1,3 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { readOpenClawConfigJson } from '@aucobot/workspace-sync';
-
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
@@ -9,22 +6,27 @@ jest.mock('../../../agents/services/agent/agent.service', () => ({
   AgentService: class MockAgentService {},
 }));
 
-jest.mock('../../../ai-providers/services/provider-keys/provider-keys.service', () => ({
-  ProviderKeysService: class MockProviderKeysService {},
-}));
+jest.mock(
+  '../../../ai-providers/services/provider-keys/provider-keys.service',
+  () => ({
+    ProviderKeysService: class MockProviderKeysService {},
+  }),
+);
 
 jest.mock('@aucobot/workspace-sync', () => ({
   readOpenClawConfigJson: jest.fn(),
   parseAgentFormData: jest.fn((formData: unknown) =>
-    typeof formData === 'object' && formData !== null ? { ...(formData as object) } : {},
+    typeof formData === 'object' && formData !== null ? { ...formData } : {},
   ),
 }));
 
-const readOpenClawConfigJsonMock = readOpenClawConfigJson as jest.MockedFunction<
-  typeof readOpenClawConfigJson
->;
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { ChatModelService } from './chat-model.service';
+import { readOpenClawConfigJson } from '@aucobot/workspace-sync';
+
+const readOpenClawConfigJsonMock =
+  readOpenClawConfigJson as jest.MockedFunction<typeof readOpenClawConfigJson>;
 
 const PROJECT_ID = 'proj_test_1';
 const DATA_DIR = '/data/proj_test_1';
@@ -69,23 +71,29 @@ describe('ChatModelService', () => {
   describe('resolveProviderIdForOpenClawModel', () => {
     it('maps google/ and gemini- prefixes to gemini', () => {
       const { service } = createService();
-      expect(service.resolveProviderIdForOpenClawModel('google/gemini-2.5-flash')).toBe(
+      expect(
+        service.resolveProviderIdForOpenClawModel('google/gemini-2.5-flash'),
+      ).toBe('gemini');
+      expect(service.resolveProviderIdForOpenClawModel('gemini-2.5-pro')).toBe(
         'gemini',
       );
-      expect(service.resolveProviderIdForOpenClawModel('gemini-2.5-pro')).toBe('gemini');
     });
 
     it('maps gpt- and o-series ids to openai', () => {
       const { service } = createService();
-      expect(service.resolveProviderIdForOpenClawModel('openai/gpt-4o')).toBe('openai');
-      expect(service.resolveProviderIdForOpenClawModel('o3-mini')).toBe('openai');
+      expect(service.resolveProviderIdForOpenClawModel('openai/gpt-4o')).toBe(
+        'openai',
+      );
+      expect(service.resolveProviderIdForOpenClawModel('o3-mini')).toBe(
+        'openai',
+      );
     });
 
     it('throws for unknown model ids', () => {
       const { service } = createService();
-      expect(() => service.resolveProviderIdForOpenClawModel('unknown-model')).toThrow(
-        BadRequestException,
-      );
+      expect(() =>
+        service.resolveProviderIdForOpenClawModel('unknown-model'),
+      ).toThrow(BadRequestException);
     });
   });
 
@@ -118,7 +126,11 @@ describe('ChatModelService', () => {
     it('skips unknown provider ids in db', async () => {
       const { service, prisma } = createService();
       prisma.projectProviderKey.findMany.mockResolvedValue([
-        { providerId: 'not-in-registry', defaultModel: null, lastTestOk: false },
+        {
+          providerId: 'not-in-registry',
+          defaultModel: null,
+          lastTestOk: false,
+        },
       ]);
 
       const result = await service.listModels(PROJECT_ID);
@@ -167,7 +179,11 @@ describe('ChatModelService', () => {
     it('rejects empty model', async () => {
       const { service } = createService();
       await expect(
-        service.setModel({ projectId: PROJECT_ID, agentId: 'main', model: '  ' }),
+        service.setModel({
+          projectId: PROJECT_ID,
+          agentId: 'main',
+          model: '  ',
+        }),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 

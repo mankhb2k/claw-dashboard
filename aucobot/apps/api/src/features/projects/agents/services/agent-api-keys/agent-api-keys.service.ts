@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { generateAgentApiToken } from '@aucobot/control-plane-core';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { validateAgentSlug } from '../../lib/agent-slug';
+import { generateAgentApiToken } from '@aucobot/control-plane-core';
 
 export type AgentApiKeyListItem = {
   id: string;
@@ -31,7 +32,10 @@ export class AgentApiKeysService {
     return row;
   }
 
-  async list(projectId: string, agentSlug: string): Promise<{ items: AgentApiKeyListItem[] }> {
+  async list(
+    projectId: string,
+    agentSlug: string,
+  ): Promise<{ items: AgentApiKeyListItem[] }> {
     const agent = await this.findAgent(projectId, agentSlug);
     const rows = await this.prisma.projectAgentApiKey.findMany({
       where: { projectAgentId: agent.id, revokedAt: null },
@@ -90,7 +94,11 @@ export class AgentApiKeysService {
     };
   }
 
-  async revoke(projectId: string, agentSlug: string, keyId: string): Promise<void> {
+  async revoke(
+    projectId: string,
+    agentSlug: string,
+    keyId: string,
+  ): Promise<void> {
     const agent = await this.findAgent(projectId, agentSlug);
     const result = await this.prisma.projectAgentApiKey.updateMany({
       where: {

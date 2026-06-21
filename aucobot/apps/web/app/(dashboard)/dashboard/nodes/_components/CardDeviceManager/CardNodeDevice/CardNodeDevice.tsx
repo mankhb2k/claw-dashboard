@@ -1,11 +1,13 @@
 "use client";
 
 import { Laptop, Monitor } from "lucide-react";
-import type { NodeEntry } from "@/schemas/nodes.schema";
+
+import styles from "./CardNodeDevice.module.css";
+import pageStyles from "../../../nodes.module.css";
 import { Button, Input, Typography } from "@/components/ui";
 import { formatCaps, getNodeTitle } from "@/utils/nodes/nodes-utils";
-import pageStyles from "../../../nodes.module.css";
-import styles from "./CardNodeDevice.module.css";
+
+import type { NodeEntry } from "@/schemas/nodes.schema";
 
 type CardNodeDeviceProps = {
   node: NodeEntry;
@@ -16,10 +18,13 @@ type CardNodeDeviceProps = {
   onRemove: () => void;
 };
 
-function platformIcon(platform?: string) {
-  const p = platform?.toLowerCase() ?? "";
-  if (p.includes("win")) return Monitor;
-  return Laptop;
+function PlatformIcon({ platform }: { platform?: string }) {
+  const isWindows = (platform?.toLowerCase() ?? "").includes("win");
+  return isWindows ? (
+    <Monitor size={22} className={styles.icon} />
+  ) : (
+    <Laptop size={22} className={styles.icon} />
+  );
 }
 
 export function CardNodeDevice({
@@ -40,13 +45,16 @@ export function CardNodeDevice({
   const commands = formatCaps(node.commands as unknown[] | undefined);
   const chips = [...caps, ...commands].slice(0, 6);
   const overflow = caps.length + commands.length - chips.length;
-  const Icon = platformIcon(typeof node.platform === "string" ? node.platform : undefined);
 
   return (
     <article className={styles.card}>
       <div className={styles.cardMain}>
         <div className={styles.iconWrap}>
-          <Icon size={22} className={styles.icon} />
+          <PlatformIcon
+            platform={
+              typeof node.platform === "string" ? node.platform : undefined
+            }
+          />
         </div>
         <div className={styles.info}>
           <div className={styles.titleRow}>

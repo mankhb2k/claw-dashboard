@@ -1,12 +1,18 @@
 import { BadRequestException } from '@nestjs/common';
+
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_BYTES,
+} from '@aucobot/runtime-contracts';
+
+import type { MultipartFile } from '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
-import { AVATAR_ALLOWED_MIME_TYPES, AVATAR_MAX_BYTES } from '@aucobot/runtime-contracts';
 
 export async function readAvatarUpload(req: FastifyRequest): Promise<{
   data: Buffer;
   mimeType: string;
 }> {
-  let part;
+  let part: MultipartFile | undefined;
   try {
     part = await req.file({ limits: { fileSize: AVATAR_MAX_BYTES } });
   } catch {

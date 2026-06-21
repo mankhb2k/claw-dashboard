@@ -7,7 +7,7 @@ import {
   saveSessionThinkingSelection,
 } from './thinking-storage.js';
 
-describe('session-thinking-storage', () => {
+void describe('session-thinking-storage', async () => {
   const projectId = 'proj-1';
   const agentId = 'main';
   const sessionKey = 'agent:main:main';
@@ -36,7 +36,7 @@ describe('session-thinking-storage', () => {
     });
   });
 
-  it('prefers gateway thinking level over storage', () => {
+  await it('prefers gateway thinking level over storage', () => {
     saveSessionThinkingSelection(projectId, agentId, sessionKey, 'low');
     assert.equal(
       resolveSessionThinkingLevel(projectId, agentId, sessionKey, 'high'),
@@ -44,7 +44,7 @@ describe('session-thinking-storage', () => {
     );
   });
 
-  it('falls back to storage then off', () => {
+  await it('falls back to storage then off', () => {
     saveSessionThinkingSelection(projectId, agentId, sessionKey, 'medium');
     assert.equal(
       resolveSessionThinkingLevel(projectId, agentId, sessionKey),

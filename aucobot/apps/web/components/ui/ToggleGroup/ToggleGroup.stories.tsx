@@ -1,7 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import React from 'react'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/ToggleGroup/ToggleGroup'
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, FileText } from 'lucide-react'
+import React from 'react'
+
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/ToggleGroup/ToggleGroup'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<typeof ToggleGroup> = {
   title: 'UI/ToggleGroup',

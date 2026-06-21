@@ -4,12 +4,12 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 export function getGoogleOAuthConfig() {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET?.trim();
-  const backendUrl = (process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`).replace(
-    /\/$/,
-    '',
-  );
+  const backendUrl = (
+    process.env.BACKEND_URL ?? `http://localhost:${process.env.PORT ?? 3001}`
+  ).replace(/\/$/, '');
   const redirectUri =
-    process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() ?? `${backendUrl}/api/connectors/oauth/callback`;
+    process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() ??
+    `${backendUrl}/api/connectors/oauth/callback`;
 
   if (!clientId || !clientSecret) {
     return null;
@@ -25,7 +25,9 @@ export function buildGoogleAuthUrl(params: {
 }): string {
   const cfg = getGoogleOAuthConfig();
   if (!cfg) {
-    throw new Error('Google OAuth chưa cấu hình (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)');
+    throw new Error(
+      'Google OAuth chưa cấu hình (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)',
+    );
   }
 
   const url = new URL(GOOGLE_AUTH_URL);
@@ -67,19 +69,26 @@ export async function exchangeGoogleAuthCode(code: string): Promise<{
 
   const json = (await res.json()) as Record<string, unknown>;
   if (!res.ok) {
-    const err = typeof json.error_description === 'string' ? json.error_description : 'Token exchange failed';
+    const err =
+      typeof json.error_description === 'string'
+        ? json.error_description
+        : 'Token exchange failed';
     throw new Error(err);
   }
 
   return {
-    accessToken: String(json.access_token ?? ''),
-    refreshToken: typeof json.refresh_token === 'string' ? json.refresh_token : undefined,
-    expiresIn: typeof json.expires_in === 'number' ? json.expires_in : undefined,
+    accessToken: typeof json.access_token === 'string' ? json.access_token : '',
+    refreshToken:
+      typeof json.refresh_token === 'string' ? json.refresh_token : undefined,
+    expiresIn:
+      typeof json.expires_in === 'number' ? json.expires_in : undefined,
     scope: typeof json.scope === 'string' ? json.scope : undefined,
   };
 }
 
-export async function refreshGoogleAccessToken(refreshToken: string): Promise<string> {
+export async function refreshGoogleAccessToken(
+  refreshToken: string,
+): Promise<string> {
   const cfg = getGoogleOAuthConfig();
   if (!cfg) {
     throw new Error('Google OAuth chưa cấu hình');
@@ -100,9 +109,12 @@ export async function refreshGoogleAccessToken(refreshToken: string): Promise<st
 
   const json = (await res.json()) as Record<string, unknown>;
   if (!res.ok) {
-    const err = typeof json.error_description === 'string' ? json.error_description : 'Refresh failed';
+    const err =
+      typeof json.error_description === 'string'
+        ? json.error_description
+        : 'Refresh failed';
     throw new Error(err);
   }
 
-  return String(json.access_token ?? '');
+  return typeof json.access_token === 'string' ? json.access_token : '';
 }

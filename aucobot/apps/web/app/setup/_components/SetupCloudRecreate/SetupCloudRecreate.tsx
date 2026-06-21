@@ -1,10 +1,13 @@
 "use client";
 
+import sharedStyles from "../setup-shared.module.css";
+import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
 import { Box, Flex } from "@/components/layout";
 import { Button, Typography } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
+import { localizeSetupMessage } from "@/utils/setup/setup-i18n";
+
 import type { Project } from "@/schemas/project.schema";
-import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
-import sharedStyles from "../setup-shared.module.css";
 
 interface SetupCloudRecreateProps {
   primary: Project;
@@ -21,36 +24,50 @@ export function SetupCloudRecreate({
   error,
   onRespawn,
 }: SetupCloudRecreateProps) {
+  const { t } = useI18n();
   const isError = primary.status === "error";
+  const localizedError = localizeSetupMessage(error, t);
+  const localizedProjectError = localizeSetupMessage(
+    primary.errorMessage,
+    t,
+  );
 
   return (
     <Flex direction="column" gap={24}>
       <SetupSectionHeader
-        badge={isError ? "Spawn failed" : "Container missing"}
-        title={isError ? "Respawn container" : "Recreate container"}
+        badge={
+          isError
+            ? t("setup.recreate.badge.spawnFailed")
+            : t("setup.recreate.badge.containerMissing")
+        }
+        title={
+          isError
+            ? t("setup.recreate.title.respawn")
+            : t("setup.recreate.title.recreate")
+        }
         description={
           <>
             Workspace <strong>{primary.displayName}</strong>
             {isError
-              ? " — gateway was not ready in time or Docker failed. Respawn to create a new container."
-              : " — data is kept on disk, but the Docker container is gone."}
+              ? ` ${t("setup.recreate.description.error")}`
+              : ` ${t("setup.recreate.description.missing")}`}
           </>
         }
       />
-      {primary.errorMessage && (
+      {localizedProjectError && (
         <Box color="danger-dim" p={12} radius="md">
           <Typography variant="xs" color="muted">
-            {primary.errorMessage}
+            {localizedProjectError}
           </Typography>
         </Box>
       )}
-      {error && (
+      {localizedError && (
         <Typography variant="small" className={sharedStyles.errorText}>
-          {error}
+          {localizedError}
         </Typography>
       )}
       <Button type="button" loading={busy || isLoading} fullWidth onClick={onRespawn}>
-        {busy ? "Spawning…" : "Respawn container"}
+        {busy ? t("setup.recreate.spawning") : t("setup.recreate.respawn")}
       </Button>
     </Flex>
   );

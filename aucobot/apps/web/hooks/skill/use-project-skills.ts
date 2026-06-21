@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+
 import { projectApi } from "@/lib/api/project";
+import { translate } from '@/lib/i18n/translate'
+
 import type {
   ProjectSkillDetail,
   ProjectSkillListRow,
@@ -16,11 +19,26 @@ export function useProjectSkills(
   options?: UseProjectSkillsOptions,
 ) {
   const active = options?.enabled ?? true;
+  const fetchKey = active && projectId ? projectId : null;
+  const [trackedFetchKey, setTrackedFetchKey] = useState<string | null>(null);
   const [skills, setSkills] = useState<ProjectSkillListRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    if (fetchKey) {
+      setLoading(true);
+      setError(null);
+    } else {
+      setSkills([]);
+      setLoading(false);
+      setError(null);
+    }
+  }
+
   const refresh = useCallback(async () => {
+    await Promise.resolve();
     if (!projectId) {
       setSkills([]);
       return;
@@ -32,16 +50,40 @@ export function useProjectSkills(
       setSkills(rows);
     } catch (err) {
       setSkills([]);
-      setError(err instanceof Error ? err.message : "Could not load skills");
+      setError(err instanceof Error ? err.message : translate('skills.errors.loadList'));
     } finally {
       setLoading(false);
     }
   }, [projectId]);
 
   useEffect(() => {
-    if (!active || !projectId) return;
-    void refresh();
-  }, [active, projectId, refresh]);
+    if (!active || !projectId) return undefined;
+
+    let cancelled = false;
+
+    void (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+
+      try {
+        const rows = await projectApi.listSkills(projectId);
+        if (!cancelled) setSkills(rows);
+      } catch (err) {
+        if (!cancelled) {
+          setSkills([]);
+          setError(
+            err instanceof Error ? err.message : translate('skills.errors.loadList'),
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [active, projectId]);
 
   const create = useCallback(
     async (input: {

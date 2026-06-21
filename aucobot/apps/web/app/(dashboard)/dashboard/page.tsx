@@ -1,6 +1,6 @@
-import { Container, Flex } from "@/components/layout";
 import { ClientOverviewPage } from "./_components/ClientOverviewPage/ClientOverviewPage";
 import styles from "./overview.module.css";
+import { Container, Flex } from "@/components/layout";
 
 export default function ProjectOverviewPage() {
   return (

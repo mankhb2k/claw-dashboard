@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import React from 'react'
+
 import { Typography } from '@/components/ui/Typography/Typography'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<typeof Typography> = {
   title: 'UI/Typography',

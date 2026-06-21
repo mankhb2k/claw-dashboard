@@ -2,13 +2,14 @@
 
 import { useMemo } from 'react'
 
-import { isWebResearchTool } from '@/utils/chat/tool/output'
-import type { LiveThreadItem, ToolStreamEntry } from '@/utils/chat/tool/types'
 
 import { ChatMessageBubble } from '../ChatMessageBubble/ChatMessageBubble'
 import { ToolActivityBar } from '../ToolActivityBar/ToolActivityBar'
 import { ToolActivityCard } from '../ToolActivityCard/ToolActivityCard'
 import { ToolResearchBlock } from '../ToolResearchBlock/ToolResearchBlock'
+import { isWebResearchTool } from '@/utils/chat/tool/output'
+
+import type { LiveThreadItem, ToolStreamEntry } from '@/utils/chat/tool/types'
 
 type GroupedLiveItem =
   | { kind: 'text'; id: string; text: string }

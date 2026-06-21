@@ -29,4 +29,27 @@ export const enProfile = {
     saveError: 'Could not update — check current password',
     submit: 'Update password',
   },
+  validation: {
+    name: {
+      required: 'Name is required',
+      max: 'Max 64 characters',
+    },
+    password: {
+      min: 'Min 6 characters',
+    },
+    confirmPassword: {
+      mismatch: 'Passwords do not match',
+    },
+    newPassword: {
+      mustDiffer: 'New password must differ from current',
+    },
+  },
+  avatar: {
+    unsupportedType: 'Only JPEG, PNG, WebP, or GIF images are supported',
+    tooLarge: 'Image must be 512 KB or smaller',
+    stillTooLarge:
+      'Image is still over 512 KB after compression — choose a smaller file',
+    uploadFailed: 'Failed to upload avatar',
+    changeAria: 'Change avatar',
+  },
 } as const

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+import styles from "./ModalAddModel.module.css";
 import {
   Input,
   Button,
@@ -11,7 +13,6 @@ import {
   DialogFooter,
   Typography,
 } from "@/components/ui";
-import styles from "./ModalAddModel.module.css";
 
 interface ModalAddModelProps {
   isOpen: boolean;
@@ -39,14 +40,16 @@ export function ModalAddModel({
   const [openclawId, setOpenclawId] = useState(defaultOpenclawId);
   const [displayName, setDisplayName] = useState("");
   const [setDefault, setSetDefault] = useState(true);
+  const [trackedOpenKey, setTrackedOpenKey] = useState("");
 
-  useEffect(() => {
-    if (isOpen) {
-      setOpenclawId(defaultOpenclawId);
-      setDisplayName("");
-      setSetDefault(true);
-    }
-  }, [isOpen, defaultOpenclawId]);
+  const openKey = isOpen ? defaultOpenclawId : "";
+
+  if (isOpen && openKey !== trackedOpenKey) {
+    setTrackedOpenKey(openKey);
+    setOpenclawId(defaultOpenclawId);
+    setDisplayName("");
+    setSetDefault(true);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

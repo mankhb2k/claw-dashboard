@@ -1,10 +1,11 @@
-import type { ConnectorAdapter } from '../../lib/connector-adapter.types';
 import {
   buildGoogleAuthUrl,
   exchangeGoogleAuthCode,
   getGoogleOAuthConfig,
   refreshGoogleAccessToken,
 } from './google-oauth';
+
+import type { ConnectorAdapter } from '../../lib/connector-adapter.types';
 
 export function createGoogleOAuthConnector(def: {
   id: string;
@@ -50,7 +51,9 @@ export function createGoogleOAuthConnector(def: {
     exchangeOAuthCode: exchangeGoogleAuthCode,
     oauthClientSecrets() {
       const cfg = getGoogleOAuthConfig();
-      return cfg ? { clientId: cfg.clientId, clientSecret: cfg.clientSecret } : null;
+      return cfg
+        ? { clientId: cfg.clientId, clientSecret: cfg.clientSecret }
+        : null;
     },
   };
 }

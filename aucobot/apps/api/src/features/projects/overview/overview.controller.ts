@@ -1,12 +1,13 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { OverviewQueryDto } from './dto/overview.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
-import { OverviewQueryDto } from './dto/overview.dto';
 import { OverviewService } from './services/overview/overview.service';
 
 @ApiTags('overview')

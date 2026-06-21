@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import styles from "./SkillAgentPanelModelBar.module.css";
 
 export function SkillAgentPanelNoModelBanner() {

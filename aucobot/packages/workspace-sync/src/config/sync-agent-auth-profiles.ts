@@ -9,7 +9,7 @@ const SAAS_PROVIDER_TO_OPENCLAW: Record<string, string> = {
   openai: 'openai',
   anthropic: 'anthropic',
   deepseek: 'deepseek',
-  groq: 'groq',
+  grok: 'xai',
   mistral: 'mistral',
   openrouter: 'openrouter',
   together: 'together',

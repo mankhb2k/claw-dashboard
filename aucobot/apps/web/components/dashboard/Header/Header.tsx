@@ -1,13 +1,15 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import {
   FaArrowRightFromBracket,
   FaBars,
   FaMoon,
   FaSun,
 } from "react-icons/fa6";
+
+import styles from "./Header.module.css";
 import {
   Avatar,
   Button,
@@ -18,11 +20,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui";
-import { useAuthStore } from "@/stores/auth.store";
 import { resolveThemeAppearance } from "@/lib/theme/theme-resolve";
+import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/stores/theme.store";
+
 import type { NavItem } from "@/components/dashboard/Sidebar/Sidebar";
-import styles from "./Header.module.css";
 
 interface HeaderProps {
   title: string;

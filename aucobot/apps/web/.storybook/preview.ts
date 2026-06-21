@@ -1,5 +1,6 @@
-import type { Preview } from '@storybook/nextjs-vite'
 import React from 'react'
+
+import type { Preview } from '@storybook/nextjs-vite'
 import '../app/globals.css'
 
 const preview: Preview = {
@@ -18,7 +19,7 @@ const preview: Preview = {
     a11y: {
       test: 'todo'
     },
-    // Đảm bảo background của Storybook Canvas/Docs đồng bộ
+    // Keep Storybook Canvas/Docs background in sync
     backgrounds: {
       disable: true,
     },
@@ -47,7 +48,7 @@ const preview: Preview = {
         const root = document.documentElement;
         root.setAttribute('data-theme', theme);
         
-        // Ép các vùng chứa của Storybook Docs/Canvas sử dụng màu của hệ thống
+        // Force Storybook Docs/Canvas containers to use system theme colors
         const styleId = 'storybook-theme-overrides';
         let styleTag = document.getElementById(styleId) as HTMLStyleElement;
         
@@ -65,7 +66,7 @@ const preview: Preview = {
             background-color: var(--color-background) !important;
             color: var(--color-foreground) !important;
           }
-          /* Fix cho bảng thuộc tính (ArgsTable) */
+          /* Fix for the props table (ArgsTable) */
           .docblock-argstable {
             background-color: var(--color-card-background) !important;
           }

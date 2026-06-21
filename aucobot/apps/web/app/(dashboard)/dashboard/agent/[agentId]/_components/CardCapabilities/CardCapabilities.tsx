@@ -1,6 +1,9 @@
 "use client";
 
+import { Globe, FileText, Terminal } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
+
+import styles from "./CardCapabilities.module.css";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -8,10 +11,8 @@ import {
   Switch,
   Card,
 } from "@/components/ui";
-import { Globe, FileText, Terminal } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
 import { useModelCatalog } from "@/hooks/chat/use-model-catalog";
-import styles from "./CardCapabilities.module.css";
+import { useI18n } from "@/lib/i18n";
 
 interface CardCapabilitiesProps {
   projectId: string;

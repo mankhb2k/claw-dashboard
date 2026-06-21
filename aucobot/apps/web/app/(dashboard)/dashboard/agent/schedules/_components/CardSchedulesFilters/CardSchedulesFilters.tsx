@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
-import { Card, Select } from "@/components/ui";
-import { SearchItem } from "@/components/dashboard";
-import { useI18n } from "@/lib/i18n";
 import styles from "./CardSchedulesFilters.module.css";
+import { SearchItem } from "@/components/dashboard";
+import { Card, Select } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 
 type AgentFilterOption = {
   value: string;

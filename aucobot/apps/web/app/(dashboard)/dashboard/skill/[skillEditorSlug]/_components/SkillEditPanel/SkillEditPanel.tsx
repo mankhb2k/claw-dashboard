@@ -1,5 +1,6 @@
 "use client";
 
+import { useCreateBlockNote } from "@blocknote/react";
 import {
   useCallback,
   useEffect,
@@ -8,17 +9,18 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { useCreateBlockNote } from "@blocknote/react";
-import { Flex, Container } from "@/components/layout";
-import { BackButton } from "@/components/dashboard";
-import { resolveThemeAppearance } from "@/lib/theme/theme-resolve";
-import { useThemeStore } from "@/stores/theme.store";
-import type { ProjectSkillDetail } from "@/schemas/project.schema";
+
 import {
   BlockNoteEditor,
   type BlockNoteViewMode,
 } from "../BlockNoteEditor";
 import styles from "./SkillEditPanel.module.css";
+import { BackButton } from "@/components/dashboard";
+import { Flex, Container } from "@/components/layout";
+import { resolveThemeAppearance } from "@/lib/theme/theme-resolve";
+import { useThemeStore } from "@/stores/theme.store";
+
+import type { ProjectSkillDetail } from "@/schemas/project.schema";
 
 export type SkillEditorHandle = {
   applyMarkdown: (markdown: string) => Promise<void>;
@@ -76,20 +78,24 @@ export function SkillEditPanel({
 
   useEffect(() => {
     if (!editor || initialized) return;
-    void loadMarkdownIntoEditor(initialBodyMarkdown).then(() =>
-      setInitialized(true),
-    );
+    void (async () => {
+      await Promise.resolve();
+      await loadMarkdownIntoEditor(initialBodyMarkdown);
+      setInitialized(true);
+    })();
   }, [editor, initialBodyMarkdown, initialized, loadMarkdownIntoEditor]);
 
   const scheduleSave = useCallback(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-    debounceTimerRef.current = setTimeout(async () => {
-      const markdown = await editor.blocksToMarkdownLossy(editor.document);
-      onBodyChange(markdown);
-      onDebouncedSave(markdown);
-      setMarkdownContent(markdown);
+    debounceTimerRef.current = setTimeout(() => {
+      void (async () => {
+        const markdown = await editor.blocksToMarkdownLossy(editor.document);
+        onBodyChange(markdown);
+        onDebouncedSave(markdown);
+        setMarkdownContent(markdown);
+      })();
     }, 2500);
   }, [editor, onBodyChange, onDebouncedSave]);
 

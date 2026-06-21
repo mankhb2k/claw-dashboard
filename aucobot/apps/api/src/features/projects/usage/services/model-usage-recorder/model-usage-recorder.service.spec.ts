@@ -1,16 +1,11 @@
-import { Prisma } from '@aucobot/database';
-import { UsageSource, UsageStatus } from '@aucobot/database';
-
 import { ModelUsageRecorderService } from './model-usage-recorder.service';
+import { Prisma, UsageSource, UsageStatus } from '@aucobot/database';
 
 const PROJECT_ID = 'proj_test_1';
 const USER_ID = 'user_test_1';
 
 function createService() {
   const prisma = {
-    modelPricing: {
-      findUnique: jest.fn(),
-    },
     modelUsageEvent: {
       create: jest.fn().mockResolvedValue({}),
     },
@@ -24,13 +19,11 @@ describe('ModelUsageRecorderService', () => {
     jest.clearAllMocks();
   });
 
-  it('creates event with computed costUsd from pricing', async () => {
+  it('creates event with computed costUsd from the bundled catalog', async () => {
     const { service, prisma } = createService();
-    prisma.modelPricing.findUnique.mockResolvedValue({
-      inputPer1MUsd: '2.5',
-      outputPer1MUsd: '10',
-    });
 
+    // openai/gpt-5.4-mini = 0.4 in / 1.6 out per 1M tokens
+    // 1,000,000 in * 0.4 + 500,000 out * 1.6 = 0.4 + 0.8 = 1.2
     await service.record({
       projectId: PROJECT_ID,
       userId: USER_ID,
@@ -46,7 +39,7 @@ describe('ModelUsageRecorderService', () => {
     expect(prisma.modelUsageEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          costUsd: '7.5',
+          costUsd: '1.2',
           inputTokens: 1_000_000,
           outputTokens: 500_000,
         }),
@@ -54,9 +47,8 @@ describe('ModelUsageRecorderService', () => {
     );
   });
 
-  it('uses costUsd 0 when pricing row is missing', async () => {
+  it('uses costUsd 0 when no pricing entry matches', async () => {
     const { service, prisma } = createService();
-    prisma.modelPricing.findUnique.mockResolvedValue(null);
 
     await service.record({
       projectId: PROJECT_ID,
@@ -78,7 +70,6 @@ describe('ModelUsageRecorderService', () => {
 
   it('swallows duplicate externalId unique violations', async () => {
     const { service, prisma } = createService();
-    prisma.modelPricing.findUnique.mockResolvedValue(null);
     prisma.modelUsageEvent.create.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('duplicate', {
         code: 'P2002',
@@ -101,7 +92,6 @@ describe('ModelUsageRecorderService', () => {
 
   it('tapGatewayFrame records parsed chat final events', async () => {
     const { service, prisma } = createService();
-    prisma.modelPricing.findUnique.mockResolvedValue(null);
     const pendingRuns = new Map([
       [
         'run-1',
@@ -131,7 +121,9 @@ describe('ModelUsageRecorderService', () => {
       },
     });
 
-    await new Promise<void>((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
 
     expect(prisma.modelUsageEvent.create).toHaveBeenCalledWith(
       expect.objectContaining({

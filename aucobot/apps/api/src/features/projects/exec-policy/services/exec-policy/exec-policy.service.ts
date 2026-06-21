@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { PrismaService } from '../../../../../core/database/prisma.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import {
   openClawConfigPath,
   parseAgentFormData,
   readOpenClawConfigJson,
   type ProjectExecPolicy,
 } from '@aucobot/workspace-sync';
-import { PrismaService } from '../../../../../core/database/prisma.service';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+
 import type { UpdateProjectExecPolicyDto } from '../../dto/exec-policy.dto';
 
 const DEFAULT_EXEC_POLICY: ProjectExecPolicy = {
@@ -21,7 +23,9 @@ function normalizeSafeBins(values: string[]): string[] {
   ).sort((a, b) => a.localeCompare(b));
 }
 
-function execFromOpenClawConfig(config: Record<string, unknown>): ProjectExecPolicy | null {
+function execFromOpenClawConfig(
+  config: Record<string, unknown>,
+): ProjectExecPolicy | null {
   const exec = (config.tools as Record<string, unknown> | undefined)?.exec as
     | Record<string, unknown>
     | undefined;
@@ -96,7 +100,9 @@ export class ExecPolicyService {
       return;
     }
 
-    const safeBins = Array.isArray(project.execSafeBins) ? project.execSafeBins : [];
+    const safeBins = Array.isArray(project.execSafeBins)
+      ? project.execSafeBins
+      : [];
     const isFactoryDefault =
       project.execAskPolicy === 'on-miss' &&
       project.execTimeoutSec === 1800 &&
@@ -106,7 +112,8 @@ export class ExecPolicyService {
     }
 
     const dataDir = this.workspace.resolveProjectDataDir(projectId);
-    const config = (await readOpenClawConfigJson(openClawConfigPath(dataDir))) ?? {};
+    const config =
+      (await readOpenClawConfigJson(openClawConfigPath(dataDir))) ?? {};
     const fromDisk = execFromOpenClawConfig(config);
     if (fromDisk) {
       await this.prisma.project.update({
@@ -128,9 +135,11 @@ export class ExecPolicyService {
       return;
     }
     try {
-      const form = parseAgentFormData(defaultAgent.formData);
+      parseAgentFormData(defaultAgent.formData);
       const raw = defaultAgent.formData as Record<string, unknown>;
-      const legacyAsk = ['always', 'on-miss', 'off'].includes(String(raw.askPolicy))
+      const legacyAsk = ['always', 'on-miss', 'off'].includes(
+        String(raw.askPolicy),
+      )
         ? String(raw.askPolicy)
         : 'on-miss';
       const legacyBins = Array.isArray(raw.safeBins)
@@ -169,13 +178,19 @@ export class ExecPolicyService {
       : [];
     const ask = project.execAskPolicy;
     return {
-      ask: ask === 'always' || ask === 'on-miss' || ask === 'off' ? ask : 'on-miss',
+      ask:
+        ask === 'always' || ask === 'on-miss' || ask === 'off'
+          ? ask
+          : 'on-miss',
       safeBins,
       timeoutSec: project.execTimeoutSec,
     };
   }
 
-  async updateProjectExecPolicy(projectId: string, dto: UpdateProjectExecPolicyDto) {
+  async updateProjectExecPolicy(
+    projectId: string,
+    dto: UpdateProjectExecPolicyDto,
+  ) {
     await this.prisma.project.update({
       where: { id: projectId },
       data: {

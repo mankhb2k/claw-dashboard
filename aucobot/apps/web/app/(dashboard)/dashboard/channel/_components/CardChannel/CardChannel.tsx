@@ -1,11 +1,10 @@
 "use client";
 
-import React from "react";
+import styles from "./CardChannel.module.css";
+import { Flex } from "@/components/layout/Flex/Flex";
 import { Card } from "@/components/ui/Card/Card";
 import { IconProvider } from "@/components/ui/IconProvider/IconProvider";
-import { Flex } from "@/components/layout/Flex/Flex";
 import { Typography } from "@/components/ui/Typography/Typography";
-import styles from "./CardChannel.module.css";
 
 export interface CardChannelProps {
   title: string;

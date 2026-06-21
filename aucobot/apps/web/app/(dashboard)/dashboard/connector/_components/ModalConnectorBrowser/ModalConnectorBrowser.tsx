@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
 import { Plus, Settings } from 'lucide-react'
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, IconProvider, Input, Typography } from '@/components/ui'
-import { Grid } from '@/components/layout'
-import type { ServiceConnectData } from '../../projectConnectData'
+import { useMemo, useState } from 'react'
+
 import styles from './ModalConnectorBrowser.module.css'
+import { Grid } from '@/components/layout'
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, IconProvider, Input, Typography } from '@/components/ui'
+
+import type { ServiceConnectData } from '../../projectConnectData'
 
 type Props = {
   services: ServiceConnectData[]

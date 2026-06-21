@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import type { NodeInviteListItem } from "@/schemas/nodes.schema";
+import { useState } from "react";
+
+import styles from "./CardInviteHistory.module.css";
+import pageStyles from "../../nodes.module.css";
 import { Button, Typography } from "@/components/ui";
 import { inviteStatusLabel } from "@/utils/nodes/nodes-utils";
-import pageStyles from "../../nodes.module.css";
-import styles from "./CardInviteHistory.module.css";
+
+import type { NodeInviteListItem } from "@/schemas/nodes.schema";
 
 export type CardInviteHistoryProps = {
   invites: NodeInviteListItem[];

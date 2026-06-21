@@ -3,15 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+import { runProviderKeyTest } from '../../lib/provider-key-test';
+import {
+  PROVIDER_REGISTRY,
+  resolveProvider,
+} from '../../lib/provider-registry';
 import {
   decryptSecret,
   encryptSecret,
   maskSecret,
 } from '@aucobot/control-plane-core';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
-import { runProviderKeyTest } from '../../lib/provider-key-test';
-import { PROVIDER_REGISTRY, resolveProvider } from '../../lib/provider-registry';
 
 export type ProviderKeyMaskedRow = {
   key: string;

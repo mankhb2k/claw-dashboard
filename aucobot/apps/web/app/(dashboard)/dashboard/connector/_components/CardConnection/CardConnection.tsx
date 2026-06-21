@@ -1,4 +1,7 @@
 import { Ellipsis } from 'lucide-react'
+
+import styles from './CardConnection.module.css'
+import { Flex } from '@/components/layout'
 import {
   Button,
   Typography,
@@ -9,9 +12,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui'
-import { Flex } from '@/components/layout'
+
 import type { ServiceConnectData } from '../../projectConnectData'
-import styles from './CardConnection.module.css'
 
 type Props = {
   service: ServiceConnectData

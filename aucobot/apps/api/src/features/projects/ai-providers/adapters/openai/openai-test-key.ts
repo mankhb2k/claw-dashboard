@@ -24,7 +24,7 @@ export async function smokeTestOpenAiApiKey(
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: 'Reply with exactly: ok' }],
-        max_tokens: PROVIDER_KEY_TEST_MAX_OUTPUT_TOKENS,
+        max_completion_tokens: PROVIDER_KEY_TEST_MAX_OUTPUT_TOKENS,
       }),
       signal: AbortSignal.timeout(PROVIDER_KEY_TEST_TIMEOUT_MS),
     });

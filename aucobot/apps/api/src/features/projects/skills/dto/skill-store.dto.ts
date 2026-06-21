@@ -20,13 +20,17 @@ export class SkillStoreSearchQueryDto {
   @MaxLength(100)
   q?: string;
 
-  @ApiPropertyOptional({ description: 'ClawHub pagination cursor (browse mode only)' })
+  @ApiPropertyOptional({
+    description: 'ClawHub pagination cursor (browse mode only)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
   cursor?: string;
 
-  @ApiPropertyOptional({ description: 'Page size for browse mode (1–200, default 50)' })
+  @ApiPropertyOptional({
+    description: 'Page size for browse mode (1–200, default 50)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -35,7 +39,8 @@ export class SkillStoreSearchQueryDto {
   limit?: number;
 
   @ApiPropertyOptional({
-    description: 'Browse sort (recommended | downloads | stars | newest | updated)',
+    description:
+      'Browse sort (recommended | downloads | stars | newest | updated)',
   })
   @IsOptional()
   @IsString()

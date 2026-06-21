@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import type { AgentFormInput } from '@/schemas/agent-form.schema';
 
 export type AgentEditTab =
@@ -10,7 +11,7 @@ export type AgentEditTab =
   | 'schedules'
   | 'heartbeat';
 
-/** localStorage key — giữ giá trị cũ để không mất persist sau refactor. */
+/** localStorage key — keeps the old value so persist survives refactors. */
 export const AGENT_EDITOR_LS_KEY = 'agent-editor-ui';
 
 interface AgentEditorState {

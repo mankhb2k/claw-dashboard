@@ -1,6 +1,36 @@
+import { z } from 'zod'
+
 import { api } from '@/lib/http/axios'
+import { translate } from '@/lib/i18n/translate'
 import { SPAWN_API_TIMEOUT_MS } from '@/lib/runtime/project-spawn'
-import { PROVIDER_TEST_TIMEOUT_MS } from '@/utils/ai-model/provider-test'
+import {
+  createCronJobInputSchema,
+  cronJobSchema,
+  cronListResponseSchema,
+  cronSummarySchema,
+  updateCronJobInputSchema,
+  type CreateCronJobInput,
+  type UpdateCronJobInput,
+} from '@/schemas/cron.schema'
+import {
+  nodesListResponseSchema,
+  nodesPairingResponseSchema,
+  renameNodeInputSchema,
+  nodeInviteCreatedSchema,
+  nodeInviteListResponseSchema,
+  createNodeInviteInputSchema,
+  type NodesListResponse,
+  type NodesPairingResponse,
+  type RenameNodeInput,
+  type NodeInviteCreated,
+  type NodeInviteListItem,
+  type CreateNodeInviteInput,
+} from '@/schemas/nodes.schema'
+import {
+  overviewResponseSchema,
+  type OverviewChartPeriod,
+  type OverviewResponse,
+} from '@/schemas/overview.schema'
 import {
   projectSchema,
   projectHealthSchema,
@@ -34,7 +64,8 @@ import {
   installSkillFromStoreInputSchema,
   skillStoreDetailSchema,
   projectCollaborationSchema,
-  updateProjectCollaborationSchema,
+  createCreateProjectSchema,
+  createUpdateProjectCollaborationSchema,
   skillStoreSearchResponseSchema,
   skillAiEditorOptionsResponseSchema,
   skillAiEditorCompleteInputSchema,
@@ -83,35 +114,11 @@ import {
   type ProjectSandboxResponse,
   type ProjectExecPolicyResponse,
 } from '@/schemas/project.schema'
-import {
-  createCronJobInputSchema,
-  cronJobSchema,
-  cronListResponseSchema,
-  cronSummarySchema,
-  updateCronJobInputSchema,
-  type CreateCronJobInput,
-  type UpdateCronJobInput,
-} from '@/schemas/cron.schema'
-import {
-  nodesListResponseSchema,
-  nodesPairingResponseSchema,
-  renameNodeInputSchema,
-  nodeInviteCreatedSchema,
-  nodeInviteListResponseSchema,
-  createNodeInviteInputSchema,
-  type NodesListResponse,
-  type NodesPairingResponse,
-  type RenameNodeInput,
-  type NodeInviteCreated,
-  type NodeInviteListItem,
-  type CreateNodeInviteInput,
-} from '@/schemas/nodes.schema'
-import {
-  overviewResponseSchema,
-  type OverviewChartPeriod,
-  type OverviewResponse,
-} from '@/schemas/overview.schema'
-import { z } from 'zod'
+import { PROVIDER_TEST_TIMEOUT_MS } from '@/utils/ai-model/provider-test'
+
+const createProjectSchema = createCreateProjectSchema(translate)
+const updateProjectCollaborationSchema =
+  createUpdateProjectCollaborationSchema(translate)
 
 export const projectApi = {
   // Backend: GET /api/projects/mine
@@ -119,15 +126,17 @@ export const projectApi = {
     const res = await api.get('/api/projects/mine')
     const parsed = z.array(projectSchema).safeParse(res.data)
     if (!parsed.success) {
-      console.error('[projectApi.list] Zod parse failed', parsed.error, res.data)
-      throw new Error('Dữ liệu project từ server không hợp lệ. Xem console.')
+      throw new Error(translate('project.errors.invalidServerData'))
     }
     return parsed.data
   },
 
   // Backend: POST /api/projects (optional displayName; slug/subdomain is server-generated)
   create: async (input: CreateProjectInput = {}): Promise<Project> => {
-    const body = input.displayName?.trim() ? { displayName: input.displayName.trim() } : {}
+    const parsed = createProjectSchema.parse(input)
+    const body = parsed.displayName?.trim()
+      ? { displayName: parsed.displayName.trim() }
+      : {}
     const res = await api.post('/api/projects', body, { timeout: SPAWN_API_TIMEOUT_MS })
     return projectSchema.parse(res.data)
   },
@@ -217,7 +226,7 @@ export const projectApi = {
     return providerKeyTestResultSchema.parse(res.data)
   },
 
-  /** GET /api/projects/providers/definitions — catalog provider + models (không cần project id) */
+  /** GET /api/projects/providers/definitions — provider + model catalog (no project id required) */
   listProviderDefinitions: async (): Promise<ProviderDefinition[]> => {
     const res = await api.get('/api/projects/providers/definitions')
     return z.array(providerDefinitionSchema).parse(res.data)

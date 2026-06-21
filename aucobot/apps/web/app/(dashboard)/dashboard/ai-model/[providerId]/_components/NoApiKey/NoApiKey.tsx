@@ -1,9 +1,10 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { Button, Typography, Spinner } from "@/components/ui";
-import { Flex } from "@/components/layout";
+
 import styles from "./NoApiKey.module.css";
+import { Flex } from "@/components/layout";
+import { Button, Typography, Spinner } from "@/components/ui";
 
 interface NoApiKeyProps {
   isLoading?: boolean;

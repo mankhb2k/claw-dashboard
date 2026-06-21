@@ -1,23 +1,22 @@
-import { loadMonorepoEnv } from '../../../scripts/load-monorepo-env.mjs';
-
-loadMonorepoEnv();
-
-import { NestFactory } from '@nestjs/core';
-import { Logger as NestLogger, ValidationPipe } from '@nestjs/common';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyWebsocket from '@fastify/websocket';
-import { AVATAR_MAX_BYTES } from '@aucobot/runtime-contracts';
+import { Logger as NestLogger, ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger as PinoNestLogger } from 'nestjs-pino';
+
 import { AppModule } from './app.module';
-import { ResponseInterceptor } from './core/common/interceptors/response.interceptor';
+import { loadMonorepoEnv } from './bootstrap/load-monorepo-env';
 import { HttpExceptionFilter } from './core/common/filters/http-exception.filter';
+import { ResponseInterceptor } from './core/common/interceptors/response.interceptor';
+import { AVATAR_MAX_BYTES } from '@aucobot/runtime-contracts';
+
+import type { NestFastifyApplication } from '@nestjs/platform-fastify';
+
+loadMonorepoEnv();
 
 async function bootstrap() {
   if (
@@ -67,9 +66,7 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('OpenClaw Auth API')
-    .setDescription(
-      'Auth — JWT cookie, đăng ký/đăng nhập bằng username',
-    )
+    .setDescription('Auth — JWT cookie, đăng ký/đăng nhập bằng username')
     .setVersion('0.1.0')
     .addBearerAuth()
     .build();
@@ -90,4 +87,4 @@ async function bootstrap() {
     NestLogger.log(`Listening on port ${port}`, 'Bootstrap');
   }
 }
-bootstrap();
+void bootstrap();

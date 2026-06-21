@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React, { useState } from "react";
+
 import { SearchItem } from "@/components/dashboard/SearchItem/SearchItem";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof SearchItem> = {
   title: "Dashboard/SearchItem",

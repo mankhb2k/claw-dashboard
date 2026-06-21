@@ -1,4 +1,5 @@
 import { sessionKeyForAgent } from './key'
+
 import type { GatewaySessionRow } from './types'
 
 export const DEFAULT_NEW_SESSION_LABEL = 'Chat New Session'

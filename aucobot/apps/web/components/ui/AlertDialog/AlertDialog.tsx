@@ -1,5 +1,6 @@
-import * as React from 'react'
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
+import * as React from 'react'
+
 import styles from './AlertDialog.module.css'
 import { Button } from '../Button/Button'
 

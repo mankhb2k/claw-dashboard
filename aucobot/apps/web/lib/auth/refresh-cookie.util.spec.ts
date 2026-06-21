@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { extractRefreshTokenFromRequest } from '@aucobot/control-plane-core'
+import { describe, expect, it } from 'vitest'
 
 describe('extractRefreshTokenFromRequest', () => {
   it('uses the last oc_refresh when duplicates are present', () => {

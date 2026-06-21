@@ -1,4 +1,6 @@
 /** Gateway sandbox staging cap — keep in sync with @aucobot/runtime-contracts */
+import { translate } from '@/lib/i18n/translate';
+
 export const SANDBOX_STAGING_MAX_BYTES = 5 * 1024 * 1024;
 
 export function resolveEffectiveSandboxActive(input: {
@@ -32,5 +34,5 @@ export function isFileOverSandboxStagingLimit(
 }
 
 export function sandboxStagingLimitError(fileName: string): string {
-  return `"${fileName}" exceeds 5 MB (sandbox limit). Disable sandbox or use a smaller file.`;
+  return translate('chat.composer.sandboxLimitError', { name: fileName })
 }

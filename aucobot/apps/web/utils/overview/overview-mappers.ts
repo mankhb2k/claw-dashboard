@@ -11,6 +11,7 @@ export interface OverviewChartDataPoint {
 export type UsageTableRowStatus = 'Success' | 'Failed' | 'Processing'
 
 export interface UsageTableRow {
+  id: string
   model: string
   time: string
   user: string
@@ -121,7 +122,8 @@ export function mapRecentCalls(
   calls: OverviewResponse['recentCalls'],
   timezone: string,
 ): UsageTableRow[] {
-  return calls.map((call) => ({
+  return calls.map((call, index) => ({
+    id: `${call.createdAt}-${index}`,
     model: call.modelId,
     time: formatCallTime(call.createdAt, timezone),
     user: formatSourceLabel(call.source, call.agentSlug),

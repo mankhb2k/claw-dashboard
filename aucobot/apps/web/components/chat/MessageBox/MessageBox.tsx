@@ -4,25 +4,14 @@ import { ArrowUp, AlertTriangle, Paperclip, Square } from "lucide-react";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type Dispatch,
   type DragEvent,
   type SetStateAction,
 } from "react";
-import { Box } from "@/components/layout";
-import { Select, Textarea } from "@/components/ui";
-import {
-  deleteChatAttachment,
-  uploadChatAttachment,
-  chatAttachmentDownloadPath,
-} from "@/lib/api/chat-attachments";
-import {
-  isFileOverSandboxStagingLimit,
-  sandboxStagingLimitError,
-} from "@/utils/chat/sandbox-staging-limit";
-import { ContextUsageRing } from "./ContextUsageRing/ContextUsageRing";
-import type { ContextUsageSnapshot } from "./ContextUsageRing/context-usage.utils";
+
 import { AttachmentPreviewRow } from "./AttachmentPreviewRow/AttachmentPreviewRow";
 import {
   FILE_INPUT_ACCEPT,
@@ -38,7 +27,35 @@ import {
   readClipboardPlainText,
   restoreSelection,
 } from "./AttachmentPreviewRow/composer-paste";
+import { ContextUsageRing } from "./ContextUsageRing/ContextUsageRing";
+import { InputMirror } from "./InputMirror/InputMirror";
 import styles from "./MessageBox.module.css";
+import { ModelSelects } from "./ModelSelects/ModelSelects";
+import { flattenSlashMenuSections } from "./SlashMenu/slash-menu.utils";
+import { SlashMenu } from "./SlashMenu/SlashMenu";
+import { Box } from "@/components/layout";
+import {
+  deleteChatAttachment,
+  uploadChatAttachment,
+  chatAttachmentDownloadPath,
+} from "@/lib/api/chat-attachments";
+import { useI18n } from "@/lib/i18n";
+import { translate } from "@/lib/i18n/translate";
+import {
+  isFileOverSandboxStagingLimit,
+  sandboxStagingLimitError,
+} from "@/utils/chat/sandbox-staging-limit";
+import {
+  buildSkillSlashCommand,
+  filterSkillsBySlashQuery,
+  parseLeadingSelectedSkill,
+  parseSkillSlashState,
+} from "@/utils/chat/skill-slash";
+
+
+import type { ContextUsageSnapshot } from "./ContextUsageRing/context-usage.utils";
+import type { SlashMenuSection } from "./SlashMenu/SlashMenu";
+import type { InvokableSkill } from "@/utils/chat/skill-slash";
 
 const MAX_INPUT_LINES = 12;
 
@@ -77,6 +94,8 @@ export type MessageBoxChatProps = MessageBoxBaseProps & {
   projectId?: string;
   sandboxActive?: boolean;
   stagingMaxBytes?: number;
+  invokableSkills?: InvokableSkill[];
+  invokableSkillsLoading?: boolean;
 };
 
 export type MessageBoxSimpleProps = MessageBoxBaseProps & {
@@ -87,9 +106,10 @@ export type MessageBoxSimpleProps = MessageBoxBaseProps & {
 export type MessageBoxProps = MessageBoxChatProps | MessageBoxSimpleProps;
 
 function syncComposerHeight(
-  element: HTMLTextAreaElement,
+  el: HTMLTextAreaElement,
   maxLines: number,
 ): void {
+  const element = el;
   element.style.height = "auto";
   const styles = getComputedStyle(element);
   const lineHeight = Number.parseFloat(styles.lineHeight) || 20;
@@ -133,7 +153,7 @@ async function uploadComposerAttachment(
       ),
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Upload failed";
+    const message = err instanceof Error ? err.message : translate("chat.composer.uploadFailed");
     setAttachments((prev) =>
       prev.map((item) =>
         item.id === localId
@@ -145,10 +165,10 @@ async function uploadComposerAttachment(
 }
 
 export function MessageBox(props: MessageBoxProps) {
+  const { t } = useI18n();
   const {
     value,
     onChange,
-    onSend,
     sending,
     disabled = false,
     placeholder = "Type a message…",
@@ -174,18 +194,126 @@ export function MessageBox(props: MessageBoxProps) {
   const projectId = enableAttachments ? props.projectId : undefined;
   const sandboxActive = enableAttachments ? (props.sandboxActive ?? false) : false;
   const stagingMaxBytes = enableAttachments ? props.stagingMaxBytes : undefined;
+  const invokableSkills = enableAttachments ? props.invokableSkills : undefined;
+  const invokableSkillsLoading = enableAttachments
+    ? (props.invokableSkillsLoading ?? false)
+    : false;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputMirrorRef = useRef<HTMLDivElement>(null);
+  const inputAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
   const attachmentsRef = useRef<ComposerAttachment[]>([]);
 
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const [trackedSandboxActive, setTrackedSandboxActive] = useState(sandboxActive);
+
+  if (sandboxActive !== trackedSandboxActive) {
+    setTrackedSandboxActive(sandboxActive);
+    setAttachments((prev) =>
+      prev.map((item) => ({
+        ...item,
+        sandboxBlocked:
+          sandboxActive &&
+          isFileOverSandboxStagingLimit(item.file.size, true),
+      })),
+    );
+  }
   const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
-
-  attachmentsRef.current = attachments;
+  const [skillMenuIndex, setSkillMenuIndex] = useState(0);
 
   const inputDisabled = disabled || sending;
+
+  const slashState = useMemo(
+    () => (enableAttachments ? parseSkillSlashState(value) : null),
+    [enableAttachments, value],
+  );
+  const filteredInvokableSkills = useMemo(() => {
+    if (!slashState || !invokableSkills) return [];
+    return filterSkillsBySlashQuery(invokableSkills, slashState.query);
+  }, [invokableSkills, slashState]);
+  const skillMenuOpen =
+    enableAttachments && Boolean(slashState) && !inputDisabled;
+  const totalInvokableSkillCount = invokableSkills?.length ?? 0;
+  const knownSkillSlugs = useMemo(
+    () => invokableSkills?.map((skill) => skill.slug) ?? [],
+    [invokableSkills],
+  );
+  const selectedSkillHighlight = useMemo(
+    () =>
+      enableAttachments
+        ? parseLeadingSelectedSkill(value, knownSkillSlugs)
+        : null,
+    [enableAttachments, knownSkillSlugs, value],
+  );
+
+  const syncInputMirrorScroll = useCallback(() => {
+    const textarea = textareaRef.current;
+    const mirror = inputMirrorRef.current;
+    if (!textarea || !mirror) return;
+    mirror.scrollTop = textarea.scrollTop;
+  }, []);
+
+  const slashMenuSections = useMemo((): SlashMenuSection[] => {
+    const emptyMessage = invokableSkillsLoading
+      ? t("chat.composer.skillMenuLoading")
+      : totalInvokableSkillCount === 0
+        ? t("chat.composer.noSkillActive")
+        : t("chat.composer.noMatchingSkills");
+
+    return [
+      {
+        id: "skills",
+        title: t("chat.composer.skillMenuTitle"),
+        items: filteredInvokableSkills.map((skill) => ({
+          id: skill.slug,
+          label: `/${skill.slug}`,
+          description: skill.description.trim() || skill.name,
+        })),
+        emptyMessage,
+        loading: invokableSkillsLoading,
+      },
+    ];
+  }, [
+    filteredInvokableSkills,
+    invokableSkillsLoading,
+    t,
+    totalInvokableSkillCount,
+  ]);
+
+  const slashMenuEntries = useMemo(
+    () => flattenSlashMenuSections(slashMenuSections),
+    [slashMenuSections],
+  );
+
+  const skillMenuResetKey = `${value}:${slashMenuEntries.length}`;
+  const [skillMenuResetTracked, setSkillMenuResetTracked] =
+    useState(skillMenuResetKey);
+  if (skillMenuResetKey !== skillMenuResetTracked) {
+    setSkillMenuResetTracked(skillMenuResetKey);
+    setSkillMenuIndex(0);
+  }
+
+  const insertSkillCommand = useCallback(
+    (skill: InvokableSkill) => {
+      onChange(buildSkillSlashCommand(skill.slug));
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.focus();
+        const end = buildSkillSlashCommand(skill.slug).length;
+        el.setSelectionRange(end, end);
+        syncComposerHeight(el, MAX_INPUT_LINES);
+      });
+    },
+    [onChange],
+  );
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
   const selectsDisabled =
     disabled ||
     sending ||
@@ -286,10 +414,10 @@ export function MessageBox(props: MessageBoxProps) {
           void uploadComposerAttachment(projectId, item.id, item.file, setAttachments);
         }
       } else {
-        setAttachmentErrors((prev) => [...prev, "No project selected for file upload."]);
+        setAttachmentErrors((prev) => [...prev, t("chat.composer.noProjectUpload")]);
       }
     },
-    [inputDisabled, projectId, sandboxActive],
+    [inputDisabled, projectId, sandboxActive, t],
   );
 
   const handlePaste = useCallback(
@@ -359,7 +487,8 @@ export function MessageBox(props: MessageBoxProps) {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setAttachmentErrors([]);
       queueFiles(Array.from(event.target.files ?? []));
-      event.target.value = "";
+      const input = event.currentTarget;
+      input.value = "";
     },
     [queueFiles],
   );
@@ -392,25 +521,10 @@ export function MessageBox(props: MessageBoxProps) {
     clearAttachments,
     enableAttachments,
     onChange,
-    onSend,
+    props,
     sandboxActive,
     value,
   ]);
-
-  useEffect(() => {
-    if (!sandboxActive) {
-      setAttachments((prev) =>
-        prev.map((item) => ({ ...item, sandboxBlocked: false })),
-      );
-      return;
-    }
-    setAttachments((prev) =>
-      prev.map((item) => ({
-        ...item,
-        sandboxBlocked: isFileOverSandboxStagingLimit(item.file.size, true),
-      })),
-    );
-  }, [sandboxActive]);
 
   useEffect(() => {
     adjustHeight();
@@ -423,18 +537,6 @@ export function MessageBox(props: MessageBoxProps) {
       }
     };
   }, []);
-
-  const providerPlaceholder = modelsLoading
-    ? "Loading…"
-    : providerOptions.length === 0
-      ? "No API key"
-      : "Provider";
-
-  const modelPlaceholder = modelsLoading
-    ? "Loading…"
-    : modelOptions.length === 0
-      ? "Model"
-      : "Model";
 
   return (
     <Box as="footer" className={styles.root} aria-label={ariaLabel}>
@@ -471,74 +573,139 @@ export function MessageBox(props: MessageBoxProps) {
           <div className={styles.sandboxCallout} role="status">
             <AlertTriangle size={14} aria-hidden />
             <span>
-              Sandbox is enabled — attachments are limited to{" "}
-              {Math.round((stagingMaxBytes ?? 5 * 1024 * 1024) / (1024 * 1024))} MB.
-              Larger files cannot be sent.
+              {t("chat.composer.sandboxCallout", {
+                mb: String(
+                  Math.round((stagingMaxBytes ?? 5 * 1024 * 1024) / (1024 * 1024)),
+                ),
+              })}
             </span>
           </div>
         ) : null}
 
         {enableAttachments && attachmentErrors.length > 0 ? (
           <div className={styles.attachmentErrors} role="alert">
-            {attachmentErrors.map((message, index) => (
-              <p key={`${index}-${message}`}>{message}</p>
+            {attachmentErrors.map((message) => (
+              <p key={message}>{message}</p>
             ))}
           </div>
         ) : null}
 
-        <div className={styles.inputArea}>
-          <Textarea
-            ref={textareaRef}
-            id={inputId}
-            rows={1}
-            className={styles.input}
-            placeholder={placeholder}
-            value={value}
-            onChange={(event) => {
-              onChange(event.target.value);
-              syncComposerHeight(event.target, MAX_INPUT_LINES);
-            }}
+        <div className={styles.inputArea} ref={inputAreaRef}>
+          <div
+            role="combobox"
+            aria-expanded={skillMenuOpen}
+            aria-controls={skillMenuOpen ? "chat-slash-menu" : undefined}
+            aria-haspopup="listbox"
+          >
+            <SlashMenu
+              open={skillMenuOpen}
+              anchorRef={inputAreaRef}
+              sections={slashMenuSections}
+              activeIndex={skillMenuIndex}
+              id="chat-slash-menu"
+              ariaLabel={t("chat.composer.skillMenuAria")}
+              onSelect={(_sectionId, item) => {
+                const skill = filteredInvokableSkills.find(
+                  (entry) => entry.slug === item.id,
+                );
+                if (skill) insertSkillCommand(skill);
+              }}
+              onActiveChange={setSkillMenuIndex}
+            />
+            <div className={styles.composerInputShell}>
+            {selectedSkillHighlight ? (
+              <div
+                ref={inputMirrorRef}
+                className={styles.composerInputMirror}
+                aria-hidden
+              >
+                <InputMirror value={value} knownSlugs={knownSkillSlugs} />
+              </div>
+            ) : null}
+            <textarea
+              ref={textareaRef}
+              id={inputId}
+              rows={1}
+              spellCheck={false}
+              className={`${styles.input} ${selectedSkillHighlight ? styles.inputWithSkillHighlight : ""}`}
+              placeholder={placeholder}
+              value={value}
+              onChange={(event) => {
+                onChange(event.target.value);
+                syncComposerHeight(event.target, MAX_INPUT_LINES);
+              }}
+              onScroll={selectedSkillHighlight ? syncInputMirrorScroll : undefined}
             onPaste={enableAttachments ? handlePaste : undefined}
             onKeyDown={(event) => {
+              if (skillMenuOpen) {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  onChange("");
+                  return;
+                }
+              }
+              if (skillMenuOpen && slashMenuEntries.length > 0) {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setSkillMenuIndex((index) =>
+                    Math.min(index + 1, slashMenuEntries.length - 1),
+                  );
+                  return;
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setSkillMenuIndex((index) => Math.max(index - 1, 0));
+                  return;
+                }
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  const entry = slashMenuEntries[skillMenuIndex];
+                  const skill = entry
+                    ? filteredInvokableSkills.find(
+                        (item) => item.slug === entry.item.id,
+                      )
+                    : undefined;
+                  if (skill) insertSkillCommand(skill);
+                  return;
+                }
+                if (event.key === "Tab") {
+                  event.preventDefault();
+                  const entry =
+                    slashMenuEntries[skillMenuIndex] ?? slashMenuEntries[0];
+                  const skill = entry
+                    ? filteredInvokableSkills.find(
+                        (item) => item.slug === entry.item.id,
+                      )
+                    : undefined;
+                  if (skill) insertSkillCommand(skill);
+                  return;
+                }
+              }
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
                 if (canSendNow) handleSendClick();
               }
             }}
             disabled={inputDisabled}
-            aria-label="Message"
-          />
+            aria-label={t("chat.composer.messageAria")}
+            aria-autocomplete={skillMenuOpen ? "list" : undefined}
+            />
+            </div>
+          </div>
         </div>
 
         <div className={styles.toolbar}>
-          <div className={styles.toolbarLeft}>
-            <div className={styles.toolbarSelect}>
-              <Select
-                id={`${composerId}-provider`}
-                labelPosition="none"
-                size="sm"
-                value={providerId || undefined}
-                onValueChange={onProviderChange}
-                options={providerOptions}
-                disabled={selectsDisabled}
-                placeholder={providerPlaceholder}
-              />
-            </div>
-            <div className={styles.toolbarSelect}>
-              <Select
-                id={`${composerId}-model`}
-                labelPosition="none"
-                size="sm"
-                value={modelId || undefined}
-                onValueChange={onModelChange}
-                options={modelOptions}
-                disabled={
-                  selectsDisabled || modelOptions.length === 0 || !providerId
-                }
-                placeholder={modelPlaceholder}
-              />
-            </div>
-          </div>
+          <ModelSelects
+            composerId={composerId}
+            providerId={providerId}
+            providerOptions={providerOptions}
+            onProviderChange={onProviderChange}
+            modelId={modelId}
+            modelOptions={modelOptions}
+            onModelChange={onModelChange}
+            modelsLoading={modelsLoading}
+            selectsDisabled={selectsDisabled}
+          />
 
           <div className={styles.toolbarRight}>
             {enableAttachments ? (
@@ -547,8 +714,8 @@ export function MessageBox(props: MessageBoxProps) {
                 className={styles.iconBtn}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={inputDisabled}
-                aria-label="Attach a document or image"
-                title="Attach a document or image"
+                aria-label={t("chat.composer.attachAria")}
+                title={t("chat.composer.attachTitle")}
               >
                 <Paperclip size={16} strokeWidth={1.75} />
               </button>
@@ -566,8 +733,8 @@ export function MessageBox(props: MessageBoxProps) {
                 type="button"
                 className={`${styles.sendBtn} ${styles.sendBtnStop}`}
                 onClick={onAbort}
-                aria-label="Stop response"
-                title="Stop response"
+                aria-label={t("chat.composer.stopAria")}
+                title={t("chat.composer.stopTitle")}
               >
                 <Square size={16} fill="currentColor" strokeWidth={0} />
               </button>
@@ -577,11 +744,11 @@ export function MessageBox(props: MessageBoxProps) {
                 className={`${styles.sendBtn} ${canSendNow ? styles.sendBtnActive : ""}`}
                 onClick={handleSendClick}
                 disabled={!canSendNow}
-                aria-label="Send message"
+                aria-label={t("chat.composer.sendAria")}
                 title={
                   hasSandboxOversized
-                    ? "A file exceeds 5 MB (sandbox)"
-                    : "Send message"
+                    ? t("chat.composer.sendBlockedSandbox")
+                    : t("chat.composer.sendTitle")
                 }
               >
                 <ArrowUp size={16} strokeWidth={2} />

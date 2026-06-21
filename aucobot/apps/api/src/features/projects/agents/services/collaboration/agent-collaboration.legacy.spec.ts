@@ -9,7 +9,10 @@ describe('legacy per-agent team migration', () => {
       resolveProjectCollaborationSettings({
         stored: { enabled: false, memberSlugs: [] },
         legacyAgents: [
-          { slug: 'agent-a', formData: legacyTeamFormSlice({ teamEnabled: false }) },
+          {
+            slug: 'agent-a',
+            formData: legacyTeamFormSlice({ teamEnabled: false }),
+          },
           {
             slug: 'agent-b',
             formData: legacyTeamFormSlice({
@@ -75,6 +78,8 @@ describe('legacy per-agent team migration', () => {
       ],
     });
     expect(resolved.enabled).toBe(true);
-    expect(resolved.memberSlugs).toEqual(expect.arrayContaining(['agent-a', 'agent-b']));
+    expect(resolved.memberSlugs).toEqual(
+      expect.arrayContaining(['agent-a', 'agent-b']),
+    );
   });
 });

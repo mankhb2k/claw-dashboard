@@ -1,6 +1,6 @@
-import { Container, Flex } from "@/components/layout";
 import { ClientProfilePage } from "./_components/ClientProfilePage/ClientProfilePage";
 import styles from "./profile.module.css";
+import { Container, Flex } from "@/components/layout";
 
 export default function ProfilePage() {
   return (

@@ -1,12 +1,8 @@
 "use client";
 
-import { forwardRef, useMemo, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu/DropdownMenu";
+import { forwardRef, useMemo, useState } from "react";
+
 import {
   buildMonthGrid,
   formatDisplayDate,
@@ -16,6 +12,11 @@ import {
   WEEKDAY_LABELS,
 } from "./date-picker.utils";
 import styles from "./DatePicker.module.css";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu/DropdownMenu";
 
 export type DatePickerSize = 'sm' | 'md'
 

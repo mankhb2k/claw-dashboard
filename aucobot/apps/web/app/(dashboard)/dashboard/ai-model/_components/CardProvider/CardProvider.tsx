@@ -1,11 +1,10 @@
 "use client";
 
-import React from "react";
+import styles from "./CardProvider.module.css";
+import { Flex } from "@/components/layout/Flex/Flex";
 import { Card } from "@/components/ui/Card/Card";
 import { IconProvider } from "@/components/ui/IconProvider/IconProvider";
-import { Flex } from "@/components/layout/Flex/Flex";
 import { Typography } from "@/components/ui/Typography/Typography";
-import styles from "./CardProvider.module.css";
 
 export interface CardProviderProps {
   title: string;

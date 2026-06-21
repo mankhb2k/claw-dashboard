@@ -36,7 +36,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
           ? String((body as { message: string | string[] }).message)
           : exception.message;
 
-      return res.status(status).send({
+      res.status(status).send({
         success: false,
         data: null,
         error: {
@@ -44,10 +44,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
           message: Array.isArray(message) ? message.join(', ') : message,
         },
       });
+      return;
     }
 
     this.logger.error(exception);
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
       success: false,
       data: null,
       error: {

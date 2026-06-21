@@ -22,7 +22,7 @@ export interface GatewayEndpointResolver {
   resolve(project: ProjectGatewayFields): GatewayEndpoint;
 }
 
-/** Cloud billing / quota — noop in OSS; implemented in cloud/packages/quota. */
+/** No-op plan guard — self-host builds skip billing and quota checks. */
 export interface PlanGuard {
   assertCanCreateProject(userId: string): Promise<void>;
 }

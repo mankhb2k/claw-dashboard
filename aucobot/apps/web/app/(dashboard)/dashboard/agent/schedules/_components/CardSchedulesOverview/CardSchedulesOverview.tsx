@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
+
+import styles from "./CardSchedulesOverview.module.css";
 import { Flex } from "@/components/layout";
 import { Typography, Card } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import { dashboardPath } from "@/lib/routing/dashboard-route";
-import styles from "./CardSchedulesOverview.module.css";
 
 type CardSchedulesOverviewProps = {
   quotaTotal: number;

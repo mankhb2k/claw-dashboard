@@ -330,39 +330,17 @@ export const DISCORD_DM_POLICY_OPTIONS: Array<{
 }> = [
   {
     value: 'pairing',
-    label: 'Pairing (khuyến nghị)',
-    description: 'Người lạ nhận mã pairing; admin approve trước khi bot trả lời DM.',
+    label: 'Pairing (recommended)',
+    description: 'Strangers receive a pairing code; an admin must approve before the bot replies.',
   },
   {
     value: 'allowlist',
     label: 'Allowlist',
-    description: 'Chỉ Discord user ID trong danh sách mới DM được với bot.',
+    description: 'Only Discord user IDs on the list can DM the bot.',
   },
   {
     value: 'open',
-    label: 'Mở (công khai)',
-    description: 'Mọi người DM được — chỉ dùng bot demo, rủi ro cao.',
-  },
-];
-
-export const TELEGRAM_DM_POLICY_OPTIONS: Array<{
-  value: TelegramDmPolicy;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: 'allowlist',
-    label: 'Allowlist (khuyến nghị)',
-    description: 'Chỉ user ID trong danh sách mới chat DM được với bot.',
-  },
-  {
-    value: 'pairing',
-    label: 'Pairing',
-    description: 'Người lạ nhận mã pairing; admin approve trước khi bot trả lời.',
-  },
-  {
-    value: 'open',
-    label: 'Mở (công khai)',
-    description: 'Mọi người DM được — chỉ dùng bot demo, rủi ro cao.',
+    label: 'Open (public)',
+    description: 'Anyone can DM the bot — use for demos only; high risk.',
   },
 ];

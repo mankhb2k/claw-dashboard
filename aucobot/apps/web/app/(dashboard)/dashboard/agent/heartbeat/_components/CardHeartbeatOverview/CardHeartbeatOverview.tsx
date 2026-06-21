@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
 import { Activity, Info } from "lucide-react";
+
+import styles from "./CardHeartbeatOverview.module.css";
 import { Flex } from "@/components/layout";
 import { Typography, Card } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
-import styles from "./CardHeartbeatOverview.module.css";
 
 export function CardHeartbeatOverview() {
   const { t } = useI18n();

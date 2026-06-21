@@ -1,26 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Flex, Grid } from "@/components/layout";
-import { DateRangePicker, Spinner, Typography } from "@/components/ui";
-import { projectApi } from "@/lib/api/project";
-import { useI18n } from "@/lib/i18n";
-import type {
-  OverviewChartPeriod,
-  OverviewResponse,
-} from "@/schemas/overview.schema";
-import { useProjectStore } from "@/stores/project.store";
+import { useEffect, useMemo, useState } from "react";
+
+import styles from "./ClientOverviewPage.module.css";
 import { CardMetric } from "../CardMetric/CardMetric";
 import { CardSchedule } from "../CardSchedule/CardSchedule";
 import { OverviewChart } from "../OverviewChart/OverviewChart";
 import { UsageTable } from "../UsageTable/UsageTable";
+import { Flex, Grid } from "@/components/layout";
+import { DateRangePicker, Spinner, Typography } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
 import {
   chartPointsToRecharts,
   formatCostUsd,
   formatTokenCount,
   mapRecentCalls,
 } from "@/utils/overview/overview-mappers";
-import styles from "./ClientOverviewPage.module.css";
+
+import type {
+  OverviewChartPeriod,
+  OverviewResponse,
+} from "@/schemas/overview.schema";
 
 function formatMetricsRange(dateFrom: string, dateTo: string): string {
   if (dateFrom === dateTo) return dateFrom
@@ -41,42 +43,45 @@ export function ClientOverviewPage() {
     undefined,
   );
   const [chartPeriod, setChartPeriod] = useState<OverviewChartPeriod>("week");
-  const [loading, setLoading] = useState(true);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadKey = projectId
+    ? `${projectId}|${pickedDateFrom ?? ""}|${pickedDateTo ?? ""}|${chartPeriod}`
+    : "";
+  const [trackedLoadKey, setTrackedLoadKey] = useState(loadKey);
+
+  if (loadKey !== trackedLoadKey) {
+    setTrackedLoadKey(loadKey);
+    if (loadKey) {
+      setFetchLoading(true);
+      setOverview(null);
+      setError(null);
+    }
+  }
+
+  const loading = !projectId ? projectsLoading : fetchLoading;
 
   useEffect(() => {
     void fetchProjects({ silent: true });
   }, [fetchProjects]);
 
-  const loadOverview = useCallback(async () => {
-    if (!projectId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await projectApi.getOverview(projectId, {
+  useEffect(() => {
+    if (!projectId) {
+      return;
+    }
+    void projectApi
+      .getOverview(projectId, {
         dateFrom: pickedDateFrom,
         dateTo: pickedDateTo,
         chartPeriod,
-      });
-      setOverview(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("overview.loadError"));
-      setOverview(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, pickedDateFrom, pickedDateTo, chartPeriod]);
-
-  useEffect(() => {
-    if (!projectId) {
-      setLoading(projectsLoading);
-      if (!projectsLoading) {
-        setLoading(false);
-      }
-      return;
-    }
-    void loadOverview();
-  }, [projectId, projectsLoading, loadOverview]);
+      })
+      .then(setOverview)
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : t("overview.loadError"));
+        setOverview(null);
+      })
+      .finally(() => setFetchLoading(false));
+  }, [projectId, pickedDateFrom, pickedDateTo, chartPeriod, t]);
 
   const inputChartData = useMemo(
     () =>

@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import React from 'react';
+
+import { Button } from '@/components/ui/Button/Button';
 import {
   Dialog,
   DialogTrigger,
@@ -10,7 +11,8 @@ import {
   DialogDescription,
   DialogClose,
 } from '@/components/ui/Dialog/Dialog';
-import { Button } from '@/components/ui/Button/Button';
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 interface InteractiveProps extends React.ComponentProps<typeof DialogContent> {
   title: string;

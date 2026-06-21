@@ -5,6 +5,7 @@ import {
   OPENAI_CHAT_MODELS,
   OPENAI_DEFAULT_OPENCLAW_MODEL,
 } from '@aucobot/shared';
+
 import type { ProviderDefinition } from './provider-registry.types';
 
 export type {
@@ -59,26 +60,25 @@ const DEEPSEEK_MODELS = [
   },
 ] satisfies ProviderDefinition['models'];
 
-const GROQ_MODELS = [
+const GROK_MODELS = [
   {
-    id: 'llama-3.3-70b-versatile',
-    name: 'Llama 3.3 70B',
-    openclawId: 'groq/llama-3.3-70b-versatile',
+    id: 'grok-4.3',
+    name: 'Grok 4.3',
+    openclawId: 'xai/grok-4.3',
     recommended: true,
-    description: 'Production — general purpose',
+    description: 'Latest flagship — chat, coding, agents',
   },
   {
-    id: 'llama-3.1-8b-instant',
-    name: 'Llama 3.1 8B',
-    openclawId: 'groq/llama-3.1-8b-instant',
-    description: 'Fast, low latency',
+    id: 'grok-4',
+    name: 'Grok 4',
+    openclawId: 'xai/grok-4',
+    description: 'Previous flagship reasoning model',
   },
   {
-    id: 'llama-3.1-70b-versatile',
-    name: 'Llama 3.1 70B',
-    openclawId: 'groq/llama-3.1-70b-versatile',
-    tier: 'deprecated',
-    description: 'Deprecated — use Llama 3.3 70B',
+    id: 'grok-3-mini',
+    name: 'Grok 3 Mini',
+    openclawId: 'xai/grok-3-mini',
+    description: 'Fast, cost-efficient',
   },
 ] satisfies ProviderDefinition['models'];
 
@@ -176,18 +176,19 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     },
   },
   {
-    id: 'groq',
-    displayName: 'Groq',
-    envKey: 'GROQ_API_KEY',
+    id: 'grok',
+    displayName: 'Grok',
+    envKey: 'XAI_API_KEY',
     uiGroup: 'foundation',
     category: 'direct',
-    defaultModel: 'groq/llama-3.3-70b-versatile',
-    apiKeyUrl: 'https://console.groq.com/keys',
-    docsUrl: 'https://console.groq.com/docs/models',
-    models: GROQ_MODELS,
+    openclawProviderId: 'xai',
+    defaultModel: 'xai/grok-4.3',
+    apiKeyUrl: 'https://console.x.ai/team/default/api-keys',
+    docsUrl: 'https://docs.x.ai/developers/models',
+    models: GROK_MODELS,
     openAiCompatTest: {
-      baseUrl: 'https://api.groq.com/openai/v1',
-      model: 'llama-3.3-70b-versatile',
+      baseUrl: 'https://api.x.ai/v1',
+      model: 'grok-4.3',
     },
   },
   {
@@ -217,7 +218,12 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     apiKeyUrl: 'https://openrouter.ai/keys',
     docsUrl: 'https://openrouter.ai/docs',
     starterModels: [
-      { id: 'auto', name: 'Auto routing', openclawId: 'openrouter/auto', recommended: true },
+      {
+        id: 'auto',
+        name: 'Auto routing',
+        openclawId: 'openrouter/auto',
+        recommended: true,
+      },
       {
         id: 'claude-sonnet',
         name: 'Claude Sonnet (via OpenRouter)',
@@ -299,7 +305,12 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
     apiKeyUrl: 'https://app.kilo.ai',
     docsUrl: 'https://kilo.ai/docs',
     starterModels: [
-      { id: 'kilo-auto', name: 'Kilo Auto', openclawId: 'kilocode/kilo/auto', recommended: true },
+      {
+        id: 'kilo-auto',
+        name: 'Kilo Auto',
+        openclawId: 'kilocode/kilo/auto',
+        recommended: true,
+      },
     ],
     openAiCompatTest: {
       baseUrl: 'https://api.kilo.ai/api/gateway',
@@ -311,7 +322,9 @@ export const PROVIDER_REGISTRY: ProviderDefinition[] = [
 const byId = new Map(PROVIDER_REGISTRY.map((p) => [p.id, p]));
 const byEnvKey = new Map(PROVIDER_REGISTRY.map((p) => [p.envKey, p]));
 
-export function resolveProvider(idOrEnvKey: string): ProviderDefinition | undefined {
+export function resolveProvider(
+  idOrEnvKey: string,
+): ProviderDefinition | undefined {
   const key = idOrEnvKey.trim();
   return byId.get(key) ?? byEnvKey.get(key);
 }
@@ -329,7 +342,8 @@ export function collectFoundationAllowlist(
 ): string[] {
   const ids: string[] = [];
   for (const def of PROVIDER_REGISTRY) {
-    if (def.uiGroup !== 'foundation' || !enabledProviderIds.has(def.id)) continue;
+    if (def.uiGroup !== 'foundation' || !enabledProviderIds.has(def.id))
+      continue;
     for (const model of def.models ?? []) {
       ids.push(model.openclawId);
     }

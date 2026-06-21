@@ -5,7 +5,10 @@ import {
 
 export const AGENT_AI_EDITOR_MAX_MESSAGES = 20;
 export const AGENT_AI_EDITOR_MAX_MARKDOWN_CHARS = 12_000;
-export const AGENT_AI_EDITOR_SUPPORTED_PROVIDERS = ['gemini', 'openai'] as const;
+export const AGENT_AI_EDITOR_SUPPORTED_PROVIDERS = [
+  'gemini',
+  'openai',
+] as const;
 
 export type AgentAiEditorProviderId =
   (typeof AGENT_AI_EDITOR_SUPPORTED_PROVIDERS)[number];

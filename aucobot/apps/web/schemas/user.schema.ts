@@ -8,25 +8,44 @@ export const publicUserSchema = z.object({
   createdAt: z.coerce.string(),
 })
 
-export const updateUserNameSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(64, 'Max 64 characters'),
-})
+export type ProfileTranslate = (path: string) => string
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(6, 'Min 6 characters').max(128),
-    newPassword: z.string().min(6, 'Min 6 characters').max(128),
-    confirmPassword: z.string().min(6, 'Min 6 characters'),
+export function createUpdateUserNameSchema(t: ProfileTranslate) {
+  return z.object({
+    name: z
+      .string()
+      .min(1, t('profile.validation.name.required'))
+      .max(64, t('profile.validation.name.max')),
   })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
-  .refine((d) => d.currentPassword !== d.newPassword, {
-    message: 'New password must differ from current',
-    path: ['newPassword'],
-  })
+}
+
+export function createChangePasswordSchema(t: ProfileTranslate) {
+  return z
+    .object({
+      currentPassword: z
+        .string()
+        .min(6, t('profile.validation.password.min'))
+        .max(128),
+      newPassword: z
+        .string()
+        .min(6, t('profile.validation.password.min'))
+        .max(128),
+      confirmPassword: z.string().min(6, t('profile.validation.password.min')),
+    })
+    .refine((d) => d.newPassword === d.confirmPassword, {
+      message: t('profile.validation.confirmPassword.mismatch'),
+      path: ['confirmPassword'],
+    })
+    .refine((d) => d.currentPassword !== d.newPassword, {
+      message: t('profile.validation.newPassword.mustDiffer'),
+      path: ['newPassword'],
+    })
+}
 
 export type PublicUser = z.infer<typeof publicUserSchema>
-export type UpdateUserNameInput = z.infer<typeof updateUserNameSchema>
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+export type UpdateUserNameInput = z.infer<
+  ReturnType<typeof createUpdateUserNameSchema>
+>
+export type ChangePasswordInput = z.infer<
+  ReturnType<typeof createChangePasswordSchema>
+>

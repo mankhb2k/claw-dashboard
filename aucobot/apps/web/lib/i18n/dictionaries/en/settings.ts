@@ -165,6 +165,7 @@ export const enSettings = {
       fetchToken: 'Unable to fetch token. Please try again.',
       openControlUi: 'Unable to open Control UI. Try again after the gateway is running.',
       copyControlUi: 'Unable to copy Control UI link.',
+      copyClipboard: 'Unable to copy to clipboard.',
     },
   },
   dangerZone: {

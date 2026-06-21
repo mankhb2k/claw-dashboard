@@ -4,15 +4,26 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ChannelConnectionStatus } from '@aucobot/database';
+
+import { toPrismaInputJson } from '../../../../../core/common/utils/prisma-json.util';
 import { PrismaService } from '../../../../../core/database/prisma.service';
-import { decryptSecret, encryptSecret, maskSecret } from '@aucobot/control-plane-core';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import { listActiveChannels, resolveChannel } from '../../lib/channel-registry';
+import {
+  decryptSecret,
+  encryptSecret,
+  maskSecret,
+} from '@aucobot/control-plane-core';
+import { ChannelConnectionStatus, Prisma } from '@aucobot/database';
+
 import type { ChannelAdapter } from '../../lib/channel-adapter.types';
 import type { ChannelDto } from '../../lib/channels.types';
 
 export type { ChannelDto } from '../../lib/channels.types';
+
+type ChannelRowWithSecrets = Prisma.ProjectChannelGetPayload<{
+  include: { secrets: true };
+}>;
 
 @Injectable()
 export class ChannelsService {
@@ -48,7 +59,11 @@ export class ChannelsService {
 
   async create(
     projectId: string,
-    input: { channelId: string; enabled?: boolean; config?: Record<string, unknown> },
+    input: {
+      channelId: string;
+      enabled?: boolean;
+      config?: Record<string, unknown>;
+    },
   ): Promise<ChannelDto> {
     const def = resolveChannel(input.channelId);
     if (!def) {
@@ -68,11 +83,13 @@ export class ChannelsService {
         channelId: def.id,
         enabled: Boolean(input.enabled),
         connectionStatus: ChannelConnectionStatus.DISCONNECTED,
-        config: this.normalizeChannelConfig(
-          def,
-          {},
-          (input.config ?? def.defaultConfig()) as Record<string, unknown>,
-        ) as object,
+        config: toPrismaInputJson(
+          this.normalizeChannelConfig(
+            def,
+            {},
+            input.config ?? def.defaultConfig(),
+          ),
+        ),
       },
       include: { secrets: true },
     });
@@ -93,7 +110,7 @@ export class ChannelsService {
         channelId: def.id,
         enabled: false,
         connectionStatus: ChannelConnectionStatus.DISCONNECTED,
-        config: def.defaultConfig() as object,
+        config: toPrismaInputJson(def.defaultConfig()),
       },
       update: {},
       include: { secrets: true },
@@ -111,7 +128,7 @@ export class ChannelsService {
     const def = resolveChannel(row.channelId);
     const data: {
       enabled?: boolean;
-      config?: object;
+      config?: Prisma.InputJsonValue;
       connectionStatus?: ChannelConnectionStatus;
     } = {};
 
@@ -119,7 +136,9 @@ export class ChannelsService {
       if (!def) {
         throw new BadRequestException(`Unknown channel: ${row.channelId}`);
       }
-      data.config = this.normalizeChannelConfig(def, row.config, input.config) as object;
+      data.config = toPrismaInputJson(
+        this.normalizeChannelConfig(def, row.config, input.config),
+      );
     }
 
     if (input.enabled !== undefined) {
@@ -127,7 +146,9 @@ export class ChannelsService {
       if (!input.enabled) {
         data.connectionStatus = ChannelConnectionStatus.DISCONNECTED;
       } else if (row.connectionStatus !== ChannelConnectionStatus.CONNECTED) {
-        throw new BadRequestException('Channel is not connected — save token and run test first');
+        throw new BadRequestException(
+          'Channel is not connected — save token and run test first',
+        );
       }
     }
 
@@ -161,12 +182,17 @@ export class ChannelsService {
     const key = secretKey.trim();
     if (!key) throw new BadRequestException('secretKey required');
     if (def && !def.secretKeys.includes(key)) {
-      throw new BadRequestException(`Unknown secret key for ${row.channelId}: ${key}`);
+      throw new BadRequestException(
+        `Unknown secret key for ${row.channelId}: ${key}`,
+      );
     }
 
     await this.prisma.projectChannelSecret.upsert({
       where: {
-        projectChannelId_secretKey: { projectChannelId: row.id, secretKey: key },
+        projectChannelId_secretKey: {
+          projectChannelId: row.id,
+          secretKey: key,
+        },
       },
       create: {
         projectChannelId: row.id,
@@ -231,7 +257,7 @@ export class ChannelsService {
           connectionStatus: ChannelConnectionStatus.CONNECTED,
           lastTestedAt: new Date(),
           lastError: null,
-          config: nextConfig as object,
+          config: toPrismaInputJson(nextConfig),
         },
       });
       await this.syncOpenClawConfig(projectId);
@@ -259,16 +285,26 @@ export class ChannelsService {
   private async syncOpenClawConfig(projectId: string): Promise<void> {
     await this.workspace.syncProjectRuntime(projectId);
     await this.prisma.projectChannel.updateMany({
-      where: { projectId, enabled: true, connectionStatus: ChannelConnectionStatus.CONNECTED },
+      where: {
+        projectId,
+        enabled: true,
+        connectionStatus: ChannelConnectionStatus.CONNECTED,
+      },
       data: { lastSyncedAt: new Date() },
     });
   }
 
-  private async markTestResult(channelRowId: string, ok: boolean, message: string | null) {
+  private async markTestResult(
+    channelRowId: string,
+    ok: boolean,
+    message: string | null,
+  ) {
     await this.prisma.projectChannel.update({
       where: { id: channelRowId },
       data: {
-        connectionStatus: ok ? ChannelConnectionStatus.CONNECTED : ChannelConnectionStatus.ERROR,
+        connectionStatus: ok
+          ? ChannelConnectionStatus.CONNECTED
+          : ChannelConnectionStatus.ERROR,
         lastTestedAt: new Date(),
         lastError: message,
       },
@@ -298,22 +334,7 @@ export class ChannelsService {
     return out;
   }
 
-  private toDto(
-    row: {
-      id: string;
-      projectId: string;
-      channelId: string;
-      enabled: boolean;
-      connectionStatus: ChannelConnectionStatus;
-      config: unknown;
-      lastTestedAt: Date | null;
-      lastError: string | null;
-      lastSyncedAt: Date | null;
-      createdAt: Date;
-      updatedAt: Date;
-      secrets: Array<{ secretKey: string; ciphertext: string; updatedAt: Date }>;
-    },
-  ): ChannelDto {
+  private toDto(row: ChannelRowWithSecrets): ChannelDto {
     const def = resolveChannel(row.channelId);
     return {
       id: row.id,
@@ -322,7 +343,7 @@ export class ChannelsService {
       channelName: def?.displayName ?? row.channelId,
       channelKind: def?.kind ?? 'BOT_TOKEN',
       enabled: row.enabled,
-      connectionStatus: row.connectionStatus.toLowerCase() as ChannelDto['connectionStatus'],
+      connectionStatus: row.connectionStatus.toLowerCase(),
       config: row.config,
       lastTestedAt: row.lastTestedAt?.toISOString() ?? null,
       lastError: row.lastError,
@@ -335,7 +356,11 @@ export class ChannelsService {
         masked: maskSecret(decryptSecret(s.ciphertext)),
       })),
       definition: def
-        ? { description: def.description, kind: def.kind, docsPath: def.docsPath }
+        ? {
+            description: def.description,
+            kind: def.kind,
+            docsPath: def.docsPath,
+          }
         : undefined,
     };
   }

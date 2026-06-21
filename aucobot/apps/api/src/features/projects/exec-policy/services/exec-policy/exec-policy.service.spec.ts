@@ -10,18 +10,17 @@ jest.mock('@aucobot/workspace-sync', () => ({
   parseAgentFormData: jest.fn((formData: unknown) => formData),
 }));
 
+import { ExecPolicyService } from './exec-policy.service';
 import {
   openClawConfigPath,
   parseAgentFormData,
   readOpenClawConfigJson,
 } from '@aucobot/workspace-sync';
-import { ExecPolicyService } from './exec-policy.service';
 
 const PROJECT_ID = 'proj_test_1';
 
-const readOpenClawConfigJsonMock = readOpenClawConfigJson as jest.MockedFunction<
-  typeof readOpenClawConfigJson
->;
+const readOpenClawConfigJsonMock =
+  readOpenClawConfigJson as jest.MockedFunction<typeof readOpenClawConfigJson>;
 const parseAgentFormDataMock = parseAgentFormData as jest.MockedFunction<
   typeof parseAgentFormData
 >;

@@ -1,9 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { TitleHeader } from "./TitleHeader";
 import { Button } from "@/components/ui";
 import { I18nProvider } from "@/lib/i18n";
 
-import { TitleHeader } from "./TitleHeader";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
 
 const meta: Meta<typeof TitleHeader> = {
   title: "Dashboard/TitleHeader",

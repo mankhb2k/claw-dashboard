@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import styles from "./CardCreateInvite.module.css";
+import pageStyles from "../../nodes.module.css";
 import { Button, Card, Typography } from "@/components/ui";
 import { formatCountdownMs } from "@/utils/nodes/nodes-utils";
-import pageStyles from "../../nodes.module.css";
-import styles from "./CardCreateInvite.module.css";
 
 export type CardCreateInviteProps = {
   latestInviteCode: string | null;
@@ -24,27 +25,28 @@ export function CardCreateInvite({
   onCreateInvite,
   onCopyError,
 }: CardCreateInviteProps) {
-  const [countdown, setCountdown] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedForCode, setCopiedForCode] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<string | null>(() =>
+    activeInviteExpiresAt ? formatCountdownMs(activeInviteExpiresAt) : null,
+  );
+  const [trackedExpiresAt, setTrackedExpiresAt] = useState(activeInviteExpiresAt);
+
+  const copied = Boolean(
+    latestInviteCode && copiedForCode === latestInviteCode,
+  );
+
+  if (activeInviteExpiresAt !== trackedExpiresAt) {
+    setTrackedExpiresAt(activeInviteExpiresAt);
+    setCountdown(
+      activeInviteExpiresAt ? formatCountdownMs(activeInviteExpiresAt) : null,
+    );
+  }
 
   useEffect(() => {
-    setCopied(false);
-  }, [latestInviteCode]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 2000);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
-
-  useEffect(() => {
-    if (!activeInviteExpiresAt) {
-      setCountdown(null);
-      return;
-    }
-    const tick = () => setCountdown(formatCountdownMs(activeInviteExpiresAt));
-    tick();
-    const timer = window.setInterval(tick, 1000);
+    if (!activeInviteExpiresAt) return undefined;
+    const timer = window.setInterval(() => {
+      setCountdown(formatCountdownMs(activeInviteExpiresAt));
+    }, 1000);
     return () => window.clearInterval(timer);
   }, [activeInviteExpiresAt]);
 
@@ -52,7 +54,7 @@ export function CardCreateInvite({
     if (!latestInviteCode) return;
     try {
       await navigator.clipboard.writeText(latestInviteCode);
-      setCopied(true);
+      setCopiedForCode(latestInviteCode);
       onCopyError("");
     } catch {
       onCopyError("Could not copy — select and copy the code manually.");

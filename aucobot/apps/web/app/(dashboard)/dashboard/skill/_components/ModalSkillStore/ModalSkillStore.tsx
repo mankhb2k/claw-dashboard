@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+
+import styles from "./ModalSkillStore.module.css";
+import {
+  CardSkillStore,
+  CardSkillStoreSkeleton,
+} from "../CardSkillStore/CardSkillStore";
+import { Box, Flex, Grid } from "@/components/layout";
 import {
   Dialog,
   DialogContent,
@@ -12,16 +19,14 @@ import {
   Spinner,
   Typography,
 } from "@/components/ui";
-import { Box, Flex, Grid } from "@/components/layout";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+
 import type { SkillStoreItem } from "@/schemas/project.schema";
-import {
-  CardSkillStore,
-  CardSkillStoreSkeleton,
-} from "../CardSkillStore/CardSkillStore";
-import styles from "./ModalSkillStore.module.css";
 
 const STORE_PAGE_SIZE = 50;
+
+const STORE_SKELETON_KEYS = ["sk-0", "sk-1", "sk-2", "sk-3"] as const;
 
 const STORE_SORT_OPTIONS = [
   { value: "recommended", label: "Recommended" },
@@ -69,6 +74,7 @@ export function ModalSkillStore({
   onInstall,
   onOpenSkill,
 }: ModalSkillStoreProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<StoreSort>("recommended");
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +91,19 @@ export function ModalSkillStore({
 
   const trimmedQuery = query.trim();
   const isSearchMode = trimmedQuery.length > 0;
+  const fetchKey =
+    isOpen && projectId ? `${projectId}:${trimmedQuery}:${sort}` : "";
+  const [trackedFetchKey, setTrackedFetchKey] = useState(fetchKey);
+
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    setNextCursor(null);
+    setContentReady(false);
+  }
+
+  if ((isLoading || isLoadingMore) && contentReady) {
+    setContentReady(false);
+  }
 
   useEffect(() => {
     nextCursorRef.current = nextCursor;
@@ -123,7 +142,7 @@ export function ModalSkillStore({
           setItems([]);
           setNextCursor(null);
         }
-        setError(err instanceof Error ? err.message : "Cannot load skill store.");
+        setError(err instanceof Error ? err.message : t("skills.errors.loadStore"));
         if (opts.append) {
           setContentReady(true);
         }
@@ -136,22 +155,27 @@ export function ModalSkillStore({
         setIsLoadingMore(false);
       }
     },
-    [projectId, isSearchMode, trimmedQuery, sort],
+    [projectId, isSearchMode, trimmedQuery, sort, t],
   );
 
   useEffect(() => {
-    if (!isOpen || !projectId) return;
-    setNextCursor(null);
-    void fetchPage({ append: false });
+    if (!isOpen || !projectId) return undefined;
+    void (async () => {
+      await Promise.resolve();
+      await fetchPage({ append: false });
+    })();
     appendLockRef.current = false;
     return () => {
       requestGen.current += 1;
       appendLockRef.current = false;
-      setContentReady(false);
     };
   }, [projectId, isOpen, trimmedQuery, sort, fetchPage]);
 
   const hasResult = useMemo(() => items.length > 0, [items.length]);
+
+  if (!isLoading && !isLoadingMore && !hasResult && !contentReady) {
+    setContentReady(true);
+  }
 
   const canObserveScroll = useMemo(
     () =>
@@ -173,14 +197,7 @@ export function ModalSkillStore({
     items.length > 0;
 
   useLayoutEffect(() => {
-    if (isLoading || isLoadingMore) {
-      setContentReady(false);
-      return;
-    }
-    if (!hasResult) {
-      setContentReady(true);
-      return;
-    }
+    if (isLoading || isLoadingMore || !hasResult) return undefined;
     let cancelled = false;
     afterPaint(() => {
       if (!cancelled) setContentReady(true);
@@ -191,10 +208,10 @@ export function ModalSkillStore({
   }, [items, isLoading, isLoadingMore, hasResult]);
 
   useEffect(() => {
-    if (!canObserveScroll) return;
+    if (!canObserveScroll) return undefined;
     const root = listSectionRef.current;
     const target = loadSentinelRef.current;
-    if (!root || !target) return;
+    if (!root || !target) return undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -256,8 +273,8 @@ export function ModalSkillStore({
           <Box ref={listSectionRef} className={styles.listSection}>
             {isLoading ? (
               <Grid columns={2} gap="var(--space-4)" fullWidth className={styles.listGrid}>
-                {Array.from({ length: 4 }, (_, i) => (
-                  <CardSkillStoreSkeleton key={`boot-${i}`} pulse />
+                {STORE_SKELETON_KEYS.map((key) => (
+                  <CardSkillStoreSkeleton key={key} pulse />
                 ))}
               </Grid>
             ) : null}

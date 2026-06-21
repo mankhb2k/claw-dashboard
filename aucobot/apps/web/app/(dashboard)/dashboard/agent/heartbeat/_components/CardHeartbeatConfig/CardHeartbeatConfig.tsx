@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+
+import styles from "./CardHeartbeatConfig.module.css";
 import { Flex } from "@/components/layout";
 import { Typography, Button, Card, Input, Select } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
@@ -8,7 +10,6 @@ import {
   HEARTBEAT_MD_PLACEHOLDER,
   type HeartbeatIntervalPreset,
 } from "@/utils/agent/heartbeat-interval";
-import styles from "./CardHeartbeatConfig.module.css";
 
 type CardHeartbeatConfigProps = {
   preset: HeartbeatIntervalPreset;

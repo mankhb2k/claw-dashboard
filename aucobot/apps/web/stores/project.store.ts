@@ -1,32 +1,38 @@
-import { create } from 'zustand'
-import { projectApi } from '@/lib/api/project'
-import { GATEWAY_READY_TIMEOUT_MS, spawnTimeoutMessage } from '@/lib/runtime/project-spawn'
-import { gatewayTimeoutMessage } from '@/lib/runtime/oss-gateway'
-import { isOssRuntime } from '@/lib/runtime/runtime-mode'
-import type { Project, CreateProjectInput } from '@/schemas/project.schema'
+import { create } from "zustand";
+
+import { projectApi } from "@/lib/api/project";
+import { GATEWAY_READY_TIMEOUT_MS } from "@/lib/runtime/project-spawn";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
+import {
+  gatewayTimeoutErrorKey,
+  SETUP_ERROR_KEYS,
+  spawnTimeoutErrorKey,
+} from "@/utils/setup/setup-i18n";
+
+import type { Project, CreateProjectInput } from "@/schemas/project.schema";
 
 interface ProjectState {
-  projects: Project[]
-  isLoading: boolean
-  error: string | null
-  fetchProjects: (opts?: { silent?: boolean }) => Promise<void>
-  createProject: (input?: CreateProjectInput) => Promise<Project>
-  syncProjectHealth: (id: string) => Promise<void>
-  startProject: (id: string) => Promise<void>
-  respawnProject: (id: string) => Promise<Project>
-  stopProject: (id: string) => Promise<void>
-  destroyProject: (id: string) => Promise<void>
-  pollHealth: (id: string, onDone: (url: string | null) => void) => () => void
-  clearHealthPoll: (id: string) => void
+  projects: Project[];
+  isLoading: boolean;
+  error: string | null;
+  fetchProjects: (opts?: { silent?: boolean }) => Promise<void>;
+  createProject: (input?: CreateProjectInput) => Promise<Project>;
+  syncProjectHealth: (id: string) => Promise<void>;
+  startProject: (id: string) => Promise<void>;
+  respawnProject: (id: string) => Promise<Project>;
+  stopProject: (id: string) => Promise<void>;
+  destroyProject: (id: string) => Promise<void>;
+  pollHealth: (id: string, onDone: (url: string | null) => void) => () => void;
+  clearHealthPoll: (id: string) => void;
 }
 
-const healthPollHandles = new Map<string, ReturnType<typeof setInterval>>()
+const healthPollHandles = new Map<string, ReturnType<typeof setInterval>>();
 
 function stopHealthPoll(id: string): void {
-  const handle = healthPollHandles.get(id)
+  const handle = healthPollHandles.get(id);
   if (handle) {
-    clearInterval(handle)
-    healthPollHandles.delete(id)
+    clearInterval(handle);
+    healthPollHandles.delete(id);
   }
 }
 
@@ -36,30 +42,37 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   error: null,
 
   fetchProjects: async (opts) => {
-    const silent = opts?.silent === true
+    const silent = opts?.silent === true;
     if (!silent) {
-      set({ isLoading: true, error: null })
+      set({ isLoading: true, error: null });
     }
     try {
-      const projects = await projectApi.list()
-      set({ projects, error: null })
+      const projects = await projectApi.list();
+      set({ projects, error: null });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Không tải được danh sách project' })
+      set({
+        error:
+          err instanceof Error
+            ? err.message
+            : SETUP_ERROR_KEYS.fetchProjects,
+      });
     } finally {
       if (!silent) {
-        set({ isLoading: false })
+        set({ isLoading: false });
       }
     }
   },
 
   createProject: async (input = {}) => {
-    const project = await projectApi.create(input)
-    set((s) => ({ projects: [project, ...s.projects.filter((p) => p.id !== project.id)] }))
-    return project
+    const project = await projectApi.create(input);
+    set((s) => ({
+      projects: [project, ...s.projects.filter((p) => p.id !== project.id)],
+    }));
+    return project;
   },
 
   syncProjectHealth: async (id) => {
-    const health = await projectApi.health(id)
+    const health = await projectApi.health(id);
     set((s) => ({
       projects: s.projects.map((p) =>
         p.id === id
@@ -75,69 +88,75 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             }
           : p,
       ),
-    }))
+    }));
   },
 
   startProject: async (id) => {
-    stopHealthPoll(id)
+    stopHealthPoll(id);
     set((s) => ({
-      projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'starting' } : p)),
-    }))
-    const updated = await projectApi.start(id)
+      projects: s.projects.map((p) =>
+        p.id === id ? { ...p, status: "starting" } : p,
+      ),
+    }));
+    const updated = await projectApi.start(id);
     set((s) => ({
       projects: s.projects.map((p) => (p.id === id ? updated : p)),
-    }))
-    if (updated.status !== 'running') {
-      get().pollHealth(id, () => {})
+    }));
+    if (updated.status !== "running") {
+      get().pollHealth(id, () => {});
     }
   },
 
   respawnProject: async (id) => {
-    stopHealthPoll(id)
+    stopHealthPoll(id);
     set((s) => ({
       projects: s.projects.map((p) =>
-        p.id === id ? { ...p, status: 'creating', containerMissing: false } : p,
+        p.id === id ? { ...p, status: "creating", containerMissing: false } : p,
       ),
-    }))
-    const project = await projectApi.respawn(id)
+    }));
+    const project = await projectApi.respawn(id);
     set((s) => ({
       projects: s.projects.map((p) => (p.id === id ? project : p)),
-    }))
-    if (project.status !== 'running') {
-      get().pollHealth(id, () => {})
+    }));
+    if (project.status !== "running") {
+      get().pollHealth(id, () => {});
     }
-    return project
+    return project;
   },
 
   stopProject: async (id) => {
-    stopHealthPoll(id)
+    stopHealthPoll(id);
     set((s) => ({
-      projects: s.projects.map((p) => (p.id === id ? { ...p, status: 'stopping' } : p)),
-    }))
-    const updated = await projectApi.stop(id)
+      projects: s.projects.map((p) =>
+        p.id === id ? { ...p, status: "stopping" } : p,
+      ),
+    }));
+    const updated = await projectApi.stop(id);
     set((s) => ({
       projects: s.projects.map((p) => (p.id === id ? updated : p)),
-    }))
-    if (updated.status !== 'stopped') {
-      get().pollHealth(id, () => {})
+    }));
+    if (updated.status !== "stopped") {
+      get().pollHealth(id, () => {});
     }
   },
 
   destroyProject: async (id) => {
-    await projectApi.destroy(id)
-    set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }))
+    await projectApi.destroy(id);
+    set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }));
   },
 
   clearHealthPoll: (id) => {
-    stopHealthPoll(id)
+    stopHealthPoll(id);
   },
 
   pollHealth: (id, onDone) => {
-    stopHealthPoll(id)
-    const pollStartedAt = Date.now()
+    stopHealthPoll(id);
+    const pollStartedAt = Date.now();
 
-    const applyHealth = (health: Awaited<ReturnType<typeof projectApi.health>>) => {
-      const healthStatus = health.status
+    const applyHealth = (
+      health: Awaited<ReturnType<typeof projectApi.health>>,
+    ) => {
+      const healthStatus = health.status;
       set((s) => ({
         projects: s.projects.map((p) =>
           p.id === id
@@ -149,61 +168,63 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
               }
             : p,
         ),
-      }))
-      if (healthStatus === 'running') {
+      }));
+      if (healthStatus === "running") {
         if (isOssRuntime() || !health.containerMissing) {
-          return health.publicUrl ?? null
+          return health.publicUrl ?? null;
         }
       }
       if (
-        healthStatus === 'stopped' ||
-        healthStatus === 'error' ||
+        healthStatus === "stopped" ||
+        healthStatus === "error" ||
         (!isOssRuntime() && health.containerMissing)
       ) {
-        return null
+        return null;
       }
-      return undefined
-    }
+      return undefined;
+    };
 
     const failPollTimeout = () => {
-      const msg = isOssRuntime() ? gatewayTimeoutMessage() : spawnTimeoutMessage()
-      stopHealthPoll(id)
+      const msg = isOssRuntime()
+        ? gatewayTimeoutErrorKey()
+        : spawnTimeoutErrorKey();
+      stopHealthPoll(id);
       set((s) => ({
         projects: s.projects.map((p) =>
           p.id === id
             ? {
                 ...p,
-                status: 'error',
+                status: "error",
                 errorMessage: p.errorMessage ?? msg,
               }
             : p,
         ),
-      }))
-      onDone(null)
-    }
+      }));
+      onDone(null);
+    };
 
     const tick = async () => {
       if (Date.now() - pollStartedAt >= GATEWAY_READY_TIMEOUT_MS) {
-        failPollTimeout()
-        return
+        failPollTimeout();
+        return;
       }
       try {
-        const health = await projectApi.health(id)
-        const result = applyHealth(health)
+        const health = await projectApi.health(id);
+        const result = applyHealth(health);
         if (result !== undefined) {
-          stopHealthPoll(id)
-          onDone(result)
+          stopHealthPoll(id);
+          onDone(result);
         }
       } catch {
-        stopHealthPoll(id)
-        onDone(null)
+        stopHealthPoll(id);
+        onDone(null);
       }
-    }
+    };
 
-    void tick()
-    const interval = setInterval(() => void tick(), 2000)
-    healthPollHandles.set(id, interval)
+    void tick();
+    const interval = setInterval(() => void tick(), 2000);
+    healthPollHandles.set(id, interval);
 
-    return () => stopHealthPoll(id)
+    return () => stopHealthPoll(id);
   },
-}))
+}));

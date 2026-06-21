@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { PrismaService } from '../../../../../core/database/prisma.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import {
   AgentCollaborationValidationError,
   buildAgentToAgentAllowListFromCollaboration,
@@ -10,8 +17,6 @@ import {
   validateCollaborationSettings,
   type ProjectCollaborationSettings,
 } from '@aucobot/workspace-sync';
-import { PrismaService } from '../../../../../core/database/prisma.service';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 
 export type ProjectCollaborationResponse = ProjectCollaborationSettings & {
   effectiveAllow: string[];
@@ -31,7 +36,9 @@ export class CollaborationService {
   }): ProjectCollaborationSettings {
     return normalizeCollaborationSettings({
       enabled: project.collaborationEnabled,
-      memberSlugs: parseCollaborationMemberSlugs(project.collaborationMemberSlugs),
+      memberSlugs: parseCollaborationMemberSlugs(
+        project.collaborationMemberSlugs,
+      ),
     });
   }
 
@@ -57,8 +64,7 @@ export class CollaborationService {
     if (hasStored) {
       return { settings, legacyDerived: false };
     }
-    const legacyDerived =
-      settings.enabled && settings.memberSlugs.length > 0;
+    const legacyDerived = settings.enabled && settings.memberSlugs.length > 0;
     return { settings, legacyDerived };
   }
 
@@ -66,8 +72,13 @@ export class CollaborationService {
     collaboration: ProjectCollaborationSettings,
     agents: { slug: string; enabled: boolean }[],
   ): string[] {
-    const enabledSlugs = agents.filter((row) => row.enabled).map((row) => row.slug);
-    return buildAgentToAgentAllowListFromCollaboration(collaboration, enabledSlugs).allow;
+    const enabledSlugs = agents
+      .filter((row) => row.enabled)
+      .map((row) => row.slug);
+    return buildAgentToAgentAllowListFromCollaboration(
+      collaboration,
+      enabledSlugs,
+    ).allow;
   }
 
   async get(projectId: string): Promise<ProjectCollaborationResponse> {
@@ -84,7 +95,10 @@ export class CollaborationService {
 
     const agents = await this.loadProjectAgents(projectId);
     const stored = this.readStoredCollaboration(project);
-    const { settings, legacyDerived } = this.resolveCollaboration(stored, agents);
+    const { settings, legacyDerived } = this.resolveCollaboration(
+      stored,
+      agents,
+    );
 
     if (legacyDerived) {
       await this.persistCollaboration(projectId, settings);

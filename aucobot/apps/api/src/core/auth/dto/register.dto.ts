@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({ description: 'Username (unique)', example: 'admin' })
@@ -7,7 +13,8 @@ export class RegisterDto {
   @MinLength(3)
   @MaxLength(32)
   @Matches(/^[a-zA-Z0-9_-]+$/, {
-    message: 'Username may only contain letters, numbers, underscore and hyphen',
+    message:
+      'Username may only contain letters, numbers, underscore and hyphen',
   })
   username!: string;
 

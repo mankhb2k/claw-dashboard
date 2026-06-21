@@ -1,10 +1,14 @@
 import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { UpdateCollaborationDto } from './dto/collaboration.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  JwtPayloadUser,
+} from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
 import { CollaborationService } from './services/collaboration/collaboration.service';
-import { UpdateCollaborationDto } from './dto/collaboration.dto';
 
 @ApiTags('agent-collaboration')
 @ApiBearerAuth()

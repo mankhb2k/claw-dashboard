@@ -1,7 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
+
 import { Flex } from "@/components/layout/Flex/Flex";
-import { Typography } from "@/components/ui/Typography/Typography";
 import {
   Table,
   TableBody,
@@ -12,6 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table/Table";
+import { Typography } from "@/components/ui/Typography/Typography";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof Table> = {
   title: "UI/Table",

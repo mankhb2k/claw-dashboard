@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { UpdateProjectExecPolicyDto } from './dto/exec-policy.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -7,7 +9,6 @@ import {
 } from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
 import { ExecPolicyService } from './services/exec-policy/exec-policy.service';
-import { UpdateProjectExecPolicyDto } from './dto/exec-policy.dto';
 
 @ApiTags('exec-policy')
 @ApiBearerAuth()

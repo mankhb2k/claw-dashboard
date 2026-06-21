@@ -1,10 +1,3 @@
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ChannelConnectionStatus } from '@aucobot/database';
-
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
@@ -45,7 +38,14 @@ jest.mock('../../lib/channel-registry', () => ({
   listActiveChannels: jest.fn(() => [mockAdapter]),
 }));
 
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { ChannelsService } from './channels.service';
+import { ChannelConnectionStatus } from '@aucobot/database';
 
 const PROJECT_ID = 'proj_test_1';
 const CHANNEL_ROW_ID = 'ch-row-1';
@@ -163,9 +163,9 @@ describe('ChannelsService', () => {
   describe('getOrCreate', () => {
     it('rejects unknown channel', async () => {
       const { service } = createService();
-      await expect(service.getOrCreate(PROJECT_ID, 'unknown')).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.getOrCreate(PROJECT_ID, 'unknown'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('upserts channel row', async () => {
@@ -178,7 +178,10 @@ describe('ChannelsService', () => {
       expect(prisma.projectChannel.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            projectId_channelId: { projectId: PROJECT_ID, channelId: 'telegram' },
+            projectId_channelId: {
+              projectId: PROJECT_ID,
+              channelId: 'telegram',
+            },
           },
         }),
       );
@@ -248,9 +251,9 @@ describe('ChannelsService', () => {
       const { service, prisma } = createService();
       prisma.projectChannel.findFirst.mockResolvedValue(null);
 
-      await expect(service.delete(PROJECT_ID, CHANNEL_ROW_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.delete(PROJECT_ID, CHANNEL_ROW_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('deletes row and syncs openclaw config', async () => {

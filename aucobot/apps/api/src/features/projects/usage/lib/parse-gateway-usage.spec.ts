@@ -1,10 +1,11 @@
-import type { PendingChatRun } from './usage-record.types';
 import {
   consumePendingRun,
   mergeSessionEnrichment,
   parseGatewayUsageFrame,
   readUsageNumbers,
 } from './parse-gateway-usage';
+
+import type { PendingChatRun } from './usage-record.types';
 
 function pendingMap(
   entries: Array<[string, PendingChatRun]>,

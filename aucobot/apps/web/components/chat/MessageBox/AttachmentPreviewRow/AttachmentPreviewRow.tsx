@@ -1,9 +1,13 @@
 "use client";
 
 import { FileText, X } from "lucide-react";
-import type { ComposerAttachment } from "./composer-attachments";
-import { formatFileKindLabel } from "./composer-attachments";
+import Image from "next/image";
+
 import styles from "./AttachmentPreviewRow.module.css";
+import { formatFileKindLabel } from "./composer-attachments";
+import { shouldUseUnoptimized } from "@/utils/image/app-image.utils";
+
+import type { ComposerAttachment } from "./composer-attachments";
 
 type AttachmentPreviewRowProps = {
   attachments: ComposerAttachment[];
@@ -65,11 +69,13 @@ function ImageAttachmentChip({
   return (
     <div className={`${styles.imageChip} ${blocked ? styles.chipBlocked : ""}`}>
       {attachment.previewUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={attachment.previewUrl}
           alt={attachment.file.name}
+          fill
+          sizes="56px"
           className={styles.imageThumb}
+          unoptimized={shouldUseUnoptimized(attachment.previewUrl)}
         />
       ) : null}
       {uploading ? (

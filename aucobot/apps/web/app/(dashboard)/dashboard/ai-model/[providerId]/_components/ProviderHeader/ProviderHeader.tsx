@@ -1,9 +1,10 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import { Button, IconProvider, Typography } from "@/components/ui";
-import { Flex } from "@/components/layout";
+
 import styles from "./ProviderHeader.module.css";
+import { Flex } from "@/components/layout";
+import { Button, IconProvider, Typography } from "@/components/ui";
 
 interface ProviderHeaderProps {
   name: string;

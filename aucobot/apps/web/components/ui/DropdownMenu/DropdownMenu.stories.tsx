@@ -1,5 +1,3 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import React from 'react';
 import {
   Ellipsis,
   HelpCircle,
@@ -10,6 +8,8 @@ import {
   User,
   Users,
 } from 'lucide-react';
+import React from 'react';
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -21,6 +21,8 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
 } from '@/components/ui/DropdownMenu/DropdownMenu';
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 const meta: Meta = {
   title: 'UI/DropdownMenu',

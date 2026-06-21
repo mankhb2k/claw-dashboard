@@ -1,9 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import JSZip from "jszip";
 import { Plus, Store } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import styles from "./ClientSkillPage.module.css";
+import { CardSkill } from "../CardSkill/CardSkill";
+import { ModalCreateSkill } from "../ModalCreateSkill/ModalCreateSkill";
+import { ModalSkillStore } from "../ModalSkillStore/ModalSkillStore";
+import { SearchItem, TitleHeader } from "@/components/dashboard";
+import { Flex, Grid } from "@/components/layout";
 import {
   Button,
   Typography,
@@ -18,23 +25,20 @@ import {
   Spinner,
   toast,
 } from "@/components/ui";
+import { useProjectSkills } from "@/hooks/skill/use-project-skills";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
 import {
   buildSkillMetaJson,
   buildSkillMarkdown,
   type SkillDraft,
 } from "@/utils/skill/skill-markdown";
-import { projectApi } from "@/lib/api/project";
+
 import type { ProjectSkillListRow } from "@/schemas/project.schema";
-import { useProjectSkills } from "@/hooks/skill/use-project-skills";
-import { useProjectStore } from "@/stores/project.store";
-import { SearchItem, TitleHeader } from "@/components/dashboard";
-import { CardSkill } from "../CardSkill/CardSkill";
-import { ModalCreateSkill } from "../ModalCreateSkill/ModalCreateSkill";
-import { ModalSkillStore } from "../ModalSkillStore/ModalSkillStore";
-import { Flex, Grid } from "@/components/layout";
-import styles from "./ClientSkillPage.module.css";
 
 export function ClientSkillPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const projectsLoading = useProjectStore((s) => s.isLoading);
@@ -85,7 +89,7 @@ export function ClientSkillPage() {
             description: data.description,
             heading: data.heading || null,
           });
-          toast.success("Skill updated");
+          toast.success(t("skills.toasts.updated"));
         } else {
           const created = await createSkill({
             slug: data.name,
@@ -95,7 +99,7 @@ export function ClientSkillPage() {
             bodyMarkdown: "",
             enabled: false,
           });
-          toast.success("Skill created");
+          toast.success(t("skills.toasts.created"));
           setIsModalOpen(false);
           router.push(`/dashboard/skill/${created.slug}`);
           return;
@@ -103,12 +107,12 @@ export function ClientSkillPage() {
         setIsModalOpen(false);
       } catch (err) {
         toast.error(
-          "Failed to save skill",
+          t("skills.toasts.saveFailed"),
           err instanceof Error ? err.message : undefined,
         );
       }
     },
-    [editingSlug, createSkill, updateSkill, router],
+    [editingSlug, createSkill, updateSkill, router, projectId, t],
   );
 
   const handleDownloadZip = useCallback(
@@ -144,12 +148,12 @@ export function ClientSkillPage() {
         URL.revokeObjectURL(url);
       } catch (err) {
         toast.error(
-          "ZIP download failed",
+          t("skills.toasts.zipDownloadFailed"),
           err instanceof Error ? err.message : undefined,
         );
       }
     },
-    [projectId],
+    [projectId, t],
   );
 
   const handleToggleEnabled = useCallback(
@@ -166,14 +170,14 @@ export function ClientSkillPage() {
           prev.map((s) => (s.slug === skill.slug ? result : s)),
         );
         if (result.lastSyncError) {
-          toast.error("Skill sync failed", result.lastSyncError);
+          toast.error(t("skills.toasts.syncFailed"), result.lastSyncError);
         } else if (nextEnabled) {
           toast.success(
-            "Enabled skill",
-            "Synced to OpenClaw — agent applies at the next chat message (/new if old session).",
+            t("skills.toasts.enabled"),
+            t("skills.toasts.enabledDescription"),
           );
         } else {
-          toast.success("Disabled skill", "Removed from OpenClaw workspace.");
+          toast.success(t("skills.toasts.disabled"), t("skills.toasts.disabledDescription"));
         }
       } catch (err) {
         setSkills((prev) =>
@@ -182,29 +186,29 @@ export function ClientSkillPage() {
           ),
         );
         toast.error(
-          "Cannot change skill status",
+          t("skills.toasts.statusChangeFailed"),
           err instanceof Error ? err.message : undefined,
         );
       } finally {
         setTogglingSlug(null);
       }
     },
-    [setSkillEnabledApi, setSkills],
+    [setSkillEnabledApi, setSkills, t],
   );
 
   const confirmDeleteSkill = useCallback(async () => {
     if (!skillToDelete || !projectId) return;
     try {
       await removeSkill(skillToDelete);
-      toast.success("Deleted skill successfully");
+      toast.success(t("skills.toasts.deleted"));
       setSkillToDelete(null);
     } catch (err) {
       toast.error(
-        "Delete skill failed",
+        t("skills.toasts.deleteFailed"),
         err instanceof Error ? err.message : undefined,
       );
     }
-  }, [skillToDelete, projectId, removeSkill]);
+  }, [skillToDelete, projectId, removeSkill, t]);
 
   const handleInstallFromStore = useCallback(
     async (slug: string, openAfterInstall = false) => {
@@ -212,7 +216,12 @@ export function ClientSkillPage() {
       setInstallingStoreSlug(slug);
       try {
         const created = await projectApi.installSkillFromStore(projectId, { slug });
-        toast.success("Installed skill", `${created.heading ?? created.name} is ready to edit.`);
+        toast.success(
+          t("skills.toasts.installed"),
+          t("skills.toasts.installedDescription", {
+            name: created.heading ?? created.name,
+          }),
+        );
         await loadSkills();
         setIsStoreModalOpen(false);
         if (openAfterInstall) {
@@ -220,14 +229,14 @@ export function ClientSkillPage() {
         }
       } catch (err) {
         toast.error(
-          "Install failed",
-          err instanceof Error ? err.message : "Cannot install from Browser Store.",
+          t("skills.toasts.installFailed"),
+          err instanceof Error ? err.message : t("skills.errors.installFromStore"),
         );
       } finally {
         setInstallingStoreSlug(null);
       }
     },
-    [projectId, loadSkills, router],
+    [projectId, loadSkills, router, t],
   );
 
   const filteredSkills = useMemo(() => {
@@ -270,7 +279,7 @@ export function ClientSkillPage() {
         >
           <Spinner size="md" />
           <Typography variant="p" color="muted">
-            Loading data...
+            {t("skills.page.loadingData")}
           </Typography>
         </Flex>
       </>
@@ -286,7 +295,7 @@ export function ClientSkillPage() {
           showBorder
         />
         <Typography variant="p" className={styles.errorText}>
-          No project. Please create a project before managing skills.
+          {t("skills.page.noProject")}
         </Typography>
       </>
     );
@@ -308,7 +317,7 @@ export function ClientSkillPage() {
         <Flex align="center" gap={3} className={styles.toolbarStart}>
           <SearchItem
             id="skill-search"
-            placeholder="Search skill..."
+            placeholder={t("skills.page.searchPlaceholder")}
             value={searchQuery}
             onChange={setSearchQuery}
           />

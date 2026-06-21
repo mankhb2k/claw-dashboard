@@ -1,6 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
-import { ToolResearchBlock } from '@/app/(dashboard)/dashboard/chat/_components/ToolResearchBlock/ToolResearchBlock'
 
 import { withChatContentArea } from './chat-story.decorators'
 import { StoryDemoBox, StorySectionLabel } from './story-demo-ui'
@@ -11,6 +9,9 @@ import {
   researchBlockDefaultArgs,
   type ResearchBlockStoryArgs,
 } from './tool-activity.story-controls'
+import { ToolResearchBlock } from '@/app/(dashboard)/dashboard/chat/_components/ToolResearchBlock/ToolResearchBlock'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<ResearchBlockStoryArgs> = {
   title: 'Chat/ToolActivity/ToolResearchBlock',

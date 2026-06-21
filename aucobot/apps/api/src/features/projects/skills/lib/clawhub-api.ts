@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+
 import {
   ClawHubBadGatewayError,
   ClawHubNotFoundError,
@@ -18,7 +19,10 @@ import {
 
 export type { ClawHubCatalogEntry, ClawHubCatalogSort, ClawHubSkillsPage };
 
-export { resolveClawHubApiBase, resolveClawHubListSort } from '@aucobot/clawhub-client';
+export {
+  resolveClawHubApiBase,
+  resolveClawHubListSort,
+} from '@aucobot/clawhub-client';
 
 function mapClawHubError(err: unknown): never {
   if (err instanceof ClawHubNotFoundError) {
@@ -43,7 +47,7 @@ export async function clawHubSearch(
   try {
     return await search(query, limit);
   } catch (err) {
-    mapClawHubError(err);
+    return mapClawHubError(err);
   }
 }
 
@@ -55,15 +59,17 @@ export async function clawHubListSkillsPage(options?: {
   try {
     return await listSkillsPage(options);
   } catch (err) {
-    mapClawHubError(err);
+    return mapClawHubError(err);
   }
 }
 
-export async function clawHubGetSkill(slug: string): Promise<ClawHubCatalogEntry> {
+export async function clawHubGetSkill(
+  slug: string,
+): Promise<ClawHubCatalogEntry> {
   try {
     return await getSkill(slug);
   } catch (err) {
-    mapClawHubError(err);
+    return mapClawHubError(err);
   }
 }
 
@@ -71,6 +77,6 @@ export async function clawHubFetchSkillMarkdown(slug: string): Promise<string> {
   try {
     return await fetchSkillMarkdown(slug);
   } catch (err) {
-    mapClawHubError(err);
+    return mapClawHubError(err);
   }
 }

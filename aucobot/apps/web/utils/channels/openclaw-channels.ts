@@ -10,6 +10,7 @@ import {
   type OpenClawChannelId,
   type OpenClawChannelDefKind,
 } from '@aucobot/shared';
+
 import type { AppDictionary } from '@/lib/i18n/dictionaries';
 
 export {
@@ -27,7 +28,7 @@ export type OpenClawChannel = OpenClawChannelDefEntry & {
   vendor: string;
 };
 
-/** Ghép định nghĩa kênh với `channels.items` trong dictionary i18n. */
+/** Merge channel definitions with `channels.items` from the i18n dictionary. */
 export function resolveOpenClawChannels(
   items: AppDictionary['channels']['items'],
 ): OpenClawChannel[] {

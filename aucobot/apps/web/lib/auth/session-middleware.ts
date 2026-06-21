@@ -1,5 +1,7 @@
-import type { NextRequest, NextResponse } from 'next/server'
 import { getServerApiBaseUrl } from '@/lib/http/api-base-url'
+
+import type { NextRequest, NextResponse } from 'next/server'
+
 
 export type SessionResolveResult = {
   valid: boolean

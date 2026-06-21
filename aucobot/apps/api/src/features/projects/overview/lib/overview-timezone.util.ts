@@ -20,7 +20,11 @@ export function todayInTimezone(tz: string, now = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(now);
 }
 
-export function parseDateOnly(date: string): { year: number; month: number; day: number } {
+export function parseDateOnly(date: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
   if (!DATE_RE.test(date)) {
     throw new Error('Invalid date format, expected YYYY-MM-DD');
   }
@@ -51,7 +55,11 @@ export function monthDateRange(anchorDate: string): {
   return { start, end, daysInMonth };
 }
 
-export function resolveAnchorDate(input: string | undefined, tz: string, now = new Date()): string {
+export function resolveAnchorDate(
+  input: string | undefined,
+  tz: string,
+  now = new Date(),
+): string {
   if (!input?.trim()) {
     return todayInTimezone(tz, now);
   }

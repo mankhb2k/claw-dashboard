@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { getCurrentProjectId } from "@/lib/current-project";
+
+import styles from "../connect.module.css";
 import { ClientConnectorPage } from "./_components/ClientConnectorPage/ClientConnectorPage";
 import { Spinner } from "@/components/ui";
-import styles from "../connect.module.css";
+import { getCurrentProjectId } from "@/lib/current-project";
 
 interface PageProps {
   params: Promise<{

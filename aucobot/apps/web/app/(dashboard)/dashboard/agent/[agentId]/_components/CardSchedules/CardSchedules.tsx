@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarClock, Play, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
-import { dashboardPath } from "@/lib/routing/dashboard-route";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import styles from "./CardSchedules.module.css";
+import { SearchItem } from "@/components/dashboard";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -13,8 +16,9 @@ import {
   Switch,
   Spinner,
 } from "@/components/ui";
-import { SearchItem } from "@/components/dashboard";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { dashboardPath } from "@/lib/routing/dashboard-route";
 import { useProjectStore } from "@/stores/project.store";
 import {
   cronJobMessage,
@@ -22,10 +26,8 @@ import {
   formatNextRun,
   lastRunStatus,
 } from "@/utils/agent/cron-format";
+
 import type { CronJob } from "@/schemas/cron.schema";
-import { CalendarClock, Play, Trash2, Plus } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
-import styles from "./CardSchedules.module.css";
 
 interface CardSchedulesProps {
   agentId: string;
@@ -61,6 +63,18 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
   const [everyMinutes, setEveryMinutes] = useState("60");
   const [at, setAt] = useState("");
 
+  const loadKey = projectId && isEditing ? `${projectId}:${agentId}` : "";
+  const [trackedLoadKey, setTrackedLoadKey] = useState(loadKey);
+
+  if (loadKey !== trackedLoadKey) {
+    setTrackedLoadKey(loadKey);
+    setLoading(Boolean(loadKey));
+    if (!loadKey) {
+      setJobs([]);
+      setError(null);
+    }
+  }
+
   const scheduleOptions = useMemo(
     () =>
       SCHEDULE_OPTION_KEYS.map((option) => ({
@@ -90,11 +104,28 @@ export function CardSchedules({ agentId, isEditing }: CardSchedulesProps) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, agentId, isEditing]);
+  }, [projectId, agentId, isEditing, t]);
 
   useEffect(() => {
-    void loadJobs();
-  }, [loadJobs]);
+    if (!projectId || !isEditing) {
+      return;
+    }
+    void Promise.all([
+      projectApi.getCronSummary(projectId),
+      projectApi.listCronJobs(projectId, agentId),
+    ])
+      .then(([summary, list]) => {
+        setQuotaLimit(summary.limit);
+        setQuotaTotal(summary.total);
+        setJobs(list.jobs);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : t("agent.schedules.errors.load"));
+        setJobs([]);
+      })
+      .finally(() => setLoading(false));
+  }, [projectId, agentId, isEditing, t]);
 
   const filteredJobs = jobs.filter((job) => {
     const q = search.trim().toLowerCase();

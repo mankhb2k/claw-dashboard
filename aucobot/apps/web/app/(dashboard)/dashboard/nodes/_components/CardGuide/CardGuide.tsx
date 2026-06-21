@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, Typography } from "@/components/ui";
 import styles from "./CardGuide.module.css";
+import { Card, Typography } from "@/components/ui";
 
 export function CardGuide() {
   return (

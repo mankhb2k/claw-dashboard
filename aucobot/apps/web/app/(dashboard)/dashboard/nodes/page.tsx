@@ -1,7 +1,7 @@
-import { getCurrentProjectId } from "@/lib/current-project";
-import { Container, Flex } from "@/components/layout";
 import { ClientNodesPage } from "./_components/ClientNodesPage/ClientNodesPage";
 import styles from "./nodes.module.css";
+import { Container, Flex } from "@/components/layout";
+import { getCurrentProjectId } from "@/lib/current-project";
 
 export default async function NodesPage() {
   const projectId = await getCurrentProjectId();

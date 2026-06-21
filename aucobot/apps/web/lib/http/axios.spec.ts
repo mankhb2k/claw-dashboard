@@ -110,7 +110,7 @@ describe('api auth refresh interceptor', () => {
     }
 
     await expect(api.get('/api/projects/mine')).rejects.toThrow(
-      'Phiên đăng nhập hết hạn. Đang chuyển tới trang đăng nhập…',
+      'Your session has expired. Redirecting to sign in…',
     )
     expect(refreshCalls).toBe(1)
     expect(win.location.assign).toHaveBeenCalledWith('/login?session=expired')

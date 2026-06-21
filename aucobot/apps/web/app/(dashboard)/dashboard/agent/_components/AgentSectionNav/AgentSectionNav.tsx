@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Tabs, type TabItem } from "@/components/ui";
-import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-route";
-import { projectApi } from "@/lib/api/project";
-import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
-import { useProjectStore } from "@/stores/project.store";
-import { useI18n } from "@/lib/i18n";
+import { useEffect, useMemo, useState } from "react";
+
 import styles from "./AgentSectionNav.module.css";
+import { Tabs, type TabItem } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-route";
+import { useProjectStore } from "@/stores/project.store";
+import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
 
 const AGENTS_HREF = `${DASHBOARD_BASE_PATH}/agent`;
 const COLLABORATION_HREF = `${DASHBOARD_BASE_PATH}/agent/collaboration`;
@@ -22,6 +23,16 @@ export function AgentSectionNav() {
   const [memberCount, setMemberCount] = useState(0);
   const [collaborationOn, setCollaborationOn] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    if (!projectId) {
+      setMemberCount(0);
+      setCollaborationOn(false);
+      setFailedCount(0);
+    }
+  }
 
   const isCollaboration = pathname === COLLABORATION_HREF;
   const isSchedules =
@@ -39,10 +50,7 @@ export function AgentSectionNav() {
 
   useEffect(() => {
     if (!projectId) {
-      setMemberCount(0);
-      setCollaborationOn(false);
-      setFailedCount(0);
-      return;
+      return undefined;
     }
 
     const loadCollaboration = () => {

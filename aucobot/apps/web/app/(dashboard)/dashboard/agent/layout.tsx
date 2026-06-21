@@ -1,10 +1,11 @@
 'use client'
 
-import React from 'react'
 import { usePathname } from 'next/navigation'
-import { Flex, Container } from '@/components/layout'
+import React from 'react'
+
 import { AgentSectionNav } from './_components/AgentSectionNav/AgentSectionNav'
 import styles from './layout.module.css'
+import { Flex, Container } from '@/components/layout'
 
 const SECTION_SLUGS = new Set(['collaboration', 'schedules', 'heartbeat'])
 
@@ -25,7 +26,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
 
   if (!shouldUseAgentSectionShell(pathname)) {
-    return <>{children}</>
+    return children
   }
 
   return (

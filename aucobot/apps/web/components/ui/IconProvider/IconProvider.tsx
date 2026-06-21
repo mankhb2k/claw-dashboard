@@ -1,14 +1,19 @@
+import Image from "next/image";
 import * as React from "react";
+
 import styles from "./IconProvider.module.css";
+import { shouldUseUnoptimized } from "@/utils/image/app-image.utils";
+
+import type { ImageProps } from "next/image";
 
 export interface IconProviderProps extends React.HTMLAttributes<HTMLSpanElement> {
   src?: string;
   alt?: string;
   label?: string;
   fallbackText?: string;
-  imgProps?: Omit<
-    React.ImgHTMLAttributes<HTMLImageElement>,
-    "src" | "alt" | "className"
+  imageProps?: Omit<
+    ImageProps,
+    "src" | "alt" | "width" | "height" | "className"
   >;
   size?: "sm" | "md" | "lg" | "xl";
   shape?: "square" | "circle";
@@ -35,7 +40,7 @@ export function IconProvider({
   alt,
   label,
   fallbackText,
-  imgProps,
+  imageProps,
   size = "md",
   shape = "square",
   withBackground = true,
@@ -56,14 +61,14 @@ export function IconProvider({
   ].join(" ");
 
   const content = src ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       className={styles.image}
       src={src}
       alt={alt ?? `${label ?? "provider"} icon`}
       width={imageSize}
       height={imageSize}
-      {...imgProps}
+      unoptimized={shouldUseUnoptimized(src)}
+      {...imageProps}
     />
   ) : (
     <span className={styles.fallback} aria-hidden="true">

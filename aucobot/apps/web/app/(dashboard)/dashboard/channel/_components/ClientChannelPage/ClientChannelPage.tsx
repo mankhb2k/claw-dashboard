@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useProjectStore } from "@/stores/project.store";
-import { projectApi } from "@/lib/api/project";
-import { mergeChannelCatalog, type ChannelCatalogCard } from "@/utils/channels/merge-channel-catalog";
-import { CardChannel } from "../CardChannel/CardChannel";
+
 import styles from "./ClientChannelPage.module.css";
+import { CardChannel } from "../CardChannel/CardChannel";
+import { BackButton, SearchItem, TitleHeader } from "@/components/dashboard";
 import { Flex, Grid } from "@/components/layout";
 import { Button, Spinner, Typography } from "@/components/ui";
-import { BackButton, SearchItem, TitleHeader } from "@/components/dashboard";
+import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
+import { mergeChannelCatalog, type ChannelCatalogCard } from "@/utils/channels/merge-channel-catalog";
 
 interface ClientChannelPageProps {
   projectId: string;
@@ -28,14 +29,21 @@ export function ClientChannelPage({ projectId: projectIdProp }: ClientChannelPag
   const [channelsError, setChannelsError] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<ChannelCatalogCard[]>([]);
   const [search, setSearch] = useState("");
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setChannelsLoading(Boolean(projectId));
+    setChannelsError(null);
+  }
 
   useEffect(() => {
-    setProjectsFetched(false);
     void fetchProjects().finally(() => setProjectsFetched(true));
   }, [fetchProjects]);
 
   const loadChannels = useCallback(async () => {
     if (!projectId) return;
+    await Promise.resolve();
     setChannelsLoading(true);
     setChannelsError(null);
     try {
@@ -53,7 +61,10 @@ export function ClientChannelPage({ projectId: projectIdProp }: ClientChannelPag
   }, [projectId, t]);
 
   useEffect(() => {
-    void loadChannels();
+    void (async () => {
+      await Promise.resolve();
+      await loadChannels();
+    })();
   }, [loadChannels]);
 
   const filtered = useMemo(() => {

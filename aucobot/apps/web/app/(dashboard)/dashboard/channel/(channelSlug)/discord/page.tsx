@@ -1,7 +1,7 @@
+import styles from "../channel-detail.module.css";
+import { ClientDiscordPage } from "./_components/ClientDiscordPage/ClientDiscordPage";
 import { Container, Flex } from "@/components/layout";
 import { getCurrentProjectId } from "@/lib/current-project";
-import { ClientDiscordPage } from "./_components/ClientDiscordPage/ClientDiscordPage";
-import styles from "../channel-detail.module.css";
 
 export default async function DiscordSetupPage() {
   const projectId = await getCurrentProjectId();

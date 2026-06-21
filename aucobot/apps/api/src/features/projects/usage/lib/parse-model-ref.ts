@@ -14,11 +14,17 @@ export function parseModelRef(modelRef: string): {
   const provider = trimmed.slice(0, slash).trim();
   const modelId = trimmed.slice(slash + 1).trim() || trimmed;
   const providerId =
-    provider === 'google' ? 'gemini' : provider === 'openai' ? 'openai' : provider;
-  return { providerId, modelId: trimmed };
+    provider === 'google'
+      ? 'gemini'
+      : provider === 'openai'
+        ? 'openai'
+        : provider;
+  return { providerId, modelId };
 }
 
-export function extractAgentSlugFromSessionKey(sessionKey: string): string | undefined {
+export function extractAgentSlugFromSessionKey(
+  sessionKey: string,
+): string | undefined {
   const key = sessionKey.trim();
   if (!key) return undefined;
   const parts = key.split(':').filter(Boolean);

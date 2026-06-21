@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { projectApi } from '@/lib/api/project'
 import { serverGet } from '@/lib/http/server-api'
 import { projectSchema, type Project } from '@/schemas/project.schema'
@@ -13,8 +14,7 @@ export async function getCurrentProject(): Promise<Project | null> {
         ? await projectApi.list()
         : projectListSchema.parse(await serverGet('/api/projects/mine'))
     return projects[0] ?? null
-  } catch (err) {
-    console.error('[getCurrentProject]', err)
+  } catch {
     return null
   }
 }

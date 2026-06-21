@@ -1,13 +1,28 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+
+import { toPrismaInputJson } from '../../../../../core/common/utils/prisma-json.util';
 import { PrismaService } from '../../../../../core/database/prisma.service';
+import { loadProjectModelCatalog } from '../../../chat/lib/project-model-catalog';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+import { slugifyAgentName, validateAgentSlug } from '../../lib/agent-slug';
+import {
+  AGENT_TEMPLATE_CATALOG,
+  type AgentTemplateCatalogEntry,
+} from '../../lib/agent-templates.catalog';
+import { CollaborationService } from '../collaboration/collaboration.service';
+import {
+  isModelInProviderCatalog,
+  modelIdsEquivalent,
+  resolveEffectiveAgentModel,
+} from '@aucobot/shared';
 import {
   compileAgentBootstrap,
   parseAgentFormData,
@@ -16,14 +31,6 @@ import {
   type AgentBootstrapFilename,
   type AgentFormInput,
 } from '@aucobot/workspace-sync';
-import { slugifyAgentName, validateAgentSlug } from '../../lib/agent-slug';
-import { CollaborationService } from '../collaboration/collaboration.service';
-import {
-  isModelInProviderCatalog,
-  modelIdsEquivalent,
-  resolveEffectiveAgentModel,
-} from '@aucobot/shared';
-import { loadProjectModelCatalog } from '../../../chat/lib/project-model-catalog';
 
 export type ProjectAgentListRow = {
   slug: string;
@@ -61,6 +68,26 @@ export type AgentTemplateRow = {
   };
 };
 
+function toAgentTemplateRow(
+  entry: AgentTemplateCatalogEntry,
+): AgentTemplateRow {
+  return {
+    slug: entry.slug,
+    name: entry.name,
+    description: entry.description,
+    avatar: entry.avatar,
+    vibe: entry.vibe,
+    defaultModel: entry.defaultModel,
+    toolsProfile: entry.toolsProfile,
+    sandboxEnabled: entry.sandboxEnabled,
+    bootstrapFiles: {
+      identity: entry.bootstrapIdentity,
+      soul: entry.bootstrapSoul,
+      agents: entry.bootstrapAgents,
+    },
+  };
+}
+
 @Injectable()
 export class AgentService {
   constructor(
@@ -78,10 +105,17 @@ export class AgentService {
       throw new BadRequestException('Agent name is required');
     }
     if (form.instructionsMode === 'simple' && !form.instructionsRole.trim()) {
-      throw new BadRequestException('instructionsRole is required in simple mode');
+      throw new BadRequestException(
+        'instructionsRole is required in simple mode',
+      );
     }
-    if (form.instructionsMode === 'advanced' && !form.instructionsAdvanced.trim()) {
-      throw new BadRequestException('instructionsAdvanced is required in advanced mode');
+    if (
+      form.instructionsMode === 'advanced' &&
+      !form.instructionsAdvanced.trim()
+    ) {
+      throw new BadRequestException(
+        'instructionsAdvanced is required in advanced mode',
+      );
     }
   }
 
@@ -189,56 +223,24 @@ export class AgentService {
     const next = { ...form, model: effective };
     await this.prisma.projectAgent.update({
       where: { projectId_slug: { projectId, slug } },
-      data: { formData: toStoredAgentFormData(next) as object },
+      data: { formData: toPrismaInputJson(toStoredAgentFormData(next)) },
     });
     await this.workspace.syncProjectRuntime(projectId);
     return next;
   }
 
-  async listTemplates(): Promise<AgentTemplateRow[]> {
-    const rows = await this.prisma.agentTemplate.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    });
-    return rows.map((t) => ({
-      slug: t.slug,
-      name: t.name,
-      description: t.description,
-      avatar: t.avatar,
-      vibe: t.vibe,
-      defaultModel: t.defaultModel,
-      toolsProfile: t.toolsProfile,
-      sandboxEnabled: t.sandboxEnabled,
-      bootstrapFiles: {
-        identity: t.bootstrapIdentity,
-        soul: t.bootstrapSoul,
-        agents: t.bootstrapAgents,
-      },
-    }));
+  listTemplates(): AgentTemplateRow[] {
+    return [...AGENT_TEMPLATE_CATALOG]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((t) => toAgentTemplateRow(t));
   }
 
-  async getTemplate(slug: string): Promise<AgentTemplateRow> {
-    const row = await this.prisma.agentTemplate.findFirst({
-      where: { slug, isActive: true },
-    });
-    if (!row) {
+  getTemplate(slug: string): AgentTemplateRow {
+    const entry = AGENT_TEMPLATE_CATALOG.find((t) => t.slug === slug);
+    if (!entry) {
       throw new NotFoundException('Agent template not found');
     }
-    return {
-      slug: row.slug,
-      name: row.name,
-      description: row.description,
-      avatar: row.avatar,
-      vibe: row.vibe,
-      defaultModel: row.defaultModel,
-      toolsProfile: row.toolsProfile,
-      sandboxEnabled: row.sandboxEnabled,
-      bootstrapFiles: {
-        identity: row.bootstrapIdentity,
-        soul: row.bootstrapSoul,
-        agents: row.bootstrapAgents,
-      },
-    };
+    return toAgentTemplateRow(entry);
   }
 
   async list(projectId: string): Promise<ProjectAgentListRow[]> {
@@ -325,7 +327,9 @@ export class AgentService {
     isDefault?: boolean;
   }): Promise<ProjectAgentDetail> {
     const parsed = parseAgentFormData(params.formData);
-    const slug = params.slug ? validateAgentSlug(params.slug) : slugifyAgentName(parsed.name);
+    const slug = params.slug
+      ? validateAgentSlug(params.slug)
+      : slugifyAgentName(parsed.name);
     const form = this.prepareFormData(parsed);
     await this.assertSkillNamesAllowed(params.projectId, form.skillNames);
 
@@ -352,7 +356,7 @@ export class AgentService {
         name: form.name.trim(),
         description: form.description.trim(),
         avatar: form.avatar.trim() || '🤖',
-        formData: toStoredAgentFormData(form) as object,
+        formData: toPrismaInputJson(toStoredAgentFormData(form)),
         enabled,
         isDefault,
       },
@@ -395,7 +399,7 @@ export class AgentService {
         name: form.name.trim(),
         description: form.description.trim(),
         avatar: form.avatar.trim() || '🤖',
-        formData: toStoredAgentFormData(form) as object,
+        formData: toPrismaInputJson(toStoredAgentFormData(form)),
         enabled,
         isDefault,
       },
@@ -409,7 +413,11 @@ export class AgentService {
     return this.get(projectId, slug);
   }
 
-  async setEnabled(projectId: string, slug: string, enabled: boolean): Promise<ProjectAgentDetail> {
+  async setEnabled(
+    projectId: string,
+    slug: string,
+    enabled: boolean,
+  ): Promise<ProjectAgentDetail> {
     const row = await this.findRow(projectId, slug);
     await this.prisma.projectAgent.update({
       where: { id: row.id },
@@ -425,7 +433,10 @@ export class AgentService {
     return this.get(projectId, slug);
   }
 
-  async setDefault(projectId: string, slug: string): Promise<ProjectAgentDetail> {
+  async setDefault(
+    projectId: string,
+    slug: string,
+  ): Promise<ProjectAgentDetail> {
     const row = await this.findRow(projectId, slug);
     await this.clearDefault(projectId);
     await this.prisma.projectAgent.update({
@@ -451,11 +462,13 @@ export class AgentService {
     } else {
       form.name = `${form.name} (Copy)`;
     }
-    const newSlug = params?.slug ? validateAgentSlug(params.slug) : slugifyAgentName(form.name);
+    const newSlug = params?.slug
+      ? validateAgentSlug(params.slug)
+      : slugifyAgentName(form.name);
     const created = await this.create({
       projectId,
       slug: newSlug,
-      formData: form as unknown as Record<string, unknown>,
+      formData: form,
       enabled: false,
       isDefault: false,
     });
@@ -471,7 +484,10 @@ export class AgentService {
     await this.prisma.projectAgent.delete({ where: { id: row.id } });
     const dataDir = this.workspace.resolveProjectDataDir(projectId);
     try {
-      await rm(this.hostAgentDir(dataDir, row.slug), { recursive: true, force: true });
+      await rm(this.hostAgentDir(dataDir, row.slug), {
+        recursive: true,
+        force: true,
+      });
     } catch {
       /* ignore */
     }
@@ -490,7 +506,9 @@ export class AgentService {
     await this.workspace.syncProjectRuntime(projectId);
   }
 
-  async syncAllEnabled(projectId: string): Promise<{ synced: number; failed: number }> {
+  async syncAllEnabled(
+    projectId: string,
+  ): Promise<{ synced: number; failed: number }> {
     const rows = await this.prisma.projectAgent.findMany({
       where: { projectId, enabled: true },
     });
@@ -528,7 +546,9 @@ export class AgentService {
       const dataDir = await this.workspace.ensureProjectLayout(row.projectId);
       const dir = this.hostAgentDir(dataDir, row.slug);
       await mkdir(dir, { recursive: true });
-      for (const name of Object.keys(bundle.files) as AgentBootstrapFilename[]) {
+      for (const name of Object.keys(
+        bundle.files,
+      ) as AgentBootstrapFilename[]) {
         await writeFile(path.join(dir, name), bundle.files[name], 'utf8');
       }
       await this.prisma.projectAgent.update({

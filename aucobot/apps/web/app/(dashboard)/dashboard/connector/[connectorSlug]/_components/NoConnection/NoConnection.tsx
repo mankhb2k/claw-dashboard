@@ -1,10 +1,13 @@
 "use client";
 
-import { Button, Typography } from "@/components/ui";
-import { Container, Flex, Box } from "@/components/layout";
-import { BackButton } from "@/components/dashboard";
-import { type ServiceConnectData } from "../../../projectConnectData";
+import Image from "next/image";
+
 import styles from "./NoConnection.module.css";
+import { type ServiceConnectData } from "../../../projectConnectData";
+import { BackButton } from "@/components/dashboard";
+import { Container, Flex, Box } from "@/components/layout";
+import { Button, Typography } from "@/components/ui";
+import { shouldUseUnoptimized } from "@/utils/image/app-image.utils";
 
 interface Props {
   service: ServiceConnectData;
@@ -32,8 +35,13 @@ export function NoConnection({ service, isConnecting, onConnect }: Props) {
             >
               <div className={styles.serviceIcon}>
                 {service.iconSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={service.iconSrc} alt={service.name} />
+                  <Image
+                    src={service.iconSrc}
+                    alt={service.name}
+                    width={56}
+                    height={56}
+                    unoptimized={shouldUseUnoptimized(service.iconSrc)}
+                  />
                 ) : (
                   <span className={styles.serviceIconFallback}>
                     {service.name.slice(0, 1)}

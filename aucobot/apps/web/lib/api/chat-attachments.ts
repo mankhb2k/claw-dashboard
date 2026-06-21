@@ -1,4 +1,5 @@
 import { uploadMultipart } from '@/lib/api/multipart-upload';
+import { translate } from '@/lib/i18n/translate';
 
 export type ChatAttachmentUploadResult = {
   id: string;
@@ -44,6 +45,6 @@ export async function deleteChatAttachment(
     credentials: 'include',
   });
   if (!res.ok) {
-    throw new Error('Could not delete attachment');
+    throw new Error(translate('chat.errors.deleteAttachment'));
   }
 }

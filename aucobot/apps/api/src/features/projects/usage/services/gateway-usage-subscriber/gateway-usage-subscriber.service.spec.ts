@@ -1,7 +1,10 @@
 import { EventEmitter } from 'node:events';
+
 import WebSocket from 'ws';
-import { ProjectStatus } from '@aucobot/database';
+
+import { GatewayUsageSubscriberService } from './gateway-usage-subscriber.service';
 import { openGatewayUpstream } from '@aucobot/control-plane-core';
+import { ProjectStatus } from '@aucobot/database';
 import { isOssRuntime } from '@aucobot/runtime-contracts';
 import { resolveOssGatewayEndpoint } from '@aucobot/runtime-oss';
 
@@ -32,12 +35,13 @@ jest.mock('../model-usage-recorder/model-usage-recorder.service', () => ({
 const openGatewayUpstreamMock = openGatewayUpstream as jest.MockedFunction<
   typeof openGatewayUpstream
 >;
-const isOssRuntimeMock = isOssRuntime as jest.MockedFunction<typeof isOssRuntime>;
-const resolveOssGatewayEndpointMock = resolveOssGatewayEndpoint as jest.MockedFunction<
-  typeof resolveOssGatewayEndpoint
+const isOssRuntimeMock = isOssRuntime as jest.MockedFunction<
+  typeof isOssRuntime
 >;
-
-import { GatewayUsageSubscriberService } from './gateway-usage-subscriber.service';
+const resolveOssGatewayEndpointMock =
+  resolveOssGatewayEndpoint as jest.MockedFunction<
+    typeof resolveOssGatewayEndpoint
+  >;
 
 const gatewayEndpointFixture = {
   httpBaseUrl: 'http://127.0.0.1:18789',
@@ -54,7 +58,7 @@ class MockUpstream extends EventEmitter {
   readyState: number = WebSocket.OPEN;
 
   close(): void {
-    this.readyState = WebSocket.CLOSED as number;
+    this.readyState = WebSocket.CLOSED;
     this.emit('close', 1000, 'closed');
   }
 }

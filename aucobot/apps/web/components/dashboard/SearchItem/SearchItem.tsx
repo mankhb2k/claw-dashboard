@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
-import { Input, type InputSize } from "@/components/ui/Input/Input";
 import { X } from "lucide-react";
+
 import styles from "./SearchItem.module.css";
+import { Input, type InputSize } from "@/components/ui/Input/Input";
 
 interface SearchItemProps {
   /** Current search text */
@@ -20,7 +20,7 @@ interface SearchItemProps {
   maxWidth?: string | number;
   /** Input size — defaults to `md` */
   size?: InputSize;
-  /** Margin 16px trên/dưới — dùng trên list page dưới TitleHeader */
+  /** 16px top/bottom margin — for list pages below TitleHeader */
   pageSpacing?: boolean;
 }
 

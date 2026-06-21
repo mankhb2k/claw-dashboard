@@ -1,7 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { Bot, Code, BarChart2, Brain, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import styles from "./ModalTemplate.module.css";
+import { Flex, Grid } from "@/components/layout";
 import {
   Dialog,
   DialogContent,
@@ -11,12 +15,10 @@ import {
   Typography,
   Spinner,
 } from "@/components/ui";
-import { Flex, Grid } from "@/components/layout";
-import { Bot, Code, BarChart2, Brain, Settings } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
+
 import type { AgentTemplateRow } from "@/schemas/project.schema";
-import styles from "./ModalTemplate.module.css";
 
 interface ModalTemplateProps {
   isOpen: boolean;
@@ -34,11 +36,21 @@ export function ModalTemplate({
   const [templates, setTemplates] = useState<AgentTemplateRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const fetchKey = isOpen && projectId ? projectId : null;
+  const [trackedFetchKey, setTrackedFetchKey] = useState<string | null>(null);
+
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    if (fetchKey) {
+      setLoading(true);
+      setLoadError(null);
+    } else {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!isOpen || !projectId) return;
-    setLoading(true);
-    setLoadError(null);
     void projectApi
       .listAgentTemplates(projectId)
       .then((rows) => {
@@ -50,7 +62,7 @@ export function ModalTemplate({
         setLoadError(t("agent.modalTemplate.loadError"));
       })
       .finally(() => setLoading(false));
-  }, [isOpen, projectId]);
+  }, [isOpen, projectId, t]);
 
   const handleSelectTemplate = (templateSlug: string) => {
     onClose();

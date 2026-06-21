@@ -1,5 +1,5 @@
-import { Typography } from "@/components/ui";
 import { Flex } from "@/components/layout";
+import { Typography } from "@/components/ui";
 
 interface TitleSectionProps {
   title: string;

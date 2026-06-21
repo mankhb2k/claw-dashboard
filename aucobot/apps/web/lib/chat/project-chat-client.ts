@@ -1,3 +1,5 @@
+import { getPublicApiBaseUrl } from '@/lib/http/api-base-url'
+
 export type GatewayEventFrame = {
   type: 'event'
   event: string
@@ -12,15 +14,12 @@ export type GatewayResponseFrame = {
   error?: { code?: string; message?: string }
 }
 
-import { getPublicApiBaseUrl } from '@/lib/http/api-base-url'
-
 export class ProjectChatClient {
   private ws: WebSocket | null = null
   private pending = new Map<
     string,
     { resolve: (v: unknown) => void; reject: (e: Error) => void }
   >()
-  private closed = false
 
   constructor(
     private readonly opts: {
@@ -42,7 +41,6 @@ export class ProjectChatClient {
   }
 
   connect(): void {
-    this.closed = false
     const ws = new WebSocket(this.wsUrl())
     this.ws = ws
 
@@ -94,7 +92,6 @@ export class ProjectChatClient {
   }
 
   disconnect(): void {
-    this.closed = true
     this.ws?.close()
     this.ws = null
     this.flushPending(new Error('disconnected'))

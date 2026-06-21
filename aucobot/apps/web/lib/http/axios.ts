@@ -1,15 +1,17 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
+
 import { setupMockInterceptor } from '@/lib/api/mocks'
 import { getPublicApiBaseUrl } from '@/lib/http/api-base-url'
+import { translate } from '@/lib/i18n/translate'
 
 type AuthAxiosConfig = InternalAxiosRequestConfig & {
-  /** Đã retry sau refresh — tránh vòng lặp. */
+  /** Already retried after refresh — avoid infinite loop. */
   _retry?: boolean
-  /** Request refresh — không gọi refresh lại khi 401. */
+  /** Refresh request — do not call refresh again on 401. */
   _skipAuthRefresh?: boolean
 }
 
-/** Không cố refresh (sai mật khẩu, refresh hết hạn, …). */
+/** Do not attempt refresh (wrong password, expired refresh token, etc.). */
 const AUTH_NO_REFRESH_PATHS = [
   '/api/auth/login',
   '/api/auth/register',
@@ -94,7 +96,9 @@ function releaseRefreshLock(id: string): void {
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 }
 
 async function waitForPeerRefresh(): Promise<void> {
@@ -144,8 +148,9 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (res) => {
-    if (res.data && typeof res.data === 'object' && 'success' in res.data) {
-      res.data = res.data.data
+    const payload = res.data
+    if (payload && typeof payload === 'object' && 'success' in payload) {
+      return { ...res, data: (payload as { data: unknown }).data }
     }
     return res
   },
@@ -157,9 +162,7 @@ api.interceptors.response.use(
     if (status === 401 && typeof window !== 'undefined' && config) {
       if (config._skipAuthRefresh) {
         redirectToLogin()
-        return Promise.reject(
-          new Error('Phiên đăng nhập hết hạn. Đang chuyển tới trang đăng nhập…'),
-        )
+        return Promise.reject(new Error(translate('http.sessionExpired')))
       }
 
       if (!config._retry && shouldAttemptRefresh(requestUrl)) {
@@ -169,17 +172,13 @@ api.interceptors.response.use(
           return api(config)
         } catch {
           redirectToLogin()
-          return Promise.reject(
-            new Error('Phiên đăng nhập hết hạn. Đang chuyển tới trang đăng nhập…'),
-          )
+          return Promise.reject(new Error(translate('http.sessionExpired')))
         }
       }
 
       if (shouldAttemptRefresh(requestUrl)) {
         redirectToLogin()
-        return Promise.reject(
-          new Error('Phiên đăng nhập hết hạn. Đang chuyển tới trang đăng nhập…'),
-        )
+        return Promise.reject(new Error(translate('http.sessionExpired')))
       }
     }
 
@@ -187,14 +186,17 @@ api.interceptors.response.use(
       const base = getPublicApiBaseUrl() || window.location.origin
       const hint =
         err.code === 'ECONNABORTED'
-          ? 'Request quá thời gian chờ.'
-          : `Không kết nối được API (${base}). Kiểm tra backend đang chạy (npm run dev trong thư mục backend).`
+          ? translate('http.timeout')
+          : translate('http.networkError', { base })
       return Promise.reject(new Error(hint))
     }
 
     const body = err.response.data as { error?: { message?: string }; message?: string }
     const message =
-      body?.error?.message ?? body?.message ?? err.message ?? 'Lỗi không xác định'
+      body?.error?.message ??
+      body?.message ??
+      err.message ??
+      translate('http.unknown')
     return Promise.reject(new Error(message))
   },
 )

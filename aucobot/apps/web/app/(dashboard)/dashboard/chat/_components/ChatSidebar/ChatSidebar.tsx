@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Ellipsis,
   MessageSquare,
@@ -10,6 +9,10 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import styles from "./ChatSidebar.module.css";
+import { SearchItem } from "@/components/dashboard";
 import { Box, Flex } from "@/components/layout";
 import {
   AlertDialog,
@@ -29,18 +32,17 @@ import {
   Skeleton,
   Typography,
 } from "@/components/ui";
-import { SearchItem } from "@/components/dashboard";
-import {
-  formatRelativeSessionTime,
-  groupSessionsByDate,
-  SESSION_GROUP_LABELS,
-} from "@/utils/chat/session/groups";
+import { useI18n } from "@/lib/i18n";
 import {
   isMainSessionKey,
   resolveSessionDisplayName,
 } from "@/utils/chat/session/display";
+import {
+  formatRelativeSessionTime,
+  groupSessionsByDate,
+} from "@/utils/chat/session/groups";
+
 import type { GatewaySessionRow } from "@/utils/chat/session/types";
-import styles from "./ChatSidebar.module.css";
 
 type ChatSidebarProps = {
   sessions: GatewaySessionRow[];
@@ -59,7 +61,8 @@ type ChatSidebarProps = {
   onDeleteSession: (key: string) => Promise<void>;
 };
 
-function scrollRenameInputToEnd(input: HTMLInputElement) {
+function scrollRenameInputToEnd(el: HTMLInputElement) {
+  const input = el;
   const end = input.value.length;
   if (end === 0) return;
 
@@ -84,11 +87,19 @@ function focusRenameInputAtEnd(input: HTMLInputElement | null) {
 
 const RENAME_FOCUS_DELAY_MS = 120;
 
+const SESSION_SKELETON_KEYS = [
+  'session-sk-1',
+  'session-sk-2',
+  'session-sk-3',
+  'session-sk-4',
+  'session-sk-5',
+] as const;
+
 function SessionListSkeleton() {
   return (
     <ul className={styles.sessionList} aria-hidden>
-      {Array.from({ length: 5 }, (_, i) => (
-        <li key={i}>
+      {SESSION_SKELETON_KEYS.map((key) => (
+        <li key={key}>
           <Flex justify="between" align="center" gap={8} className={styles.skeletonRow}>
             <Skeleton variant="text" width="72%" height={13} />
             <Skeleton variant="textSm" width={48} height={11} />
@@ -115,6 +126,7 @@ export function ChatSidebar({
   onRenameSession,
   onDeleteSession,
 }: ChatSidebarProps) {
+  const { t } = useI18n();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameSaving, setRenameSaving] = useState(false);
@@ -127,7 +139,7 @@ export function ChatSidebar({
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!editingKey) return;
+    if (!editingKey) return undefined;
 
     skipRenameBlurRef.current = true;
     const timer = window.setTimeout(() => {
@@ -178,6 +190,8 @@ export function ChatSidebar({
       skipRenameBlurRef.current = true;
       setEditingKey(null);
       setRenameValue("");
+    } catch {
+      // Parent sets chat error and rethrows — absorb unhandled rejection.
     } finally {
       setRenameSaving(false);
     }
@@ -217,6 +231,8 @@ export function ChatSidebar({
     try {
       await onDeleteSession(deleteTarget.key);
       setDeleteTarget(null);
+    } catch {
+      // Parent sets chat error and rethrows — absorb unhandled rejection.
     } finally {
       setDeleteSaving(false);
     }
@@ -227,7 +243,7 @@ export function ChatSidebar({
       <Box
         as="aside"
         className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}
-        aria-label="Chat session list"
+        aria-label={t("chat.sidebar.ariaSessionList")}
       >
         <Flex
           align="center"
@@ -245,7 +261,7 @@ export function ChatSidebar({
             className={styles.collapseBtn}
             onClick={onToggleCollapse}
             iconOnly
-            aria-label={collapsed ? "Open chat sidebar" : "Close chat sidebar"}
+            aria-label={collapsed ? t("chat.sidebar.openSidebar") : t("chat.sidebar.closeSidebar")}
           >
             {collapsed ? (
               <PanelLeftOpen size={16} aria-hidden />
@@ -265,10 +281,10 @@ export function ChatSidebar({
             loading={creating}
             iconOnly={collapsed}
             fullWidth={!collapsed}
-            aria-label="New chat"
+            aria-label={t("chat.sidebar.newChatAria")}
           >
             {!creating && <MessageSquarePlus size={16} aria-hidden />}
-            {!collapsed && "New chat"}
+            {!collapsed && t("chat.sidebar.newChat")}
           </Button>
         </Box>
 
@@ -280,7 +296,7 @@ export function ChatSidebar({
             >
               <SearchItem
                 id="chat-session-search"
-                placeholder="Search chats"
+                placeholder={t("chat.sidebar.searchPlaceholder")}
                 value={searchQuery}
                 onChange={onSearchChange}
                 maxWidth="100%"
@@ -303,7 +319,7 @@ export function ChatSidebar({
                     aria-hidden
                   />
                   <Typography variant="xs" color="muted" className={styles.emptyText}>
-                    No chats found for &quot;{trimmedSearch}&quot;.
+                    {t("chat.sidebar.emptySearch", { query: trimmedSearch })}
                   </Typography>
                 </Flex>
               ) : showEmptyList ? (
@@ -319,7 +335,7 @@ export function ChatSidebar({
                     aria-hidden
                   />
                   <Typography variant="xs" color="muted" className={styles.emptyText}>
-                    No chats found. Click &quot;New chat&quot; to start.
+                    {t("chat.sidebar.emptyList")}
                   </Typography>
                 </Flex>
               ) : (
@@ -331,7 +347,7 @@ export function ChatSidebar({
                       color="muted"
                       className={styles.groupHeading}
                     >
-                      {SESSION_GROUP_LABELS[group]}
+                      {t(`chat.sidebar.groups.${group}`)}
                     </Typography>
                     <ul className={styles.sessionList}>
                       {groupSessions.map((row) => {
@@ -368,7 +384,7 @@ export function ChatSidebar({
                                   onFocus={(event) =>
                                     focusRenameInputAtEnd(event.currentTarget)
                                   }
-                                  aria-label={`Rename chat ${displayName}`}
+                                  aria-label={t("chat.sidebar.renameAria", { name: displayName })}
                                 />
                               ) : (
                                 <>
@@ -406,7 +422,7 @@ export function ChatSidebar({
                                       <DropdownMenuTrigger
                                         variant="kebab"
                                         className={styles.sessionMenuBtn}
-                                        aria-label={`Options for chat ${displayName}`}
+                                        aria-label={t("chat.sidebar.optionsAria", { name: displayName })}
                                         disabled={disabled}
                                         onClick={(e) => e.stopPropagation()}
                                       >
@@ -417,7 +433,7 @@ export function ChatSidebar({
                                           onSelect={() => openRename(row)}
                                         >
                                           <Pencil size={14} aria-hidden />
-                                          Rename
+                                          {t("chat.sidebar.rename")}
                                         </DropdownMenuItem>
                                         {canDelete && (
                                           <DropdownMenuItem
@@ -428,7 +444,7 @@ export function ChatSidebar({
                                             }}
                                           >
                                             <Trash2 size={14} aria-hidden />
-                                            Delete
+                                            {t("chat.sidebar.delete")}
                                           </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
@@ -455,18 +471,18 @@ export function ChatSidebar({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete chat?</AlertDialogTitle>
+            <AlertDialogTitle>{t("chat.sidebar.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Chat &quot;
-              {deleteTarget
-                ? resolveSessionDisplayName(deleteTarget.key, deleteTarget)
-                : ""}
-              &quot; and chat history will be permanently deleted.
+              {t("chat.sidebar.deleteDescription", {
+                name: deleteTarget
+                  ? resolveSessionDisplayName(deleteTarget.key, deleteTarget)
+                  : "",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteSaving}>
-              Cancel
+              {t("chat.sidebar.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="danger"
@@ -476,7 +492,7 @@ export function ChatSidebar({
                 void handleDeleteConfirm();
               }}
             >
-              {deleteSaving ? "Deleting…" : "Delete"}
+              {deleteSaving ? t("chat.sidebar.deleting") : t("chat.sidebar.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -29,4 +29,27 @@ export const viProfile = {
     saveError: 'Không thể cập nhật — kiểm tra mật khẩu hiện tại',
     submit: 'Cập nhật mật khẩu',
   },
+  validation: {
+    name: {
+      required: 'Tên hiển thị là bắt buộc',
+      max: 'Tối đa 64 ký tự',
+    },
+    password: {
+      min: 'Mật khẩu tối thiểu 6 ký tự',
+    },
+    confirmPassword: {
+      mismatch: 'Mật khẩu không khớp',
+    },
+    newPassword: {
+      mustDiffer: 'Mật khẩu mới phải khác mật khẩu hiện tại',
+    },
+  },
+  avatar: {
+    unsupportedType: 'Chỉ hỗ trợ ảnh JPEG, PNG, WebP hoặc GIF',
+    tooLarge: 'Ảnh phải nhỏ hơn hoặc bằng 512 KB',
+    stillTooLarge:
+      'Ảnh vẫn trên 512 KB sau khi nén — hãy chọn file nhỏ hơn',
+    uploadFailed: 'Tải avatar thất bại',
+    changeAria: 'Đổi avatar',
+  },
 } as const

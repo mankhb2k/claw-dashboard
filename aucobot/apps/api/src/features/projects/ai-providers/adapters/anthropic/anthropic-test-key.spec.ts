@@ -7,7 +7,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
-    text: async () => JSON.stringify(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   } as Response;
 }
 
@@ -25,7 +25,11 @@ describe('smokeTestAnthropicApiKey', () => {
 
     const result = await smokeTestAnthropicApiKey('sk-ant-test');
 
-    expect(result).toEqual({ ok: true, model: 'claude-haiku-4-5', message: 'ok' });
+    expect(result).toEqual({
+      ok: true,
+      model: 'claude-haiku-4-5',
+      message: 'ok',
+    });
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.anthropic.com/v1/messages');

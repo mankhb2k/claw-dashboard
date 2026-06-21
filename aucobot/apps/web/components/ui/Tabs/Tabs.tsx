@@ -1,8 +1,9 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
+import * as React from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+
 import styles from "./Tabs.module.css";
 
 export type TabBadgeTone = "default" | "danger";

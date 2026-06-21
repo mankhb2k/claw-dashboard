@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -17,6 +17,8 @@ import {
 } from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
 import { ChatAttachmentsService } from './services/chat-attachments/chat-attachments.service';
+
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 @ApiTags('chat-attachments')
 @ApiBearerAuth()

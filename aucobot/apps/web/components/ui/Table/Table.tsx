@@ -1,6 +1,7 @@
 import * as React from "react";
-import { Typography } from "../Typography/Typography";
+
 import styles from "./Table.module.css";
+import { Typography } from "../Typography/Typography";
 
 export type TableAlign = "left" | "center" | "right";
 export type TableSize = "sm" | "md";

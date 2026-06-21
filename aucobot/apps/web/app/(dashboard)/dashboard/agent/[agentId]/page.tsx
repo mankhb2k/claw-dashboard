@@ -1,7 +1,6 @@
-import React from "react";
-import { Flex, Container } from "@/components/layout";
 import { ClientAgentIdPage } from "./_components/ClientAgentIdPage/ClientAgentIdPage";
 import styles from "./agentId.module.css";
+import { Flex, Container } from "@/components/layout";
 
 interface PageProps {
   params: Promise<{

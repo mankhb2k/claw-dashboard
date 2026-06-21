@@ -1,10 +1,11 @@
-import type { ChatModelsResponse } from '@/lib/api/chat';
 import {
   findCatalogModelInCatalog,
   isOpenClawIdInCatalog,
   migrateFoundationOpenClawId,
   NO_MODEL_LABEL,
 } from '@aucobot/shared';
+
+import type { ChatModelsResponse } from '@/lib/api/chat';
 
 export type ModelSelection = {
   providerId?: string;

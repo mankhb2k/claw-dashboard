@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { parseSkillMarkdown } from '@aucobot/workspace-sync';
+
 import {
   clawHubFetchSkillMarkdown,
   clawHubGetSkill,
@@ -8,7 +8,11 @@ import {
   resolveClawHubListSort,
   type ClawHubCatalogEntry,
 } from '../../lib/clawhub-api';
-import { ProjectSkillsService, type ProjectSkillDetail } from '../project-skills/project-skills.service';
+import {
+  ProjectSkillsService,
+  type ProjectSkillDetail,
+} from '../project-skills/project-skills.service';
+import { parseSkillMarkdown } from '@aucobot/workspace-sync';
 
 type SkillStoreSearchItem = {
   slug: string;
@@ -34,7 +38,10 @@ export type SkillStoreSearchResult = {
 export class SkillStoreService {
   constructor(private readonly skills: ProjectSkillsService) {}
 
-  private toSearchItem(entry: ClawHubCatalogEntry, installedSet: Set<string>): SkillStoreSearchItem {
+  private toSearchItem(
+    entry: ClawHubCatalogEntry,
+    installedSet: Set<string>,
+  ): SkillStoreSearchItem {
     return {
       slug: entry.slug,
       name: entry.slug,
@@ -47,7 +54,10 @@ export class SkillStoreService {
     };
   }
 
-  private parseStoreSkillMarkdown(markdown: string, fallback: ClawHubCatalogEntry) {
+  private parseStoreSkillMarkdown(
+    markdown: string,
+    fallback: ClawHubCatalogEntry,
+  ) {
     const parsed = parseSkillMarkdown(markdown, {
       fallbackSlug: fallback.slug,
       fallbackDescription: fallback.summary,
@@ -86,7 +96,10 @@ export class SkillStoreService {
     };
   }
 
-  async getDetail(projectId: string, slug: string): Promise<SkillStoreDetailItem> {
+  async getDetail(
+    projectId: string,
+    slug: string,
+  ): Promise<SkillStoreDetailItem> {
     const entry = await clawHubGetSkill(slug);
     const markdown = await clawHubFetchSkillMarkdown(slug);
     const parsed = this.parseStoreSkillMarkdown(markdown, entry);

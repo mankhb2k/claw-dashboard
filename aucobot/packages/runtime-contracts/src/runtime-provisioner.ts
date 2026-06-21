@@ -15,7 +15,7 @@ export type ProvisionOpts = {
 };
 
 export interface RuntimeProvisioner {
-  /** OSS: bootstrap disk + wait for shared gateway. Cloud: spawn container. */
+  /** Bootstrap disk + wait for shared gateway. */
   provision(projectId: string, opts: ProvisionOpts): Promise<RuntimeHandle>;
   start(handle: RuntimeHandle): Promise<void>;
   stop(handle: RuntimeHandle): Promise<void>;

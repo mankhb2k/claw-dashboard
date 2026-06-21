@@ -1,7 +1,8 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 
 import { MessageBox } from "./MessageBox";
+
+import type { Decorator, Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const providerOptions = [
   { value: "openai", label: "OpenAI" },

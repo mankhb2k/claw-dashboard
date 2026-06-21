@@ -1,3 +1,5 @@
+import { connectorLogo } from "@/utils/logoship/connector-logo";
+
 export type ServiceType = "MCP" | "API" | "OAUTH";
 
 export type PermissionMode = "allow" | "ask" | "block";
@@ -47,7 +49,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     type: "OAUTH",
     author: "Google",
     description: "Connect Google Drive to manage and share files.",
-    iconSrc: "/tools-provider-icon/GoogleDrive-icon.svg",
+    iconSrc: connectorLogo("google-drive"),
   },
   {
     id: "notion",
@@ -56,7 +58,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     type: "MCP",
     author: "Notion",
     description: "Connect Notion to read and write databases and pages.",
-    iconSrc: "/tools-provider-icon/Notion-icon.svg",
+    iconSrc: connectorLogo("notion"),
   },
   {
     id: "github",
@@ -65,7 +67,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     type: "OAUTH",
     author: "GitHub",
     description: "Connect GitHub to manage repositories and code.",
-    iconSrc: "/tools-provider-icon/GitHub-icon.svg",
+    iconSrc: connectorLogo("github"),
   },
   {
     id: "slack",
@@ -74,7 +76,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     type: "MCP",
     author: "Slack",
     description: "Connect Slack to send messages and receive notifications.",
-    iconSrc: "/icons/slack.svg",
+    iconSrc: connectorLogo("slack"),
   },
   {
     id: "gmail",
@@ -83,7 +85,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     type: "OAUTH",
     author: "Google",
     description: "Connect Gmail to read and send email.",
-    iconSrc: "/tools-provider-icon/Gmail-icon.svg",
+    iconSrc: connectorLogo("gmail"),
   },
   {
     id: "google-calendar",
@@ -92,7 +94,7 @@ export const CONNECT_SERVICES: ServiceConnectData[] = [
     type: "OAUTH",
     author: "Google",
     description: "Connect Google Calendar to manage schedules.",
-    iconSrc: "/tools-provider-icon/GoogleCalendar-icon.svg",
+    iconSrc: connectorLogo("google-calendar"),
   },
   {
     id: "shopee",

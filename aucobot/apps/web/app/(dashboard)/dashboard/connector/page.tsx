@@ -1,9 +1,10 @@
 import { Suspense } from "react";
-import { getCurrentProjectId } from "@/lib/current-project";
+
 import { ClientConnectPage } from "./_components/ClientConnectPage/ClientConnectPage";
+import styles from "./connect.module.css";
 import { Container, Flex } from "@/components/layout";
 import { Spinner } from "@/components/ui";
-import styles from "./connect.module.css";
+import { getCurrentProjectId } from "@/lib/current-project";
 
 export default async function ProjectConnectPage() {
   const projectId = await getCurrentProjectId();

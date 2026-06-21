@@ -17,8 +17,12 @@ export function readLocale(): Locale {
 
 export function readLocaleWithFallback(fallback: Locale): Locale {
   if (typeof window === 'undefined') return fallback
-  const raw = window.localStorage.getItem(I18N_LOCALE_STORAGE_KEY)
-  return isLocale(raw) ? raw : fallback
+  try {
+    const raw = window.localStorage?.getItem(I18N_LOCALE_STORAGE_KEY) ?? null
+    return isLocale(raw) ? raw : fallback
+  } catch {
+    return fallback
+  }
 }
 
 export function writeLocale(locale: Locale) {

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useI18n } from "@/lib/i18n";
+
 import styles from "./AgentPanelModelBar.module.css";
+import { useI18n } from "@/lib/i18n";
 
 export function AgentPanelNoModelBanner() {
   const { t } = useI18n();

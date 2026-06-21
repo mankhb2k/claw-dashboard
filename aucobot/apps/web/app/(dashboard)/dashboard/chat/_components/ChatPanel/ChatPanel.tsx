@@ -1,23 +1,23 @@
 "use client";
 
+import { AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import {
-  AlertCircle,
-  MessageSquare,
-  RefreshCw,
-} from "lucide-react";
-import { Box } from "@/components/layout";
-import { Button, Select } from "@/components/ui";
-import { isOssRuntime } from "@/lib/runtime/runtime-mode";
-import type { LiveThreadItem } from "@/utils/chat/tool/types";
-import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
+
+import styles from "./ChatPanel.module.css";
 import { ChatLiveThread } from "../ChatLiveThread/ChatLiveThread";
+import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
 import { ContentArea } from "../ContentArea/ContentArea";
 import {
   MessageBox,
   type ComposerSendPayload,
 } from "@/components/chat/MessageBox";
-import styles from "./ChatPanel.module.css";
+import { Box } from "@/components/layout";
+import { Button, Select } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
+
+import type { InvokableSkill } from "@/utils/chat/skill-slash";
+import type { LiveThreadItem } from "@/utils/chat/tool/types";
 
 export type ChatPanelMessage = {
   id: string;
@@ -36,11 +36,11 @@ type SelectOption = {
   label: string;
 };
 
-const STATUS_LABEL: Record<ChatPanelConnectionState, string> = {
-  idle: "Waiting to connect",
-  connecting: "Connecting…",
-  connected: "Connected",
-  error: "Connection error",
+const STATUS_KEYS: Record<ChatPanelConnectionState, string> = {
+  idle: "chat.panel.connection.idle",
+  connecting: "chat.panel.connection.connecting",
+  connected: "chat.panel.connection.connected",
+  error: "chat.panel.connection.error",
 };
 
 export type ChatPanelProps = {
@@ -90,6 +90,8 @@ export type ChatPanelProps = {
   sessionKey?: string;
   liveItems?: LiveThreadItem[];
   showToolPreparing?: boolean;
+  invokableSkills?: InvokableSkill[];
+  invokableSkillsLoading?: boolean;
 };
 
 export function ChatPanel({
@@ -134,7 +136,10 @@ export function ChatPanel({
   sessionKey,
   liveItems = [],
   showToolPreparing = false,
+  invokableSkills,
+  invokableSkillsLoading,
 }: ChatPanelProps) {
+  const { t } = useI18n();
   const showEmpty =
     messages.length === 0 &&
     liveItems.length === 0 &&
@@ -142,10 +147,7 @@ export function ChatPanel({
     !sending &&
     connectionState === "connected";
 
-  const canSend =
-    ready &&
-    connectionState === "connected" &&
-    !sending;
+  const canSend = ready && connectionState === "connected" && !sending;
 
   const controlsDisabled =
     connectionState === "connecting" || sending || statusLoading;
@@ -160,17 +162,19 @@ export function ChatPanel({
           : styles.statusIdle;
 
   return (
-    <Box as="section" className={styles.panel} aria-label="Chat conversation">
+    <Box as="section" className={styles.panel} aria-label={t("chat.panel.ariaConversation")}>
       <header className={styles.header}>
         <div className={styles.headerMain}>
-          <p className={styles.headerTitle}>OpenClaw Chat</p>
+          <p className={styles.headerTitle}>{t("chat.panel.title")}</p>
           <p className={styles.headerSub}>
-            {projectDisplayName ?? "Project"} ·{" "}
+            {projectDisplayName ?? t("chat.panel.projectFallback")} ·{" "}
             {statusLoading
-              ? "Checking…"
+              ? t("chat.panel.checking")
               : ready
-                ? "Gateway ready"
-                : `Status: ${projectStatus ?? "—"}`}
+                ? t("chat.panel.gatewayReady")
+                : t("chat.panel.statusLabel", {
+                    status: projectStatus ?? "—",
+                  })}
           </p>
         </div>
 
@@ -187,13 +191,13 @@ export function ChatPanel({
                   : [{ value: "main", label: "main" }]
               }
               disabled={controlsDisabled}
-              placeholder="Select agent"
+              placeholder={t("chat.panel.selectAgent")}
             />
           </div>
 
           <div
             className={styles.thinkingField}
-            title="Off = faster responses; High = deeper reasoning, slower"
+            title={t("chat.panel.thinkingTitle")}
           >
             <Select
               id="chat-thinking"
@@ -202,7 +206,7 @@ export function ChatPanel({
               onValueChange={onThinkingChange}
               options={thinkingOptions}
               disabled={controlsDisabled || thinkingSaving}
-              placeholder="Thinking"
+              placeholder={t("chat.panel.thinkingPlaceholder")}
             />
           </div>
         </div>
@@ -210,16 +214,18 @@ export function ChatPanel({
         <div className={styles.headerActions}>
           <span
             className={`${styles.statusPill} ${statusClass}`}
-            title={STATUS_LABEL[connectionState]}
+            title={t(STATUS_KEYS[connectionState])}
           >
             <span className={styles.statusDot} />
-            {statusLoading ? "Checking…" : STATUS_LABEL[connectionState]}
+            {statusLoading
+              ? t("chat.panel.checking")
+              : t(STATUS_KEYS[connectionState])}
           </span>
 
           {ready && connectionState === "error" && (
             <Button size="sm" variant="outline" onClick={onConnect}>
               <RefreshCw size={14} />
-              Reconnect
+              {t("chat.panel.reconnect")}
             </Button>
           )}
         </div>
@@ -227,9 +233,9 @@ export function ChatPanel({
 
       {!modelsLoading && !hasProviders && (
         <div className={styles.modelHint} role="status">
-          No LLM API key yet.{" "}
-          <Link href="/dashboard/ai-model/gemini">Add a Gemini API key</Link>{" "}
-          and select a model in the composer below.
+          {t("chat.panel.noApiKey")}
+          <Link href="/dashboard/ai-model/gemini">{t("chat.panel.addGeminiKey")}</Link>
+          {t("chat.panel.selectModelHint")}
         </div>
       )}
 
@@ -237,17 +243,17 @@ export function ChatPanel({
         <div className={styles.alert} role="alert">
           <AlertCircle size={18} className={styles.alertIcon} />
           <div className={styles.alertBody}>
-            <span className={styles.alertTitle}>Cannot chat</span>
+            <span className={styles.alertTitle}>{t("chat.panel.cannotChat")}</span>
             {error}
           </div>
           {ready && (
             <Button size="sm" variant="outline" onClick={onConnect}>
-              Retry
+              {t("chat.panel.retry")}
             </Button>
           )}
           {!ready && (
             <Button size="sm" variant="outline" onClick={onOpenSetup}>
-              Open setup
+              {t("chat.panel.openSetup")}
             </Button>
           )}
         </div>
@@ -261,19 +267,19 @@ export function ChatPanel({
               <div className={styles.emptyIcon}>
                 <MessageSquare size={28} />
               </div>
-              <h2 className={styles.emptyTitle}>Start a conversation</h2>
+              <h2 className={styles.emptyTitle}>{t("chat.panel.emptyTitle")}</h2>
               <p className={styles.emptyHint}>
                 {isOssRuntime()
-                  ? "Send a message to chat with your OpenClaw agent via the shared gateway."
-                  : "Send a message to chat with your OpenClaw agent on your container."}{" "}
-                Press Enter to send, Shift+Enter for a new line.
+                  ? t("chat.panel.emptyHintOss")
+                  : t("chat.panel.emptyHintContainer")}{" "}
+                {t("chat.panel.emptyHintKeys")}
               </p>
               <Button
                 size="sm"
                 onClick={onNewSession}
                 disabled={sessionActionsDisabled}
               >
-                New chat
+                {t("chat.panel.newChat")}
               </Button>
             </div>
           ) : undefined
@@ -290,11 +296,11 @@ export function ChatPanel({
             disabled={!ready || connectionState !== "connected"}
             inputId="chat-message-input"
             composerId="chat-composer"
-            ariaLabel="Chat message input"
+            ariaLabel={t("chat.panel.messageInputAria")}
             placeholder={
               ready && connectionState === "connected"
-                ? "Type a message…"
-                : "Connect to the gateway to chat…"
+                ? t("chat.panel.placeholderConnected")
+                : t("chat.panel.placeholderDisconnected")
             }
             providerId={providerId}
             providerOptions={providerOptions}
@@ -312,6 +318,8 @@ export function ChatPanel({
             projectId={projectId}
             sandboxActive={sandboxActive}
             stagingMaxBytes={stagingMaxBytes}
+            invokableSkills={invokableSkills}
+            invokableSkillsLoading={invokableSkillsLoading}
           />
         }
       >

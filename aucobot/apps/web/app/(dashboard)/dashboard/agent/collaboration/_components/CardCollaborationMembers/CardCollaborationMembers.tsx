@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import styles from "./CardCollaborationMembers.module.css";
+import { SearchItem } from "@/components/dashboard";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -9,10 +10,9 @@ import {
   Card,
   Button,
 } from "@/components/ui";
-import { SearchItem } from "@/components/dashboard";
 import { useI18n } from "@/lib/i18n";
+
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
-import styles from "./CardCollaborationMembers.module.css";
 
 type CardCollaborationMembersProps = {
   enabled: boolean;

@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl } from '@/lib/http/api-base-url'
+import { translate } from '@/lib/i18n/translate'
 
 type ApiEnvelope<T> = {
   success?: boolean
@@ -10,7 +11,7 @@ function parseApiEnvelope<T>(json: unknown): T {
   if (json && typeof json === 'object' && 'success' in json) {
     const envelope = json as ApiEnvelope<T>
     if (envelope.success === false) {
-      throw new Error(envelope.error?.message ?? 'Request failed')
+      throw new Error(envelope.error?.message ?? translate('http.requestFailed'))
     }
     return envelope.data as T
   }
@@ -43,7 +44,7 @@ export async function uploadMultipart(
         typeof json === 'object' &&
         'message' in json &&
         String((json as { message: unknown }).message)) ||
-      `Upload failed (${res.status})`
+      translate('chat.errors.uploadFailedStatus', { status: String(res.status) })
     throw new Error(String(message))
   }
 

@@ -1,14 +1,19 @@
 "use client";
 
+import { ChevronsLeft } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
-import { ChevronsLeft } from "lucide-react";
+
+import styles from "./Sidebar.module.css";
 import { SidebarFooter } from "@/components/dashboard/SidebarFooter/SidebarFooter";
 import { useI18n } from "@/lib/i18n";
-import styles from "./Sidebar.module.css";
+import { shouldUseUnoptimized } from "@/utils/image/app-image.utils";
+
+import type { LucideIcon } from "lucide-react";
 
 const ICON_STROKE = 1.25;
+const BRAND_ICON = "/aucobot-icon.svg";
 
 export type NavItem = {
   href: string;
@@ -40,14 +45,14 @@ export function Sidebar({
       <header className={styles.header}>
         <div className={styles.brand}>
           <Link href={homeHref} title={t("sidebar.dashboardTitle")} className={styles.brandLink}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/aucobot-icon.svg"
+            <Image
+              src={BRAND_ICON}
               alt=""
               aria-hidden
               className={styles.logoIcon}
               width={24}
               height={24}
+              unoptimized={shouldUseUnoptimized(BRAND_ICON)}
             />
             <span className={styles.logoText}>
               {t("sidebar.brand")}

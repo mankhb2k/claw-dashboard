@@ -1,11 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import type { NextRequest } from 'next/server'
 
 vi.mock('@/lib/http/api-base-url', () => ({
   getServerApiBaseUrl: () => 'http://localhost:8387',
 }))
 
 import { resolveSession } from '@/lib/auth/session-middleware'
+
+import type { NextRequest } from 'next/server'
 
 function mockRequest(cookie?: string): NextRequest {
   return {

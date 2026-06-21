@@ -35,10 +35,12 @@ describe('overview-timezone.util', () => {
 
   it('defaults metrics range to 7 days ending on dateTo', () => {
     const fixed = new Date('2026-06-05T12:00:00.000Z');
-    expect(resolveMetricsDateRange(undefined, undefined, 'UTC', fixed)).toEqual({
-      dateFrom: '2026-05-30',
-      dateTo: '2026-06-05',
-    });
+    expect(resolveMetricsDateRange(undefined, undefined, 'UTC', fixed)).toEqual(
+      {
+        dateFrom: '2026-05-30',
+        dateTo: '2026-06-05',
+      },
+    );
   });
 
   it('rejects inverted metrics ranges', () => {

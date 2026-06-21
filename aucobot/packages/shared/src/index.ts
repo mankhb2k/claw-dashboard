@@ -71,7 +71,6 @@ export {
   validateTelegramAccessForm,
   validateTelegramAccessConfig,
   readTelegramAccessFromConfig,
-  TELEGRAM_DM_POLICY_OPTIONS,
   type TelegramAccessValidation,
   DISCORD_DM_POLICIES,
   type DiscordDmPolicy,
@@ -96,3 +95,9 @@ export {
   OPENCLAW_DOC_ORIGIN,
   openclawDocsUrl,
 } from './channels/openclaw-channel-defs.js';
+export {
+  UsageSource,
+  UsageStatus,
+  USAGE_SOURCES,
+  USAGE_STATUSES,
+} from './usage/usage.js';

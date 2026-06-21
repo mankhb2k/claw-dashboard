@@ -1,3 +1,5 @@
+import { translate } from '@/lib/i18n/translate'
+
 const MAX_BYTES = 512 * 1024
 const MAX_EDGE = 256
 const ALLOWED_TYPES = new Set([
@@ -9,10 +11,10 @@ const ALLOWED_TYPES = new Set([
 
 export function validateAvatarFile(file: File): string | null {
   if (!ALLOWED_TYPES.has(file.type)) {
-    return 'Only JPEG, PNG, WebP, or GIF images are supported'
+    return translate('profile.avatar.unsupportedType')
   }
   if (file.size > MAX_BYTES) {
-    return 'Image must be 512 KB or smaller'
+    return translate('profile.avatar.tooLarge')
   }
   return null
 }
@@ -51,7 +53,7 @@ export async function prepareAvatarFile(file: File): Promise<File> {
     return file
   }
   if (blob.size > MAX_BYTES) {
-    throw new Error('Image is still over 512 KB after compression — choose a smaller file')
+    throw new Error(translate('profile.avatar.stillTooLarge'))
   }
   const ext = outputType === 'image/png' ? 'png' : 'jpg'
   return new File([blob], `avatar.${ext}`, { type: outputType })

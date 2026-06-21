@@ -6,7 +6,9 @@ export type SkillContextForPrompt = {
   currentBodyMarkdown?: string;
 };
 
-export function buildSkillAiEditorSystemPrompt(ctx: SkillContextForPrompt): string {
+export function buildSkillAiEditorSystemPrompt(
+  ctx: SkillContextForPrompt,
+): string {
   const lines = [
     'You help the user write the BODY of an OpenClaw Agent Skill (markdown only).',
     'Rules:',

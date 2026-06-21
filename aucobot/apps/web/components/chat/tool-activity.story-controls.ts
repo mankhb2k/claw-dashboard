@@ -4,6 +4,7 @@ import {
   resolveToolActivityI18nKey,
   type CanonicalToolId,
 } from '@/utils/chat/tool/stream'
+
 import type {
   ToolActivity,
   ToolActivityStatus,
@@ -355,6 +356,10 @@ export function buildResearchEntries(preset: ResearchPreset): ToolStreamEntry[] 
         buildStoryToolEntry({ toolPreset: 'web_fetch', status: 'running' }),
         buildStoryToolEntry({ toolPreset: 'web_fetch', status: 'done' }),
       ]
+    default: {
+      const _exhaustive: never = preset
+      return _exhaustive
+    }
   }
 }
 

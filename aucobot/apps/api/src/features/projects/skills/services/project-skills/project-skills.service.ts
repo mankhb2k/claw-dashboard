@@ -1,11 +1,13 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import {
@@ -168,23 +170,34 @@ export class ProjectSkillsService {
   ): Promise<ProjectSkillDetail> {
     const existing = await this.findRow(projectId, slug);
 
-    const name = params.name !== undefined ? validateSkillName(params.name) : existing.name;
+    const name =
+      params.name !== undefined
+        ? validateSkillName(params.name)
+        : existing.name;
     const description =
-      params.description !== undefined ? params.description.trim() : existing.description;
+      params.description !== undefined
+        ? params.description.trim()
+        : existing.description;
     if (!description) {
       throw new BadRequestException('description is required');
     }
     const bodyMarkdown =
-      params.bodyMarkdown !== undefined ? params.bodyMarkdown : existing.bodyMarkdown;
+      params.bodyMarkdown !== undefined
+        ? params.bodyMarkdown
+        : existing.bodyMarkdown;
     this.assertBodySize(bodyMarkdown);
-    const enabled = params.enabled !== undefined ? params.enabled : existing.enabled;
+    const enabled =
+      params.enabled !== undefined ? params.enabled : existing.enabled;
 
     let row = await this.prisma.projectSkill.update({
       where: { id: existing.id },
       data: {
         name,
         description,
-        heading: params.heading !== undefined ? params.heading?.trim() || null : existing.heading,
+        heading:
+          params.heading !== undefined
+            ? params.heading?.trim() || null
+            : existing.heading,
         bodyMarkdown,
         enabled,
         lastSyncError: null,
@@ -200,7 +213,11 @@ export class ProjectSkillsService {
     };
   }
 
-  async setEnabled(projectId: string, slug: string, enabled: boolean): Promise<ProjectSkillDetail> {
+  async setEnabled(
+    projectId: string,
+    slug: string,
+    enabled: boolean,
+  ): Promise<ProjectSkillDetail> {
     return this.update(projectId, slug, { enabled });
   }
 
@@ -211,7 +228,9 @@ export class ProjectSkillsService {
     await this.publishRuntime(projectId);
   }
 
-  async syncAllEnabled(projectId: string): Promise<{ synced: number; failed: number }> {
+  async syncAllEnabled(
+    projectId: string,
+  ): Promise<{ synced: number; failed: number }> {
     const rows = await this.prisma.projectSkill.findMany({
       where: { projectId, enabled: true },
     });
@@ -306,7 +325,10 @@ export class ProjectSkillsService {
     }
   }
 
-  private async removeSkillFromDisk(projectId: string, slug: string): Promise<void> {
+  private async removeSkillFromDisk(
+    projectId: string,
+    slug: string,
+  ): Promise<void> {
     const dataDir = await this.workspace.ensureProjectLayout(projectId);
     const dir = this.skillDir(dataDir, slug);
     try {

@@ -1,15 +1,17 @@
 "use client";
 
 import { useLayoutEffect, useSyncExternalStore } from "react";
+
+import { ToastProvider } from "@/components/ui";
 import { I18nProvider } from "@/lib/i18n";
-import type { Locale } from "@/lib/i18n";
 import {
   readThemeAppearance,
   subscribeThemeAppearance,
 } from "@/lib/theme/theme-sync";
-import { ToastProvider } from "@/components/ui";
 
-/** Đồng bộ `data-theme` với theme store / localStorage. */
+import type { Locale } from "@/lib/i18n";
+
+/** Sync `data-theme` with theme store / localStorage. */
 function ThemeDocumentSync({ appearance }: { appearance: "light" | "dark" }) {
   useLayoutEffect(() => {
     const mode = readThemeAppearance();

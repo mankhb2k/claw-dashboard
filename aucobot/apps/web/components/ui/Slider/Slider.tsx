@@ -1,5 +1,6 @@
-import * as React from 'react'
 import * as SliderPrimitive from '@radix-ui/react-slider'
+import * as React from 'react'
+
 import styles from './Slider.module.css'
 
 export interface SliderProps extends SliderPrimitive.SliderProps {

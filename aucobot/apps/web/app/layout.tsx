@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
 import { Be_Vietnam_Pro } from "next/font/google";
+import { cookies, headers } from "next/headers";
 import Script from "next/script";
+
 import "./globals.css";
 import { Providers } from "./providers";
 import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from "@/lib/i18n";
-import { THEME_APPEARANCE_COOKIE } from "@/lib/theme/theme-constants";
 import { getThemeBootstrapInlineScript } from "@/lib/theme/theme-bootstrap";
+import { THEME_APPEARANCE_COOKIE } from "@/lib/theme/theme-constants";
+
+import type { Metadata } from "next";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",

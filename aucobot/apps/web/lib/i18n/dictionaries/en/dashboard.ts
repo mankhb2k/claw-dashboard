@@ -66,4 +66,14 @@ export const enDashboard = {
       createFailed: "Create project failed",
     },
   },
+  schedule: {
+    title: 'Scheduled tasks',
+    subtitle: 'Cron jobs across all agents in this project (gateway).',
+    viewAll: 'View all',
+    jobsUsed: '/ {{limit}} jobs used · {{remaining}} remaining',
+    failedJobs: '{{count}} job{{suffix}} with a failed last run',
+    review: 'Review →',
+    projectSchedules: 'Project schedules →',
+    manageAgents: 'Manage agents →',
+  },
 } as const;

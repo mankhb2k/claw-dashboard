@@ -1,4 +1,8 @@
-function envMs(current: string | undefined, legacy: string | undefined, fallback: number): number {
+function envMs(
+  current: string | undefined,
+  legacy: string | undefined,
+  fallback: number,
+): number {
   const raw = current ?? legacy;
   if (raw === undefined || raw === '') return fallback;
   const n = Number(raw);
@@ -24,7 +28,10 @@ export const SKILL_AI_EDITOR_MAX_MARKDOWN_CHARS = 64_000;
 
 export const SKILL_AI_EDITOR_MAX_MESSAGES = 20;
 
-export const SKILL_AI_EDITOR_SUPPORTED_PROVIDERS = ['gemini', 'openai'] as const;
+export const SKILL_AI_EDITOR_SUPPORTED_PROVIDERS = [
+  'gemini',
+  'openai',
+] as const;
 
 export type SkillAiEditorProviderId =
   (typeof SKILL_AI_EDITOR_SUPPORTED_PROVIDERS)[number];

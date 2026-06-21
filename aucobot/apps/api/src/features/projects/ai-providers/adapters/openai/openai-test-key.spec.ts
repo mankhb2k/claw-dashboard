@@ -7,7 +7,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
-    text: async () => JSON.stringify(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   } as Response;
 }
 
@@ -37,8 +37,10 @@ describe('smokeTestOpenAiApiKey', () => {
     const body = JSON.parse(init.body as string) as {
       model: string;
       messages: unknown[];
+      max_completion_tokens: number;
     };
     expect(body.model).toBe('gpt-5.4-mini');
+    expect(body.max_completion_tokens).toBe(16);
     expect(body.messages).toHaveLength(1);
   });
 
@@ -51,16 +53,22 @@ describe('smokeTestOpenAiApiKey', () => {
 
     const result = await smokeTestOpenAiApiKey('sk-test');
 
-    expect(result).toEqual({ ok: true, model: 'gpt-5.4-mini', message: 'verified' });
+    expect(result).toEqual({
+      ok: true,
+      model: 'gpt-5.4-mini',
+      message: 'verified',
+    });
   });
 
   it('returns error with API message on HTTP failure', async () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 401,
-      text: async () =>
-        JSON.stringify({ error: { message: 'Incorrect API key provided' } }),
-    } as Response);
+      text: () =>
+        Promise.resolve(
+          JSON.stringify({ error: { message: 'Incorrect API key provided' } }),
+        ),
+    });
 
     const result = await smokeTestOpenAiApiKey('bad');
 
@@ -72,8 +80,8 @@ describe('smokeTestOpenAiApiKey', () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
-      text: async () => 'upstream error',
-    } as Response);
+      text: () => Promise.resolve('upstream error'),
+    });
 
     const result = await smokeTestOpenAiApiKey('key');
 
@@ -85,7 +93,11 @@ describe('smokeTestOpenAiApiKey', () => {
 
     const result = await smokeTestOpenAiApiKey('key');
 
-    expect(result).toEqual({ ok: true, model: 'gpt-5.4-mini', message: 'verified' });
+    expect(result).toEqual({
+      ok: true,
+      model: 'gpt-5.4-mini',
+      message: 'verified',
+    });
   });
 
   it('returns timeout error when fetch times out', async () => {

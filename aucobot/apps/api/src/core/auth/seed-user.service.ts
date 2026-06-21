@@ -1,7 +1,8 @@
 /** On boot: ensureSelfHostDefaultUser from env */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ensureSelfHostDefaultUser } from '@aucobot/control-plane-core';
+
 import { PrismaService } from '../database/prisma.service';
+import { ensureSelfHostDefaultUser } from '@aucobot/control-plane-core';
 
 @Injectable()
 export class SeedUserService implements OnModuleInit {
@@ -11,16 +12,17 @@ export class SeedUserService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     try {
-      const { username, created } = await ensureSelfHostDefaultUser(this.prisma);
+      const { username, created } = await ensureSelfHostDefaultUser(
+        this.prisma,
+      );
       this.log.log(
         created
           ? `Self-host default user created (username=${username})`
           : `Self-host default user synced from env (username=${username})`,
       );
     } catch (err) {
-      this.log.error(
-        `Failed to ensure self-host default user: ${err instanceof Error ? err.message : err}`,
-      );
+      const message = err instanceof Error ? err.message : String(err);
+      this.log.error(`Failed to ensure self-host default user: ${message}`);
     }
   }
 }

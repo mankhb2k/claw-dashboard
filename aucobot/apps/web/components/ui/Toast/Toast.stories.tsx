@@ -1,12 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import React from 'react';
+
+import { Button } from '@/components/ui/Button/Button';
 import {
   ToastProvider,
   useToast,
   toast,
   type ToastVariant,
 } from '@/components/ui/Toast/Toast';
-import { Button } from '@/components/ui/Button/Button';
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 type ToastStoryArgs = {
   variant: ToastVariant;

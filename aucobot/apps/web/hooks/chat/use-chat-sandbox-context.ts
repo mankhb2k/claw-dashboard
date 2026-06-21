@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { projectApi } from '@/lib/api/project';
 import {
   resolveEffectiveSandboxActive,
@@ -17,18 +18,25 @@ export function useChatSandboxContext(
   projectId: string,
   agentId: string,
 ): ChatSandboxContext {
+  const fetchKey = projectId ? `${projectId}:${agentId}` : null;
+  const [trackedFetchKey, setTrackedFetchKey] = useState<string | null>(null);
   const [sandboxActive, setSandboxActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!projectId) {
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    if (fetchKey) {
+      setLoading(true);
+    } else {
       setSandboxActive(false);
       setLoading(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!projectId) return undefined;
 
     let active = true;
-    setLoading(true);
 
     void (async () => {
       try {

@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers'
+
 import { getServerApiBaseUrl } from '@/lib/http/api-base-url'
+import { translate } from '@/lib/i18n/translate'
 
 export function getApiBaseUrl(): string {
   return getServerApiBaseUrl()
@@ -22,9 +24,9 @@ function unwrapApiPayload<T>(json: unknown): T {
     }
     const err = body.error
     if (err && typeof err === 'object' && 'message' in err) {
-      throw new Error(String((err as { message?: string }).message ?? 'API error'))
+      throw new Error(String((err as { message?: string }).message ?? translate('http.apiError')))
     }
-    throw new Error('API error')
+    throw new Error(translate('http.apiError'))
   }
   return json as T
 }

@@ -1,13 +1,15 @@
 /** /api/auth — cookies hold tokens; body returns { user } only */
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+
+import { setAuthCookies, clearAuthCookies } from './auth-cookies.util';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
-import { setAuthCookies, clearAuthCookies } from './auth-cookies.util';
+import { RegisterDto } from './dto/register.dto';
 import { extractRefreshTokenFromRequest } from '@aucobot/control-plane-core';
+
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,7 +29,10 @@ export class AuthController {
 
   /** bcrypt check + set cookies */
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) reply: FastifyReply) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
     const tokens = await this.auth.login(dto);
     setAuthCookies(reply, tokens);
     return { user: tokens.user };
@@ -40,8 +45,7 @@ export class AuthController {
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
   ) {
-    const raw =
-      dto.refreshToken?.trim() || extractRefreshTokenFromRequest(req);
+    const raw = dto.refreshToken?.trim() || extractRefreshTokenFromRequest(req);
     const tokens = await this.auth.refresh(raw);
     setAuthCookies(reply, tokens);
     return { user: tokens.user };
@@ -49,7 +53,10 @@ export class AuthController {
 
   /** Revoke refresh in DB + clear cookies */
   @Post('logout')
-  async logout(@Req() req: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
+  async logout(
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
     const raw = extractRefreshTokenFromRequest(req);
     await this.auth.logout(raw);
     clearAuthCookies(reply);
@@ -58,7 +65,10 @@ export class AuthController {
 
   /** Valid access or silent refresh via oc_refresh → set cookies when rotated */
   @Get('session')
-  async session(@Req() req: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
+  async session(
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
     const result = await this.auth.resolveSession(req);
     if (result.refreshed && result.tokens) {
       setAuthCookies(reply, result.tokens);

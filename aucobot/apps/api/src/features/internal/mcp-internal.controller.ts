@@ -1,9 +1,16 @@
-import { Controller, Get, NotFoundException, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { ConnectorConnectionStatus } from '@aucobot/database';
-import { decryptSecret } from '@aucobot/control-plane-core';
-import { PrismaService } from '../../core/database/prisma.service';
+
 import { McpServiceSecretGuard } from './mcp-service-secret.guard';
+import { PrismaService } from '../../core/database/prisma.service';
+import { decryptSecret } from '@aucobot/control-plane-core';
+import { ConnectorConnectionStatus } from '@aucobot/database';
 
 @ApiExcludeController()
 @Controller('internal/mcp')
@@ -31,7 +38,10 @@ export class McpInternalController {
       throw new NotFoundException('Connector not found');
     }
 
-    if (!row.enabled || row.connectionStatus !== ConnectorConnectionStatus.CONNECTED) {
+    if (
+      !row.enabled ||
+      row.connectionStatus !== ConnectorConnectionStatus.CONNECTED
+    ) {
       throw new NotFoundException('Connector is not connected');
     }
 

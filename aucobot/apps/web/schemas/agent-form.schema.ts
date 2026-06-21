@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { translate } from '@/lib/i18n/translate'
+
 export const agentVibeSchema = z.enum(['professional', 'friendly', 'strict'])
 
 export const agentInstructionsModeSchema = z.enum(['simple', 'advanced'])
@@ -8,49 +10,55 @@ const instructionsFieldMax = 12_000
 
 const INTERPRETER_SAFE_BINS = new Set(['python', 'python3', 'node', 'nodejs', 'ruby', 'bash', 'sh', 'zsh'])
 
+export type AgentFormTranslate = (path: string) => string
+
 /** Agent form schema — UI view model; compiled to OpenClaw bootstrap on save */
-export const agentFormSchema = z
-  .object({
-    name: z
-      .string()
-      .min(1, 'Agent name is required')
-      .max(120, 'Agent name must be at most 120 characters'),
-    description: z.string().max(500, 'Description must be at most 500 characters'),
-    avatar: z.string().min(1, 'Avatar is required'),
-    tags: z.array(z.string().min(1)).max(20, 'At most 20 tags'),
-    vibe: agentVibeSchema,
+export function createAgentFormSchema(t: AgentFormTranslate) {
+  return z
+    .object({
+      name: z
+        .string()
+        .min(1, t('agent.validation.name.required'))
+        .max(120, t('agent.validation.name.max')),
+      description: z.string().max(500, t('agent.validation.description.max')),
+      avatar: z.string().min(1, t('agent.validation.avatar.required')),
+      tags: z.array(z.string().min(1)).max(20, t('agent.validation.tags.max')),
+      vibe: agentVibeSchema,
 
-    instructionsMode: agentInstructionsModeSchema,
-    instructionsRole: z.string().max(instructionsFieldMax),
-    instructionsRules: z.string().max(instructionsFieldMax),
-    instructionsConstraints: z.string().max(instructionsFieldMax),
-    instructionsOutputFormat: z.string().max(instructionsFieldMax),
-    instructionsAdvanced: z.string().max(instructionsFieldMax),
+      instructionsMode: agentInstructionsModeSchema,
+      instructionsRole: z.string().max(instructionsFieldMax),
+      instructionsRules: z.string().max(instructionsFieldMax),
+      instructionsConstraints: z.string().max(instructionsFieldMax),
+      instructionsOutputFormat: z.string().max(instructionsFieldMax),
+      instructionsAdvanced: z.string().max(instructionsFieldMax),
 
-    toolsNotes: z.string().max(instructionsFieldMax),
+      toolsNotes: z.string().max(instructionsFieldMax),
 
-    model: z.string(),
-    shellExecEnabled: z.boolean(),
-    skillNames: z.array(z.string().min(1)).max(100, 'At most 100 skills per agent'),
-  })
-  .superRefine((data, ctx) => {
-    if (data.instructionsMode === 'simple' && !data.instructionsRole.trim()) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['instructionsRole'],
-        message: 'Role description is required',
-      })
-    }
-    if (data.instructionsMode === 'advanced' && !data.instructionsAdvanced.trim()) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['instructionsAdvanced'],
-        message: 'AGENTS.md content is required',
-      })
-    }
-  })
+      model: z.string(),
+      shellExecEnabled: z.boolean(),
+      skillNames: z
+        .array(z.string().min(1))
+        .max(100, t('agent.validation.skillNames.max')),
+    })
+    .superRefine((data, ctx) => {
+      if (data.instructionsMode === 'simple' && !data.instructionsRole.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['instructionsRole'],
+          message: t('agent.validation.instructions.roleRequired'),
+        })
+      }
+      if (data.instructionsMode === 'advanced' && !data.instructionsAdvanced.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['instructionsAdvanced'],
+          message: t('agent.validation.instructions.agentsMdRequired'),
+        })
+      }
+    })
+}
 
-export type AgentFormInput = z.infer<typeof agentFormSchema>
+export type AgentFormInput = z.infer<ReturnType<typeof createAgentFormSchema>>
 export type AgentVibe = z.infer<typeof agentVibeSchema>
 export type AgentInstructionsMode = z.infer<typeof agentInstructionsModeSchema>
 
@@ -92,7 +100,7 @@ export function buildAgentFormDefaults(
   const templateSlug = template?.id
 
   return {
-    name: template?.name ?? 'New Agent',
+    name: template?.name ?? translate('agent.defaults.newAgentName'),
     description: template?.description ?? '',
     avatar: template?.avatar ?? '🤖',
     tags: templateSlug ? [templateSlug] : [],

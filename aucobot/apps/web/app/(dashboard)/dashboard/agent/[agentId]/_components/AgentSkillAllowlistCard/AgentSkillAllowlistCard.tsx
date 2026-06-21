@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
+
+import styles from "./AgentSkillAllowlistCard.module.css";
 import { Flex } from "@/components/layout";
 import { Typography, Switch, Card, Button } from "@/components/ui";
-import { Sparkles } from "lucide-react";
+import { useProjectSkills } from "@/hooks/skill/use-project-skills";
 import { useI18n } from "@/lib/i18n";
 import { useProjectStore } from "@/stores/project.store";
-import { useProjectSkills } from "@/hooks/skill/use-project-skills";
+
 import type { AgentFormInput } from "@/schemas/agent-form.schema";
-import styles from "./AgentSkillAllowlistCard.module.css";
 
 export function AgentSkillAllowlistCard() {
   const { t } = useI18n();

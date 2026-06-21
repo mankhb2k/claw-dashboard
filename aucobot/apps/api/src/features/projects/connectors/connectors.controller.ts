@@ -10,13 +10,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
+
 import {
   CreateConnectorDto,
   UpdateConnectorDto,
   UpsertConnectorSecretDto,
 } from './dto/connector.dto';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  JwtPayloadUser,
+} from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
 import { ProjectConnectorsService } from './services/project-connectors/project-connectors.service';
 

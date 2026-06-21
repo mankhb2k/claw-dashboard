@@ -1,25 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import styles from "./ClientSkillEditorPage.module.css";
+import pageStyles from "../../skillEditorSlug.module.css";
+import { SkillAgentPanel } from "../SkillAgentPanel/SkillAgentPanel";
+import { SkillEditPanel } from "../SkillEditPanel/SkillEditPanel";
+import { BackButton } from "@/components/dashboard";
 import { Flex } from "@/components/layout";
 import { Typography, Spinner, toast } from "@/components/ui";
-import { BackButton } from "@/components/dashboard";
-import { buildSkillMarkdown } from "@/utils/skill/skill-markdown";
 import { projectApi } from "@/lib/api/project";
-import type { ProjectSkillDetail } from "@/schemas/project.schema";
+import { useI18n } from "@/lib/i18n";
 import { useProjectStore } from "@/stores/project.store";
 import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
+import { buildSkillMarkdown } from "@/utils/skill/skill-markdown";
+
 import type { SkillEditorHandle } from "../SkillEditPanel/SkillEditPanel";
-import { SkillEditPanel } from "../SkillEditPanel/SkillEditPanel";
-import { SkillAgentPanel } from "../SkillAgentPanel/SkillAgentPanel";
-import pageStyles from "../../skillEditorSlug.module.css";
-import styles from "./ClientSkillEditorPage.module.css";
+import type { ProjectSkillDetail } from "@/schemas/project.schema";
 
 const MIN_SAVING_DISPLAY_MS = 2000;
 const SAVED_DISPLAY_MS = 3000;
 
 export function ClientSkillEditorPage() {
+  const { t } = useI18n();
   const params = useParams();
   const skillSlug =
     typeof params.skillEditorSlug === "string" ? params.skillEditorSlug : "";
@@ -33,7 +37,6 @@ export function ClientSkillEditorPage() {
   const setSkillSnapshot = useSkillEditorStore((s) => s.setSkillSnapshot);
 
   const [bootstrapped, setBootstrapped] = useState(false);
-  const [skillLoading, setSkillLoading] = useState(false);
   const [skill, setSkill] = useState<ProjectSkillDetail | null>(null);
   const [bodyMarkdown, setBodyMarkdown] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -41,11 +44,22 @@ export function ClientSkillEditorPage() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const loadKey = projectId && skillSlug ? `${projectId}:${skillSlug}` : "";
+  const [trackedLoadKey, setTrackedLoadKey] = useState(loadKey);
+  const [skillLoading, setSkillLoading] = useState(Boolean(loadKey));
+
+  if (loadKey !== trackedLoadKey) {
+    setTrackedLoadKey(loadKey);
+    setSkillLoading(Boolean(loadKey));
+    setLoadError(null);
+  }
 
   const bodyRef = useRef(bodyMarkdown);
-  bodyRef.current = bodyMarkdown;
   const skillRef = useRef(skill);
-  skillRef.current = skill;
+  useEffect(() => {
+    bodyRef.current = bodyMarkdown;
+    skillRef.current = skill;
+  }, [bodyMarkdown, skill]);
   const editorRef = useRef<SkillEditorHandle>(null);
   const saveStartedAtRef = useRef<number | null>(null);
   const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,19 +109,21 @@ export function ClientSkillEditorPage() {
 
   useEffect(() => {
     if (!projectId || !skillSlug) return;
-    setLoadError(null);
-    setSkillLoading(true);
-    void projectApi
-      .getSkill(projectId, skillSlug)
-      .then((row) => {
+    void (async () => {
+      await Promise.resolve();
+      try {
+        const row = await projectApi.getSkill(projectId, skillSlug);
         setSkill(row);
         setBodyMarkdown(row.bodyMarkdown);
-      })
-      .catch((err) => {
+      } catch (err) {
         setSkill(null);
-        setLoadError(err instanceof Error ? err.message : "Failed to load skill");
-      })
-      .finally(() => setSkillLoading(false));
+        setLoadError(err instanceof Error ? err.message : t("skills.errors.load"));
+      } finally {
+        setSkillLoading(false);
+      }
+    })();
+    // Omit `t`: only used for fallback error messages; locale change must not reload skill body.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- §9.11
   }, [projectId, skillSlug]);
 
   useEffect(() => {
@@ -150,14 +166,14 @@ export function ClientSkillEditorPage() {
       } catch (err) {
         if (seq !== saveSeqRef.current) return;
 
-        const message = err instanceof Error ? err.message : "Save failed";
+        const message = err instanceof Error ? err.message : t("skills.errors.save");
         scheduleSaveStatus(seq, "error", () => {
           setSaveError(message);
-          toast.error("Failed to save skill", message);
+          toast.error(t("skills.toasts.saveFailed"), message);
         });
       }
     },
-    [clearSaveStatusTimer, projectId, scheduleSaveStatus],
+    [clearSaveStatusTimer, projectId, scheduleSaveStatus, t],
   );
 
   const handleBodyChange = useCallback(
@@ -179,8 +195,8 @@ export function ClientSkillEditorPage() {
   const handleApplyAiMarkdown = useCallback(async (markdown: string) => {
     await editorRef.current?.applyMarkdown(markdown);
     setBodyMarkdown(markdown);
-    toast.success("AI updated the editor", "Saving to skill…");
-  }, []);
+    toast.success(t("skills.toasts.aiUpdated"), t("skills.toasts.aiUpdatedDescription"));
+  }, [t]);
 
   const handleCopy = useCallback(async () => {
     const current = skillRef.current;
@@ -196,11 +212,11 @@ export function ClientSkillEditorPage() {
     if (!preview.trim()) return;
     try {
       await navigator.clipboard.writeText(preview);
-      toast.success("Copied SKILL.md");
+      toast.success(t("skills.toasts.copied"));
     } catch {
-      toast.error("Could not copy to clipboard");
+      toast.error(t("skills.toasts.copyFailed"));
     }
-  }, []);
+  }, [t]);
 
   if (!bootstrapped || (projectsLoading && !projectId)) {
     return (
@@ -212,7 +228,7 @@ export function ClientSkillEditorPage() {
         className={pageStyles.state}
       >
         <Spinner size="md" />
-        <Typography variant="p">Loading data...</Typography>
+        <Typography variant="p">{t("skills.page.loadingData")}</Typography>
       </Flex>
     );
   }
@@ -220,7 +236,7 @@ export function ClientSkillEditorPage() {
   if (!projectId) {
     return (
       <Typography variant="p" className={pageStyles.error}>
-        No project yet. Create a project before editing a skill.
+        {t("skills.page.noProjectEdit")}
       </Typography>
     );
   }
@@ -228,9 +244,9 @@ export function ClientSkillEditorPage() {
   if (loadError || (!skill && !skillLoading && bootstrapped)) {
     return (
       <Flex direction="column" gap={12} className={pageStyles.state}>
-        <BackButton href="/dashboard/skill">Back to list</BackButton>
+        <BackButton href="/dashboard/skill">{t("skills.page.backToList")}</BackButton>
         <Typography variant="p" className={pageStyles.error}>
-          {loadError ?? "Skill not found."}
+          {loadError ?? t("skills.page.skillNotFound")}
         </Typography>
       </Flex>
     );

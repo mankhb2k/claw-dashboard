@@ -1,16 +1,5 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useProjectStore } from "@/stores/project.store";
-import { useI18n } from "@/lib/i18n";
-import {
-  getPrimaryProject,
-  shouldRedirectToSetup,
-  SETUP_PATH,
-} from "@/lib/routing/entry-route";
-import { isOssRuntime } from "@/lib/runtime/runtime-mode";
-import { Sidebar, NavItem } from "@/components/dashboard/Sidebar/Sidebar";
 import {
   Brain,
   LayoutDashboard,
@@ -22,9 +11,22 @@ import {
   Bot,
   MonitorSmartphone,
 } from "lucide-react";
-import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
-import { useSessionKeepAlive } from "@/hooks/auth/use-session-keep-alive";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useMemo } from "react";
+
 import styles from "./layout.module.css";
+import { Sidebar, NavItem } from "@/components/dashboard/Sidebar/Sidebar";
+import { useSessionKeepAlive } from "@/hooks/auth/use-session-keep-alive";
+import { useI18n } from "@/lib/i18n";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+import {
+  getPrimaryProject,
+  shouldRedirectToSetup,
+  SETUP_PATH,
+} from "@/lib/routing/entry-route";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
+import { useAuthStore } from "@/stores/auth.store";
+import { useProjectStore } from "@/stores/project.store";
 
 function isDashboardCanvasRoute(pathname: string): boolean {
   if (pathname.startsWith(`${DASHBOARD_BASE_PATH}/chat`)) {
@@ -52,9 +54,23 @@ export default function DashboardLayout({
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const syncProjectHealth = useProjectStore((s) => s.syncProjectHealth);
   const projects = useProjectStore((s) => s.projects);
+  const fetchMe = useAuthStore((s) => s.fetchMe);
   const gateDoneRef = useRef(false);
 
   useSessionKeepAlive();
+
+  useEffect(() => {
+    void fetchMe();
+  }, [fetchMe]);
+
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebar-collapsed");
+    if (savedState !== null) {
+      // SSR-safe: localStorage is client-only; read after mount to avoid hydration mismatch.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- §9.11
+      setCollapsed(JSON.parse(savedState) as boolean);
+    }
+  }, []);
 
   useEffect(() => {
     if (gateDoneRef.current) return;
@@ -101,13 +117,6 @@ export default function DashboardLayout({
       router.replace(SETUP_PATH);
     }
   }, [projects, workspaceChecked, router]);
-
-  useEffect(() => {
-    const savedState = localStorage.getItem("sidebar-collapsed");
-    if (savedState !== null) {
-      setCollapsed(JSON.parse(savedState));
-    }
-  }, []);
 
   const handleToggle = () => {
     setCollapsed((prev) => {

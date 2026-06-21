@@ -4,13 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
-import { ProjectsService } from '../../../services/projects/projects.service';
 import {
   resolveGatewayEndpoint,
   resolveOssGatewayHttpBase,
   resolveOssGatewayToken,
 } from '../../../runtime/gateway-endpoint';
+import { ProjectsService } from '../../../services/projects/projects.service';
 import {
   generateNodeInviteCode,
   hashNodeInviteCode,
@@ -83,7 +84,10 @@ export class NodeInvitesService {
     };
   }
 
-  async listInvites(userId: string, projectId: string): Promise<NodeInviteListItem[]> {
+  async listInvites(
+    userId: string,
+    projectId: string,
+  ): Promise<NodeInviteListItem[]> {
     await this.projects.assertOwned(userId, projectId);
 
     const rows = await this.prisma.nodeInvite.findMany({
@@ -95,7 +99,11 @@ export class NodeInvitesService {
     return rows.map((row) => this.toListItem(row));
   }
 
-  async revokeInvite(userId: string, projectId: string, inviteId: string): Promise<void> {
+  async revokeInvite(
+    userId: string,
+    projectId: string,
+    inviteId: string,
+  ): Promise<void> {
     await this.projects.assertOwned(userId, projectId);
 
     const row = await this.prisma.nodeInvite.findFirst({

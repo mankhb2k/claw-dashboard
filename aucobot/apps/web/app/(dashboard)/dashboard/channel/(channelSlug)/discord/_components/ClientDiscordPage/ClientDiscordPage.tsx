@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Flex } from "@/components/layout";
-import { Input, Button, Select } from "@/components/ui";
-import { BackButton } from "@/components/dashboard";
-import { projectApi } from "@/lib/api/project";
-import type { ProjectChannel } from "@/schemas/project.schema";
 import {
   readDiscordAccessFromConfig,
   DISCORD_DM_POLICY_OPTIONS,
   validateDiscordAccessForm,
   type DiscordDmPolicy,
 } from "@aucobot/shared";
+import { useEffect, useMemo, useState } from "react";
+
 import styles from "../../../channel-detail.module.css";
+import { BackButton } from "@/components/dashboard";
+import { Flex } from "@/components/layout";
+import { Input, Button, Select } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+
+import type { ProjectChannel } from "@/schemas/project.schema";
 
 interface Props {
   projectId: string;
@@ -34,22 +37,30 @@ function preserveBotMetadata(
 }
 
 export function ClientDiscordPage({ projectId }: Props) {
+  const { t } = useI18n();
   const [token, setToken] = useState("");
   const [dmPolicy, setDmPolicy] = useState<DiscordDmPolicy>("pairing");
   const [allowFromInput, setAllowFromInput] = useState("");
   const [channel, setChannel] = useState<ProjectChannel | null>(null);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+  const [loading, setLoading] = useState(Boolean(projectId));
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+    setError(null);
+  }
 
   useEffect(() => {
     if (!projectId) return;
-    setLoading(true);
-    projectApi
-      .listChannels(projectId)
-      .then((rows) => {
+    void (async () => {
+      await Promise.resolve();
+      try {
+        const rows = await projectApi.listChannels(projectId);
         const row = rows.find((c) => c.channelId === "discord") ?? null;
         setChannel(row);
         if (row) {
@@ -57,12 +68,15 @@ export function ClientDiscordPage({ projectId }: Props) {
           setDmPolicy(access.dmPolicy);
           setAllowFromInput(access.allowFromInput);
         }
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Failed to load channel configuration");
-      })
-      .finally(() => setLoading(false));
-  }, [projectId]);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : t("channels.detail.errors.load"),
+        );
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [projectId, t]);
 
   const accessValidation = useMemo(
     () => validateDiscordAccessForm({ dmPolicy, allowFromInput }),
@@ -87,7 +101,7 @@ export function ClientDiscordPage({ projectId }: Props) {
 
     const needsNewToken = !hasBotToken;
     if (needsNewToken && !token.trim()) {
-      setFieldError("Bot token is required for the first connection.");
+      setFieldError(t("channels.detail.errors.tokenRequired"));
       return;
     }
 
@@ -109,27 +123,27 @@ export function ClientDiscordPage({ projectId }: Props) {
         await projectApi.upsertChannelSecret(projectId, row.id, "bot_token", token.trim());
         const test = await projectApi.testChannel(projectId, row.id);
         if (!test.ok) {
-          throw new Error(test.message ?? "Token verification failed");
+          throw new Error(test.message ?? t("channels.detail.errors.tokenVerify"));
         }
         row = await projectApi.updateChannel(projectId, row.id, {
           config: configPatch,
           enabled: true,
         });
         setToken("");
-        setSuccess(test.message ?? "Discord channel saved and enabled");
+        setSuccess(test.message ?? t("channels.detail.success.discordSavedEnabled"));
       } else if (row.connectionStatus === "connected") {
         row = await projectApi.updateChannel(projectId, row.id, {
           config: configPatch,
           enabled: true,
         });
-        setSuccess("DM access policy updated");
+        setSuccess(t("channels.detail.success.dmPolicyUpdated"));
       } else {
-        setSuccess("Configuration saved — enter token and save again to enable");
+        setSuccess(t("channels.detail.success.configSavedRetry"));
       }
 
       setChannel(row);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      setError(err instanceof Error ? err.message : t("channels.detail.errors.save"));
     } finally {
       setSaving(false);
     }
@@ -143,9 +157,9 @@ export function ClientDiscordPage({ projectId }: Props) {
     try {
       const updated = await projectApi.updateChannel(projectId, channel.id, { enabled: false });
       setChannel(updated);
-      setSuccess("Discord channel disabled");
+      setSuccess(t("channels.detail.success.discordDisabled"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to disable channel");
+      setError(err instanceof Error ? err.message : t("channels.detail.errors.disable"));
     } finally {
       setSaving(false);
     }
@@ -164,7 +178,7 @@ export function ClientDiscordPage({ projectId }: Props) {
     accessValidation.ok && projectId && (hasBotToken || token.trim().length > 0);
 
   if (loading) {
-    return <p className={styles.hint}>Loading...</p>;
+    return <p className={styles.hint}>{t("channels.detail.loading")}</p>;
   }
 
   return (
@@ -180,7 +194,7 @@ export function ClientDiscordPage({ projectId }: Props) {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Connected</h2>
           <p className={styles.statusMeta}>
-            Bot: {botUsername ? `@${botUsername}` : "Discord bot"}
+            Bot: {botUsername ? `@${botUsername}` : t("channels.detail.botFallback.discord")}
             {channel.secrets[0]?.masked ? ` · Token: ${channel.secrets[0].masked}` : null}
             <br />
             DM: <strong>{savedAccess?.dmPolicy ?? dmPolicy}</strong>

@@ -1,6 +1,7 @@
 appId: ai.openclaw.node-device
-productName: OpenClaw Node
+productName: Aucobot Node
 npmRebuild: false
+publish: null
 directories:
   output: release
 files:

@@ -1,8 +1,9 @@
 import { forwardRef, Module } from '@nestjs/common';
+
 import { ProjectsModule } from '../projects.module';
-import { WorkspaceModule } from '../workspace/workspace.module';
 import { ChannelsCatalogController } from './channels-catalog.controller';
 import { ChannelsController } from './channels.controller';
+import { WorkspaceModule } from '../workspace/workspace.module';
 import { ChannelsService } from './services/channels/channels.service';
 
 @Module({

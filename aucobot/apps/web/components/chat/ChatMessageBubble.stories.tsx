@@ -1,8 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-
-import { ChatMessageBubble } from '@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble'
 
 import { withChatContentArea } from './chat-story.decorators'
+import { ChatMessageBubble } from '@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+
 
 type MessageBubbleStoryArgs = {
   role: 'user' | 'assistant'

@@ -28,6 +28,55 @@ export const viChannels = {
     backToList: '← Về danh sách',
     invalidProject: 'Mã project không hợp lệ',
   },
+  detail: {
+    errors: {
+      load: 'Không tải được cấu hình kênh',
+      tokenRequired: 'Cần bot token cho lần kết nối đầu tiên.',
+      tokenVerify: 'Xác minh token thất bại',
+      save: 'Lưu thất bại',
+      disable: 'Không tắt được kênh',
+    },
+    success: {
+      channelDisabled: 'Đã tắt kênh',
+      dmPolicyUpdated: 'Đã cập nhật chính sách DM',
+      configSavedRetry: 'Đã lưu cấu hình — nhập token và lưu lại để bật',
+      discordSavedEnabled: 'Đã lưu và bật kênh Discord',
+      telegramSavedEnabled: 'Đã lưu và bật kênh Telegram',
+      discordDisabled: 'Đã tắt kênh Discord',
+      telegramDisabled: 'Đã tắt kênh Telegram',
+    },
+    botFallback: {
+      discord: 'Discord bot',
+      telegram: 'Telegram bot',
+    },
+    loading: 'Đang tải...',
+    telegram: {
+      dmPolicy: {
+        allowlist: {
+          label: 'Allowlist (khuyến nghị)',
+          description: 'Chỉ user ID trong danh sách mới chat DM được với bot.',
+        },
+        pairing: {
+          label: 'Pairing',
+          description:
+            'Người lạ nhận mã pairing; admin approve trước khi bot trả lời.',
+        },
+        open: {
+          label: 'Mở (công khai)',
+          description: 'Mọi người DM được — chỉ dùng bot demo, rủi ro cao.',
+        },
+      },
+      form: {
+        dmPolicyLabel: 'Chính sách DM (dmPolicy)',
+        allowFromLabel: 'Telegram user ID (allowFrom)',
+        requiredSuffix: ' — bắt buộc',
+        optionalSuffix: ' — tùy chọn',
+        allowFromPlaceholder: '8734062810\n745123456',
+        allowFromHintBefore: 'Một ID mỗi dòng (hoặc phân tách bằng dấu phẩy). Tiền tố',
+        allowFromHintAfter: 'được chấp nhận.',
+      },
+    },
+  },
   badge: {
     channel: 'Channel',
     web: 'Web',

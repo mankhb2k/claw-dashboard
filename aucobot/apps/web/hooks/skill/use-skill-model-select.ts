@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { projectApi } from '@/lib/api/project';
+import { translate } from '@/lib/i18n/translate';
+
 import type { SkillAiEditorOptionsResponse } from '@/schemas/project.schema';
 
 const STORAGE_PREFIX = 'skill-panel-model:';
@@ -33,6 +36,8 @@ function saveStoredSelection(
 }
 
 export function useSkillModelSelect(projectId: string) {
+  const fetchKey = projectId || null;
+  const [trackedFetchKey, setTrackedFetchKey] = useState<string | null>(null);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [providerId, setProviderId] = useState<string | undefined>();
   const [modelId, setModelId] = useState<string | undefined>();
@@ -40,14 +45,23 @@ export function useSkillModelSelect(projectId: string) {
     useState<SkillAiEditorOptionsResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!projectId) {
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    if (fetchKey) {
+      setModelsLoading(true);
+      setLoadError(null);
+    } else {
       setModelsLoading(false);
       setModelOptions(null);
-      return;
+      setProviderId(undefined);
+      setModelId(undefined);
+      setLoadError(null);
     }
+  }
 
-    setModelsLoading(true);
+  useEffect(() => {
+    if (!projectId) return;
+
     void projectApi
       .skillAiEditorOptions(projectId)
       .then((res) => {
@@ -80,7 +94,7 @@ export function useSkillModelSelect(projectId: string) {
       .catch((err) => {
         setModelOptions({ providers: [] });
         setLoadError(
-          err instanceof Error ? err.message : 'Không tải danh sách model',
+          err instanceof Error ? err.message : translate('aiModel.errors.loadModels'),
         );
       })
       .finally(() => setModelsLoading(false));

@@ -1,12 +1,13 @@
-import type {
-  ProjectEnvMaskedRow,
-  ProviderDefinition,
-} from '@/schemas/project.schema'
 import {
   getProviderUiMetadata,
   PHASE1_AI_PROVIDER_IDS,
   PHASE1_FOUNDATION_IDS,
 } from './providers-data'
+
+import type {
+  ProjectEnvMaskedRow,
+  ProviderDefinition,
+} from '@/schemas/project.schema'
 
 export type MergedProviderCard = {
   id: string

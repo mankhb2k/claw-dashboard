@@ -5,7 +5,7 @@ export function isOssRuntime(): boolean {
   return raw === 'oss' || raw !== 'cloud'
 }
 
-/** OSS web defaults to oss when unset. */
+/** Hosted / multi-tenant UI when NEXT_PUBLIC_RUNTIME_MODE is not `oss`. */
 export function isCloudRuntime(): boolean {
   return process.env.NEXT_PUBLIC_RUNTIME_MODE?.trim().toLowerCase() === 'cloud'
 }

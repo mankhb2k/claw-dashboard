@@ -10,13 +10,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
+
 import { SaveKeyDto, SetEnabledDto } from './dto/key.dto';
-import { AddProviderModelDto, UpdateProviderModelDto } from './dto/provider-model.dto';
+import {
+  AddProviderModelDto,
+  UpdateProviderModelDto,
+} from './dto/provider-model.dto';
 import { ProjectsService } from '../services/projects/projects.service';
 import { ProviderKeysService } from './services/provider-keys/provider-keys.service';
 import { ProviderModelsService } from './services/provider-models/provider-models.service';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  JwtPayloadUser,
+} from '../../../core/common/decorators/current-user.decorator';
 
 @ApiTags('projects-provider-keys')
 @ApiBearerAuth()

@@ -19,5 +19,7 @@ export type SkillAiEditorCompleteResult = {
 
 export interface SkillAiEditorProviderAdapter {
   readonly id: string;
-  complete(input: SkillAiEditorCompleteInput): Promise<SkillAiEditorCompleteResult>;
+  complete(
+    input: SkillAiEditorCompleteInput,
+  ): Promise<SkillAiEditorCompleteResult>;
 }

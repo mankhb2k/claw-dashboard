@@ -1,10 +1,11 @@
 "use client";
 
 import { FileText, X } from "lucide-react";
+
+import styles from "./CardOptimizeResult.module.css";
 import { Box, Flex } from "@/components/layout";
 import { Button, Card, Typography } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
-import styles from "./CardOptimizeResult.module.css";
 
 export type CardOptimizeResultProps = {
   markdown: string;

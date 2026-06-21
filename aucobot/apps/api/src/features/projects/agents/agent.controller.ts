@@ -10,14 +10,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { CurrentUser, JwtPayloadUser } from '../../../core/common/decorators/current-user.decorator';
+
 import {
   CreateAgentDto,
   DuplicateAgentDto,
   SetAgentEnabledDto,
   UpdateAgentDto,
 } from './dto/agent.dto';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  JwtPayloadUser,
+} from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
 import { AgentService } from './services/agent/agent.service';
 
@@ -32,7 +36,10 @@ export class AgentController {
   ) {}
 
   @Get(':id/agents/templates')
-  async listTemplates(@CurrentUser() user: JwtPayloadUser, @Param('id') id: string) {
+  async listTemplates(
+    @CurrentUser() user: JwtPayloadUser,
+    @Param('id') id: string,
+  ) {
     await this.projects.assertOwned(user.sub, id);
     return this.agents.listTemplates();
   }

@@ -1,7 +1,8 @@
 'use client'
 
-import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
+import * as React from 'react'
+
 import styles from './Grid.module.css'
 
 type SpacingValue = 0 | 1 | 2 | 3 | 4 | 6 | 8

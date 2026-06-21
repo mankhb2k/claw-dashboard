@@ -195,10 +195,11 @@ export function insertTextAtSelection(
 }
 
 export function restoreSelection(
-  textarea: HTMLTextAreaElement,
+  el: HTMLTextAreaElement,
   start: number,
   end: number,
 ): void {
+  const textarea = el;
   textarea.selectionStart = start;
   textarea.selectionEnd = end;
 }

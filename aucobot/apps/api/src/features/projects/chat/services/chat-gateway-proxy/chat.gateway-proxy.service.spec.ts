@@ -1,7 +1,3 @@
-import { EventEmitter } from 'node:events';
-import WebSocket from 'ws';
-import { isAllowedChatRpc, openGatewayUpstream } from '@aucobot/control-plane-core';
-
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
@@ -10,9 +6,12 @@ jest.mock('../chat-attachments/chat-attachments.service', () => ({
   ChatAttachmentsService: class MockChatAttachmentsService {},
 }));
 
-jest.mock('../../../usage/services/model-usage-recorder/model-usage-recorder.service', () => ({
-  ModelUsageRecorderService: class MockModelUsageRecorderService {},
-}));
+jest.mock(
+  '../../../usage/services/model-usage-recorder/model-usage-recorder.service',
+  () => ({
+    ModelUsageRecorderService: class MockModelUsageRecorderService {},
+  }),
+);
 
 jest.mock('@aucobot/control-plane-core', () => ({
   openGatewayUpstream: jest.fn(),
@@ -31,12 +30,22 @@ jest.mock('@aucobot/control-plane-core', () => ({
   ),
 }));
 
+import { EventEmitter } from 'node:events';
+
+import WebSocket from 'ws';
+
+import { ChatGatewayProxyService } from './chat.gateway-proxy.service';
+import {
+  isAllowedChatRpc,
+  openGatewayUpstream,
+} from '@aucobot/control-plane-core';
+
 const openGatewayUpstreamMock = openGatewayUpstream as jest.MockedFunction<
   typeof openGatewayUpstream
 >;
-const isAllowedChatRpcMock = isAllowedChatRpc as jest.MockedFunction<typeof isAllowedChatRpc>;
-
-import { ChatGatewayProxyService } from './chat.gateway-proxy.service';
+const isAllowedChatRpcMock = isAllowedChatRpc as jest.MockedFunction<
+  typeof isAllowedChatRpc
+>;
 
 const PROJECT_ID = 'proj_test_1';
 const DATA_DIR = '/data/proj_test_1';
@@ -129,7 +138,9 @@ describe('ChatGatewayProxyService', () => {
       const { service, workspace } = createService();
       const client = new MockSocket();
       const upstream = new MockSocket();
-      openGatewayUpstreamMock.mockResolvedValue(upstream as unknown as WebSocket);
+      openGatewayUpstreamMock.mockResolvedValue(
+        upstream as unknown as WebSocket,
+      );
 
       await service.bridge({
         client: client as unknown as WebSocket,
@@ -146,10 +157,17 @@ describe('ChatGatewayProxyService', () => {
 
       client.emit(
         'message',
-        JSON.stringify({ type: 'req', id: 'req-1', method: 'chat.send', params: { text: 'hi' } }),
+        JSON.stringify({
+          type: 'req',
+          id: 'req-1',
+          method: 'chat.send',
+          params: { text: 'hi' },
+        }),
       );
 
-      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise<void>((resolve) => {
+        setImmediate(resolve);
+      });
 
       expect(parseSent(upstream)).toContainEqual(
         expect.objectContaining({ type: 'req', method: 'chat.send' }),
@@ -160,7 +178,9 @@ describe('ChatGatewayProxyService', () => {
       const { service } = createService();
       const client = new MockSocket();
       const upstream = new MockSocket();
-      openGatewayUpstreamMock.mockResolvedValue(upstream as unknown as WebSocket);
+      openGatewayUpstreamMock.mockResolvedValue(
+        upstream as unknown as WebSocket,
+      );
 
       await service.bridge({
         client: client as unknown as WebSocket,
@@ -172,7 +192,12 @@ describe('ChatGatewayProxyService', () => {
 
       client.emit(
         'message',
-        JSON.stringify({ type: 'req', id: 'req-2', method: 'config.patch', params: {} }),
+        JSON.stringify({
+          type: 'req',
+          id: 'req-2',
+          method: 'config.patch',
+          params: {},
+        }),
       );
 
       const frames = parseSent(client);
@@ -191,7 +216,9 @@ describe('ChatGatewayProxyService', () => {
       const { service } = createService();
       const client = new MockSocket();
       const upstream = new MockSocket();
-      openGatewayUpstreamMock.mockResolvedValue(upstream as unknown as WebSocket);
+      openGatewayUpstreamMock.mockResolvedValue(
+        upstream as unknown as WebSocket,
+      );
       isAllowedChatRpcMock.mockReturnValue(true);
 
       await service.bridge({
@@ -204,7 +231,12 @@ describe('ChatGatewayProxyService', () => {
 
       client.emit(
         'message',
-        JSON.stringify({ type: 'req', id: 'req-3', method: 'connect', params: {} }),
+        JSON.stringify({
+          type: 'req',
+          id: 'req-3',
+          method: 'connect',
+          params: {},
+        }),
       );
 
       const frames = parseSent(client);
@@ -213,7 +245,9 @@ describe('ChatGatewayProxyService', () => {
           type: 'res',
           id: 'req-3',
           ok: false,
-          error: expect.objectContaining({ message: 'connect is handled by the proxy' }),
+          error: expect.objectContaining({
+            message: 'connect is handled by the proxy',
+          }),
         }),
       );
       expect(parseSent(upstream)).toHaveLength(0);
@@ -223,7 +257,9 @@ describe('ChatGatewayProxyService', () => {
       const { service, usageRecorder } = createService();
       const client = new MockSocket();
       const upstream = new MockSocket();
-      openGatewayUpstreamMock.mockResolvedValue(upstream as unknown as WebSocket);
+      openGatewayUpstreamMock.mockResolvedValue(
+        upstream as unknown as WebSocket,
+      );
 
       await service.bridge({
         client: client as unknown as WebSocket,
@@ -235,7 +271,11 @@ describe('ChatGatewayProxyService', () => {
 
       upstream.emit(
         'message',
-        JSON.stringify({ type: 'event', event: 'chat', payload: { state: 'delta' } }),
+        JSON.stringify({
+          type: 'event',
+          event: 'chat',
+          payload: { state: 'delta' },
+        }),
       );
 
       expect(parseSent(client)).toContainEqual(
@@ -248,7 +288,9 @@ describe('ChatGatewayProxyService', () => {
       const { service, usageRecorder } = createService();
       const client = new MockSocket();
       const upstream = new MockSocket();
-      openGatewayUpstreamMock.mockResolvedValue(upstream as unknown as WebSocket);
+      openGatewayUpstreamMock.mockResolvedValue(
+        upstream as unknown as WebSocket,
+      );
 
       await service.bridge({
         client: client as unknown as WebSocket,
@@ -272,7 +314,9 @@ describe('ChatGatewayProxyService', () => {
         }),
       );
 
-      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise<void>((resolve) => {
+        setImmediate(resolve);
+      });
 
       upstream.emit(
         'message',

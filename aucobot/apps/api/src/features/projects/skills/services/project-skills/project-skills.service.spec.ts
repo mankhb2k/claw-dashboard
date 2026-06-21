@@ -1,9 +1,10 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+
 import {
   BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
 
 jest.mock('node:fs/promises', () => ({
   mkdir: jest.fn().mockResolvedValue(undefined),
@@ -22,8 +23,8 @@ jest.mock('@aucobot/workspace-sync', () => ({
   validateSkillName: (name: string) => name.trim().toLowerCase(),
 }));
 
-import { buildSkillMarkdown } from '@aucobot/workspace-sync';
 import { ProjectSkillsService } from './project-skills.service';
+import { buildSkillMarkdown } from '@aucobot/workspace-sync';
 
 const PROJECT_ID = 'proj_test_1';
 const DATA_DIR = '/data/proj_test_1';
@@ -98,7 +99,10 @@ describe('ProjectSkillsService', () => {
     it('creates disabled skill without disk sync', async () => {
       const { service, prisma, workspace } = createService();
       prisma.projectSkill.findUnique.mockResolvedValue(null);
-      prisma.projectSkill.create.mockResolvedValue({ ...baseRow, enabled: false });
+      prisma.projectSkill.create.mockResolvedValue({
+        ...baseRow,
+        enabled: false,
+      });
 
       const result = await service.create({
         projectId: PROJECT_ID,
@@ -170,7 +174,11 @@ describe('ProjectSkillsService', () => {
       prisma.projectSkill.findUnique.mockResolvedValue(baseRow);
       prisma.projectSkill.update
         .mockResolvedValueOnce({ ...baseRow, enabled: false })
-        .mockResolvedValueOnce({ ...baseRow, enabled: false, lastSyncedAt: new Date() });
+        .mockResolvedValueOnce({
+          ...baseRow,
+          enabled: false,
+          lastSyncedAt: new Date(),
+        });
 
       await service.update(PROJECT_ID, SKILL_SLUG, { enabled: false });
 
@@ -188,7 +196,9 @@ describe('ProjectSkillsService', () => {
       await service.delete(PROJECT_ID, SKILL_SLUG);
 
       expect(rm).toHaveBeenCalled();
-      expect(prisma.projectSkill.delete).toHaveBeenCalledWith({ where: { id: baseRow.id } });
+      expect(prisma.projectSkill.delete).toHaveBeenCalledWith({
+        where: { id: baseRow.id },
+      });
       expect(workspace.syncProjectRuntime).toHaveBeenCalledWith(PROJECT_ID);
     });
   });
@@ -201,7 +211,11 @@ describe('ProjectSkillsService', () => {
         { ...baseRow, id: 'skill-2', slug: 'broken', lastSyncError: null },
       ]);
       prisma.projectSkill.update
-        .mockResolvedValueOnce({ ...baseRow, lastSyncedAt: new Date(), lastSyncError: null })
+        .mockResolvedValueOnce({
+          ...baseRow,
+          lastSyncedAt: new Date(),
+          lastSyncError: null,
+        })
         .mockResolvedValueOnce({
           ...baseRow,
           id: 'skill-2',

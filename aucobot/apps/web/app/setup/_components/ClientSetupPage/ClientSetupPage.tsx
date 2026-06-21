@@ -1,8 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useProjectStore } from "@/stores/project.store";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import styles from "./ClientSetupPage.module.css";
+import { SetupCloudRecreate } from "../SetupCloudRecreate/SetupCloudRecreate";
+import { SetupCreateForm } from "../SetupCreateForm/SetupCreateForm";
+import { SetupFooterMeta } from "../SetupFooterMeta/SetupFooterMeta";
+import { SetupOssRecover } from "../SetupOssRecover/SetupOssRecover";
+import { SetupResume } from "../SetupResume/SetupResume";
+import { Card, Typography } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
+import { getDashboardPath } from "@/lib/routing/dashboard-route";
 import {
   getPrimaryProject,
   isContainerMissing,
@@ -10,21 +19,17 @@ import {
   isProjectReady,
   shouldRedirectToSetup,
 } from "@/lib/routing/entry-route";
-import { getDashboardPath } from "@/lib/routing/dashboard-route";
-import { gatewayTimeoutMessage } from "@/lib/runtime/oss-gateway";
-import { spawnTimeoutMessage } from "@/lib/runtime/project-spawn";
+import { useProjectStore } from "@/stores/project.store";
+import {
+  gatewayTimeoutErrorKey,
+  SETUP_ERROR_KEYS,
+  spawnTimeoutErrorKey,
+} from "@/utils/setup/setup-i18n";
 import {
   resolveCloudMode,
   resolveOssMode,
   resolveSetupError,
 } from "@/utils/setup/setup-utils";
-import styles from "./ClientSetupPage.module.css";
-import { SetupCreateForm } from "../SetupCreateForm/SetupCreateForm";
-import { SetupOssRecover } from "../SetupOssRecover/SetupOssRecover";
-import { SetupCloudRecreate } from "../SetupCloudRecreate/SetupCloudRecreate";
-import { SetupResume } from "../SetupResume/SetupResume";
-import { Card, Typography } from "@/components/ui";
-import { SetupFooterMeta } from "../SetupFooterMeta/SetupFooterMeta";
 
 interface ClientSetupPageProps {
   oss: boolean;
@@ -32,6 +37,7 @@ interface ClientSetupPageProps {
 
 export function ClientSetupPage({ oss }: ClientSetupPageProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const syncProjectHealth = useProjectStore((s) => s.syncProjectHealth);
   const createProject = useProjectStore((s) => s.createProject);
@@ -54,12 +60,18 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
   const canEnterDashboard =
     bootstrapped && primary !== null && !shouldRedirectToSetup(primary);
 
+  const timeoutErrorKey = oss
+    ? gatewayTimeoutErrorKey()
+    : spawnTimeoutErrorKey();
+
   useEffect(() => {
     void (async () => {
       try {
         await fetchProjects();
         if (oss) {
-          const current = getPrimaryProject(useProjectStore.getState().projects);
+          const current = getPrimaryProject(
+            useProjectStore.getState().projects,
+          );
           if (current) {
             await syncProjectHealth(current.id);
           }
@@ -71,18 +83,21 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
   }, [fetchProjects, syncProjectHealth, oss]);
 
   useEffect(() => {
-    if (!canEnterDashboard || autoEnterDoneRef.current || isProvisioning) return;
+    if (!canEnterDashboard || autoEnterDoneRef.current || isProvisioning)
+      return;
     autoEnterDoneRef.current = true;
     router.replace(getDashboardPath());
   }, [canEnterDashboard, isProvisioning, router]);
 
+  const primaryId = primary?.id;
+
   useEffect(() => {
-    if (!oss || !primary || canEnterDashboard) return;
-    const stop = pollHealth(primary.id, () => {
+    if (!oss || !primaryId || canEnterDashboard) return undefined;
+    const stop = pollHealth(primaryId, () => {
       void fetchProjects({ silent: true });
     });
     return () => stop();
-  }, [oss, primary?.id, primary?.status, canEnterDashboard, pollHealth, fetchProjects]);
+  }, [oss, primaryId, canEnterDashboard, pollHealth, fetchProjects]);
 
   const retryGatewayCheck = useCallback(() => {
     const current = getPrimaryProject(useProjectStore.getState().projects);
@@ -91,7 +106,9 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
     setIsProvisioning(true);
     const stop = pollHealth(current.id, () => {
       stop();
-      void fetchProjects({ silent: true }).finally(() => setIsProvisioning(false));
+      void fetchProjects({ silent: true }).finally(() =>
+        setIsProvisioning(false),
+      );
     });
   }, [pollHealth, fetchProjects, isProvisioning]);
 
@@ -101,7 +118,11 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
         const stop = pollHealth(projectId, () => {
           stop();
           const latest = getPrimaryProject(useProjectStore.getState().projects);
-          resolve(latest ? isProjectReady(latest.status) && !isContainerMissing(latest) : false);
+          resolve(
+            latest
+              ? isProjectReady(latest.status) && !isContainerMissing(latest)
+              : false,
+          );
         });
       }),
     [pollHealth],
@@ -121,12 +142,18 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
       } else {
         const latest = getPrimaryProject(useProjectStore.getState().projects);
         setLocalError(
-          latest?.errorMessage?.trim() ||
-            (oss ? gatewayTimeoutMessage() : spawnTimeoutMessage()),
+          latest?.errorMessage?.trim() || timeoutErrorKey,
         );
       }
     },
-    [oss, respawnProject, startProject, fetchProjects, waitUntilRunning, router],
+    [
+      respawnProject,
+      startProject,
+      fetchProjects,
+      waitUntilRunning,
+      router,
+      timeoutErrorKey,
+    ],
   );
 
   const goToDashboard = useCallback(async () => {
@@ -134,7 +161,7 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
     setLocalError(null);
     const current = getPrimaryProject(useProjectStore.getState().projects);
     if (!current) {
-      setLocalError("No workspace yet. Create a project first.");
+      setLocalError(SETUP_ERROR_KEYS.noWorkspace);
       return;
     }
 
@@ -153,12 +180,15 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
         } else {
           const latest = getPrimaryProject(useProjectStore.getState().projects);
           setLocalError(
-            latest?.errorMessage?.trim() ||
-              (oss ? gatewayTimeoutMessage() : spawnTimeoutMessage()),
+            latest?.errorMessage?.trim() || timeoutErrorKey,
           );
         }
       } catch (err) {
-        setLocalError(err instanceof Error ? err.message : "Could not open dashboard");
+        setLocalError(
+          err instanceof Error
+            ? err.message
+            : SETUP_ERROR_KEYS.openDashboard,
+        );
       } finally {
         setIsProvisioning(false);
       }
@@ -173,11 +203,23 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
         current.status === "creating";
       await spawnAndEnter(current.id, needsRespawn ? "respawn" : "start");
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Could not open dashboard");
+      setLocalError(
+        err instanceof Error
+          ? err.message
+          : SETUP_ERROR_KEYS.openDashboard,
+      );
     } finally {
       setIsProvisioning(false);
     }
-  }, [oss, router, spawnAndEnter, isProvisioning, fetchProjects, waitUntilRunning]);
+  }, [
+    oss,
+    router,
+    spawnAndEnter,
+    isProvisioning,
+    fetchProjects,
+    waitUntilRunning,
+    timeoutErrorKey,
+  ]);
 
   const handleRespawn = useCallback(async () => {
     const current = getPrimaryProject(useProjectStore.getState().projects);
@@ -187,7 +229,11 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
     try {
       await spawnAndEnter(current.id, "respawn");
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Respawn failed");
+      setLocalError(
+        err instanceof Error
+          ? err.message
+          : SETUP_ERROR_KEYS.respawnFailed,
+      );
     } finally {
       setIsProvisioning(false);
     }
@@ -205,25 +251,29 @@ export function ClientSetupPage({ oss }: ClientSetupPageProps) {
         await fetchProjects({ silent: true });
         const latest = getPrimaryProject(useProjectStore.getState().projects);
         setLocalError(
-          latest?.errorMessage?.trim() ||
-            (oss ? gatewayTimeoutMessage() : spawnTimeoutMessage()),
+          latest?.errorMessage?.trim() || timeoutErrorKey,
         );
       }
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Could not create workspace");
+      setLocalError(
+        err instanceof Error
+          ? err.message
+          : SETUP_ERROR_KEYS.createWorkspace,
+      );
       await fetchProjects({ silent: true });
     } finally {
       setIsProvisioning(false);
     }
   };
 
-  const busy = isProvisioning || (primary ? isProjectBusy(primary.status) : false);
+  const busy =
+    isProvisioning || (primary ? isProjectBusy(primary.status) : false);
   const error = resolveSetupError(primary, localError ?? storeError);
 
   if (canEnterDashboard) {
     return (
       <Typography variant="small" color="muted" className={styles.opening}>
-        Opening dashboard…
+        {t("setup.opening")}
       </Typography>
     );
   }

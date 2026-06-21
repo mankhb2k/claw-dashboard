@@ -1,13 +1,17 @@
-import { api } from '@/lib/http/axios'
 import { uploadMultipart } from '@/lib/api/multipart-upload'
+import { api } from '@/lib/http/axios'
+import { translate } from '@/lib/i18n/translate'
 import {
-  changePasswordSchema,
+  createChangePasswordSchema,
+  createUpdateUserNameSchema,
   publicUserSchema,
-  updateUserNameSchema,
   type ChangePasswordInput,
   type PublicUser,
   type UpdateUserNameInput,
 } from '@/schemas/user.schema'
+
+const updateUserNameSchema = createUpdateUserNameSchema(translate)
+const changePasswordSchema = createChangePasswordSchema(translate)
 
 export const usersApi = {
   me: async (): Promise<PublicUser> => {

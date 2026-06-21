@@ -8,14 +8,15 @@ import {
   useMemo,
   useSyncExternalStore,
 } from 'react'
+
 import { type Locale } from './constants'
 import { getDictionary, type AppDictionary } from './dictionaries'
-import { getNestedString, interpolate } from './nested-get'
 import {
   readLocaleWithFallback,
   subscribeLocale,
   writeLocale,
 } from './locale-storage'
+import { getNestedString, interpolate } from './nested-get'
 import { resolveOpenClawChannels, type OpenClawChannel } from '@/utils/channels/openclaw-channels'
 
 type I18nContextValue = {

@@ -1,20 +1,26 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { registerSchema, type RegisterInput } from "@/schemas/auth.schema";
-import { useAuthStore } from "@/stores/auth.store";
-import { resolveDashboardPath } from "@/lib/routing/resolve-dashboard-path";
-import { Input } from "@/components/ui/Input/Input";
-import { Button } from "@/components/ui/Button/Button";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+
 import styles from "./register.module.css";
+import { Button } from "@/components/ui/Button/Button";
+import { Input } from "@/components/ui/Input/Input";
+import { useI18n } from "@/lib/i18n";
+import { resolveDashboardPath } from "@/lib/routing/resolve-dashboard-path";
+import { createRegisterSchema, type RegisterInput } from "@/schemas/auth.schema";
+import { useAuthStore } from "@/stores/auth.store";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const register_ = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
+
+  const registerSchema = useMemo(() => createRegisterSchema(t), [t]);
 
   const {
     register,
@@ -31,15 +37,15 @@ export default function RegisterPage() {
       router.push(await resolveDashboardPath());
     } catch (err) {
       setError("root", {
-        message: err instanceof Error ? err.message : "Đăng ký thất bại",
+        message: err instanceof Error ? err.message : t("auth.register.failed"),
       });
     }
   };
 
   return (
     <div className={styles.wrapper}>
-      <h1 className={styles.title}>Create account</h1>
-      <p className={styles.subtitle}>Self-host · Register by username</p>
+      <h1 className={styles.title}>{t("auth.register.title")}</h1>
+      <p className={styles.subtitle}>{t("auth.register.subtitle")}</p>
 
       <form
         className={styles.form}
@@ -49,8 +55,8 @@ export default function RegisterPage() {
         <Input
           id="username"
           type="text"
-          label="Username"
-          placeholder="admin"
+          label={t("auth.fields.username.label")}
+          placeholder={t("auth.fields.username.placeholder")}
           autoComplete="username"
           error={errors.username?.message}
           {...register("username")}
@@ -59,8 +65,8 @@ export default function RegisterPage() {
         <Input
           id="password"
           type="password"
-          label="Password"
-          placeholder="••••••••"
+          label={t("auth.fields.password.label")}
+          placeholder={t("auth.fields.password.placeholder")}
           autoComplete="new-password"
           error={errors.password?.message}
           {...register("password")}
@@ -69,8 +75,8 @@ export default function RegisterPage() {
         <Input
           id="confirmPassword"
           type="password"
-          label="Confirm password"
-          placeholder="••••••••"
+          label={t("auth.fields.confirmPassword.label")}
+          placeholder={t("auth.fields.confirmPassword.placeholder")}
           autoComplete="new-password"
           error={errors.confirmPassword?.message}
           {...register("confirmPassword")}
@@ -81,14 +87,14 @@ export default function RegisterPage() {
         )}
 
         <Button type="submit" loading={isLoading} style={{ width: "100%" }}>
-          Create account
+          {t("auth.register.submit")}
         </Button>
       </form>
 
       <p className={styles.footer}>
-        Already have an account?{" "}
+        {t("auth.register.hasAccount")}{" "}
         <Link href="/login" className={styles.link}>
-          Login
+          {t("auth.register.loginLink")}
         </Link>
       </p>
     </div>

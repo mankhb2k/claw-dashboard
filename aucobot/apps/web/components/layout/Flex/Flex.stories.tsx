@@ -1,7 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import React from 'react'
-import { Flex } from '@/components/layout/Flex/Flex'
+
 import { Box, BoxProps } from '@/components/layout/Box/Box'
+import { Flex } from '@/components/layout/Flex/Flex'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<typeof Flex> = {
   title: 'Layout/Flex',
@@ -125,9 +127,9 @@ export const NestedLayout: Story = {
       </Flex>
 
       <Flex gap={4} wrap="wrap">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <Box key={i} color="surface" border p={6} radius="lg" width="120px" style={{ textAlign: 'center' }}>
-            Card {i}
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <Box key={`flex-card-${n}`} color="surface" border p={6} radius="lg" width="120px" style={{ textAlign: 'center' }}>
+            Card {n}
           </Box>
         ))}
       </Flex>

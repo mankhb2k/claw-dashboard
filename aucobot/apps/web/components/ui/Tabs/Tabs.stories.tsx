@@ -1,5 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import React, { useMemo, useState } from "react";
 import {
   Activity,
   Brain,
@@ -8,7 +6,11 @@ import {
   UserRoundPen,
   Wrench,
 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof Tabs> = {
   title: "UI/Tabs",

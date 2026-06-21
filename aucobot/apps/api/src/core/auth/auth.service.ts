@@ -5,6 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+
+import { PrismaService } from '../database/prisma.service';
+import { UsersService } from '../users/users.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import {
   accessMaxAgeSec,
   extractAccessTokenFromRequest,
@@ -17,10 +22,6 @@ import {
   verifyAccessToken,
   type PublicUser,
 } from '@aucobot/control-plane-core';
-import { PrismaService } from '../database/prisma.service';
-import { UsersService } from '../users/users.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 
 export type AuthTokensResult = {
   accessToken: string;

@@ -1,15 +1,17 @@
-import type { ConnectorDefinition } from '@/schemas/project.schema'
+import { connectorLogo } from '@/utils/logoship/connector-logo'
+
 import type { ServiceConnectData } from './projectConnectData'
+import type { ConnectorDefinition } from '@/schemas/project.schema'
 
 /** Icon and metadata UI — catalog name/description come from the API. */
 const CONNECTOR_UI: Record<string, Pick<ServiceConnectData, 'iconSrc' | 'author'>> = {
   'google-drive': {
     author: 'Google',
-    iconSrc: '/tools-provider-icon/GoogleDrive-icon.svg',
+    iconSrc: connectorLogo('google-drive'),
   },
   'google-calendar': {
     author: 'Google',
-    iconSrc: '/tools-provider-icon/GoogleCalendar-icon.svg',
+    iconSrc: connectorLogo('google-calendar'),
   },
 }
 

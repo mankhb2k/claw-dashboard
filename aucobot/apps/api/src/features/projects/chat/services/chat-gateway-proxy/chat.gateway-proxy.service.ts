@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import WebSocket, { type RawData } from 'ws';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
-import { isAllowedChatRpc, openGatewayUpstream } from '@aucobot/control-plane-core';
-import { ChatAttachmentsService } from '../chat-attachments/chat-attachments.service';
+
 import { extractAgentSlugFromSessionKey } from '../../../usage/lib/parse-model-ref';
 import { parseWsFrame } from '../../../usage/lib/parse-ws-frame';
-import type { PendingChatRun } from '../../../usage/lib/usage-record.types';
 import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+import { ChatAttachmentsService } from '../chat-attachments/chat-attachments.service';
+import {
+  isAllowedChatRpc,
+  openGatewayUpstream,
+} from '@aucobot/control-plane-core';
+
+import type { PendingChatRun } from '../../../usage/lib/usage-record.types';
 
 type ClientSocket = WebSocket;
 type UpstreamSocket = WebSocket;
@@ -20,7 +25,9 @@ function sendJson(socket: WebSocket, frame: unknown): void {
 
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  return value.filter(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0,
+  );
 }
 
 @Injectable()
@@ -45,9 +52,14 @@ export class ChatGatewayProxyService {
     const projectDataDir = await this.workspace.ensureProjectLayout(projectId);
 
     try {
-      upstream = await openGatewayUpstream(gatewayWsUrl, gatewayToken, projectDataDir);
+      upstream = await openGatewayUpstream(
+        gatewayWsUrl,
+        gatewayToken,
+        projectDataDir,
+      );
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'GATEWAY_UNREACHABLE';
+      const message =
+        err instanceof Error ? err.message : 'GATEWAY_UNREACHABLE';
       this.log.warn(`Upstream connect failed (${gatewayWsUrl}): ${message}`);
       sendJson(client, {
         type: 'event',
@@ -194,7 +206,10 @@ export class ChatGatewayProxyService {
   }> {
     const params =
       frame.params && typeof frame.params === 'object'
-        ? ({ ...(frame.params as Record<string, unknown>) } as Record<string, unknown>)
+        ? ({ ...(frame.params as Record<string, unknown>) } as Record<
+            string,
+            unknown
+          >)
         : {};
 
     const attachmentIds = asStringArray(params.attachmentIds);
@@ -207,7 +222,9 @@ export class ChatGatewayProxyService {
     const sessionKey =
       typeof params.sessionKey === 'string' ? params.sessionKey.trim() : '';
     const idempotencyKey =
-      typeof params.idempotencyKey === 'string' ? params.idempotencyKey.trim() : '';
+      typeof params.idempotencyKey === 'string'
+        ? params.idempotencyKey.trim()
+        : '';
 
     try {
       const attachments = await this.attachments.buildChatSendAttachments({
@@ -235,7 +252,8 @@ export class ChatGatewayProxyService {
         },
       };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Attachment enrich failed';
+      const message =
+        err instanceof Error ? err.message : 'Attachment enrich failed';
       const code = message.startsWith('SANDBOX_ATTACHMENT_TOO_LARGE')
         ? 'SANDBOX_ATTACHMENT_TOO_LARGE'
         : 'ATTACHMENT_ENRICH_FAILED';
@@ -254,7 +272,9 @@ export class ChatGatewayProxyService {
     if (!params) return;
 
     const idempotencyKey =
-      typeof params.idempotencyKey === 'string' ? params.idempotencyKey.trim() : '';
+      typeof params.idempotencyKey === 'string'
+        ? params.idempotencyKey.trim()
+        : '';
     if (!idempotencyKey) return;
 
     const sessionKey =

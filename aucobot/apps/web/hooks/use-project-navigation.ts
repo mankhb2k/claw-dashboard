@@ -1,7 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useMemo } from "react";
 import {
   LayoutDashboard,
   Brain,
@@ -11,8 +9,12 @@ import {
   Settings as SettingsIcon,
   Bot,
 } from "lucide-react";
-import type { NavItem } from "@/components/dashboard/Sidebar/Sidebar";
+import { usePathname } from "next/navigation";
+import { useMemo } from "react";
+
 import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+
+import type { NavItem } from "@/components/dashboard/Sidebar/Sidebar";
 
 const DASHBOARD_ROUTE =
   /^\/dashboard(?:\/(setting|ai-model|channel|skill|connect|agent)(?:\/[^/]+)*)?$/;

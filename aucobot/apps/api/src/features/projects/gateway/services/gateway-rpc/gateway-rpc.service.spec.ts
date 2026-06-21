@@ -22,8 +22,8 @@ jest.mock('../../../services/projects/projects.service', () => ({
   ProjectsService: class MockProjectsService {},
 }));
 
-import { GatewayRpcError } from '@aucobot/control-plane-core';
 import { GatewayRpcService } from './gateway-rpc.service';
+import { GatewayRpcError } from '@aucobot/control-plane-core';
 
 const USER_ID = 'user_test_1';
 const PROJECT_ID = 'proj_test_1';
@@ -57,7 +57,10 @@ describe('GatewayRpcService', () => {
       limit: 10,
     });
 
-    expect(projects.getRuntimeForChat).toHaveBeenCalledWith(USER_ID, PROJECT_ID);
+    expect(projects.getRuntimeForChat).toHaveBeenCalledWith(
+      USER_ID,
+      PROJECT_ID,
+    );
     expect(workspace.ensureProjectLayout).toHaveBeenCalledWith(PROJECT_ID);
     expect(callGatewayRpcMock).toHaveBeenCalledWith(
       'ws://127.0.0.1:18789',
@@ -76,10 +79,12 @@ describe('GatewayRpcService', () => {
       reason: 'PROJECT_NOT_RUNNING',
     });
 
-    await expect(service.call(USER_ID, PROJECT_ID, 'cron.list')).rejects.toThrow(
-      ServiceUnavailableException,
-    );
-    await expect(service.call(USER_ID, PROJECT_ID, 'cron.list')).rejects.toMatchObject({
+    await expect(
+      service.call(USER_ID, PROJECT_ID, 'cron.list'),
+    ).rejects.toThrow(ServiceUnavailableException);
+    await expect(
+      service.call(USER_ID, PROJECT_ID, 'cron.list'),
+    ).rejects.toMatchObject({
       response: {
         code: 'PROJECT_NOT_RUNNING',
         message: 'Project gateway is not available',
@@ -96,11 +101,13 @@ describe('GatewayRpcService', () => {
       gatewayWsUrl: 'ws://127.0.0.1:18789',
       gatewayToken: 'gw-token',
     });
-    callGatewayRpcMock.mockRejectedValue(new GatewayRpcError('cron.list failed', 'RPC_ERR'));
-
-    await expect(service.call(USER_ID, PROJECT_ID, 'cron.list')).rejects.toThrow(
-      new ServiceUnavailableException('cron.list failed'),
+    callGatewayRpcMock.mockRejectedValue(
+      new GatewayRpcError('cron.list failed', 'RPC_ERR'),
     );
+
+    await expect(
+      service.call(USER_ID, PROJECT_ID, 'cron.list'),
+    ).rejects.toThrow(new ServiceUnavailableException('cron.list failed'));
   });
 
   it('rethrows unexpected errors from callGatewayRpc', async () => {
@@ -113,6 +120,8 @@ describe('GatewayRpcService', () => {
     const unexpected = new Error('socket hang up');
     callGatewayRpcMock.mockRejectedValue(unexpected);
 
-    await expect(service.call(USER_ID, PROJECT_ID, 'nodes.list')).rejects.toBe(unexpected);
+    await expect(service.call(USER_ID, PROJECT_ID, 'nodes.list')).rejects.toBe(
+      unexpected,
+    );
   });
 });

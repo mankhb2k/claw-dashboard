@@ -1,4 +1,5 @@
 import { compileAgentsMd } from '@aucobot/workspace-sync/agent-workspace-compile';
+
 import type { AgentFormInput } from '@/schemas/agent-form.schema';
 
 export type AgentPanelApplyFields = {

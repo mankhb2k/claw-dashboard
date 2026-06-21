@@ -1,5 +1,6 @@
-import type { GatewaySessionRow } from './types'
 import { isPlaceholderSessionLabel } from './display'
+
+import type { GatewaySessionRow } from './types'
 
 export const AUTO_TITLE_MAX_LENGTH = 48
 

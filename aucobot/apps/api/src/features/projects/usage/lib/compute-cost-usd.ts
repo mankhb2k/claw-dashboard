@@ -15,7 +15,9 @@ export function computeCostUsd(
     return '0';
   }
 
-  const cost = (inputTokens / 1_000_000) * inputRate + (outputTokens / 1_000_000) * outputRate;
+  const cost =
+    (inputTokens / 1_000_000) * inputRate +
+    (outputTokens / 1_000_000) * outputRate;
   if (!Number.isFinite(cost) || cost <= 0) {
     return '0';
   }

@@ -1,15 +1,29 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { RotateCcw, Sparkles } from "lucide-react";
 import Link from "next/link";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import styles from "./AgentPanel.module.css";
+import panelStyles from "./AgentPanelLayout.module.css";
+import { AgentPanelNoModelBanner } from "./AgentPanelModelBar";
+import barStyles from "./AgentPanelModelBar.module.css";
+import { CardOptimizeResult } from "./CardOptimizeResult/CardOptimizeResult";
+import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble";
+import { MessageBox } from "@/components/chat/MessageBox";
 import { Box, Flex } from "@/components/layout";
 import { Typography, Button, Spinner } from "@/components/ui";
-import { RotateCcw, Sparkles } from "lucide-react";
-import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble";
-import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
-import { useProjectStore } from "@/stores/project.store";
 import { useChatModelSelect } from "@/hooks/chat/use-chat-model-select";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
+import { useProjectStore } from "@/stores/project.store";
 import {
   getWelcomeMessage,
   QUICK_PROMPTS,
@@ -20,13 +34,6 @@ import {
   OPTIMIZE_SEED_USER_MESSAGE,
 } from "@/utils/agent/agent-panel-context";
 import { dispatchApplyAgentsMd } from "@/utils/agent/agent-panel-events";
-import { MessageBox } from "@/components/chat/MessageBox";
-import { useI18n } from "@/lib/i18n";
-import { AgentPanelNoModelBanner } from "./AgentPanelModelBar";
-import { CardOptimizeResult } from "./CardOptimizeResult/CardOptimizeResult";
-import styles from "./AgentPanel.module.css";
-import panelStyles from "./AgentPanelLayout.module.css";
-import barStyles from "./AgentPanelModelBar.module.css";
 
 type PanelChatMessage = {
   id: string;
@@ -39,9 +46,9 @@ type PanelChatMessage = {
 
 function renderSimpleMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
+  return parts.map((part) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+      return <strong key={`md-bold:${part}`}>{part.slice(2, -2)}</strong>;
     }
     return part;
   });
@@ -111,7 +118,7 @@ export function AgentPanel() {
   const [apiError, setApiError] = useState<React.ReactNode | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const optimizeStartedRef = useRef(false);
-  const context = formSnapshot ?? {};
+  const context = useMemo(() => formSnapshot ?? {}, [formSnapshot]);
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -142,7 +149,7 @@ export function AgentPanel() {
         agentContext: buildAgentContextFromForm(context, activeEditTab),
       });
     },
-    [projectId, providerId, modelId, context, activeEditTab],
+    [projectId, providerId, modelId, context, activeEditTab, t],
   );
 
   const appendAssistantFromApi = useCallback(
@@ -237,8 +244,12 @@ export function AgentPanel() {
 
   useEffect(() => {
     if (!pendingPanelMessage) return;
-    sendMessage(pendingPanelMessage);
+    const message = pendingPanelMessage;
     clearPendingPanelMessage();
+    void (async () => {
+      await Promise.resolve();
+      sendMessage(message);
+    })();
   }, [pendingPanelMessage, sendMessage, clearPendingPanelMessage]);
 
   useEffect(() => {
@@ -250,7 +261,10 @@ export function AgentPanel() {
     if (!hasProviders || !providerId || !modelId || !projectId) return;
 
     optimizeStartedRef.current = true;
-    void runApiTurn(OPTIMIZE_SEED_USER_MESSAGE, "optimize");
+    void (async () => {
+      await Promise.resolve();
+      await runApiTurn(OPTIMIZE_SEED_USER_MESSAGE, "optimize");
+    })();
   }, [
     optimizeMode,
     modelsLoading,
@@ -373,8 +387,8 @@ export function AgentPanel() {
                   </div>
                   {msg.questions?.length ? (
                     <ol className={styles.questionList}>
-                      {msg.questions.map((q, idx) => (
-                        <li key={idx}>{q}</li>
+                      {msg.questions.map((q) => (
+                        <li key={q}>{q}</li>
                       ))}
                     </ol>
                   ) : null}

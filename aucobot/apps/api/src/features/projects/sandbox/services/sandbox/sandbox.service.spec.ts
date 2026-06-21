@@ -93,9 +93,9 @@ describe('SandboxService', () => {
       prisma.project.findUnique.mockResolvedValue(null);
       prisma.projectAgent.findMany.mockResolvedValue([]);
 
-      await expect(service.getProjectSandbox(PROJECT_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.getProjectSandbox(PROJECT_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('normalizes legacy non-main mode to selected', async () => {

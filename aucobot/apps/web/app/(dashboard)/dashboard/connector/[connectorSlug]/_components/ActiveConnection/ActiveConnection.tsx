@@ -1,24 +1,9 @@
 "use client";
 
 import { ChevronDown, ExternalLink } from "lucide-react";
-import {
-  Button,
-  Typography,
-  Card,
-  ToggleGroup,
-  ToggleGroupItem,
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@/components/ui";
-import { Container, Flex, Box } from "@/components/layout";
-import { BackButton } from "@/components/dashboard";
+import Image from "next/image";
+
+import styles from "./ActiveConnection.module.css";
 import {
   MOCK_PERMISSION_GROUPS,
   PERMISSION_GROUP_LABELS,
@@ -26,7 +11,25 @@ import {
   type ServiceConnectData,
 } from "../../../projectConnectData";
 import { type PermissionMode } from "../ClientConnectorPage/ClientConnectorPage";
-import styles from "./ActiveConnection.module.css";
+import { BackButton } from "@/components/dashboard";
+import { Container, Flex, Box } from "@/components/layout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+  Card,
+  ToggleGroup,
+  ToggleGroupItem,
+  Typography,
+} from "@/components/ui";
+import { shouldUseUnoptimized } from "@/utils/image/app-image.utils";
 
 interface Props {
   service: ServiceConnectData;
@@ -61,8 +64,13 @@ export function ActiveConnection({
                 <Flex align="center" gap={16}>
                   <div className={styles.serviceIcon}>
                     {service.iconSrc ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={service.iconSrc} alt={service.name} />
+                      <Image
+                        src={service.iconSrc}
+                        alt={service.name}
+                        width={56}
+                        height={56}
+                        unoptimized={shouldUseUnoptimized(service.iconSrc)}
+                      />
                     ) : (
                       <span className={styles.serviceIconFallback}>
                         {service.name.slice(0, 1)}

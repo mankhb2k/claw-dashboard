@@ -1,7 +1,9 @@
-import type { ReactNode } from "react";
+
+import styles from "./SetupSectionHeader.module.css";
 import { Box, Flex } from "@/components/layout";
 import { Typography } from "@/components/ui";
-import styles from "./SetupSectionHeader.module.css";
+
+import type { ReactNode } from "react";
 
 interface SetupSectionHeaderProps {
   badge: string;

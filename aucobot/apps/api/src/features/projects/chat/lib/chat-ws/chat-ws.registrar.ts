@@ -1,12 +1,15 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
+
+import { ProjectsService } from '../../../services/projects/projects.service';
+import { ChatGatewayProxyService } from '../../services/chat-gateway-proxy/chat.gateway-proxy.service';
 import {
   extractAccessTokenFromRequest,
   verifyAccessToken,
 } from '@aucobot/control-plane-core';
-import { ProjectsService } from '../../../services/projects/projects.service';
-import { ChatGatewayProxyService } from '../../services/chat-gateway-proxy/chat.gateway-proxy.service';
+
+import type { WebSocket } from '@fastify/websocket';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 @Injectable()
 export class ChatWsRegistrar implements OnApplicationBootstrap {
@@ -19,7 +22,7 @@ export class ChatWsRegistrar implements OnApplicationBootstrap {
   ) {}
 
   onApplicationBootstrap(): void {
-    const fastify = this.adapterHost.httpAdapter.getInstance() as FastifyInstance;
+    const fastify = this.adapterHost.httpAdapter.getInstance<FastifyInstance>();
     if (!fastify.hasPlugin('@fastify/websocket')) {
       this.log.warn('@fastify/websocket not loaded — chat proxy disabled');
       return;
@@ -28,7 +31,10 @@ export class ChatWsRegistrar implements OnApplicationBootstrap {
     fastify.get(
       '/api/projects/:projectId/chat/ws',
       { websocket: true },
-      (socket, req: FastifyRequest<{ Params: { projectId: string } }>) => {
+      (
+        socket: WebSocket,
+        req: FastifyRequest<{ Params: { projectId: string } }>,
+      ) => {
         void this.handleConnection(socket, req);
       },
     );
@@ -36,7 +42,7 @@ export class ChatWsRegistrar implements OnApplicationBootstrap {
   }
 
   private async handleConnection(
-    socket: import('@fastify/websocket').WebSocket,
+    socket: WebSocket,
     req: FastifyRequest<{ Params: { projectId: string } }>,
   ): Promise<void> {
     const projectId = req.params?.projectId?.trim();
@@ -66,7 +72,7 @@ export class ChatWsRegistrar implements OnApplicationBootstrap {
     }
 
     await this.proxy.bridge({
-      client: socket as unknown as import('ws').WebSocket,
+      client: socket,
       projectId,
       userId: user.sub,
       gatewayWsUrl: runtime.gatewayWsUrl,

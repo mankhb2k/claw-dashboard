@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
+
 import { BadRequestException, Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { getDecryptedProviderKey } from '../../../ai-editor/lib/get-decrypted-provider-key';
 import { listSkillEditorProviderOptions } from '../../../ai-editor/lib/list-editor-provider-options';
@@ -7,7 +9,7 @@ import {
   recordEditorUsageFailure,
   recordEditorUsageSuccess,
 } from '../../../ai-editor/lib/record-editor-usage';
-import type { EditorOptionProvider } from '../../../ai-editor/ai-editor.types';
+import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
 import {
   SKILL_AI_EDITOR_MAX_MARKDOWN_CHARS,
   SKILL_AI_EDITOR_MAX_MESSAGES,
@@ -17,12 +19,13 @@ import {
   buildSkillAiEditorSystemPrompt,
   type SkillContextForPrompt,
 } from '../../lib/skill-ai-editor.prompt';
-import type { SkillAiEditorMessage } from '../../lib/skill-ai-editor.types';
 import {
   getSkillAiEditorAdapter,
   isSkillAiEditorProviderSupported,
 } from '../../providers/skill-ai-editor-registry';
-import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
+
+import type { EditorOptionProvider } from '../../../ai-editor/ai-editor.types';
+import type { SkillAiEditorMessage } from '../../lib/skill-ai-editor.types';
 
 export type SkillAiEditorOptionProvider = EditorOptionProvider;
 
@@ -109,7 +112,12 @@ export class SkillAiEditorService {
 
       return { markdown: result.markdown };
     } catch (err) {
-      recordEditorUsageFailure(this.usageRecorder, usageBase, err, usageMetadata);
+      recordEditorUsageFailure(
+        this.usageRecorder,
+        usageBase,
+        err,
+        usageMetadata,
+      );
       throw err;
     }
   }

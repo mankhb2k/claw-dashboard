@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import {
   openclawProviderPrefix,
@@ -60,9 +61,7 @@ export class ProviderModelsService {
     const trimmed = openclawId.trim();
     const prefix = `${openclawProviderPrefix(provider)}/`;
     if (!trimmed.startsWith(prefix)) {
-      throw new BadRequestException(
-        `Model ref must start with "${prefix}"`,
-      );
+      throw new BadRequestException(`Model ref must start with "${prefix}"`);
     }
     if (trimmed.length <= prefix.length) {
       throw new BadRequestException('Model ref is incomplete');
@@ -70,7 +69,10 @@ export class ProviderModelsService {
     return trimmed;
   }
 
-  async list(projectId: string, providerId: string): Promise<ProviderModelRow[]> {
+  async list(
+    projectId: string,
+    providerId: string,
+  ): Promise<ProviderModelRow[]> {
     const provider = this.assertAiProvider(providerId);
     const rows = await this.prisma.projectProviderModel.findMany({
       where: { projectId, providerId: provider.id },
@@ -98,7 +100,10 @@ export class ProviderModelsService {
       params.projectId,
       params.providerId,
     );
-    const openclawId = this.validateOpenclawId(params.providerId, params.openclawId);
+    const openclawId = this.validateOpenclawId(
+      params.providerId,
+      params.openclawId,
+    );
     const setDefault = params.setDefault ?? false;
 
     const existingCount = await this.prisma.projectProviderModel.count({

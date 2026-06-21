@@ -4,7 +4,8 @@ const resolveMetricsDateRangeMock = jest.fn();
 
 jest.mock('../../lib/overview-timezone.util', () => ({
   ...jest.requireActual('../../lib/overview-timezone.util'),
-  resolveMetricsDateRange: (...args: unknown[]) => resolveMetricsDateRangeMock(...args),
+  resolveMetricsDateRange: (...args: unknown[]) =>
+    resolveMetricsDateRangeMock(...args),
 }));
 
 import { OverviewService } from './overview.service';
@@ -73,14 +74,14 @@ describe('OverviewService', () => {
 
   it('returns metrics, week charts, and recent calls', async () => {
     const { service, prisma } = createService();
-    prisma.user.findUnique.mockResolvedValue({ analyticsTimezone: 'Asia/Ho_Chi_Minh' });
+    prisma.user.findUnique.mockResolvedValue({
+      analyticsTimezone: 'Asia/Ho_Chi_Minh',
+    });
     prisma.$queryRaw
       .mockResolvedValueOnce([
         { total_input: 100n, total_output: 40n, total_cost: '1.250000' },
       ])
-      .mockResolvedValueOnce([
-        { day: '2026-06-07', input: 20n, output: 8n },
-      ]);
+      .mockResolvedValueOnce([{ day: '2026-06-07', input: 20n, output: 8n }]);
     prisma.modelUsageEvent.findMany.mockResolvedValue([
       {
         modelId: 'gpt-4o',
@@ -132,7 +133,9 @@ describe('OverviewService', () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue({ analyticsTimezone: 'UTC' });
     prisma.$queryRaw
-      .mockResolvedValueOnce([{ total_input: 0, total_output: 0, total_cost: '0' }])
+      .mockResolvedValueOnce([
+        { total_input: 0, total_output: 0, total_cost: '0' },
+      ])
       .mockResolvedValueOnce([{ hour: 9, input: 15n, output: 3n }]);
     prisma.modelUsageEvent.findMany.mockResolvedValue([]);
 
@@ -155,7 +158,9 @@ describe('OverviewService', () => {
     });
     prisma.user.findUnique.mockResolvedValue({ analyticsTimezone: 'UTC' });
     prisma.$queryRaw
-      .mockResolvedValueOnce([{ total_input: 0, total_output: 0, total_cost: '0' }])
+      .mockResolvedValueOnce([
+        { total_input: 0, total_output: 0, total_cost: '0' },
+      ])
       .mockResolvedValueOnce([{ day: 15, input: 5n, output: 2n }]);
     prisma.modelUsageEvent.findMany.mockResolvedValue([]);
 
@@ -174,7 +179,9 @@ describe('OverviewService', () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue({ analyticsTimezone: 'UTC' });
     prisma.$queryRaw
-      .mockResolvedValueOnce([{ total_input: 0, total_output: 0, total_cost: '0' }])
+      .mockResolvedValueOnce([
+        { total_input: 0, total_output: 0, total_cost: '0' },
+      ])
       .mockResolvedValueOnce([]);
     prisma.modelUsageEvent.findMany.mockResolvedValue([
       {
@@ -207,6 +214,9 @@ describe('OverviewService', () => {
       chartPeriod: 'week',
     });
 
-    expect(result.recentCalls.map((row) => row.status)).toEqual(['Failed', 'Cancelled']);
+    expect(result.recentCalls.map((row) => row.status)).toEqual([
+      'Failed',
+      'Cancelled',
+    ]);
   });
 });

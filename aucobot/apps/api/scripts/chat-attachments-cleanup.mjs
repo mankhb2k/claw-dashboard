@@ -1,7 +1,6 @@
 /**
  * Delete orphan PENDING chat attachments older than 24h (blob + DB).
- * OSS: removes files under chat-uploads/ on disk.
- * Cloud: deletes R2 objects when CHAT_ATTACHMENT_S3_* env is configured.
+ * Self-host: removes files under chat-uploads/ on disk (OPENCLAW_DATA_ROOT).
  *
  * Usage: pnpm --filter @aucobot/api run cleanup:chat-attachments
  */
@@ -32,24 +31,14 @@ function resolveSafePath(dataDir, relativePath) {
   return abs;
 }
 
-async function loadCloudStorage() {
-  if (!process.env.CHAT_ATTACHMENT_S3_BUCKET?.trim()) return null;
-  const mod = await import('@aucobot-cloud/chat-attachment-storage');
-  return new mod.CloudChatAttachmentStorage();
-}
-
-async function deleteBlob(row, cloudStorage) {
-  if (row.storagePath?.trim()) {
-    const dataDir = resolveProjectDataDir(row.projectId, { dataRoot });
-    const abs = resolveSafePath(dataDir, row.storagePath);
-    try {
-      await unlink(abs);
-    } catch {
-      /* ignore missing */
-    }
-  }
-  if (row.storageKey?.trim() && cloudStorage) {
-    await cloudStorage.delete(row.projectId, { storageKey: row.storageKey });
+async function deleteBlob(row) {
+  if (!row.storagePath?.trim()) return;
+  const dataDir = resolveProjectDataDir(row.projectId, { dataRoot });
+  const abs = resolveSafePath(dataDir, row.storagePath);
+  try {
+    await unlink(abs);
+  } catch {
+    /* ignore missing */
   }
 }
 
@@ -66,13 +55,8 @@ async function main() {
     `Found ${rows.length} orphan attachment(s) before ${cutoff.toISOString()}`,
   );
 
-  const cloudStorage = await loadCloudStorage();
-  if (cloudStorage) {
-    console.log('Cloud R2 cleanup enabled (CHAT_ATTACHMENT_S3_BUCKET)');
-  }
-
   for (const row of rows) {
-    await deleteBlob(row, cloudStorage);
+    await deleteBlob(row);
     await prisma.chatAttachment.update({
       where: { id: row.id },
       data: { status: ChatAttachmentStatus.DELETED },

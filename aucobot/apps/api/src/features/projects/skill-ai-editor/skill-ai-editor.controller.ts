@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { SkillAiCompleteDto } from './dto/skill-ai-complete.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
   JwtPayloadUser,
 } from '../../../core/common/decorators/current-user.decorator';
-import { SkillAiCompleteDto } from './dto/skill-ai-complete.dto';
 import { ProjectsService } from '../services/projects/projects.service';
 import { SkillAiEditorService } from './services/skill-ai-editor/skill-ai-editor.service';
 

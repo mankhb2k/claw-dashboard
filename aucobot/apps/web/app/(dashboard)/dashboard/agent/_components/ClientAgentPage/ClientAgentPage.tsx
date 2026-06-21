@@ -1,7 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, Bot, Users } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import styles from "./ClientAgentPage.module.css";
+import { CardAgent } from "../CardAgent/CardAgent";
+import { ModalTemplate } from "../ModalTemplate/ModalTemplate";
+import { SearchItem } from "@/components/dashboard";
 import { Flex, Grid } from "@/components/layout";
 import {
   Button,
@@ -16,22 +23,17 @@ import {
   Spinner,
   Typography,
 } from "@/components/ui";
-import Link from "next/link";
-import { Plus, Bot, Users } from "lucide-react";
-import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
-import { SearchItem } from "@/components/dashboard";
-import { CardAgent } from "../CardAgent/CardAgent";
-import styles from "./ClientAgentPage.module.css";
-import type { AgentItem } from "../../agentMockData";
-import { ModalTemplate } from "../ModalTemplate/ModalTemplate";
-import { projectApi } from "@/lib/api/project";
 import { chatApi } from "@/lib/api/chat";
-import { useProjectStore } from "@/stores/project.store";
-import type { ProjectAgentListRow } from "@/schemas/project.schema";
-import type { ChatModelsResponse } from "@/lib/api/chat";
-import { resolveModelDisplayName } from "@/utils/chat/model-catalog";
-import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
+import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+import { useProjectStore } from "@/stores/project.store";
+import { COLLABORATION_UPDATED_EVENT } from "@/utils/agent/collaboration-events";
+import { resolveModelDisplayName } from "@/utils/chat/model-catalog";
+
+import type { AgentItem } from "../../agentMockData";
+import type { ChatModelsResponse } from "@/lib/api/chat";
+import type { ProjectAgentListRow } from "@/schemas/project.schema";
 
 function toAgentItem(
   row: ProjectAgentListRow,
@@ -58,21 +60,33 @@ export function ClientAgentPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [isModalTemplateOpen, setIsModalTemplateOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [listFilter, setListFilter] = useState<"all" | "collaboration">("all");
   const [collaborationEnabled, setCollaborationEnabled] = useState(false);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+  const [loading, setLoading] = useState(Boolean(projectId));
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+    setError(null);
+    if (!projectId) {
+      setAgents([]);
+      setCollaborationEnabled(false);
+    }
+  }
+
+  const effectiveListFilter =
+    !collaborationEnabled && listFilter === "collaboration"
+      ? "all"
+      : listFilter;
 
   useEffect(() => {
     void fetchProjects({ silent: true });
   }, [fetchProjects]);
 
   const loadList = useCallback(async () => {
-    if (!projectId) {
-      setAgents([]);
-      setCollaborationEnabled(false);
-      return;
-    }
+    if (!projectId) return;
     const [rows, collaboration, modelCatalog] = await Promise.all([
       projectApi.listAgents(projectId),
       projectApi.getCollaboration(projectId),
@@ -83,22 +97,21 @@ export function ClientAgentPage() {
   }, [projectId]);
 
   useEffect(() => {
-    if (!projectId) {
-      setAgents([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    void loadList()
-      .catch((err) => {
+    if (!projectId) return;
+    void (async () => {
+      await Promise.resolve();
+      try {
+        await loadList();
+      } catch (err) {
         setAgents([]);
         setError(
           err instanceof Error ? err.message : t("agent.list.errors.loadList"),
         );
-      })
-      .finally(() => setLoading(false));
-  }, [projectId, loadList]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [projectId, loadList, t]);
 
   useEffect(() => {
     const refresh = () => {
@@ -109,12 +122,6 @@ export function ClientAgentPage() {
       window.removeEventListener(COLLABORATION_UPDATED_EVENT, refresh);
   }, [loadList]);
 
-  useEffect(() => {
-    if (!collaborationEnabled && listFilter === "collaboration") {
-      setListFilter("all");
-    }
-  }, [collaborationEnabled, listFilter]);
-
   const reloadAgents = useCallback(async () => {
     if (!projectId) return;
     try {
@@ -124,11 +131,11 @@ export function ClientAgentPage() {
         err instanceof Error ? err.message : t("agent.list.errors.loadList"),
       );
     }
-  }, [projectId, loadList]);
+  }, [projectId, loadList, t]);
 
   const filteredAgents = useMemo(() => {
     return agents.filter((agent) => {
-      if (listFilter === "collaboration" && !agent.inCollaboration) {
+      if (effectiveListFilter === "collaboration" && !agent.inCollaboration) {
         return false;
       }
       const q = searchQuery.trim().toLowerCase();
@@ -139,7 +146,7 @@ export function ClientAgentPage() {
         agent.id.toLowerCase().includes(q)
       );
     });
-  }, [agents, searchQuery, listFilter]);
+  }, [agents, searchQuery, effectiveListFilter]);
 
   const collaborationCount = useMemo(
     () => agents.filter((a) => a.inCollaboration).length,
@@ -219,7 +226,7 @@ export function ClientAgentPage() {
               <button
                 type="button"
                 className={`${styles.filterChip} ${
-                  listFilter === "all" ? styles.filterChipActive : ""
+                  effectiveListFilter === "all" ? styles.filterChipActive : ""
                 }`}
                 onClick={() => setListFilter("all")}
               >
@@ -228,7 +235,9 @@ export function ClientAgentPage() {
               <button
                 type="button"
                 className={`${styles.filterChip} ${
-                  listFilter === "collaboration" ? styles.filterChipActive : ""
+                  effectiveListFilter === "collaboration"
+                    ? styles.filterChipActive
+                    : ""
                 }`}
                 onClick={() => setListFilter("collaboration")}
               >
@@ -296,7 +305,7 @@ export function ClientAgentPage() {
         >
           <Bot size={48} className={styles.emptyIcon} />
           <Typography variant="h3" className={styles.emptyTitle}>
-            {listFilter === "collaboration"
+            {effectiveListFilter === "collaboration"
               ? t("agent.list.noCollaborationTitle")
               : t("agent.list.noMatchTitle")}
           </Typography>
@@ -305,11 +314,11 @@ export function ClientAgentPage() {
             color="muted"
             className={styles.emptyDesc}
           >
-            {listFilter === "collaboration"
+            {effectiveListFilter === "collaboration"
               ? t("agent.list.noCollaborationDescription")
               : t("agent.list.noMatchDescription")}
           </Typography>
-          {listFilter === "collaboration" ? (
+          {effectiveListFilter === "collaboration" ? (
             <Link
               href={`${DASHBOARD_BASE_PATH}/agent/collaboration`}
               className={styles.collaborationLink}

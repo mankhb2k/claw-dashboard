@@ -1,8 +1,5 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Button, Input, Typography, Spinner } from "@/components/ui";
-import { Flex } from "@/components/layout";
 import {
   Play,
   Square,
@@ -14,18 +11,23 @@ import {
   AlertTriangle,
   ExternalLink,
 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+
+import styles from "./GatewayStatusSection.module.css";
+import { CardSection } from "../CardSection/CardSection";
+import { TitleSection } from "../TitleSection/TitleSection";
+import { Flex } from "@/components/layout";
+import { Button, Input, Typography, Spinner } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
-import { useProjectStore } from "@/stores/project.store";
-import type { ProjectHealth, ProjectStatus } from "@/schemas/project.schema";
 import {
   buildGatewayControlUiUrl,
   resolveOssGatewayHttpBase,
 } from "@/lib/runtime/gateway-control-ui";
 import { isCloudRuntime } from "@/lib/runtime/runtime-mode";
-import styles from "./GatewayStatusSection.module.css";
-import { CardSection } from "../CardSection/CardSection";
-import { TitleSection } from "../TitleSection/TitleSection";
+import { useProjectStore } from "@/stores/project.store";
+
+import type { ProjectHealth, ProjectStatus } from "@/schemas/project.schema";
 
 interface Props {
   projectId: string;
@@ -102,22 +104,24 @@ export function GatewayStatusSection({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      return;
+      return undefined;
     }
-    if (intervalRef.current) return;
+    if (intervalRef.current) return undefined;
 
-    intervalRef.current = setInterval(async () => {
-      const h = await fetchHealth();
-      if (
-        h &&
-        h.status !== "starting" &&
-        h.status !== "stopping" &&
-        h.status !== "creating"
-      ) {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        intervalRef.current = null;
-        setActionLoading(false);
-      }
+    intervalRef.current = setInterval(() => {
+      void (async () => {
+        const h = await fetchHealth();
+        if (
+          h &&
+          h.status !== "starting" &&
+          h.status !== "stopping" &&
+          h.status !== "creating"
+        ) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setActionLoading(false);
+        }
+      })();
     }, 3000);
 
     return () => {
@@ -129,7 +133,10 @@ export function GatewayStatusSection({
   }, [health?.status, fetchHealth]);
 
   useEffect(() => {
-    fetchHealth();
+    void (async () => {
+      await Promise.resolve();
+      await fetchHealth();
+    })();
   }, [fetchHealth]);
 
   const handleStart = async () => {
@@ -233,9 +240,13 @@ export function GatewayStatusSection({
   };
 
   const copyToClipboard = async (text: string, type: "token" | "url") => {
-    await navigator.clipboard.writeText(text);
-    setCopied(type);
-    setTimeout(() => setCopied(null), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(type);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      setGatewayError(t("settings.gateway.errors.copyClipboard"));
+    }
   };
 
   const status = health?.status ?? "stopped";

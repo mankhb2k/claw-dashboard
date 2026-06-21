@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+
+import { Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+
 import type { ChatAgentSummary } from '../../lib/chat.types';
 
 export type { ChatAgentSummary } from '../../lib/chat.types';

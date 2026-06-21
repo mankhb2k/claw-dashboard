@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useProjectStore } from "@/stores/project.store";
-import { projectApi } from "@/lib/api/project";
-import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import styles from "./ClientConnectorPage.module.css";
+import { findServiceBySlug } from "../../../connect-display";
 import {
   MOCK_PERMISSION_GROUPS,
   type PermissionGroupData,
 } from "../../../projectConnectData";
-import { findServiceBySlug } from "../../../connect-display";
-import { Typography, Spinner } from "@/components/ui";
-import { Container, Flex } from "@/components/layout";
-import { BackButton } from "@/components/dashboard";
-import { NoConnection } from "../NoConnection/NoConnection";
 import { ActiveConnection } from "../ActiveConnection/ActiveConnection";
-import styles from "./ClientConnectorPage.module.css";
+import { NoConnection } from "../NoConnection/NoConnection";
+import { BackButton } from "@/components/dashboard";
+import { Container, Flex } from "@/components/layout";
+import { Typography, Spinner } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
+
+import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
 
 export type PermissionMode = "allow" | "ask" | "block";
 
@@ -25,6 +28,7 @@ interface Props {
 }
 
 export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,7 +36,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
 
   const [definitions, setDefinitions] = useState<ConnectorDefinition[]>([]);
   const [connectors, setConnectors] = useState<ProjectConnector[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(projectId));
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,13 +49,20 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
     read: true,
     write: true,
   });
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setIsLoading(Boolean(projectId));
+    setError(null);
+  }
 
   const service = useMemo(
     () => findServiceBySlug(connectorSlug, definitions),
     [connectorSlug, definitions],
   );
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     if (!projectId) return;
     const [defs, rows] = await Promise.all([
       projectApi.listConnectorDefinitions(),
@@ -59,21 +70,29 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
     ]);
     setDefinitions(defs);
     setConnectors(rows);
-  };
-
-  useEffect(() => {
-    if (!projectId) return;
-    setIsLoading(true);
-    reload()
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load connectors"))
-      .finally(() => setIsLoading(false));
   }, [projectId]);
 
   useEffect(() => {
-    if (searchParams.get("connected") === "1" && projectId) {
-      void reload();
-    }
-  }, [searchParams, projectId]);
+    if (!projectId) return;
+    void (async () => {
+      await Promise.resolve();
+      try {
+        await reload();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("connect.detail.loadFailed"));
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [projectId, reload, t]);
+
+  useEffect(() => {
+    if (searchParams.get("connected") !== "1" || !projectId) return;
+    void (async () => {
+      await Promise.resolve();
+      await reload();
+    })();
+  }, [searchParams, projectId, reload]);
 
   const activeConnector = useMemo(
     () =>
@@ -93,7 +112,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
       const { url } = await projectApi.startConnectorOAuth(projectId, service.slug);
       window.location.href = url;
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Connection failed");
+      alert(err instanceof Error ? err.message : t("connect.detail.connectionFailed"));
       setIsConnecting(false);
     }
   };
@@ -104,7 +123,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
       await projectApi.deleteConnector(projectId, activeConnector.id);
       router.push("/dashboard/connector");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to disconnect");
+      alert(err instanceof Error ? err.message : t("connect.detail.disconnectFailed"));
     }
   };
 
@@ -126,7 +145,7 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
         <Container size="md">
           <Flex center fullHeight direction="column" gap={4} p={8}>
             <Spinner size="lg" />
-            <Typography color="muted">Loading...</Typography>
+            <Typography color="muted">{t("connect.page.loading")}</Typography>
           </Flex>
         </Container>
       </div>
@@ -140,16 +159,16 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
           <Flex center fullHeight direction="column" gap={24} py={80}>
             <Flex direction="column" center gap={8}>
               <Typography variant="h2" weight="bold" className={styles.error}>
-                {error ? "Something went wrong" : "Not found"}
+                {error ? t("connect.detail.errorTitle") : t("connect.detail.notFoundTitle")}
               </Typography>
               <Typography color="muted" className={styles.errorText}>
                 {!project
-                  ? "The project does not exist or you do not have access."
-                  : "This connector is unavailable or not supported on the backend."}
+                  ? t("connect.detail.notFoundProject")
+                  : t("connect.detail.notFoundConnector")}
               </Typography>
             </Flex>
             <BackButton href="/dashboard/connector">
-              Back to connections
+              {t("connect.detail.backToConnections")}
             </BackButton>
           </Flex>
         </Container>

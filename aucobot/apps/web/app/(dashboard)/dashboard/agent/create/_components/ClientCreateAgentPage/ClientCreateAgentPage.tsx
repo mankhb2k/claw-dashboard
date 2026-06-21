@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
-import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
-import { EditPanel } from "../../../[agentId]/_components/EditPanel/EditPanel";
-import { AgentPanel } from "../../../[agentId]/_components/AgentPanel/AgentPanel";
 import styles from "./ClientCreateAgentPage.module.css";
+import { AgentPanel } from "../../../[agentId]/_components/AgentPanel/AgentPanel";
+import { EditPanel } from "../../../[agentId]/_components/EditPanel/EditPanel";
+import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
 
 export function ClientCreateAgentPage() {
   const agentPanelOpen = useAgentEditorStore((s) => s.agentPanelOpen);

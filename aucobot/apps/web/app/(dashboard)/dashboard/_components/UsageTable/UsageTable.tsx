@@ -1,6 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
+
+import styles from "./UsageTable.module.css";
 import { Box, Flex } from "@/components/layout";
 import {
   Card,
@@ -13,8 +14,9 @@ import {
   TableRow,
   Typography,
 } from "@/components/ui";
+
 import type { UsageTableRow } from "@/utils/overview/overview-mappers";
-import styles from "./UsageTable.module.css";
+import type { CSSProperties } from "react";
 
 export type { UsageTableRow };
 
@@ -65,9 +67,9 @@ export function UsageTable({ title, data }: UsageTableProps) {
           {data.length === 0 ? (
             <TableEmpty colSpan={COLUMN_COUNT} message="No recent calls" />
           ) : (
-            data.map((row, idx) => (
+            data.map((row) => (
               <TableRow
-                key={`${row.model}-${row.time}-${idx}`}
+                key={row.id}
                 hoverable
               >
                 <TableCell>

@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  useCallback,
   useEffect,
   useRef,
   type ReactNode,
   type RefObject,
 } from "react";
+
 import styles from "./ContentArea.module.css";
 
 const BOTTOM_THRESHOLD_PX = 80;
@@ -41,18 +41,15 @@ export function ContentArea({
   const stickToBottomRef = useRef(true);
   const prevResetKeyRef = useRef(scrollResetKey);
 
-  const onScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    stickToBottomRef.current = isNearBottom(el);
-  }, [scrollRef]);
-
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) return undefined;
+    const onScroll = () => {
+      stickToBottomRef.current = isNearBottom(el);
+    };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
-  }, [onScroll, scrollRef]);
+  }, [scrollRef]);
 
   useEffect(() => {
     if (scrollResetKey === undefined) return;

@@ -1,22 +1,24 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useProjectStore } from "@/stores/project.store";
-import { projectApi } from "@/lib/api/project";
-import type { ProjectConnector } from "@/schemas/project.schema";
-import { Button } from "@/components/ui/Button/Button";
+import { useMemo, useState, useEffect, useCallback } from "react";
+
 import styles from "./ClientConnectPage.module.css";
-import { Typography } from "@/components/ui/Typography/Typography";
-import { Flex } from "@/components/layout";
-import { TitleHeader } from "@/components/dashboard";
-import { useI18n } from "@/lib/i18n";
 import { toServiceConnectData } from "../../connect-display";
-import type { ServiceConnectData } from "../../projectConnectData";
 import { CardConnection } from "../CardConnection/CardConnection";
 import { ModalConnectorBrowser } from "../ModalConnectorBrowser/ModalConnectorBrowser";
 import { ModalCustomConnector } from "../ModalCustomConnector/ModalCustomConnector";
+import { TitleHeader } from "@/components/dashboard";
+import { Flex } from "@/components/layout";
+import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { Typography } from "@/components/ui/Typography/Typography";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
+
+import type { ServiceConnectData } from "../../projectConnectData";
+import type { ProjectConnector } from "@/schemas/project.schema";
 
 interface ClientConnectPageProps {
   projectId: string;
@@ -36,6 +38,12 @@ export function ClientConnectPage({ projectId }: ClientConnectPageProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [appStoreOpen, setAppStoreOpen] = useState(false);
   const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setFetched(false);
+  }
 
   const loadConnectData = useCallback(async () => {
     if (!projectId) return;
@@ -50,7 +58,6 @@ export function ClientConnectPage({ projectId }: ClientConnectPageProps) {
 
   useEffect(() => {
     if (!projectId) return;
-    setFetched(false);
     void fetchProjects()
       .then(() => loadConnectData())
       .catch((err) =>

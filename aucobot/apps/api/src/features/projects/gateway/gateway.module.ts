@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { WorkspaceModule } from '../workspace/workspace.module';
+
 import { ProjectsModule } from '../projects.module';
+import { WorkspaceModule } from '../workspace/workspace.module';
 import { GatewayRpcService } from './services/gateway-rpc/gateway-rpc.service';
 
 @Module({

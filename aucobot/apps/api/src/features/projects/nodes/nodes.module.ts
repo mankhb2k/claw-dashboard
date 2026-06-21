@@ -1,12 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { AuthModule } from '../../../core/auth/auth.module';
-import { WorkspaceModule } from '../workspace/workspace.module';
-import { ProjectsModule } from '../projects.module';
-import { GatewayModule } from '../gateway/gateway.module';
-import { NodesController } from './nodes.controller';
+
 import { NodeInvitesPublicController } from './node-invites-public.controller';
-import { NodesService } from './services/nodes/nodes.service';
+import { NodesController } from './nodes.controller';
+import { AuthModule } from '../../../core/auth/auth.module';
+import { GatewayModule } from '../gateway/gateway.module';
+import { ProjectsModule } from '../projects.module';
+import { WorkspaceModule } from '../workspace/workspace.module';
 import { NodeInvitesService } from './services/node-invites/node-invites.service';
+import { NodesService } from './services/nodes/nodes.service';
 
 @Module({
   imports: [

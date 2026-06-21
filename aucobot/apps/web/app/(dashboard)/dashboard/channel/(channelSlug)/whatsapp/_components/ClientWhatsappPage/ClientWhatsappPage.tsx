@@ -1,8 +1,8 @@
 "use client";
 
+import { BackButton } from "@/components/dashboard";
 import { Flex } from "@/components/layout";
 import { Typography } from "@/components/ui";
-import { BackButton } from "@/components/dashboard";
 
 export function ClientWhatsappPage() {
   return (

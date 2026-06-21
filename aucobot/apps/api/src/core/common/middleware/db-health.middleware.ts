@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
+
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
@@ -28,6 +29,6 @@ export class DbHealthMiddleware implements NestMiddleware {
           : `Database unavailable: ${detail}`,
       );
     }
-    next();
+    return next();
   }
 }

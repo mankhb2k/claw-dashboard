@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+
+import styles from "./CardCollaborationAllowList.module.css";
 import { Typography, Card } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
-import styles from "./CardCollaborationAllowList.module.css";
 
 type CardCollaborationAllowListProps = {
   enabled: boolean;

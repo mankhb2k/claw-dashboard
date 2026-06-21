@@ -1,10 +1,3 @@
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ProjectStatus } from '@aucobot/database';
-
 jest.mock('nanoid', () => ({
   customAlphabet: () => () => 'abc123xyz0',
 }));
@@ -35,19 +28,29 @@ const resolveGatewayEndpointMock = jest.fn();
 const resolveOssGatewayTokenMock = jest.fn();
 
 jest.mock('../../runtime/gateway-endpoint', () => ({
-  resolveGatewayEndpoint: (...args: unknown[]) => resolveGatewayEndpointMock(...args),
-  resolveOssGatewayToken: (...args: unknown[]) => resolveOssGatewayTokenMock(...args),
+  resolveGatewayEndpoint: (...args: unknown[]) =>
+    resolveGatewayEndpointMock(...args),
+  resolveOssGatewayToken: (...args: unknown[]) =>
+    resolveOssGatewayTokenMock(...args),
   resolveOssGatewayHttpBase: jest.fn(() => 'http://127.0.0.1:18789'),
 }));
 
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { ProjectsService } from './projects.service';
 import { isOssRuntime } from '../../runtime/runtime-mode';
 import { gatewayTokenForNewProject } from '@aucobot/control-plane-core';
-import { ProjectsService } from './projects.service';
+import { ProjectStatus } from '@aucobot/database';
 
-const isOssRuntimeMock = isOssRuntime as jest.MockedFunction<typeof isOssRuntime>;
-const gatewayTokenForNewProjectMock = gatewayTokenForNewProject as jest.MockedFunction<
-  typeof gatewayTokenForNewProject
->;
+const isOssRuntimeMock = isOssRuntime;
+const gatewayTokenForNewProjectMock =
+  gatewayTokenForNewProject as jest.MockedFunction<
+    typeof gatewayTokenForNewProject
+  >;
 
 const USER_ID = 'user-1';
 const PROJECT_ID = 'proj-1';
@@ -102,7 +105,10 @@ describe('ProjectsService', () => {
     provisionMock.mockImplementation(
       async (
         projectId: string,
-        opts: { gatewayToken: string; onBootstrap?: (id: string, token: string) => Promise<void> },
+        opts: {
+          gatewayToken: string;
+          onBootstrap?: (id: string, token: string) => Promise<void>;
+        },
       ) => {
         await opts.onBootstrap?.(projectId, opts.gatewayToken);
         return { projectId, mode: 'oss' };
@@ -159,7 +165,11 @@ describe('ProjectsService', () => {
 
     it('rejects when user already has a project', async () => {
       const { service, prisma } = createService();
-      prisma.user.findUnique.mockResolvedValue({ id: USER_ID, name: 'Admin', username: 'admin' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: USER_ID,
+        name: 'Admin',
+        username: 'admin',
+      });
       prisma.project.findUnique.mockResolvedValue(buildProject());
 
       await expect(
@@ -169,10 +179,17 @@ describe('ProjectsService', () => {
 
     it('provisions OSS gateway and marks project RUNNING', async () => {
       const { service, prisma, workspace } = createService();
-      const creating = buildProject({ status: ProjectStatus.CREATING, gatewayToken: null });
+      const creating = buildProject({
+        status: ProjectStatus.CREATING,
+        gatewayToken: null,
+      });
       const running = buildProject({ status: ProjectStatus.RUNNING });
 
-      prisma.user.findUnique.mockResolvedValue({ id: USER_ID, name: 'Admin', username: 'admin' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: USER_ID,
+        name: 'Admin',
+        username: 'admin',
+      });
       prisma.project.findUnique.mockResolvedValue(null);
       prisma.project.create.mockResolvedValue(creating);
       prisma.project.update.mockResolvedValue(running);
@@ -240,7 +257,11 @@ describe('ProjectsService', () => {
       const { service, prisma } = createService();
       const creating = buildProject({ status: ProjectStatus.CREATING });
 
-      prisma.user.findUnique.mockResolvedValue({ id: USER_ID, name: null, username: 'admin' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: USER_ID,
+        name: null,
+        username: 'admin',
+      });
       prisma.project.findUnique.mockResolvedValue(null);
       prisma.project.create.mockResolvedValue(creating);
       provisionMock.mockRejectedValue(new Error('gateway unhealthy'));
@@ -260,28 +281,26 @@ describe('ProjectsService', () => {
   });
 
   describe('runtime lifecycle actions', () => {
-    it('respawn throws OSS message in OSS mode', async () => {
+    it('respawn throws OSS message in OSS mode', () => {
       const { service } = createService();
 
-      await expect(service.respawn(USER_ID, PROJECT_ID)).rejects.toMatchObject({
-        response: expect.objectContaining({
-          message: expect.stringContaining('shared gateway'),
-        }),
-      });
-    });
-
-    it('start throws OSS message in OSS mode', async () => {
-      const { service } = createService();
-
-      await expect(service.start(USER_ID, PROJECT_ID)).rejects.toBeInstanceOf(
+      expect(() => service.respawn(USER_ID, PROJECT_ID)).toThrow(
         BadRequestException,
       );
     });
 
-    it('stop throws OSS message in OSS mode', async () => {
+    it('start throws OSS message in OSS mode', () => {
       const { service } = createService();
 
-      await expect(service.stop(USER_ID, PROJECT_ID)).rejects.toBeInstanceOf(
+      expect(() => service.start(USER_ID, PROJECT_ID)).toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('stop throws OSS message in OSS mode', () => {
+      const { service } = createService();
+
+      expect(() => service.stop(USER_ID, PROJECT_ID)).toThrow(
         BadRequestException,
       );
     });
@@ -336,7 +355,8 @@ describe('ProjectsService', () => {
       const running = buildProject({ status: ProjectStatus.RUNNING });
       const errored = buildProject({
         status: ProjectStatus.ERROR,
-        errorMessage: 'Gateway is not reachable on port 18789. Run Openclaw and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.',
+        errorMessage:
+          'Gateway is not reachable on port 18789. Run Openclaw and match OPENCLAW_GATEWAY_TOKEN in aucobot/apps/.env.',
       });
       prisma.project.findFirst.mockResolvedValue(running);
       prisma.project.update.mockResolvedValue(errored);

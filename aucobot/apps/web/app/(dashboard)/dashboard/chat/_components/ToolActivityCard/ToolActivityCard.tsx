@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import {
   AlertCircle,
   ChevronDown,
@@ -10,11 +9,13 @@ import {
   Terminal,
   Wrench,
 } from 'lucide-react'
-
-import { useI18n } from '@/lib/i18n'
-import type { ToolStreamEntry } from '@/utils/chat/tool/types'
+import { useState } from 'react'
 
 import styles from './ToolActivityCard.module.css'
+import { useI18n } from '@/lib/i18n'
+
+import type { ToolStreamEntry } from '@/utils/chat/tool/types'
+
 
 type ToolActivityCardProps = {
   entry: ToolStreamEntry

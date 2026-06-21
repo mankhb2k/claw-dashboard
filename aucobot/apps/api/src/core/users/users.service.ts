@@ -6,14 +6,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import type { FastifyRequest } from 'fastify';
-import { toPublicUser, type PublicUser } from '@aucobot/control-plane-core';
-import type { AvatarStorage } from '@aucobot/runtime-contracts';
+
 import { PrismaService } from '../database/prisma.service';
 import { AVATAR_STORAGE } from './avatar/avatar-storage.provider';
 import { readAvatarUpload } from './avatar/avatar-upload.util';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserNameDto } from './dto/update-user-name.dto';
+import { toPublicUser, type PublicUser } from '@aucobot/control-plane-core';
+
+import type { AvatarStorage } from '@aucobot/runtime-contracts';
+import type { FastifyRequest } from 'fastify';
 
 const publicUserSelect = {
   id: true,
@@ -45,7 +47,10 @@ export class UsersService {
     return this.toPublic(userId);
   }
 
-  async updateName(userId: string, dto: UpdateUserNameDto): Promise<PublicUser> {
+  async updateName(
+    userId: string,
+    dto: UpdateUserNameDto,
+  ): Promise<PublicUser> {
     const name = dto.name.trim();
     await this.prisma.user.update({
       where: { id: userId },
@@ -89,7 +94,9 @@ export class UsersService {
     if (!ok) throw new UnauthorizedException('Current password is incorrect');
 
     if (dto.currentPassword === dto.newPassword) {
-      throw new BadRequestException('New password must differ from current password');
+      throw new BadRequestException(
+        'New password must differ from current password',
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.newPassword, 12);

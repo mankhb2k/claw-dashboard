@@ -1,44 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SETUP_PATH, shouldRedirectToSetup } from "@/lib/routing/entry-route";
-import { isOssRuntime } from "@/lib/runtime/runtime-mode";
-import { useProjectStore } from "@/stores/project.store";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { useChatDerivations } from "./use-chat-derivations";
+import { useChatSessionSearch } from "./use-chat-session-search";
+import { useSidebarPreference } from "./use-sidebar-preference";
+import { useChatInvokableSkills } from "@/hooks/chat/use-chat-invokable-skills";
+import { useChatSandboxContext } from "@/hooks/chat/use-chat-sandbox-context";
+import { useChatToolStream } from "@/hooks/chat/use-chat-tool-stream";
 import { chatApi, type ChatModelsResponse } from "@/lib/api/chat";
-import { resolveModelSelection } from "@/utils/chat/model-catalog";
 import {
   ProjectChatClient,
   type GatewayEventFrame,
 } from "@/lib/chat/project-chat-client";
-import { patchSessionModel } from "@/utils/chat/session/model-patch";
-import { patchSessionThinking } from "@/utils/chat/session/thinking-patch";
+import { translate } from "@/lib/i18n/translate";
+import { SETUP_PATH, shouldRedirectToSetup } from "@/lib/routing/entry-route";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
+import { useProjectStore } from "@/stores/project.store";
 import {
-  clearSessionThinkingSelection,
-  resolveSessionThinkingLevel,
-  saveSessionThinkingSelection,
-} from "@/utils/chat/session/thinking-storage";
+  resolveAgentPrimaryOpenClawId,
+  resolveModelSelection,
+} from "@/utils/chat/model-catalog";
 import {
-  DEFAULT_THINKING_LEVEL,
-  normalizeThinkingLevel,
-  type ThinkingLevel,
-} from "@/utils/chat/thinking-level";
-import {
-  clearSessionModelSelection,
-  loadSessionModelSelection,
-  saveSessionModelSelection,
-} from "@/utils/chat/session/model-storage";
-import {
-  extractText,
-  roleOf,
-  stableMessageId,
-} from "@/utils/chat/stream/message-extract";
-import {
-  loadLastAgentId,
-  loadLastSessionKey,
-  saveLastAgentId,
-  saveLastSessionKey,
-} from "@/utils/chat/session/last-key";
+  isFileOverSandboxStagingLimit,
+  SANDBOX_STAGING_MAX_BYTES,
+} from "@/utils/chat/sandbox-staging-limit";
 import {
   deriveAutoTitleFromMessage,
   isAutoTitleCandidate,
@@ -50,38 +37,64 @@ import {
   isMainSessionKey,
   reconcilePatchedSessionLabels,
 } from "@/utils/chat/session/display";
-import type {
-  GatewaySessionRow,
-  SessionsCreateResult,
-  SessionsListResult,
-} from "@/utils/chat/session/types";
-import { matchesSessionKey, sessionKeyForAgent } from "@/utils/chat/session/key";
 import {
-  isFileOverSandboxStagingLimit,
-  SANDBOX_STAGING_MAX_BYTES,
-} from "@/utils/chat/sandbox-staging-limit";
-import { useChatSandboxContext } from "@/hooks/chat/use-chat-sandbox-context";
-import { useChatToolStream } from "@/hooks/chat/use-chat-tool-stream";
+  matchesSessionKey,
+  sessionKeyForAgent,
+} from "@/utils/chat/session/key";
+import {
+  loadLastAgentId,
+  loadLastSessionKey,
+  saveLastAgentId,
+  saveLastSessionKey,
+} from "@/utils/chat/session/last-key";
+import { patchSessionModel } from "@/utils/chat/session/model-patch";
+import {
+  clearSessionModelSelection,
+  loadSessionModelSelection,
+  saveSessionModelSelection,
+} from "@/utils/chat/session/model-storage";
+import { patchSessionThinking } from "@/utils/chat/session/thinking-patch";
+import {
+  clearSessionThinkingSelection,
+  resolveSessionThinkingLevel,
+  saveSessionThinkingSelection,
+} from "@/utils/chat/session/thinking-storage";
 import {
   isHiddenToolPayloadText,
   shouldShowHistoryMessage,
 } from "@/utils/chat/stream/history-filter";
+import {
+  extractText,
+  roleOf,
+  stableMessageId,
+} from "@/utils/chat/stream/message-extract";
 import { accumulateStreamDelta } from "@/utils/chat/stream/stream-delta";
+import {
+  DEFAULT_THINKING_LEVEL,
+  normalizeThinkingLevel,
+  type ThinkingLevel,
+} from "@/utils/chat/thinking-level";
 import { mergeLiveAssistantText } from "@/utils/chat/tool/stream";
+
 import type {
   ChatPanelConnectionState,
   ChatPanelMessage,
 } from "../ChatPanel/ChatPanel";
 import type { ComposerSendPayload } from "@/components/chat/MessageBox";
-import { useChatSessionSearch } from "./use-chat-session-search";
-import { useSidebarPreference } from "./use-sidebar-preference";
-import { useChatDerivations } from "./use-chat-derivations";
+import type {
+  GatewaySessionRow,
+  SessionsCreateResult,
+  SessionsListResult,
+} from "@/utils/chat/session/types";
 
 type ConnectionState = ChatPanelConnectionState;
 
 const SESSIONS_LIST_LIMIT = 50;
 
-function rowFromMessage(message: unknown, index: number): ChatPanelMessage | null {
+function rowFromMessage(
+  message: unknown,
+  index: number,
+): ChatPanelMessage | null {
   const text = extractText(message);
   if (!text?.trim()) return null;
   const role = roleOf(message);
@@ -112,6 +125,8 @@ export function useClientChatPage() {
     projectId,
     agentId,
   );
+  const { invokableSkills, loading: invokableSkillsLoading } =
+    useChatInvokableSkills(projectId, agentId);
   const [sessionKey, setSessionKey] = useState("agent:main:main");
   const [sessions, setSessions] = useState<GatewaySessionRow[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -128,12 +143,27 @@ export function useClientChatPage() {
   const [modelOptions, setModelOptions] = useState<ChatModelsResponse | null>(
     null,
   );
+  const modelFetchKey = projectId ? `${projectId}:${agentId}` : null;
+  const [trackedModelFetchKey, setTrackedModelFetchKey] = useState<
+    string | null
+  >(null);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [providerId, setProviderId] = useState<string | undefined>(undefined);
   const [modelId, setModelId] = useState<string | undefined>(undefined);
+
+  if (modelFetchKey !== trackedModelFetchKey) {
+    setTrackedModelFetchKey(modelFetchKey);
+    if (modelFetchKey) {
+      setModelsLoading(true);
+    } else {
+      setModelsLoading(false);
+      setModelOptions(null);
+    }
+  }
   const [modelSaving, setModelSaving] = useState(false);
-  const [thinkingLevel, setThinkingLevel] =
-    useState<ThinkingLevel>(DEFAULT_THINKING_LEVEL);
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>(
+    DEFAULT_THINKING_LEVEL,
+  );
   const [thinkingSaving, setThinkingSaving] = useState(false);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("idle");
@@ -259,7 +289,7 @@ export function useClientChatPage() {
       } catch (err) {
         if (requestId !== sessionsRequestIdRef.current) return;
         setError(
-          err instanceof Error ? err.message : "Could not load sessions",
+          err instanceof Error ? err.message : translate("chat.errors.loadSessions"),
         );
       } finally {
         if (requestId === sessionsRequestIdRef.current) {
@@ -381,7 +411,7 @@ export function useClientChatPage() {
           setSending(false);
           setStreamText("");
           resetToolStreamRef.current();
-          setError("The agent returned an error while processing your message");
+          setError(translate("chat.errors.agentError"));
         } else if (payload.state === "aborted") {
           sendingRef.current = false;
           setSending(false);
@@ -393,14 +423,14 @@ export function useClientChatPage() {
         if (code === 1008) {
           setConnectionState("error");
           setError(
-            "WebSocket rejected (session expired). Sign out and sign in again, or refresh the page.",
+            translate("chat.errors.wsSessionExpired"),
           );
           return;
         }
         if (code === 1013 || reason.includes("not running")) {
           setConnectionState("error");
           setError(
-            "Gateway is not ready yet. Wait a few seconds, then click Retry.",
+            translate("chat.errors.gatewayNotReady"),
           );
           return;
         }
@@ -411,15 +441,22 @@ export function useClientChatPage() {
         setError(
           msg === "WebSocket error"
             ? isOssRuntime()
-              ? "Cannot reach the shared gateway. Ensure aucobot-gateway-dev is running on port 18789 and the API proxy is enabled."
-              : "Cannot reach the gateway. Check the worker container and WebSocket proxy."
+              ? translate("chat.errors.gatewayUnreachableOss")
+              : translate("chat.errors.gatewayUnreachable")
             : msg,
         );
       },
     });
     clientRef.current = client;
     client.connect();
-  }, [projectId, ready, loadHistory, loadSessions, subscribeSessions]);
+  }, [
+    projectId,
+    ready,
+    loadHistory,
+    loadSessions,
+    subscribeSessions,
+    debouncedSessionSearchRef,
+  ]);
 
   const {
     agentPrimaryModel,
@@ -466,7 +503,7 @@ export function useClientChatPage() {
           );
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to change model");
+        setError(err instanceof Error ? err.message : translate("chat.errors.changeModel"));
       } finally {
         setModelSaving(false);
       }
@@ -499,7 +536,9 @@ export function useClientChatPage() {
         }
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to change thinking level",
+          err instanceof Error
+            ? err.message
+            : translate("chat.errors.changeThinking"),
         );
       } finally {
         setThinkingSaving(false);
@@ -509,11 +548,8 @@ export function useClientChatPage() {
   );
 
   useEffect(() => {
-    if (!projectId) {
-      setModelsLoading(false);
-      return;
-    }
-    setModelsLoading(true);
+    if (!projectId) return;
+
     void chatApi
       .listModels(projectId, agentId)
       .then((res) => {
@@ -526,27 +562,40 @@ export function useClientChatPage() {
           providers: [],
         });
         setError(
-          err instanceof Error ? err.message : "Failed to load model catalog",
+          err instanceof Error ? err.message : translate("chat.errors.loadModelCatalog"),
         );
       })
       .finally(() => setModelsLoading(false));
   }, [projectId, agentId]);
 
-  useEffect(() => {
-    if (!projectId || !modelOptions || modelsLoading) return;
-
+  const defaultModelSelection = useMemo(() => {
+    if (!projectId || !modelOptions || modelsLoading) {
+      return { providerId: undefined, modelId: undefined };
+    }
     const stored = loadSessionModelSelection(projectId, agentId, sessionKey);
     const target =
       stored?.modelId?.trim() ||
-      agentPrimaryModel?.trim() ||
+      resolveAgentPrimaryOpenClawId(modelOptions)?.trim() ||
       modelOptions.primaryModel?.trim() ||
       "";
-    const selection = resolveModelSelection(modelOptions, target);
-    setProviderId(selection.providerId);
-    setModelId(selection.modelId);
+    return resolveModelSelection(modelOptions, target);
+  }, [projectId, agentId, sessionKey, modelOptions, modelsLoading]);
 
+  const modelSelectionKey = `${projectId}|${agentId}|${sessionKey}|${modelsLoading}|${defaultModelSelection.providerId}|${defaultModelSelection.modelId}`;
+  const [trackedModelSelectionKey, setTrackedModelSelectionKey] =
+    useState(modelSelectionKey);
+
+  if (modelSelectionKey !== trackedModelSelectionKey) {
+    setTrackedModelSelectionKey(modelSelectionKey);
+    setProviderId(defaultModelSelection.providerId);
+    setModelId(defaultModelSelection.modelId);
+  }
+
+  useEffect(() => {
+    if (!projectId || !modelOptions || modelsLoading) return;
+
+    const sessionModel = modelId?.trim();
     const client = clientRef.current;
-    const sessionModel = selection.modelId?.trim();
     if (
       !client?.connected ||
       connectionState !== "connected" ||
@@ -560,35 +609,45 @@ export function useClientChatPage() {
     );
   }, [
     projectId,
-    agentId,
-    sessionKey,
     modelOptions,
     modelsLoading,
-    agentPrimaryModel,
+    modelId,
+    sessionKey,
     connectionState,
   ]);
 
-  useEffect(() => {
-    if (!projectId || !sessionKey) return;
-
+  const gatewayThinkingLevel = useMemo(() => {
+    if (!projectId || !sessionKey) return DEFAULT_THINKING_LEVEL;
     const gatewayRow = sessions.find((s) => s.key === sessionKey);
-    const target = resolveSessionThinkingLevel(
+    return resolveSessionThinkingLevel(
       projectId,
       agentId,
       sessionKey,
       gatewayRow?.thinkingLevel,
     );
-    setThinkingLevel(target);
+  }, [projectId, agentId, sessionKey, sessions]);
+
+  const thinkingSyncKey = `${projectId}|${agentId}|${sessionKey}|${gatewayThinkingLevel}`;
+  const [trackedThinkingSyncKey, setTrackedThinkingSyncKey] =
+    useState(thinkingSyncKey);
+
+  if (thinkingSyncKey !== trackedThinkingSyncKey) {
+    setTrackedThinkingSyncKey(thinkingSyncKey);
+    setThinkingLevel(gatewayThinkingLevel);
+  }
+
+  useEffect(() => {
+    if (!projectId || !sessionKey) return;
 
     const client = clientRef.current;
     if (!client?.connected || connectionState !== "connected") {
       return;
     }
 
-    void patchSessionThinking(client, sessionKey, target).catch(
+    void patchSessionThinking(client, sessionKey, gatewayThinkingLevel).catch(
       () => undefined,
     );
-  }, [projectId, agentId, sessionKey, sessions, connectionState]);
+  }, [projectId, sessionKey, gatewayThinkingLevel, connectionState]);
 
   const handleProviderChange = (nextProviderId: string) => {
     setProviderId(nextProviderId);
@@ -652,7 +711,7 @@ export function useClientChatPage() {
         { agentId, label },
       );
       const key = res.key?.trim();
-      if (!key) throw new Error("Gateway did not return a session key");
+      if (!key) throw new Error(translate("chat.errors.noSessionKey"));
       patchedSessionLabelsRef.current.set(key, label);
       setSessionKey(key);
       if (projectId) saveLastSessionKey(projectId, agentId, key);
@@ -686,7 +745,7 @@ export function useClientChatPage() {
       await loadSessions(client, agentId, debouncedSessionSearchRef.current);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not create a new session",
+        err instanceof Error ? err.message : translate("chat.errors.createSession"),
       );
     } finally {
       setCreatingSession(false);
@@ -700,6 +759,7 @@ export function useClientChatPage() {
     modelOptions,
     loadSessions,
     sessions,
+    debouncedSessionSearchRef,
   ]);
 
   const handleRenameSession = useCallback(
@@ -723,12 +783,12 @@ export function useClientChatPage() {
         patchedSessionLabelsRef.current.delete(key);
         sessionSortPreserveRef.current.delete(key);
         setError(
-          err instanceof Error ? err.message : "Could not rename session",
+          err instanceof Error ? err.message : translate("chat.errors.renameSession"),
         );
         throw err;
       }
     },
-    [agentId, loadSessions, sessions],
+    [agentId, loadSessions, sessions, debouncedSessionSearchRef],
   );
 
   const handleDeleteSession = useCallback(
@@ -736,7 +796,7 @@ export function useClientChatPage() {
       const client = clientRef.current;
       if (!client?.connected) return;
       if (isMainSessionKey(key, agentId)) {
-        setError("Cannot delete the main session");
+        setError(translate("chat.errors.cannotDeleteMain"));
         return;
       }
       setError(null);
@@ -758,12 +818,12 @@ export function useClientChatPage() {
         await loadSessions(client, agentId, debouncedSessionSearchRef.current);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Could not delete session",
+          err instanceof Error ? err.message : translate("chat.errors.deleteSession"),
         );
         throw err;
       }
     },
-    [agentId, projectId, loadSessions],
+    [agentId, projectId, loadSessions, debouncedSessionSearchRef],
   );
 
   const maybeAutoTitleSession = useCallback(
@@ -791,7 +851,7 @@ export function useClientChatPage() {
         autoTitledSessionsRef.current.delete(key);
       }
     },
-    [sessions, loadSessions],
+    [sessions, loadSessions, debouncedSessionSearchRef],
   );
 
   useEffect(() => {
@@ -804,12 +864,16 @@ export function useClientChatPage() {
     }
   }, [project, router]);
 
+  const [trackedStatusProjectId, setTrackedStatusProjectId] =
+    useState(projectId);
+  if (projectId !== trackedStatusProjectId) {
+    setTrackedStatusProjectId(projectId);
+    setStatusLoading(Boolean(projectId));
+  }
+
   useEffect(() => {
-    if (!projectId) {
-      setStatusLoading(false);
-      return;
-    }
-    setStatusLoading(true);
+    if (!projectId) return;
+
     void chatApi
       .status(projectId)
       .then((s) => {
@@ -828,15 +892,21 @@ export function useClientChatPage() {
       })
       .catch((err) => {
         setError(
-          err instanceof Error ? err.message : "Could not load chat status",
+          err instanceof Error ? err.message : translate("chat.errors.loadStatus"),
         );
       })
       .finally(() => setStatusLoading(false));
   }, [projectId, router]);
 
   useEffect(() => {
-    if (ready && projectId) connectChat();
-    return () => clientRef.current?.disconnect();
+    if (!ready || !projectId) return undefined;
+    void (async () => {
+      await Promise.resolve();
+      connectChat();
+    })();
+    return () => {
+      clientRef.current?.disconnect();
+    };
   }, [ready, projectId, connectChat]);
 
   useEffect(() => {
@@ -857,7 +927,7 @@ export function useClientChatPage() {
     void loadHistory(client, sessionKey).catch((err) => {
       if (sessionKeyRef.current !== sessionKey) return;
       setError(
-        err instanceof Error ? err.message : "Could not load chat history",
+        err instanceof Error ? err.message : translate("chat.errors.loadHistory"),
       );
     });
   }, [sessionKey, connectionState, loadHistory]);
@@ -917,7 +987,7 @@ export function useClientChatPage() {
     } catch (err) {
       sendingRef.current = false;
       setSending(false);
-      setError(err instanceof Error ? err.message : "Failed to send message");
+      setError(err instanceof Error ? err.message : translate("chat.errors.sendMessage"));
     }
   };
 
@@ -994,5 +1064,7 @@ export function useClientChatPage() {
     liveItems,
     showToolPreparing,
     modelHint,
+    invokableSkills,
+    invokableSkillsLoading,
   };
 }

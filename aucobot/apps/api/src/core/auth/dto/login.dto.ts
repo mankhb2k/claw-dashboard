@@ -7,7 +7,8 @@ export class LoginDto {
   @MinLength(3)
   @MaxLength(32)
   @Matches(/^[a-zA-Z0-9_-]+$/, {
-    message: 'Username may only contain letters, numbers, underscore and hyphen',
+    message:
+      'Username may only contain letters, numbers, underscore and hyphen',
   })
   username!: string;
 

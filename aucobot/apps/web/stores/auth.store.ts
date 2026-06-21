@@ -1,5 +1,7 @@
 import { create } from "zustand";
+
 import { authApi } from "@/lib/api/auth";
+
 import type { User, LoginInput, RegisterInput } from "@/schemas/auth.schema";
 
 interface AuthState {
@@ -53,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authApi.logout();
     } catch {
-      // Backend tắt hoặc mock lỗi — vẫn xóa state client
+      // Backend down or mock error — still clear client state
     } finally {
       set({ user: null, isInitialized: true });
     }

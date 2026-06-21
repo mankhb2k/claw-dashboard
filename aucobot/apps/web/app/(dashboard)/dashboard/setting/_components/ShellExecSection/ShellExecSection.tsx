@@ -1,6 +1,12 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+
+import styles from "./ShellExecSection.module.css";
+import { CardSection } from "../CardSection/CardSection";
+import { TitleSection } from "../TitleSection/TitleSection";
+import { Flex } from "@/components/layout";
 import {
   Button,
   Input,
@@ -8,14 +14,9 @@ import {
   ToggleGroupItem,
   Typography,
 } from "@/components/ui";
-import { Flex } from "@/components/layout";
-import { X } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
 import { INTERPRETER_SAFE_BINS } from "@/schemas/agent-form.schema";
-import styles from "./ShellExecSection.module.css";
-import { CardSection } from "../CardSection/CardSection";
-import { TitleSection } from "../TitleSection/TitleSection";
 
 interface Props {
   projectId: string;
@@ -55,7 +56,7 @@ export function ShellExecSection({ projectId }: Props) {
 
   useEffect(() => {
     let active = true;
-    if (!projectId) return;
+    if (!projectId) return undefined;
     projectApi
       .getProjectExecPolicy(projectId)
       .then((res) => {

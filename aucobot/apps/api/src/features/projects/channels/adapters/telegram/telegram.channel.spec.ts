@@ -27,10 +27,11 @@ describe('TELEGRAM_CHANNEL', () => {
 
     it('returns connected label when Telegram getMe succeeds', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        json: async () => ({
-          ok: true,
-          result: { username: 'my_test_bot', first_name: 'Test' },
-        }),
+        json: () =>
+          Promise.resolve({
+            ok: true,
+            result: { username: 'my_test_bot', first_name: 'Test' },
+          }),
       }) as typeof fetch;
 
       const result = await TELEGRAM_CHANNEL.testConnection(
@@ -50,10 +51,11 @@ describe('TELEGRAM_CHANNEL', () => {
 
     it('returns API error message when getMe fails', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        json: async () => ({
-          ok: false,
-          description: 'Unauthorized',
-        }),
+        json: () =>
+          Promise.resolve({
+            ok: false,
+            description: 'Unauthorized',
+          }),
       }) as typeof fetch;
 
       const result = await TELEGRAM_CHANNEL.testConnection(

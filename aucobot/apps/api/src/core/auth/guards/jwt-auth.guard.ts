@@ -5,15 +5,18 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+
 import {
   extractAccessTokenFromRequest,
   verifyAccessToken,
 } from '@aucobot/control-plane-core';
 
+import type { AuthRequest } from '../../common/types/auth-request';
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthRequest>();
     const token = extractAccessTokenFromRequest(req);
     const payload = verifyAccessToken(token);
     if (!payload) {

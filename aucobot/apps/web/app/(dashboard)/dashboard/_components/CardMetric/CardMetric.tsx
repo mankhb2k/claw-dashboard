@@ -1,8 +1,11 @@
-import type { CSSProperties } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+
+
+import styles from "./CardMetric.module.css";
 import { Flex } from "@/components/layout";
 import { Card, Typography } from "@/components/ui";
-import styles from "./CardMetric.module.css";
+
+import type { CSSProperties } from "react";
 
 interface CardMetricProps {
   title: string;

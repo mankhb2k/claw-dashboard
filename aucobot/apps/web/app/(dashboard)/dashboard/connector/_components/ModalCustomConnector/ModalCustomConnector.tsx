@@ -1,25 +1,21 @@
 'use client'
 
-import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from '@/components/ui'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useMemo } from 'react'
+import { useForm } from 'react-hook-form'
+
 import styles from './ModalCustomConnector.module.css'
+import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from '@/components/ui'
+import { useI18n } from '@/lib/i18n'
+import { createCustomConnectorSchema, type CustomConnectorInput } from '@/schemas/connect.schema'
 
 type Props = {
   onClose: () => void
 }
 
-const customConnectorSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  serverUrl: z.string().url('Invalid URL'),
-  clientId: z.string().optional(),
-  clientSecret: z.string().optional(),
-})
-
-type CustomConnectorInput = z.infer<typeof customConnectorSchema>
-
 export function ModalCustomConnector({ onClose }: Props) {
+  const { t } = useI18n()
+  const customConnectorSchema = useMemo(() => createCustomConnectorSchema(t), [t])
   const {
     register,
     handleSubmit,
@@ -28,8 +24,8 @@ export function ModalCustomConnector({ onClose }: Props) {
     resolver: zodResolver(customConnectorSchema),
   })
 
-  const onSubmit = (data: CustomConnectorInput) => {
-    console.log('Submitted data:', data)
+  const onSubmit = (_data: CustomConnectorInput) => {
+    onClose()
   }
 
   return (

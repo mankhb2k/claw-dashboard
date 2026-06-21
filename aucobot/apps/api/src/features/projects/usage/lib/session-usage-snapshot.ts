@@ -15,7 +15,9 @@ function asNonNegativeInt(value: unknown): number {
   return Math.max(0, Math.round(value));
 }
 
-function parseSessionRow(raw: Record<string, unknown> | undefined): SessionUsageRow | null {
+function parseSessionRow(
+  raw: Record<string, unknown> | undefined,
+): SessionUsageRow | null {
   if (!raw) return null;
   return {
     inputTokens: asNonNegativeInt(raw.inputTokens),
@@ -25,7 +27,9 @@ function parseSessionRow(raw: Record<string, unknown> | undefined): SessionUsage
         ? raw.modelProvider.trim()
         : null,
     model:
-      typeof raw.model === 'string' && raw.model.trim() ? raw.model.trim() : null,
+      typeof raw.model === 'string' && raw.model.trim()
+        ? raw.model.trim()
+        : null,
   };
 }
 

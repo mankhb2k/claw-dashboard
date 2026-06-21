@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Input, Typography } from "@/components/ui";
-import { Flex } from "@/components/layout";
-import { usersApi } from "@/lib/api/users";
-import { useI18n } from "@/lib/i18n";
-import { useAuthStore } from "@/stores/auth.store";
-import {
-  updateUserNameSchema,
-  type PublicUser,
-  type UpdateUserNameInput,
-} from "@/schemas/user.schema";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+
 import { CardSection } from "../../../setting/_components/CardSection/CardSection";
 import { TitleSection } from "../../../setting/_components/TitleSection/TitleSection";
 import styles from "../../profile.module.css";
+import { Flex } from "@/components/layout";
+import { Button, Input, Typography } from "@/components/ui";
+import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
+import {
+  createUpdateUserNameSchema,
+  type PublicUser,
+  type UpdateUserNameInput,
+} from "@/schemas/user.schema";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface ProfileAccountSectionProps {
   user: PublicUser;
@@ -27,6 +28,7 @@ export function ProfileAccountSection({
   onUserUpdated,
 }: ProfileAccountSectionProps) {
   const { t, locale } = useI18n();
+  const updateUserNameSchema = useMemo(() => createUpdateUserNameSchema(t), [t]);
   const setAuthUser = useAuthStore((s) => s.setUser);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",

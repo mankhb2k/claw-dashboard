@@ -1,7 +1,8 @@
-import type { AgentAiEditorProviderId } from '../lib/agent-ai-editor.constants';
-import type { AgentAiEditorProviderAdapter } from '../lib/agent-ai-editor.types';
 import { GeminiAgentProvider } from './gemini-agent.provider';
 import { OpenAiAgentProvider } from './openai-agent.provider';
+
+import type { AgentAiEditorProviderId } from '../lib/agent-ai-editor.constants';
+import type { AgentAiEditorProviderAdapter } from '../lib/agent-ai-editor.types';
 
 const adapters: AgentAiEditorProviderAdapter[] = [
   new GeminiAgentProvider(),

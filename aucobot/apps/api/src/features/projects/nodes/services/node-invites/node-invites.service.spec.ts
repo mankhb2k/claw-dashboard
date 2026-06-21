@@ -10,7 +10,9 @@ jest.mock('../../../services/projects/projects.service', () => ({
 
 jest.mock('../../../runtime/gateway-endpoint', () => ({
   resolveOssGatewayHttpBase: jest.fn(() => 'http://127.0.0.1:18789'),
-  resolveOssGatewayToken: jest.fn((token?: string | null) => token ?? 'env-gateway-token'),
+  resolveOssGatewayToken: jest.fn(
+    (token?: string | null) => token ?? 'env-gateway-token',
+  ),
   resolveGatewayEndpoint: jest.fn(() => ({
     baseUrl: 'http://127.0.0.1:18789',
     wsBaseUrl: 'ws://127.0.0.1:18789',
@@ -18,11 +20,11 @@ jest.mock('../../../runtime/gateway-endpoint', () => ({
   })),
 }));
 
+import { NodeInvitesService } from './node-invites.service';
 import {
   hashNodeInviteCode,
   NODE_INVITE_PREFIX,
 } from '../../lib/node-invite.util';
-import { NodeInvitesService } from './node-invites.service';
 
 const USER_ID = 'user_test_1';
 const PROJECT_ID = 'proj_test_1';
@@ -46,14 +48,16 @@ function createService() {
   return { service, prisma, projects };
 }
 
-function buildInviteRow(overrides: Partial<{
-  id: string;
-  codePrefix: string;
-  label: string | null;
-  expiresAt: Date;
-  usedAt: Date | null;
-  createdAt: Date;
-}> = {}) {
+function buildInviteRow(
+  overrides: Partial<{
+    id: string;
+    codePrefix: string;
+    label: string | null;
+    expiresAt: Date;
+    usedAt: Date | null;
+    createdAt: Date;
+  }> = {},
+) {
   return {
     id: INVITE_ID,
     codePrefix: `${NODE_INVITE_PREFIX}abcd`,
@@ -133,7 +137,11 @@ describe('NodeInvitesService', () => {
 
       const items = await service.listInvites(USER_ID, PROJECT_ID);
 
-      expect(items.map((item) => item.status)).toEqual(['active', 'used', 'expired']);
+      expect(items.map((item) => item.status)).toEqual([
+        'active',
+        'used',
+        'expired',
+      ]);
     });
   });
 
@@ -155,7 +163,9 @@ describe('NodeInvitesService', () => {
 
       await service.revokeInvite(USER_ID, PROJECT_ID, INVITE_ID);
 
-      expect(prisma.nodeInvite.delete).toHaveBeenCalledWith({ where: { id: INVITE_ID } });
+      expect(prisma.nodeInvite.delete).toHaveBeenCalledWith({
+        where: { id: INVITE_ID },
+      });
     });
   });
 

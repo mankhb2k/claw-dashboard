@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma, type UsageStatus } from '@aucobot/database';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import {
   addDays,
@@ -7,10 +7,14 @@ import {
   normalizeTimezone,
   resolveMetricsDateRange,
 } from '../../lib/overview-timezone.util';
+import { Prisma, type UsageStatus } from '@aucobot/database';
 
 type ChartPeriod = 'day' | 'week' | 'month';
 
-type TokenRow = { input: bigint | number | null; output: bigint | number | null };
+type TokenRow = {
+  input: bigint | number | null;
+  output: bigint | number | null;
+};
 
 type HourlyRow = TokenRow & { hour: number | null };
 type DailyRow = TokenRow & { day: string | null };
@@ -119,7 +123,11 @@ export class OverviewService {
     return this.loadMonthCharts(projectId, tz, anchorDate);
   }
 
-  private async loadDayCharts(projectId: string, tz: string, anchorDate: string) {
+  private async loadDayCharts(
+    projectId: string,
+    tz: string,
+    anchorDate: string,
+  ) {
     const rows = await this.prisma.$queryRaw<HourlyRow[]>(
       Prisma.sql`
         SELECT
@@ -153,7 +161,11 @@ export class OverviewService {
     return { input, output };
   }
 
-  private async loadWeekCharts(projectId: string, tz: string, anchorDate: string) {
+  private async loadWeekCharts(
+    projectId: string,
+    tz: string,
+    anchorDate: string,
+  ) {
     const startDate = addDays(anchorDate, -6);
     const rows = await this.prisma.$queryRaw<DailyRow[]>(
       Prisma.sql`
@@ -189,7 +201,11 @@ export class OverviewService {
     return { input, output };
   }
 
-  private async loadMonthCharts(projectId: string, tz: string, anchorDate: string) {
+  private async loadMonthCharts(
+    projectId: string,
+    tz: string,
+    anchorDate: string,
+  ) {
     const { start, end, daysInMonth } = monthDateRange(anchorDate);
     const rows = await this.prisma.$queryRaw<
       Array<TokenRow & { day: number | null }>
@@ -276,10 +292,13 @@ export class OverviewService {
     return typeof value === 'bigint' ? Number(value) : value;
   }
 
-  private toDecimalString(value: string | number | bigint | null | undefined): string {
+  private toDecimalString(
+    value: string | number | bigint | null | undefined,
+  ): string {
     if (value === null || value === undefined) return '0';
     if (typeof value === 'bigint') return value.toString();
-    if (typeof value === 'number') return value.toFixed(6).replace(/\.?0+$/, '') || '0';
+    if (typeof value === 'number')
+      return value.toFixed(6).replace(/\.?0+$/, '') || '0';
     const trimmed = String(value).trim();
     return trimmed.length > 0 ? trimmed : '0';
   }

@@ -1,8 +1,3 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-
-import { ChatLiveThread } from '@/app/(dashboard)/dashboard/chat/_components/ChatLiveThread/ChatLiveThread'
-import { ChatMessageBubble } from '@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble'
-import { ToolActivityCard } from '@/app/(dashboard)/dashboard/chat/_components/ToolActivityCard/ToolActivityCard'
 
 import { withChatContentArea } from './chat-story.decorators'
 import { StorySectionLabel } from './story-demo-ui'
@@ -15,6 +10,12 @@ import {
   toolCardDefaultArgs,
   type ToolCardStoryArgs,
 } from './tool-activity.story-controls'
+import { ChatLiveThread } from '@/app/(dashboard)/dashboard/chat/_components/ChatLiveThread/ChatLiveThread'
+import { ChatMessageBubble } from '@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble'
+import { ToolActivityCard } from '@/app/(dashboard)/dashboard/chat/_components/ToolActivityCard/ToolActivityCard'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+
 
 type ContentAreaStoryArgs = ToolCardStoryArgs & {
   scenario: 'tool_flow' | 'tool_error' | 'research' | 'preparing'

@@ -1,6 +1,3 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
-import { ConnectorConnectionStatus } from '@aucobot/database';
-
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
@@ -24,9 +21,13 @@ const mockAdapter = {
   configSchema: null,
   testConnection: testConnectionMock,
   isOAuthConfigured: jest.fn().mockReturnValue(true),
-  buildOAuthUrl: jest.fn().mockReturnValue('https://accounts.google.com/o/oauth2/auth'),
+  buildOAuthUrl: jest
+    .fn()
+    .mockReturnValue('https://accounts.google.com/o/oauth2/auth'),
   exchangeOAuthCode: jest.fn(),
-  oauthClientSecrets: jest.fn().mockReturnValue({ clientId: 'cid', clientSecret: 'csec' }),
+  oauthClientSecrets: jest
+    .fn()
+    .mockReturnValue({ clientId: 'cid', clientSecret: 'csec' }),
 };
 
 jest.mock('../../lib/connector-registry', () => ({
@@ -36,6 +37,8 @@ jest.mock('../../lib/connector-registry', () => ({
   }),
   listActiveConnectors: jest.fn(() => [mockAdapter]),
 }));
+
+import { BadRequestException, ConflictException } from '@nestjs/common';
 
 import { ProjectConnectorsService } from './project-connectors.service';
 
@@ -90,7 +93,9 @@ describe('ProjectConnectorsService', () => {
 
     it('rejects duplicate connector for project', async () => {
       const { service, prisma } = createService();
-      prisma.projectConnector.findUnique.mockResolvedValue({ id: CONNECTOR_ID });
+      prisma.projectConnector.findUnique.mockResolvedValue({
+        id: CONNECTOR_ID,
+      });
 
       await expect(
         service.create(PROJECT_ID, { connectorSlug: 'google-drive' }),
@@ -129,11 +134,16 @@ describe('ProjectConnectorsService', () => {
         ],
       });
       prisma.projectConnector.update.mockResolvedValue({});
-      testConnectionMock.mockResolvedValue({ ok: true, message: 'Kết nối Google OK' });
+      testConnectionMock.mockResolvedValue({
+        ok: true,
+        message: 'Kết nối Google OK',
+      });
 
       const result = await service.test(PROJECT_ID, CONNECTOR_ID);
 
-      expect(testConnectionMock).toHaveBeenCalledWith({ refresh_token: 'refresh-abc' });
+      expect(testConnectionMock).toHaveBeenCalledWith({
+        refresh_token: 'refresh-abc',
+      });
       expect(result).toEqual({ ok: true, message: 'Kết nối Google OK' });
     });
   });
@@ -156,7 +166,11 @@ describe('ProjectConnectorsService', () => {
         connectorSlug: 'google-drive',
       });
 
-      const result = await service.startOAuth('user-1', PROJECT_ID, 'google-drive');
+      const result = await service.startOAuth(
+        'user-1',
+        PROJECT_ID,
+        'google-drive',
+      );
 
       expect(result.url).toBe('https://accounts.google.com/o/oauth2/auth');
       expect(mockAdapter.buildOAuthUrl).toHaveBeenCalledWith({

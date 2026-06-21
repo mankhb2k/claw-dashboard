@@ -1,13 +1,14 @@
+import { toNativeModelId } from '../../skill-ai-editor/providers/model-id.util';
 import {
   AGENT_AI_EDITOR_MAX_OUTPUT_TOKENS,
   AGENT_AI_EDITOR_TIMEOUT_MS,
 } from '../lib/agent-ai-editor.constants';
+
 import type {
   AgentAiEditorCompleteInput,
   AgentAiEditorProviderAdapter,
   LlmCompleteResult,
 } from '../lib/agent-ai-editor.types';
-import { toNativeModelId } from '../../skill-ai-editor/providers/model-id.util';
 
 type OpenAiChatResponse = {
   choices?: Array<{ message?: { content?: string | null } }>;
@@ -18,7 +19,9 @@ type OpenAiChatResponse = {
 export class OpenAiAgentProvider implements AgentAiEditorProviderAdapter {
   readonly id = 'openai';
 
-  async complete(input: AgentAiEditorCompleteInput): Promise<LlmCompleteResult> {
+  async complete(
+    input: AgentAiEditorCompleteInput,
+  ): Promise<LlmCompleteResult> {
     const startedAt = Date.now();
     const modelId = toNativeModelId(input.model, 'openai');
     const messages: Array<{ role: string; content: string }> = [

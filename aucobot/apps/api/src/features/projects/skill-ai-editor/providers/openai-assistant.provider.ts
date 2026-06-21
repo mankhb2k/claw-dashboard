@@ -1,14 +1,15 @@
+import { toNativeModelId } from './model-id.util';
 import {
   SKILL_AI_EDITOR_MAX_OUTPUT_TOKENS,
   SKILL_AI_EDITOR_TIMEOUT_MS,
 } from '../lib/skill-ai-editor.constants';
+import { normalizeAssistantMarkdown } from '../lib/skill-ai-editor.prompt';
+
 import type {
   SkillAiEditorCompleteInput,
   SkillAiEditorCompleteResult,
   SkillAiEditorProviderAdapter,
 } from '../lib/skill-ai-editor.types';
-import { normalizeAssistantMarkdown } from '../lib/skill-ai-editor.prompt';
-import { toNativeModelId } from './model-id.util';
 
 type OpenAiChatResponse = {
   choices?: Array<{
@@ -22,7 +23,9 @@ type OpenAiChatResponse = {
 export class OpenAiAssistantProvider implements SkillAiEditorProviderAdapter {
   readonly id = 'openai';
 
-  async complete(input: SkillAiEditorCompleteInput): Promise<SkillAiEditorCompleteResult> {
+  async complete(
+    input: SkillAiEditorCompleteInput,
+  ): Promise<SkillAiEditorCompleteResult> {
     const startedAt = Date.now();
     const modelId = toNativeModelId(input.model, 'openai');
 

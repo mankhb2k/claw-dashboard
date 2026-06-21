@@ -4,9 +4,12 @@ jest.mock('../../../gateway/services/gateway-rpc/gateway-rpc.service', () => ({
   GatewayRpcService: class MockGatewayRpcService {},
 }));
 
-jest.mock('../../../usage/services/model-usage-recorder/model-usage-recorder.service', () => ({
-  ModelUsageRecorderService: class MockModelUsageRecorderService {},
-}));
+jest.mock(
+  '../../../usage/services/model-usage-recorder/model-usage-recorder.service',
+  () => ({
+    ModelUsageRecorderService: class MockModelUsageRecorderService {},
+  }),
+);
 
 import { CronService } from './cron.service';
 
@@ -64,11 +67,17 @@ describe('CronService', () => {
         'cron.status',
         {},
       );
-      expect(gateway.call).toHaveBeenNthCalledWith(2, USER_ID, PROJECT_ID, 'cron.list', {
-        includeDisabled: true,
-        limit: 200,
-        offset: 0,
-      });
+      expect(gateway.call).toHaveBeenNthCalledWith(
+        2,
+        USER_ID,
+        PROJECT_ID,
+        'cron.list',
+        {
+          includeDisabled: true,
+          limit: 200,
+          offset: 0,
+        },
+      );
       expect(summary).toEqual({
         enabled: true,
         jobCount: 3,
@@ -91,14 +100,19 @@ describe('CronService', () => {
 
       await service.list(USER_ID, PROJECT_ID, '  support  ');
 
-      expect(gateway.call).toHaveBeenCalledWith(USER_ID, PROJECT_ID, 'cron.list', {
-        includeDisabled: true,
-        limit: 200,
-        offset: 0,
-        sortBy: 'nextRunAtMs',
-        sortDir: 'asc',
-        agentId: 'support',
-      });
+      expect(gateway.call).toHaveBeenCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.list',
+        {
+          includeDisabled: true,
+          limit: 200,
+          offset: 0,
+          sortBy: 'nextRunAtMs',
+          sortDir: 'asc',
+          agentId: 'support',
+        },
+      );
     });
   });
 
@@ -110,9 +124,14 @@ describe('CronService', () => {
       const job = await service.get(USER_ID, PROJECT_ID, JOB_ID);
 
       expect(job).toEqual(sampleJob);
-      expect(gateway.call).toHaveBeenCalledWith(USER_ID, PROJECT_ID, 'cron.get', {
-        id: JOB_ID,
-      });
+      expect(gateway.call).toHaveBeenCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.get',
+        {
+          id: JOB_ID,
+        },
+      );
     });
 
     it('throws NotFoundException when gateway returns null', async () => {
@@ -139,7 +158,9 @@ describe('CronService', () => {
           everyMinutes: 30,
         }),
       ).rejects.toThrow(
-        new BadRequestException(`Cron job limit reached (${LIMIT} per project)`),
+        new BadRequestException(
+          `Cron job limit reached (${LIMIT} per project)`,
+        ),
       );
     });
 
@@ -159,20 +180,27 @@ describe('CronService', () => {
       });
 
       expect(created).toEqual(sampleJob);
-      expect(gateway.call).toHaveBeenLastCalledWith(USER_ID, PROJECT_ID, 'cron.add', {
-        name: 'Daily digest',
-        agentId: 'main',
-        enabled: true,
-        schedule: { kind: 'cron', expr: '0 9 * * *' },
-        sessionTarget: 'isolated',
-        wakeMode: 'now',
-        payload: { kind: 'agentTurn', message: 'Run digest' },
-      });
+      expect(gateway.call).toHaveBeenLastCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.add',
+        {
+          name: 'Daily digest',
+          agentId: 'main',
+          enabled: true,
+          schedule: { kind: 'cron', expr: '0 9 * * *' },
+          sessionTarget: 'isolated',
+          wakeMode: 'now',
+          payload: { kind: 'agentTurn', message: 'Run digest' },
+        },
+      );
     });
 
     it('creates every schedule with default 60 minutes', async () => {
       const { service, gateway } = createService();
-      gateway.call.mockResolvedValueOnce({ total: 0 }).mockResolvedValueOnce(sampleJob);
+      gateway.call
+        .mockResolvedValueOnce({ total: 0 })
+        .mockResolvedValueOnce(sampleJob);
 
       await service.create(USER_ID, PROJECT_ID, {
         name: 'Poll',
@@ -232,13 +260,18 @@ describe('CronService', () => {
         enabled: false,
       });
 
-      expect(gateway.call).toHaveBeenLastCalledWith(USER_ID, PROJECT_ID, 'cron.update', {
-        id: JOB_ID,
-        patch: {
-          enabled: false,
-          payload: { kind: 'agentTurn', message: 'Updated' },
+      expect(gateway.call).toHaveBeenLastCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.update',
+        {
+          id: JOB_ID,
+          patch: {
+            enabled: false,
+            payload: { kind: 'agentTurn', message: 'Updated' },
+          },
         },
-      });
+      );
     });
 
     it('rebuilds schedule when scheduleKind changes', async () => {
@@ -255,12 +288,17 @@ describe('CronService', () => {
         cronExpr: '0 0 * * *',
       });
 
-      expect(gateway.call).toHaveBeenLastCalledWith(USER_ID, PROJECT_ID, 'cron.update', {
-        id: JOB_ID,
-        patch: {
-          schedule: { kind: 'cron', expr: '0 0 * * *' },
+      expect(gateway.call).toHaveBeenLastCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.update',
+        {
+          id: JOB_ID,
+          patch: {
+            schedule: { kind: 'cron', expr: '0 0 * * *' },
+          },
         },
-      });
+      );
     });
   });
 
@@ -272,9 +310,14 @@ describe('CronService', () => {
       const result = await service.remove(USER_ID, PROJECT_ID, JOB_ID);
 
       expect(result).toEqual({ removed: true });
-      expect(gateway.call).toHaveBeenCalledWith(USER_ID, PROJECT_ID, 'cron.remove', {
-        id: JOB_ID,
-      });
+      expect(gateway.call).toHaveBeenCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.remove',
+        {
+          id: JOB_ID,
+        },
+      );
     });
   });
 
@@ -285,10 +328,15 @@ describe('CronService', () => {
 
       await service.run(USER_ID, PROJECT_ID, JOB_ID);
 
-      expect(gateway.call).toHaveBeenCalledWith(USER_ID, PROJECT_ID, 'cron.run', {
-        id: JOB_ID,
-        mode: 'force',
-      });
+      expect(gateway.call).toHaveBeenCalledWith(
+        USER_ID,
+        PROJECT_ID,
+        'cron.run',
+        {
+          id: JOB_ID,
+          mode: 'force',
+        },
+      );
       expect(usageRecorder.recordFireAndForget).not.toHaveBeenCalled();
     });
 

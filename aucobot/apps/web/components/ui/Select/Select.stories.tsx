@@ -1,7 +1,9 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
-import { Select } from "@/components/ui/Select/Select";
+
 import { Card } from "@/components/ui/Card/Card";
+import { Select } from "@/components/ui/Select/Select";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof Select> = {
   title: "UI/Select",

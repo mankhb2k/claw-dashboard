@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, Check, Loader2 } from 'lucide-react'
-
-import { useI18n } from '@/lib/i18n'
-import type { ToolActivity } from '@/utils/chat/tool/types'
+import { useCallback, useEffect, useState } from 'react'
 
 import styles from './ToolActivityBar.module.css'
+import { useI18n } from '@/lib/i18n'
+
+import type { ToolActivity } from '@/utils/chat/tool/types'
+
 
 const DONE_AUTO_REMOVE_MS = 30_000
 
@@ -38,6 +39,23 @@ function ActivityRow({
   )
 }
 
+function DoneActivityScheduler({
+  activityId,
+  onHide,
+}: {
+  activityId: string
+  onHide: (id: string) => void
+}) {
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      onHide(activityId)
+    }, DONE_AUTO_REMOVE_MS)
+    return () => window.clearTimeout(timerId)
+  }, [activityId, onHide])
+
+  return null
+}
+
 export function ToolActivityBar({
   activities,
   showPreparing = false,
@@ -46,41 +64,32 @@ export function ToolActivityBar({
   const [hiddenDoneIds, setHiddenDoneIds] = useState<Set<string>>(
     () => new Set(),
   )
-  const scheduledRef = useRef<Set<string>>(new Set())
+  const [trackedActivityCount, setTrackedActivityCount] = useState(
+    activities.length,
+  )
 
-  useEffect(() => {
-    if (activities.length === 0) {
-      setHiddenDoneIds(new Set())
-      scheduledRef.current.clear()
-    }
-  }, [activities.length])
+  if (activities.length === 0 && trackedActivityCount !== 0) {
+    setTrackedActivityCount(0)
+    setHiddenDoneIds(new Set())
+  } else if (activities.length !== trackedActivityCount) {
+    setTrackedActivityCount(activities.length)
+  }
 
-  useEffect(() => {
-    const timers: number[] = []
-    for (const activity of activities) {
-      if (activity.status !== 'done') continue
-      if (hiddenDoneIds.has(activity.id)) continue
-      if (scheduledRef.current.has(activity.id)) continue
-      scheduledRef.current.add(activity.id)
-      timers.push(
-        window.setTimeout(() => {
-          scheduledRef.current.delete(activity.id)
-          setHiddenDoneIds((prev) => {
-            if (prev.has(activity.id)) return prev
-            const next = new Set(prev)
-            next.add(activity.id)
-            return next
-          })
-        }, DONE_AUTO_REMOVE_MS),
-      )
-    }
-    return () => {
-      for (const timer of timers) window.clearTimeout(timer)
-    }
-  }, [activities, hiddenDoneIds])
+  const hideDoneActivity = useCallback((id: string) => {
+    setHiddenDoneIds((prev) => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
+  }, [])
 
   const visibleActivities = activities.filter(
     (activity) => activity.status !== 'done' || !hiddenDoneIds.has(activity.id),
+  )
+
+  const doneActivitiesToSchedule = activities.filter(
+    (activity) => activity.status === 'done' && !hiddenDoneIds.has(activity.id),
   )
 
   if (!showPreparing && visibleActivities.length === 0) {
@@ -89,6 +98,13 @@ export function ToolActivityBar({
 
   return (
     <div className={styles.bar} aria-label="Tool activity">
+      {doneActivitiesToSchedule.map((activity) => (
+        <DoneActivityScheduler
+          key={activity.id}
+          activityId={activity.id}
+          onHide={hideDoneActivity}
+        />
+      ))}
       {visibleActivities.map((activity) => {
         const label = activity.displayName
           ? t(activity.i18nKey, { name: activity.displayName })

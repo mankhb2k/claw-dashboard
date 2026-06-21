@@ -1,5 +1,21 @@
-import { Injectable } from '@nestjs/common';
 import { writeFile } from 'node:fs/promises';
+
+import { Injectable } from '@nestjs/common';
+
+import { PrismaService } from '../../../../../core/database/prisma.service';
+import {
+  collectFoundationAllowlist,
+  resolveProvider,
+} from '../../../ai-providers/lib/provider-registry';
+import { resolveChannel } from '../../../channels/lib/channel-registry';
+import { resolveConnector } from '../../../connectors/lib/connector-registry';
+import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
+import {
+  decryptSecret,
+  getMcpServiceSecret,
+  signProjectMcpToken,
+} from '@aucobot/control-plane-core';
+import { migrateFoundationOpenClawId } from '@aucobot/shared';
 import {
   buildInitialOpenClawConfig,
   cleanupStaleMainAgentModels,
@@ -29,16 +45,6 @@ import {
   writeOpenClawConfigJson,
   type ProjectExecPolicy,
 } from '@aucobot/workspace-sync';
-import { PrismaService } from '../../../../../core/database/prisma.service';
-import { decryptSecret, getMcpServiceSecret, signProjectMcpToken } from '@aucobot/control-plane-core';
-import { migrateFoundationOpenClawId } from '@aucobot/shared';
-import { resolveConnector } from '../../../connectors/lib/connector-registry';
-import { resolveChannel } from '../../../channels/lib/channel-registry';
-import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
-import {
-  collectFoundationAllowlist,
-  resolveProvider,
-} from '../../../ai-providers/lib/provider-registry';
 
 @Injectable()
 export class WorkspaceService {
@@ -57,9 +63,16 @@ export class WorkspaceService {
     return ensureProjectLayout(projectId, this.layoutOptions());
   }
 
-  async syncOpenClawJsonToDisk(projectId: string, config: OpenClawProjectConfig): Promise<void> {
+  async syncOpenClawJsonToDisk(
+    projectId: string,
+    config: OpenClawProjectConfig,
+  ): Promise<void> {
     const dataDir = await this.ensureProjectLayout(projectId);
-    await writeFile(openClawConfigPath(dataDir), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+    await writeFile(
+      openClawConfigPath(dataDir),
+      `${JSON.stringify(config, null, 2)}\n`,
+      'utf8',
+    );
   }
 
   /** Bootstrap layout + `openclaw.json` on disk (OSS — path is not stored in DB). */
@@ -67,14 +80,19 @@ export class WorkspaceService {
     projectId: string;
     gatewayToken: string;
   }): Promise<{ dataDir: string }> {
-    const config = buildInitialOpenClawConfig({ gatewayToken: params.gatewayToken });
+    const config = buildInitialOpenClawConfig({
+      gatewayToken: params.gatewayToken,
+    });
     const dataDir = await this.ensureProjectLayout(params.projectId);
     await this.syncOpenClawJsonToDisk(params.projectId, config);
     return { dataDir };
   }
 
   /** Write `gateway.auth.token` on disk (OSS: must match `OPENCLAW_GATEWAY_TOKEN`). */
-  async syncGatewayAuthToDisk(projectId: string, gatewayToken: string): Promise<void> {
+  async syncGatewayAuthToDisk(
+    projectId: string,
+    gatewayToken: string,
+  ): Promise<void> {
     const dataDir = await this.ensureProjectLayout(projectId);
     const configPath = openClawConfigPath(dataDir);
     const config = (await readOpenClawConfigJson(configPath)) ?? {};
@@ -83,7 +101,10 @@ export class WorkspaceService {
   }
 
   /** Ensure `openclaw.json` exists and gateway auth matches the canonical token. */
-  async ensureGatewayConfigOnDisk(projectId: string, gatewayToken: string): Promise<void> {
+  async ensureGatewayConfigOnDisk(
+    projectId: string,
+    gatewayToken: string,
+  ): Promise<void> {
     await this.syncGatewayAuthToDisk(projectId, gatewayToken);
   }
 
@@ -119,7 +140,9 @@ export class WorkspaceService {
       const migrated = migrateFoundationOpenClawId(row.defaultModel);
       if (migrated && migrated !== row.defaultModel) {
         await this.prisma.projectProviderKey.update({
-          where: { projectId_providerId: { projectId, providerId: row.providerId } },
+          where: {
+            projectId_providerId: { projectId, providerId: row.providerId },
+          },
           data: { defaultModel: migrated },
         });
         row.defaultModel = migrated;
@@ -143,7 +166,8 @@ export class WorkspaceService {
         })
       : [];
     mergeProviderKeysIntoConfig(config, providerRows, decryptSecret, {
-      foundationAllowlistOpenclawIds: collectFoundationAllowlist(enabledProviderIds),
+      foundationAllowlistOpenclawIds:
+        collectFoundationAllowlist(enabledProviderIds),
       proxyModelOpenclawIds: proxyModelRows.map((row) => row.openclawId),
     });
 
@@ -172,7 +196,8 @@ export class WorkspaceService {
       if (cleanedExec) {
         nextForm = cleanedExec as typeof nextForm;
       }
-      const cleanedSandbox = stripLegacyAgentSandboxKeysFromRawFormData(nextForm);
+      const cleanedSandbox =
+        stripLegacyAgentSandboxKeysFromRawFormData(nextForm);
       if (cleanedSandbox) {
         nextForm = cleanedSandbox as typeof nextForm;
       }
@@ -181,12 +206,14 @@ export class WorkspaceService {
           where: { id: row.id },
           data: { formData: nextForm as object },
         });
-        row.formData = nextForm as object;
+        row.formData = nextForm;
       }
     }
 
     const normalizedExemptSlugs = [...legacyExemptCandidates].sort();
-    const storedExemptSlugs = parseCollaborationMemberSlugs(project?.sandboxExemptAgentSlugs).sort();
+    const storedExemptSlugs = parseCollaborationMemberSlugs(
+      project?.sandboxExemptAgentSlugs,
+    ).sort();
     if (
       project &&
       normalizedExemptSlugs.join(',') !== storedExemptSlugs.join(',')
@@ -199,7 +226,9 @@ export class WorkspaceService {
 
     const storedCollaboration = normalizeCollaborationSettings({
       enabled: project?.collaborationEnabled ?? false,
-      memberSlugs: parseCollaborationMemberSlugs(project?.collaborationMemberSlugs),
+      memberSlugs: parseCollaborationMemberSlugs(
+        project?.collaborationMemberSlugs,
+      ),
     });
     const collaboration = resolveProjectCollaborationSettings({
       stored: storedCollaboration,
@@ -227,7 +256,9 @@ export class WorkspaceService {
           ? project.execAskPolicy
           : 'on-miss',
       safeBins: Array.isArray(project?.execSafeBins)
-        ? project.execSafeBins.map((v) => String(v).trim().toLowerCase()).filter(Boolean)
+        ? project.execSafeBins
+            .map((v) => (typeof v === 'string' ? v.trim().toLowerCase() : ''))
+            .filter(Boolean)
         : [],
       timeoutSec: project?.execTimeoutSec ?? 1800,
     };
@@ -240,7 +271,9 @@ export class WorkspaceService {
           ? ('selected' as const)
           : ('all' as const),
       exemptSlugs: normalizedExemptSlugs,
-      appliedSlugs: parseCollaborationMemberSlugs(project?.sandboxAppliedAgentSlugs),
+      appliedSlugs: parseCollaborationMemberSlugs(
+        project?.sandboxAppliedAgentSlugs,
+      ),
     };
 
     mergeAgentsIntoConfig(
@@ -305,13 +338,17 @@ export class WorkspaceService {
     const aucomcpBase = process.env.AUCOMCP_BASE_URL?.trim();
     const mcpSecret = getMcpServiceSecret();
     const remoteMcp =
-      aucomcpBase && mcpSecret ?
-        {
-          baseUrl: aucomcpBase,
-          signProjectToken: (pid: string, connectorSlug: string) =>
-            signProjectMcpToken({ projectId: pid, connectorSlug, secret: mcpSecret }),
-        }
-      : undefined;
+      aucomcpBase && mcpSecret
+        ? {
+            baseUrl: aucomcpBase,
+            signProjectToken: (pid: string, connectorSlug: string) =>
+              signProjectMcpToken({
+                projectId: pid,
+                connectorSlug,
+                secret: mcpSecret,
+              }),
+          }
+        : undefined;
 
     await mergeConnectorsIntoConfig(
       config,
@@ -336,7 +373,9 @@ export class WorkspaceService {
       dataDir,
       (slug) => {
         const def = resolveConnector(slug);
-        return def ? { slug: def.slug, mcpServerId: def.mcpServerId } : undefined;
+        return def
+          ? { slug: def.slug, mcpServerId: def.mcpServerId }
+          : undefined;
       },
       {
         projectId,

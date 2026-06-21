@@ -11,7 +11,9 @@ describe('node-invite.util', () => {
     const first = generateNodeInviteCode();
     expect(first.code.startsWith(NODE_INVITE_PREFIX)).toBe(true);
     expect(hashNodeInviteCode(first.code)).toBe(first.codeHash);
-    expect(first.codePrefix).toBe(first.code.slice(0, NODE_INVITE_PREFIX_LENGTH));
+    expect(first.codePrefix).toBe(
+      first.code.slice(0, NODE_INVITE_PREFIX_LENGTH),
+    );
   });
 
   it('generates unique codes on each call', () => {

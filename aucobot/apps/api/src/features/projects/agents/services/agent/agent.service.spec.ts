@@ -1,9 +1,10 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+
 import {
   BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
 
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
@@ -37,25 +38,32 @@ jest.mock('../../../chat/lib/project-model-catalog', () => ({
 }));
 
 jest.mock('@aucobot/workspace-sync', () => {
+  function asString(v: unknown, fallback = ''): string {
+    return typeof v === 'string' ? v : fallback;
+  }
+
   function parseAgentFormData(raw: unknown) {
     if (!raw || typeof raw !== 'object') {
       throw new Error('Invalid agent formData');
     }
     const o = raw as Record<string, unknown>;
     return {
-      name: String(o.name ?? '').trim(),
-      description: String(o.description ?? ''),
-      avatar: String(o.avatar ?? '🤖').trim() || '🤖',
-      tags: Array.isArray(o.tags) ? o.tags.map((t) => String(t).trim()).filter(Boolean) : [],
+      name: asString(o.name).trim(),
+      description: asString(o.description),
+      avatar: asString(o.avatar, '🤖').trim() || '🤖',
+      tags: Array.isArray(o.tags)
+        ? o.tags.map((t) => asString(t).trim()).filter(Boolean)
+        : [],
       vibe: 'professional',
-      instructionsMode: o.instructionsMode === 'advanced' ? 'advanced' : 'simple',
-      instructionsRole: String(o.instructionsRole ?? ''),
-      instructionsRules: String(o.instructionsRules ?? ''),
-      instructionsConstraints: String(o.instructionsConstraints ?? ''),
-      instructionsOutputFormat: String(o.instructionsOutputFormat ?? ''),
-      instructionsAdvanced: String(o.instructionsAdvanced ?? ''),
-      toolsNotes: String(o.toolsNotes ?? ''),
-      model: String(o.model ?? 'google/gemini-2.5-flash'),
+      instructionsMode:
+        o.instructionsMode === 'advanced' ? 'advanced' : 'simple',
+      instructionsRole: asString(o.instructionsRole),
+      instructionsRules: asString(o.instructionsRules),
+      instructionsConstraints: asString(o.instructionsConstraints),
+      instructionsOutputFormat: asString(o.instructionsOutputFormat),
+      instructionsAdvanced: asString(o.instructionsAdvanced),
+      toolsNotes: asString(o.toolsNotes),
+      model: asString(o.model, 'google/gemini-2.5-flash'),
       shellExecEnabled: o.shellExecEnabled !== false,
       skillNames: Array.isArray(o.skillNames)
         ? o.skillNames.map((t) => String(t).trim()).filter(Boolean)
@@ -92,6 +100,7 @@ jest.mock('@aucobot/workspace-sync', () => {
 });
 
 import { AgentService } from './agent.service';
+import { AGENT_TEMPLATE_CATALOG } from '../../lib/agent-templates.catalog';
 
 const mkdirMock = mkdir as jest.MockedFunction<typeof mkdir>;
 const rmMock = rm as jest.MockedFunction<typeof rm>;
@@ -144,30 +153,8 @@ function buildAgentRow(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
-function buildTemplateRow() {
-  return {
-    slug: 'default',
-    name: 'Default',
-    description: 'Starter template',
-    avatar: '🤖',
-    vibe: 'friendly',
-    defaultModel: 'google/gemini-2.5-flash',
-    toolsProfile: 'default',
-    sandboxEnabled: false,
-    bootstrapIdentity: 'identity',
-    bootstrapSoul: 'soul',
-    bootstrapAgents: 'agents',
-    isActive: true,
-    sortOrder: 0,
-  };
-}
-
 function createService() {
   const prisma = {
-    agentTemplate: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-    },
     project: {
       findUnique: jest.fn(),
     },
@@ -187,8 +174,12 @@ function createService() {
   };
   const workspace = {
     syncProjectRuntime: jest.fn().mockResolvedValue(undefined),
-    ensureProjectLayout: jest.fn().mockResolvedValue('/data/projects/proj_test_1'),
-    resolveProjectDataDir: jest.fn().mockReturnValue('/data/projects/proj_test_1'),
+    ensureProjectLayout: jest
+      .fn()
+      .mockResolvedValue('/data/projects/proj_test_1'),
+    resolveProjectDataDir: jest
+      .fn()
+      .mockReturnValue('/data/projects/proj_test_1'),
   };
   const collaboration = {
     removeMember: jest.fn().mockResolvedValue(undefined),
@@ -211,46 +202,41 @@ describe('AgentService', () => {
   });
 
   describe('listTemplates', () => {
-    it('maps active templates from database', async () => {
-      const { service, prisma } = createService();
-      prisma.agentTemplate.findMany.mockResolvedValue([buildTemplateRow()]);
+    it('maps the bundled catalog ordered by sortOrder', () => {
+      const { service } = createService();
 
-      const rows = await service.listTemplates();
+      const rows = service.listTemplates();
 
-      expect(prisma.agentTemplate.findMany).toHaveBeenCalledWith({
-        where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-      });
-      expect(rows).toHaveLength(1);
+      expect(rows.length).toBeGreaterThan(0);
+      expect(rows.map((r) => r.slug)).toContain('empty');
+      const sortOrders = rows.map(
+        (r) => AGENT_TEMPLATE_CATALOG.find((t) => t.slug === r.slug)!.sortOrder,
+      );
+      expect(sortOrders).toEqual([...sortOrders].sort((a, b) => a - b));
       expect(rows[0]).toMatchObject({
-        slug: 'default',
         bootstrapFiles: {
-          identity: 'identity',
-          soul: 'soul',
-          agents: 'agents',
+          identity: expect.any(String),
+          soul: expect.any(String),
+          agents: expect.any(String),
         },
       });
     });
   });
 
   describe('getTemplate', () => {
-    it('throws when template is missing', async () => {
-      const { service, prisma } = createService();
-      prisma.agentTemplate.findFirst.mockResolvedValue(null);
+    it('throws when template is missing', () => {
+      const { service } = createService();
 
-      await expect(service.getTemplate('missing')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      expect(() => service.getTemplate('missing')).toThrow(NotFoundException);
     });
 
-    it('returns template row', async () => {
-      const { service, prisma } = createService();
-      prisma.agentTemplate.findFirst.mockResolvedValue(buildTemplateRow());
+    it('returns the requested template row', () => {
+      const { service } = createService();
 
-      const row = await service.getTemplate('default');
+      const row = service.getTemplate('customer-support');
 
-      expect(row.slug).toBe('default');
-      expect(row.defaultModel).toBe('google/gemini-2.5-flash');
+      expect(row.slug).toBe('customer-support');
+      expect(row.bootstrapFiles.identity).toContain('Customer Support');
     });
   });
 
@@ -663,5 +649,4 @@ describe('AgentService', () => {
       expect(workspace.syncProjectRuntime).toHaveBeenCalledWith(PROJECT_ID);
     });
   });
-
 });

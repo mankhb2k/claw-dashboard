@@ -1,6 +1,9 @@
 "use client";
 
+import { MoreHorizontal, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+
+import styles from "./CardApiKey.module.css";
 import {
   Card,
   Typography,
@@ -11,9 +14,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui";
-import { Flex } from "@/components/layout";
-import { MoreHorizontal, Eye, EyeOff } from "lucide-react";
-import styles from "./CardApiKey.module.css";
 
 const HIDDEN_KEY_PLACEHOLDER = "·····························";
 
@@ -94,51 +94,55 @@ export function CardApiKey({
                 className={`${styles.connectionCard} ${conn.disabled || conn.pending ? styles.connectionCardDisabled : ""}`}
                 disableHover
               >
-                <Flex justify="between" align="center">
-                  <Flex align="center" gap={12}>
-                    <div
-                      className={
-                        conn.disabled
-                          ? styles.iconWrapper
-                          : styles.iconWrapperSuccess
-                      }
+                <div className={styles.cardRow}>
+                  <div
+                    className={
+                      conn.disabled
+                        ? styles.iconWrapper
+                        : styles.iconWrapperSuccess
+                    }
+                  >
+                    <span
+                      className={`material-symbols-outlined ${conn.disabled ? styles.iconLock : styles.iconKey}`}
                     >
-                      <span
-                        className={`material-symbols-outlined ${conn.disabled ? styles.iconLock : styles.iconKey}`}
-                      >
-                        {conn.disabled ? "link_off" : "key"}
-                      </span>
-                    </div>
-                    <div>
-                      <Typography variant="p" weight="medium" as="span">
-                        {conn.name}
-                      </Typography>
-                      <Flex align="center" gap={4}>
-                        <Typography
-                          variant="p"
-                          color="muted"
-                          className={`${styles.maskedKey} ${!isVisible && !isRevealing ? styles.hiddenKeyPlaceholder : ""}`}
-                        >
-                          {isRevealing
-                            ? "Loading key..."
-                            : isVisible
-                              ? (revealedKeys[conn.id] ?? conn.key)
-                              : HIDDEN_KEY_PLACEHOLDER}
-                        </Typography>
-                        <button
-                          type="button"
-                          className={styles.eyeBtn}
-                          onClick={() => toggleKeyVisibility(conn)}
-                          disabled={isRevealing}
-                          aria-label={isVisible ? "Hide key" : "Show key"}
-                        >
-                          {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
-                        </button>
-                      </Flex>
-                    </div>
-                  </Flex>
+                      {conn.disabled ? "link_off" : "key"}
+                    </span>
+                  </div>
 
-                  <Flex align="center" gap={8}>
+                  <div className={styles.colKey}>
+                    <Typography variant="p" weight="medium" as="span">
+                      {conn.name}
+                    </Typography>
+                    <div className={styles.keyRow}>
+                      <Typography
+                        variant="p"
+                        color="muted"
+                        className={`${styles.maskedKey} ${!isVisible && !isRevealing ? styles.hiddenKeyPlaceholder : styles.revealedKey}`}
+                        title={
+                          isVisible && !isRevealing
+                            ? (revealedKeys[conn.id] ?? conn.key)
+                            : undefined
+                        }
+                      >
+                        {isRevealing
+                          ? "Loading key..."
+                          : isVisible
+                            ? (revealedKeys[conn.id] ?? conn.key)
+                            : HIDDEN_KEY_PLACEHOLDER}
+                      </Typography>
+                      <button
+                        type="button"
+                        className={styles.eyeBtn}
+                        onClick={() => toggleKeyVisibility(conn)}
+                        disabled={isRevealing}
+                        aria-label={isVisible ? "Hide key" : "Show key"}
+                      >
+                        {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.colActions}>
                     <Switch
                       checked={!conn.disabled && !conn.pending}
                       disabled={isTesting}
@@ -173,8 +177,8 @@ export function CardApiKey({
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </Flex>
-                </Flex>
+                  </div>
+                </div>
               </Card>
             );
           })}

@@ -1,7 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { decryptSecret } from '@aucobot/control-plane-core';
-import type { PrismaService } from '../../../../core/database/prisma.service';
+
 import { resolveProvider } from '../../ai-providers/lib/provider-registry';
+import { decryptSecret } from '@aucobot/control-plane-core';
+
+import type { PrismaService } from '../../../../core/database/prisma.service';
 
 export async function getDecryptedProviderKey(
   prisma: PrismaService,

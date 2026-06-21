@@ -1,4 +1,7 @@
-import React from "react";
+import { MoreVertical, Edit2, Copy, Trash2, Sparkles } from "lucide-react";
+
+import styles from "./CardAgent.module.css";
+import { AgentItem } from "../../agentMockData";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -9,16 +12,7 @@ import {
   Card,
   Avatar,
 } from "@/components/ui";
-import {
-  MoreVertical,
-  Edit2,
-  Copy,
-  Trash2,
-  Sparkles,
-} from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import styles from "./CardAgent.module.css";
-import { AgentItem } from "../../agentMockData";
 import { NO_MODEL_LABEL } from "@/utils/chat/model-catalog";
 
 interface CardAgentProps {
@@ -48,27 +42,23 @@ export function CardAgent({
   };
 
   return (
-    <Card
-      className={styles.card}
-      hover="md"
-      onClick={onClick}
-    >
+    <Card className={styles.card} hover="md" onClick={onClick}>
       <div className={styles.cardHeader}>
         <Flex align="center" gap={12}>
-          <Avatar
-            size="lg"
-            fallback={agent.avatar}
-            className={styles.avatar}
-          />
+          <Avatar size="lg" fallback={agent.avatar} className={styles.avatar} />
           <div className={styles.info}>
             <Flex align="center" gap={8}>
-              <Typography variant="h4" as="span">{agent.name}</Typography>
+              <Typography variant="h4" as="span">
+                {agent.name}
+              </Typography>
               <div
                 className={`${styles.statusIndicator} ${
                   !agent.isActive ? styles.inactive : ""
                 }`}
                 title={
-                  agent.isActive ? t("agent.card.active") : t("agent.card.disabled")
+                  agent.isActive
+                    ? t("agent.card.active")
+                    : t("agent.card.disabled")
                 }
               />
             </Flex>
@@ -79,10 +69,13 @@ export function CardAgent({
         </Flex>
 
         <DropdownMenu>
-          <DropdownMenuTrigger variant="kebab" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuTrigger
+            variant="kebab"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MoreVertical size={16} />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="start">
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();

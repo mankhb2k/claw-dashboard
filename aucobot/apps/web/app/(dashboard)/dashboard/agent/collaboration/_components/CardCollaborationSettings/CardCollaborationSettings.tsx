@@ -1,9 +1,8 @@
 "use client";
 
-import React from "react";
+import styles from "./CardCollaborationSettings.module.css";
 import { Typography, Switch, Card } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
-import styles from "./CardCollaborationSettings.module.css";
 
 type CardCollaborationSettingsProps = {
   enabled: boolean;

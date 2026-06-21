@@ -10,7 +10,9 @@ import { SettingsOverlay } from "./components/settings/SettingsOverlay";
 import { SettingsSidebar } from "./components/settings/SettingsSidebar";
 import { DEFAULT_PERMISSIONS } from "./components/settings/PermissionToggles";
 import { useConnectionTimer } from "./hooks/useConnectionTimer";
+import { useConnectionSounds } from "./hooks/useConnectionSounds";
 import { useNodeDevice } from "./hooks/useNodeDevice";
+import { prepareConnectionAudio } from "./lib/connection-sounds";
 import styles from "./styles/app.module.css";
 
 export function App() {
@@ -41,6 +43,7 @@ export function App() {
   const visualsActive = sessionActive;
 
   const timerLabel = useConnectionTimer(connected);
+  useConnectionSounds(state);
 
   const nodesUrl = useMemo(() => {
     if (!config?.aucobotWebUrl) return undefined;
@@ -48,6 +51,8 @@ export function App() {
   }, [config?.aucobotWebUrl]);
 
   const handleToggle = useCallback(async () => {
+    void prepareConnectionAudio();
+
     if (sessionActive) {
       await disconnect();
       return;
@@ -66,6 +71,7 @@ export function App() {
 
   const handleInviteSubmit = useCallback(
     async (payload: { webBaseUrl: string; inviteCode: string }) => {
+      void prepareConnectionAudio();
       setInviteError(undefined);
       const result = await connectWithInvite({
         webBaseUrl: payload.webBaseUrl,

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Typography, Checkbox, Card } from "@/components/ui";
-import { useI18n } from "@/lib/i18n";
-import { projectApi } from "@/lib/api/project";
-import { useProjectStore } from "@/stores/project.store";
+import { useEffect, useState } from "react";
+
 import styles from "./JoinCollaborationOnCreate.module.css";
+import { Typography, Checkbox, Card } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
 
 interface JoinCollaborationOnCreateProps {
   checked: boolean;
@@ -20,15 +21,18 @@ export function JoinCollaborationOnCreate({
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [collaborationEnabled, setCollaborationEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setCollaborationEnabled(false);
+    setLoading(Boolean(projectId));
+  }
 
   useEffect(() => {
     if (!projectId) {
-      setCollaborationEnabled(false);
-      setLoading(false);
       return;
     }
-
-    setLoading(true);
     void projectApi
       .getCollaboration(projectId)
       .then((data) => setCollaborationEnabled(data.enabled))

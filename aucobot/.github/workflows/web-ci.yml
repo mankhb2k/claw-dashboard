@@ -1,6 +1,6 @@
 # CI cho apps/web — chạy tự động trên mỗi Pull Request và push vào nhánh chính.
 # Mục tiêu: chặn merge nếu lint có error hoặc typecheck/build thất bại.
-# Tài liệu chuẩn: apps/web/.agent/rule.md §7.
+# Tài liệu chuẩn: apps/web/.agent/rule.md §8.
 name: Web CI
 
 on:
@@ -48,13 +48,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Luật cứng (error) chặn merge — xem rule.md §7.2
+      # Hard rules (error) block merge — rule.md §9
       - name: Lint (eslint)
         run: pnpm --filter @aucobot/web lint
 
       - name: Typecheck (tsc --noEmit)
         run: pnpm --filter @aucobot/web typecheck
 
-      # Build web + các workspace package phụ thuộc (turbo lo thứ tự)
+      # Build web (postinstall already builds workspace deps used by web)
       - name: Build (next build)
-        run: pnpm turbo run build --filter=@aucobot/web
+        run: pnpm --filter @aucobot/web build

@@ -4,8 +4,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { FastifyRequest } from 'fastify';
+
 import { getMcpServiceSecret } from '@aucobot/control-plane-core';
+
+import type { FastifyRequest } from 'fastify';
 
 @Injectable()
 export class McpServiceSecretGuard implements CanActivate {

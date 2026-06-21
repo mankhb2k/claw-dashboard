@@ -1,4 +1,4 @@
-import type { UsageSource, UsageStatus } from '@aucobot/database';
+import type { UsageSource, UsageStatus } from '@aucobot/shared';
 
 export type RecordUsageInput = {
   projectId: string;

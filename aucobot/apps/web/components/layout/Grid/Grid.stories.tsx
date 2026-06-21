@@ -1,7 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import React from 'react'
-import { Grid } from '@/components/layout/Grid/Grid'
+
 import { Box, BoxProps } from '@/components/layout/Box/Box'
+import { Grid } from '@/components/layout/Grid/Grid'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<typeof Grid> = {
   title: 'Layout/Grid',
@@ -18,6 +20,11 @@ const meta: Meta<typeof Grid> = {
 
 export default meta
 type Story = StoryObj<typeof Grid>
+
+const GRID_DEMO_CELL_KEYS = Array.from(
+  { length: 12 },
+  (_, n) => `grid-cell-${n + 1}`,
+);
 
 const TestBox = ({ color = 'primary', children = 'Box', ...props }: BoxProps) => (
   <Box 
@@ -65,9 +72,9 @@ export const TwelveColumns: Story = {
   args: {
     columns: 12,
     gap: 2,
-    children: Array.from({ length: 12 }).map((_, i) => (
-      <TestBox key={i} color="surface" border style={{ minHeight: '40px', fontSize: '10px' }}>
-        {i + 1}
+    children: GRID_DEMO_CELL_KEYS.map((key, n) => (
+      <TestBox key={key} color="surface" border style={{ minHeight: '40px', fontSize: '10px' }}>
+        {n + 1}
       </TestBox>
     )),
   },

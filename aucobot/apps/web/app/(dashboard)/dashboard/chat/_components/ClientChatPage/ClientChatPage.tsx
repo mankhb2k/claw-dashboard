@@ -1,17 +1,19 @@
 "use client";
 
+import styles from "./ClientChatPage.module.css";
+import { useClientChatPage } from "./use-client-chat-page";
 import { ChatPanel } from "../ChatPanel/ChatPanel";
 import { ChatSidebar } from "../ChatSidebar/ChatSidebar";
-import { useClientChatPage } from "./use-client-chat-page";
-import styles from "./ClientChatPage.module.css";
+import { useI18n } from "@/lib/i18n";
 
 export function ClientChatPage() {
+  const { t } = useI18n();
   const chat = useClientChatPage();
 
   if (!chat.hasProject) {
     return (
       <p className={styles.muted}>
-        No project yet. Create one from Overview first.
+        {t("chat.errors.noProject")}
       </p>
     );
   }
@@ -77,6 +79,8 @@ export function ClientChatPage() {
         liveItems={chat.liveItems}
         showToolPreparing={chat.showToolPreparing}
         modelHint={chat.modelHint}
+        invokableSkills={chat.invokableSkills}
+        invokableSkillsLoading={chat.invokableSkillsLoading}
       />
     </div>
   );

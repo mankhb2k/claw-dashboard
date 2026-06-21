@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import { CalendarClock, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
+
+import styles from "./CardSchedulesJobs.module.css";
 import { Flex } from "@/components/layout";
 import { Typography, Button, Card, Switch, Spinner } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
-import type { CronJob } from "@/schemas/cron.schema";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import {
   cronJobMessage,
   formatCronSchedule,
@@ -13,9 +15,8 @@ import {
   isCronJobFailed,
   lastRunStatus,
 } from "@/utils/agent/cron-format";
-import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
-import { CalendarClock, Play, Trash2 } from "lucide-react";
-import styles from "./CardSchedulesJobs.module.css";
+
+import type { CronJob } from "@/schemas/cron.schema";
 
 function agentSchedulesHref(slug: string): string {
   return `${DASHBOARD_BASE_PATH}/agent/${encodeURIComponent(slug)}?tab=schedules`;

@@ -1,8 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
-import {
-  CHAT_ATTACHMENT_MAX_COUNT,
-  SANDBOX_STAGING_MAX_BYTES,
-} from '@aucobot/runtime-contracts';
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
@@ -11,12 +6,19 @@ jest.mock('../../lib/chat-attachment-upload.util', () => ({
   readChatAttachmentUpload: jest.fn(),
 }));
 
-import { readChatAttachmentUpload } from '../../lib/chat-attachment-upload.util';
-import { ChatAttachmentsService } from './chat-attachments.service';
+import { BadRequestException } from '@nestjs/common';
 
-const readChatAttachmentUploadMock = readChatAttachmentUpload as jest.MockedFunction<
-  typeof readChatAttachmentUpload
->;
+import { ChatAttachmentsService } from './chat-attachments.service';
+import { readChatAttachmentUpload } from '../../lib/chat-attachment-upload.util';
+import {
+  CHAT_ATTACHMENT_MAX_COUNT,
+  SANDBOX_STAGING_MAX_BYTES,
+} from '@aucobot/runtime-contracts';
+
+const readChatAttachmentUploadMock =
+  readChatAttachmentUpload as jest.MockedFunction<
+    typeof readChatAttachmentUpload
+  >;
 
 const PROJECT_ID = 'proj_test_1';
 const USER_ID = 'user_test_1';
@@ -44,7 +46,7 @@ function createService() {
   const service = new ChatAttachmentsService(
     prisma as never,
     workspace as never,
-    storage as never,
+    storage,
   );
   return { service, prisma, workspace, storage };
 }
@@ -165,7 +167,9 @@ describe('ChatAttachmentsService', () => {
           sessionKey: 'agent:main:direct',
         }),
       ).rejects.toThrow(
-        new BadRequestException('One or more attachments are invalid or already sent'),
+        new BadRequestException(
+          'One or more attachments are invalid or already sent',
+        ),
       );
 
       expect(prisma.project.findUnique).not.toHaveBeenCalled();

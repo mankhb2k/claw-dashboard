@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import styles from "./ClientProjectSchedulesPage.module.css";
+import { CardSchedulesFilters } from "../CardSchedulesFilters/CardSchedulesFilters";
+import { CardSchedulesJobs } from "../CardSchedulesJobs/CardSchedulesJobs";
+import { CardSchedulesOverview } from "../CardSchedulesOverview/CardSchedulesOverview";
 import { Flex } from "@/components/layout";
 import { Spinner } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
-import { useProjectStore } from "@/stores/project.store";
-import type { ProjectAgentListRow } from "@/schemas/project.schema";
-import type { CronJob } from "@/schemas/cron.schema";
-import { cronJobMessage, formatCronSchedule } from "@/utils/agent/cron-format";
-import { CardSchedulesOverview } from "../CardSchedulesOverview/CardSchedulesOverview";
-import { CardSchedulesFilters } from "../CardSchedulesFilters/CardSchedulesFilters";
-import { CardSchedulesJobs } from "../CardSchedulesJobs/CardSchedulesJobs";
 import { useI18n } from "@/lib/i18n";
-import styles from "./ClientProjectSchedulesPage.module.css";
+import { useProjectStore } from "@/stores/project.store";
+import { cronJobMessage, formatCronSchedule } from "@/utils/agent/cron-format";
+
+import type { CronJob } from "@/schemas/cron.schema";
+import type { ProjectAgentListRow } from "@/schemas/project.schema";
 
 const ALL_AGENTS = "__all__";
 
@@ -30,6 +32,16 @@ export function ClientProjectSchedulesPage() {
   const [search, setSearch] = useState("");
   const [agentFilter, setAgentFilter] = useState(ALL_AGENTS);
   const [busyJobId, setBusyJobId] = useState<string | null>(null);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+    if (!projectId) {
+      setAgents([]);
+      setJobs([]);
+    }
+  }
 
   useEffect(() => {
     void fetchProjects({ silent: true });
@@ -77,11 +89,30 @@ export function ClientProjectSchedulesPage() {
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!projectId) {
+      return;
+    }
+    void Promise.all([
+      projectApi.getCronSummary(projectId),
+      projectApi.listCronJobs(projectId),
+      projectApi.listAgents(projectId),
+    ])
+      .then(([summary, list, agentRows]) => {
+        setQuotaLimit(summary.limit);
+        setQuotaTotal(summary.total);
+        setJobs(list.jobs);
+        setAgents(agentRows);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : t("agent.schedules.errors.load"));
+        setJobs([]);
+      })
+      .finally(() => setLoading(false));
+  }, [projectId, t]);
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {

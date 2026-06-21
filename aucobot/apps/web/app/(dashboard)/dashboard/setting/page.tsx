@@ -1,9 +1,9 @@
-import { Flex, Container } from "@/components/layout";
-import { projectApi } from "@/lib/api/project";
-import { getCurrentProject } from "@/lib/current-project";
 import { ClientSettingPage } from "./_components/ClientSettingPage/ClientSettingPage";
 import { SettingProjectNotFound } from "./_components/SettingProjectNotFound/SettingProjectNotFound";
 import styles from "./setting.module.css";
+import { Flex, Container } from "@/components/layout";
+import { projectApi } from "@/lib/api/project";
+import { getCurrentProject } from "@/lib/current-project";
 
 export default async function ProjectSettingPage() {
   const project = await getCurrentProject();

@@ -3,9 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { GatewayRpcService } from '../../../gateway/services/gateway-rpc/gateway-rpc.service';
 import { parseCronRunRpcUsage } from '../../../usage/lib/parse-rpc-usage';
 import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
+
 import type { CreateCronJobDto, UpdateCronJobDto } from '../../dto/cron.dto';
 
 /** Gateway cron.list rejects limit > 200 */
@@ -147,7 +149,11 @@ export class CronService {
     });
   }
 
-  async get(userId: string, projectId: string, jobId: string): Promise<CronJobRecord> {
+  async get(
+    userId: string,
+    projectId: string,
+    jobId: string,
+  ): Promise<CronJobRecord> {
     const job = await this.gateway.call<CronJobRecord | null>(
       userId,
       projectId,
@@ -161,11 +167,16 @@ export class CronService {
   }
 
   async create(userId: string, projectId: string, dto: CreateCronJobDto) {
-    const page = await this.gateway.call<CronListPage>(userId, projectId, 'cron.list', {
-      includeDisabled: true,
-      limit: 1,
-      offset: 0,
-    });
+    const page = await this.gateway.call<CronListPage>(
+      userId,
+      projectId,
+      'cron.list',
+      {
+        includeDisabled: true,
+        limit: 1,
+        offset: 0,
+      },
+    );
     const total = page.total ?? 0;
     if (total >= CRON_JOBS_PER_PROJECT_LIMIT) {
       throw new BadRequestException(
@@ -182,7 +193,12 @@ export class CronService {
       schedule,
     });
 
-    return this.gateway.call<CronJobRecord>(userId, projectId, 'cron.add', body);
+    return this.gateway.call<CronJobRecord>(
+      userId,
+      projectId,
+      'cron.add',
+      body,
+    );
   }
 
   async update(
@@ -209,13 +225,19 @@ export class CronService {
       const kind = dto.scheduleKind ?? current.schedule.kind;
       patch.schedule = buildSchedule({
         scheduleKind: kind,
-        cronExpr: dto.cronExpr ?? (current.schedule.kind === 'cron' ? current.schedule.expr : undefined),
+        cronExpr:
+          dto.cronExpr ??
+          (current.schedule.kind === 'cron'
+            ? current.schedule.expr
+            : undefined),
         everyMinutes:
           dto.everyMinutes ??
           (current.schedule.kind === 'every'
             ? Math.round(current.schedule.everyMs / 60_000)
             : undefined),
-        at: dto.at ?? (current.schedule.kind === 'at' ? current.schedule.at : undefined),
+        at:
+          dto.at ??
+          (current.schedule.kind === 'at' ? current.schedule.at : undefined),
       });
     }
     if (dto.message !== undefined) {
@@ -232,16 +254,26 @@ export class CronService {
   }
 
   async remove(userId: string, projectId: string, jobId: string) {
-    return this.gateway.call<{ removed: boolean }>(userId, projectId, 'cron.remove', {
-      id: jobId,
-    });
+    return this.gateway.call<{ removed: boolean }>(
+      userId,
+      projectId,
+      'cron.remove',
+      {
+        id: jobId,
+      },
+    );
   }
 
   async run(userId: string, projectId: string, jobId: string) {
-    const result = await this.gateway.call<unknown>(userId, projectId, 'cron.run', {
-      id: jobId,
-      mode: 'force',
-    });
+    const result = await this.gateway.call<unknown>(
+      userId,
+      projectId,
+      'cron.run',
+      {
+        id: jobId,
+        mode: 'force',
+      },
+    );
 
     const parsed = parseCronRunRpcUsage(jobId, result);
     if (parsed) {

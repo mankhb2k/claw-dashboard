@@ -1,11 +1,12 @@
 "use client";
 
+import { Check, Copy } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+
+import styles from "./CodeBlock.module.css";
+import { CodeBlockTabs, type CodeBlockTab } from "./CodeBlockTabs";
 import { Button } from "@/components/ui/Button/Button";
 import { Typography } from "@/components/ui/Typography/Typography";
-import { Check, Copy } from "lucide-react";
-import { CodeBlockTabs, type CodeBlockTab } from "./CodeBlockTabs";
-import styles from "./CodeBlock.module.css";
 
 export type { CodeBlockTab } from "./CodeBlockTabs";
 export { CodeBlockTabs } from "./CodeBlockTabs";

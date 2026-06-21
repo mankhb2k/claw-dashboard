@@ -1,18 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Flex } from "@/components/layout";
-import { Input, Button, Select } from "@/components/ui";
-import { BackButton } from "@/components/dashboard";
-import { projectApi } from "@/lib/api/project";
-import type { ProjectChannel } from "@/schemas/project.schema";
 import {
   readTelegramAccessFromConfig,
-  TELEGRAM_DM_POLICY_OPTIONS,
   validateTelegramAccessForm,
   type TelegramDmPolicy,
 } from "@aucobot/shared";
+import { useEffect, useMemo, useState } from "react";
+
 import styles from "../../../channel-detail.module.css";
+import { BackButton } from "@/components/dashboard";
+import { Flex } from "@/components/layout";
+import { Input, Button, Select, Textarea } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+
+import type { ProjectChannel } from "@/schemas/project.schema";
+
+/** dmPolicy select order (labels from i18n). */
+const TELEGRAM_DM_POLICY_UI_ORDER: TelegramDmPolicy[] = [
+  "allowlist",
+  "pairing",
+  "open",
+];
 
 interface Props {
   projectId: string;
@@ -34,22 +43,30 @@ function preserveBotUsername(
 }
 
 export function ClientTelegramPage({ projectId }: Props) {
+  const { t } = useI18n();
   const [token, setToken] = useState("");
   const [dmPolicy, setDmPolicy] = useState<TelegramDmPolicy>("allowlist");
   const [allowFromInput, setAllowFromInput] = useState("");
   const [channel, setChannel] = useState<ProjectChannel | null>(null);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+  const [loading, setLoading] = useState(Boolean(projectId));
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+    setError(null);
+  }
 
   useEffect(() => {
     if (!projectId) return;
-    setLoading(true);
-    projectApi
-      .listChannels(projectId)
-      .then((rows) => {
+    void (async () => {
+      await Promise.resolve();
+      try {
+        const rows = await projectApi.listChannels(projectId);
         const row = rows.find((c) => c.channelId === "telegram") ?? null;
         setChannel(row);
         if (row) {
@@ -57,12 +74,15 @@ export function ClientTelegramPage({ projectId }: Props) {
           setDmPolicy(access.dmPolicy);
           setAllowFromInput(access.allowFromInput);
         }
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Failed to load channel configuration");
-      })
-      .finally(() => setLoading(false));
-  }, [projectId]);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : t("channels.detail.errors.load"),
+        );
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [projectId, t]);
 
   const accessValidation = useMemo(
     () => validateTelegramAccessForm({ dmPolicy, allowFromInput }),
@@ -75,7 +95,31 @@ export function ClientTelegramPage({ projectId }: Props) {
   );
 
   const hasBotToken = Boolean(channel?.secrets.some((s) => s.key === "bot_token"));
-  const policyOption = TELEGRAM_DM_POLICY_OPTIONS.find((o) => o.value === dmPolicy);
+
+  const policyOptions = useMemo(
+    () =>
+      TELEGRAM_DM_POLICY_UI_ORDER.map((value) => ({
+        value,
+        label: t(`channels.detail.telegram.dmPolicy.${value}.label`),
+      })),
+    [t],
+  );
+
+  const policyDescription = t(`channels.detail.telegram.dmPolicy.${dmPolicy}.description`);
+
+  const allowFromLabel = `${t("channels.detail.telegram.form.allowFromLabel")}${
+    dmPolicy === "allowlist"
+      ? t("channels.detail.telegram.form.requiredSuffix")
+      : t("channels.detail.telegram.form.optionalSuffix")
+  }`;
+
+  const allowFromHint = (
+    <>
+      {t("channels.detail.telegram.form.allowFromHintBefore")}{" "}
+      <code>telegram:</code> / <code>tg:</code>{" "}
+      {t("channels.detail.telegram.form.allowFromHintAfter")}
+    </>
+  );
 
   const handleSave = async () => {
     if (!projectId) return;
@@ -87,7 +131,7 @@ export function ClientTelegramPage({ projectId }: Props) {
 
     const needsNewToken = !hasBotToken;
     if (needsNewToken && !token.trim()) {
-      setFieldError("Bot token is required for the first connection.");
+      setFieldError(t("channels.detail.errors.tokenRequired"));
       return;
     }
 
@@ -109,27 +153,27 @@ export function ClientTelegramPage({ projectId }: Props) {
         await projectApi.upsertChannelSecret(projectId, row.id, "bot_token", token.trim());
         const test = await projectApi.testChannel(projectId, row.id);
         if (!test.ok) {
-          throw new Error(test.message ?? "Token verification failed");
+          throw new Error(test.message ?? t("channels.detail.errors.tokenVerify"));
         }
         row = await projectApi.updateChannel(projectId, row.id, {
           config: configPatch,
           enabled: true,
         });
         setToken("");
-        setSuccess(test.message ?? "Telegram channel saved and enabled");
+        setSuccess(test.message ?? t("channels.detail.success.telegramSavedEnabled"));
       } else if (row.connectionStatus === "connected") {
         row = await projectApi.updateChannel(projectId, row.id, {
           config: configPatch,
           enabled: true,
         });
-        setSuccess("DM access policy updated");
+        setSuccess(t("channels.detail.success.dmPolicyUpdated"));
       } else {
-        setSuccess("Configuration saved — enter token and save again to enable");
+        setSuccess(t("channels.detail.success.configSavedRetry"));
       }
 
       setChannel(row);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      setError(err instanceof Error ? err.message : t("channels.detail.errors.save"));
     } finally {
       setSaving(false);
     }
@@ -143,9 +187,9 @@ export function ClientTelegramPage({ projectId }: Props) {
     try {
       const updated = await projectApi.updateChannel(projectId, channel.id, { enabled: false });
       setChannel(updated);
-      setSuccess("Telegram channel disabled");
+      setSuccess(t("channels.detail.success.telegramDisabled"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to disable channel");
+      setError(err instanceof Error ? err.message : t("channels.detail.errors.disable"));
     } finally {
       setSaving(false);
     }
@@ -164,7 +208,7 @@ export function ClientTelegramPage({ projectId }: Props) {
     accessValidation.ok && projectId && (hasBotToken || token.trim().length > 0);
 
   if (loading) {
-    return <p className={styles.hint}>Loading...</p>;
+    return <p className={styles.hint}>{t("channels.detail.loading")}</p>;
   }
 
   return (
@@ -180,7 +224,7 @@ export function ClientTelegramPage({ projectId }: Props) {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Connected</h2>
           <p className={styles.statusMeta}>
-            Bot: {botUsername ? `@${botUsername}` : "Telegram bot"}
+            Bot: {botUsername ? `@${botUsername}` : t("channels.detail.botFallback.telegram")}
             {channel.secrets[0]?.masked ? ` · Token: ${channel.secrets[0].masked}` : null}
             <br />
             DM: <strong>{savedAccess?.dmPolicy ?? dmPolicy}</strong>
@@ -216,15 +260,12 @@ export function ClientTelegramPage({ projectId }: Props) {
         <div className={styles.fieldBlock}>
           <Select
             id="dm-policy"
-            label="DM policy (dmPolicy)"
+            label={t("channels.detail.telegram.form.dmPolicyLabel")}
             value={dmPolicy}
             onValueChange={(value) => setDmPolicy(value as TelegramDmPolicy)}
-            options={TELEGRAM_DM_POLICY_OPTIONS.map((o) => ({
-              value: o.value,
-              label: o.label,
-            }))}
+            options={policyOptions}
           />
-          {policyOption ? <p className={styles.policyHint}>{policyOption.description}</p> : null}
+          <p className={styles.policyHint}>{policyDescription}</p>
         </div>
 
         {dmPolicy === "open" ? (
@@ -236,22 +277,15 @@ export function ClientTelegramPage({ projectId }: Props) {
 
         {dmPolicy !== "open" ? (
           <div className={styles.fieldBlock}>
-            <label htmlFor="allow-from" className={styles.label}>
-              Telegram user ID (allowFrom)
-              {dmPolicy === "allowlist" ? " — required" : " — optional"}
-            </label>
-            <textarea
+            <Textarea
               id="allow-from"
-              className={styles.textarea}
-              placeholder={"8734062810\n745123456"}
+              label={allowFromLabel}
+              placeholder={t("channels.detail.telegram.form.allowFromPlaceholder")}
               value={allowFromInput}
               onChange={(e) => setAllowFromInput(e.target.value)}
               spellCheck={false}
+              hint={allowFromHint}
             />
-            <p className={styles.hint}>
-              One ID per line (or comma-separated). Prefixes <code>telegram:</code> /{" "}
-              <code>tg:</code> are accepted.
-            </p>
           </div>
         ) : null}
 

@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+import styles from "./SandboxSection.module.css";
+import { CardSection } from "../CardSection/CardSection";
+import { TitleSection } from "../TitleSection/TitleSection";
+import { SearchItem } from "@/components/dashboard";
+import { Flex } from "@/components/layout";
 import {
   Avatar,
   Button,
@@ -9,15 +16,10 @@ import {
   Switch,
   Typography,
 } from "@/components/ui";
-import { Flex } from "@/components/layout";
-import { SearchItem } from "@/components/dashboard";
-import { AlertTriangle } from "lucide-react";
 import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
+
 import type { ProjectAgentListRow } from "@/schemas/project.schema";
-import styles from "./SandboxSection.module.css";
-import { CardSection } from "../CardSection/CardSection";
-import { TitleSection } from "../TitleSection/TitleSection";
 
 interface Props {
   projectId: string;
@@ -184,53 +186,61 @@ export function SandboxSection({ projectId }: Props) {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
 
-  useEffect(() => {
-    let active = true;
-    if (!projectId) return;
-
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
     setConfigLoaded(false);
     setAgentsLoaded(false);
     setConfigError(null);
     setAgentsError(null);
+  }
 
-    void projectApi
-      .listAgents(projectId)
-      .then((rows) => {
-        if (!active) return;
-        setAgents(rows);
-        setAgentsError(null);
-        setAgentsLoaded(true);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setAgents([]);
-        setAgentsError(
-          err instanceof Error ? err.message : t("settings.sandbox.errors.loadAgents"),
-        );
-        setAgentsLoaded(true);
-      });
+  useEffect(() => {
+    let active = true;
+    if (!projectId) return undefined;
 
-    void projectApi
-      .getProjectSandbox(projectId)
-      .then((res) => {
-        if (!active) return;
-        setEnabled(res.enabled);
-        setMode(res.mode);
-        setExemptAgentSlugs(res.exemptAgentSlugs);
-        setAppliedAgentSlugs(res.appliedAgentSlugs);
-        setConfigError(null);
-        setConfigLoaded(true);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setConfigError(
-          err instanceof Error
-            ? err.message
-            : t("settings.sandbox.errors.loadSettings"),
-        );
-        setConfigLoaded(true);
-      });
+    void (async () => {
+      await Promise.resolve();
+
+      void projectApi
+        .listAgents(projectId)
+        .then((rows) => {
+          if (!active) return;
+          setAgents(rows);
+          setAgentsError(null);
+          setAgentsLoaded(true);
+        })
+        .catch((err) => {
+          if (!active) return;
+          setAgents([]);
+          setAgentsError(
+            err instanceof Error ? err.message : t("settings.sandbox.errors.loadAgents"),
+          );
+          setAgentsLoaded(true);
+        });
+
+      void projectApi
+        .getProjectSandbox(projectId)
+        .then((res) => {
+          if (!active) return;
+          setEnabled(res.enabled);
+          setMode(res.mode);
+          setExemptAgentSlugs(res.exemptAgentSlugs);
+          setAppliedAgentSlugs(res.appliedAgentSlugs);
+          setConfigError(null);
+          setConfigLoaded(true);
+        })
+        .catch((err) => {
+          if (!active) return;
+          setConfigError(
+            err instanceof Error
+              ? err.message
+              : t("settings.sandbox.errors.loadSettings"),
+          );
+          setConfigLoaded(true);
+        });
+    })();
 
     return () => {
       active = false;

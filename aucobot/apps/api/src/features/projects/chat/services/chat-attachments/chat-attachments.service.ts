@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -5,8 +7,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import type { FastifyRequest } from 'fastify';
+
+import { PrismaService } from '../../../../../core/database/prisma.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+import { readChatAttachmentUpload } from '../../lib/chat-attachment-upload.util';
+import { CHAT_ATTACHMENT_STORAGE } from '../../storage/chat-attachment-storage.provider';
+import {
+  ChatAttachmentKind as DbAttachmentKind,
+  ChatAttachmentStatus,
+} from '@aucobot/database';
 import {
   CHAT_ATTACHMENT_MAX_COUNT,
   SANDBOX_STAGING_MAX_BYTES,
@@ -17,16 +26,8 @@ import {
   type ChatAttachmentStorage,
 } from '@aucobot/runtime-contracts';
 import { parseCollaborationMemberSlugs } from '@aucobot/workspace-sync';
-import {
-  ChatAttachmentKind as DbAttachmentKind,
-  ChatAttachmentStatus,
-} from '@aucobot/database';
-import { PrismaService } from '../../../../../core/database/prisma.service';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
-import { readChatAttachmentUpload } from '../../lib/chat-attachment-upload.util';
-import {
-  CHAT_ATTACHMENT_STORAGE,
-} from '../../storage/chat-attachment-storage.provider';
+
+import type { FastifyRequest } from 'fastify';
 
 const ORPHAN_HOURS = 24;
 
@@ -43,7 +44,8 @@ export class ChatAttachmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workspace: WorkspaceService,
-    @Inject(CHAT_ATTACHMENT_STORAGE) private readonly storage: ChatAttachmentStorage,
+    @Inject(CHAT_ATTACHMENT_STORAGE)
+    private readonly storage: ChatAttachmentStorage,
   ) {}
 
   async upload(projectId: string, userId: string, req: FastifyRequest) {
@@ -53,10 +55,13 @@ export class ChatAttachmentsService {
       where: { projectId, userId, status: ChatAttachmentStatus.PENDING },
     });
     if (pendingCount >= CHAT_ATTACHMENT_MAX_COUNT) {
-      throw new BadRequestException(`Maximum ${CHAT_ATTACHMENT_MAX_COUNT} pending attachments`);
+      throw new BadRequestException(
+        `Maximum ${CHAT_ATTACHMENT_MAX_COUNT} pending attachments`,
+      );
     }
 
-    const { data, mimeType, originalName } = await readChatAttachmentUpload(req);
+    const { data, mimeType, originalName } =
+      await readChatAttachmentUpload(req);
     const kind = classifyChatAttachmentKind(mimeType, originalName);
     if (!kind) {
       throw new BadRequestException('Unsupported file type');
@@ -99,9 +104,17 @@ export class ChatAttachmentsService {
     };
   }
 
-  async readForDownload(projectId: string, attachmentId: string, userId: string) {
+  async readForDownload(
+    projectId: string,
+    attachmentId: string,
+    userId: string,
+  ) {
     const row = await this.prisma.chatAttachment.findFirst({
-      where: { id: attachmentId, projectId, status: { not: ChatAttachmentStatus.DELETED } },
+      where: {
+        id: attachmentId,
+        projectId,
+        status: { not: ChatAttachmentStatus.DELETED },
+      },
     });
     if (!row) {
       throw new NotFoundException('Attachment not found');
@@ -124,7 +137,12 @@ export class ChatAttachmentsService {
 
   async deletePending(projectId: string, attachmentId: string, userId: string) {
     const row = await this.prisma.chatAttachment.findFirst({
-      where: { id: attachmentId, projectId, userId, status: ChatAttachmentStatus.PENDING },
+      where: {
+        id: attachmentId,
+        projectId,
+        userId,
+        status: ChatAttachmentStatus.PENDING,
+      },
     });
     if (!row) {
       throw new NotFoundException('Pending attachment not found');
@@ -141,7 +159,10 @@ export class ChatAttachmentsService {
     return { ok: true };
   }
 
-  async resolveSandboxActive(projectId: string, sessionKey: string): Promise<boolean> {
+  async resolveSandboxActive(
+    projectId: string,
+    sessionKey: string,
+  ): Promise<boolean> {
     const agentSlug = agentSlugFromSessionKey(sessionKey);
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -154,8 +175,12 @@ export class ChatAttachmentsService {
     });
     if (!project) return false;
 
-    const exemptSlugs = parseCollaborationMemberSlugs(project.sandboxExemptAgentSlugs);
-    const appliedSlugs = parseCollaborationMemberSlugs(project.sandboxAppliedAgentSlugs);
+    const exemptSlugs = parseCollaborationMemberSlugs(
+      project.sandboxExemptAgentSlugs,
+    );
+    const appliedSlugs = parseCollaborationMemberSlugs(
+      project.sandboxAppliedAgentSlugs,
+    );
     const mode =
       project.sandboxDefaultMode === 'selected' ||
       project.sandboxDefaultMode === 'non-main'
@@ -190,12 +215,19 @@ export class ChatAttachmentsService {
     });
 
     if (rows.length !== attachmentIds.length) {
-      throw new BadRequestException('One or more attachments are invalid or already sent');
+      throw new BadRequestException(
+        'One or more attachments are invalid or already sent',
+      );
     }
 
-    const sandboxActive = await this.resolveSandboxActive(projectId, sessionKey);
+    const sandboxActive = await this.resolveSandboxActive(
+      projectId,
+      sessionKey,
+    );
     if (sandboxActive) {
-      const oversized = rows.find((r) => r.sizeBytes > SANDBOX_STAGING_MAX_BYTES);
+      const oversized = rows.find(
+        (r) => r.sizeBytes > SANDBOX_STAGING_MAX_BYTES,
+      );
       if (oversized) {
         throw new BadRequestException(
           `SANDBOX_ATTACHMENT_TOO_LARGE: "${oversized.originalName}" exceeds 5 MB sandbox staging limit`,
@@ -203,7 +235,8 @@ export class ChatAttachmentsService {
       }
     }
 
-    const out: Array<{ mimeType: string; fileName: string; content: string }> = [];
+    const out: Array<{ mimeType: string; fileName: string; content: string }> =
+      [];
     for (const row of rows) {
       const read = await this.storage.read(projectId, {
         storagePath: row.storagePath,

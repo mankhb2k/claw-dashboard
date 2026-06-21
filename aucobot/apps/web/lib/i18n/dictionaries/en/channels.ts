@@ -29,6 +29,55 @@ export const enChannels = {
     backToList: "← Back to list",
     invalidProject: "Invalid project id",
   },
+  detail: {
+    errors: {
+      load: 'Failed to load channel configuration',
+      tokenRequired: 'Bot token is required for the first connection.',
+      tokenVerify: 'Token verification failed',
+      save: 'Save failed',
+      disable: 'Failed to disable channel',
+    },
+    success: {
+      channelDisabled: 'Channel disabled',
+      dmPolicyUpdated: 'DM access policy updated',
+      configSavedRetry: 'Configuration saved — enter token and save again to enable',
+      discordSavedEnabled: 'Discord channel saved and enabled',
+      telegramSavedEnabled: 'Telegram channel saved and enabled',
+      discordDisabled: 'Discord channel disabled',
+      telegramDisabled: 'Telegram channel disabled',
+    },
+    botFallback: {
+      discord: 'Discord bot',
+      telegram: 'Telegram bot',
+    },
+    loading: 'Loading...',
+    telegram: {
+      dmPolicy: {
+        allowlist: {
+          label: 'Allowlist (recommended)',
+          description: 'Only user IDs on the list can DM the bot.',
+        },
+        pairing: {
+          label: 'Pairing',
+          description:
+            'Strangers receive a pairing code; an admin must approve before the bot replies.',
+        },
+        open: {
+          label: 'Open (public)',
+          description: 'Anyone can DM the bot — use for demos only; high risk.',
+        },
+      },
+      form: {
+        dmPolicyLabel: 'DM policy (dmPolicy)',
+        allowFromLabel: 'Telegram user ID (allowFrom)',
+        requiredSuffix: ' — required',
+        optionalSuffix: ' — optional',
+        allowFromPlaceholder: '8734062810\n745123456',
+        allowFromHintBefore: 'One ID per line (or comma-separated). Prefixes',
+        allowFromHintAfter: 'are accepted.',
+      },
+    },
+  },
   badge: {
     channel: "Channel",
     web: "Web",

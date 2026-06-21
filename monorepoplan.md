@@ -23,7 +23,7 @@ AucoBot là monorepo **pnpm** gồm:
 - **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
 - **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — `workflow.md` §5.6).
 
-> **OSS compose = 4 services:** `web` + `api` (AucoBot) + `gateway` + `postgres` (upstream pull). **+1 volume** `openclaw_data`. Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài.
+> **OSS compose = 5 services:** `web` + `api` (build AucoBot) + `mcp` (pull Hub) + `gateway` + `postgres` (upstream pull). **+2 volume** (`postgres_data`, `openclaw_data`). Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài. _(Chi tiết 5 service: xem `workflow.md` §2; bảng §2 dưới đây giữ mô tả 4 service AucoBot+gateway+postgres, `mcp` là service connectors bổ sung.)_
 
 ---
 
@@ -665,6 +665,73 @@ OPENCLAW_SPAWN_TIMEOUT_MS=60000
 
 ---
 
+## 10.2 OSS DB refactor — giữ / bỏ (quyết định 2026-06)
+
+> Nguyên tắc: **DB OSS chỉ giữ dữ liệu runtime có giá trị cho self-host 1 user.** Catalog tĩnh → file bundle trong repo. Logic/billing Cloud → **repo private**, map FK vào bảng OSS trên **cùng** Postgres prod (không lộ schema kinh doanh ra public).
+
+### Giữ (runtime / core OSS)
+
+| Model | Lý do giữ |
+| ----- | --------- |
+| `User`, `RefreshToken` | Auth core |
+| `Project` (+ cột config) | Core |
+| `ProjectAgent`, `ProjectAgentApiKey` | Core |
+| `ProjectSkill` | Core |
+| `ProjectProviderKey`, `ProjectProviderModel` | Core (provider key + proxy model ref) |
+| `ProjectChannel` + `ProjectChannelSecret` | Core (bot token kênh) |
+| `ProjectConnector` + `ProjectConnectorSecret` | Core (OAuth / secret connector) |
+| `ModelUsageEvent` | Analytics local (append-only) — overview dashboard |
+| `NodeInvite` | Companion device — **đã triển khai end-to-end** (API + dashboard + public redeem) |
+
+### Bỏ khỏi DB → bundle file tĩnh trong repo
+
+| Model | Thay bằng | Ghi chú |
+| ----- | --------- | ------- |
+| `AgentTemplate` | `agent-templates` JSON/TS bundle (đã có `packages/database/prisma/agent-templates.seed-data.ts`) | Dữ liệu 100% tĩnh; `agent.service` đọc file thay `db`; bỏ `agentTemplate.upsert` trong `seed.ts` |
+| `ModelPricing` | `model-pricing` JSON catalog | Đọc lúc record cost; cost đã snapshot vào `model_usage_events.cost_usd` → overview **không** cần join pricing |
+
+### Slim cột — Avatar (ngoại lệ cố ý lưu blob trong DB)
+
+OSS lưu avatar **blob trong DB** vì chỉ có 1 user cá nhân — đây là ngoại lệ duy nhất với quy tắc "không blob trong DB":
+
+| Cột | OSS |
+| --- | --- |
+| `avatar_data` (Bytes) | **Giữ** — bytes ảnh |
+| `avatar_mime_type` | **Giữ** — serve đúng content-type |
+| `avatar_url` | **Bỏ** — chiến lược CDN của Cloud |
+| `avatar_storage_key` | **Bỏ** — chiến lược object storage (R2) của Cloud |
+
+> Cloud cần avatar qua R2/CDN → thêm cột/bảng storage **trong repo private** (FK `users.id`), không đưa vào schema OSS public. Interface `AvatarStorage` (`runtime-contracts`) giữ nguyên; `PostgresAvatarStorage` (OSS) bỏ 2 dòng set `avatarUrl/avatarStorageKey = null`.
+
+### Ranh giới Cloud (repo private, FK → OSS)
+
+`subscriptions`, `credit_wallets`, `billing_customers`, `project_runtimes` **không** nằm trong schema OSS public. Cloud repo riêng quản migration **additive** trên **cùng** instance Postgres prod, FK → `users.id` / `projects.id` (xem §10.1). Toàn bộ giá / plan / fleet nằm trong private → không lộ bí mật kinh doanh.
+
+---
+
+## 10.3 Tách package — định hướng OSS-first, Cloud tái dùng
+
+**Bối cảnh:** Cloud sẽ dựng trong **1–2 tháng** (consumer thứ hai có thật) → tách package **được biện minh**, không còn là "abstraction dùng một lần". Điều kiện duy trì: mỗi package phải có **đường import thật từ `cloud-*`**, nếu không thì gộp lại vào `apps/api`.
+
+| Package | Cloud import? | Quyết định |
+| ------- | ------------- | ---------- |
+| `shared` | Có (types, API client FE↔BE) | **Giữ** |
+| `database` | Có (Prisma client OSS) | **Giữ** — Cloud thêm model qua migration private |
+| `runtime-contracts` | Có (`RuntimeProvisioner`, `PlanGuard`, `AvatarStorage`) | **Giữ** — seam OSS↔Cloud |
+| `control-plane-core` | Có (auth, crypto, projects, sync, chat proxy) | **Giữ** — lõi tái dùng lớn nhất |
+| `workspace-sync` | Có (sync `openclaw.json` giống hệt) | **Giữ** |
+| `runtime-oss` | Không (impl riêng OSS) | **Giữ nhỏ** — impl `StaticGatewayProvisioner` của contract |
+| `ui-kit` | Chưa | **Hoãn** — chỉ tách khi >3 màn hình Cloud khác biệt |
+
+**Guardrail (cursor rule `aucobot-packages`):**
+
+- Package OSS **không** import `@nestjs/*`, không import `apps/*`, không import `cloud/*`.
+- Bí mật kinh doanh chỉ sống ở repo / `packages/cloud` private (billing, fleet, quota) — package OSS không bao giờ import ngược.
+
+**Rủi ro kỹ thuật cần prototype tuần đầu dựng Cloud:** Prisma không hỗ trợ "import schema" giữa hai repo. Cloud nên giữ **schema superset** (model OSS đồng bộ từ `@aucobot/database` + model cloud) với một migration history riêng trên DB cloud — xác minh sớm để tránh drift schema.
+
+---
+
 ## 11. Apps
 
 ### 11.1 `apps/oss-api` (public)
@@ -795,6 +862,12 @@ OPENCLAW_SPAWN_TIMEOUT_MS=60000
 | Multi-project OSS | Một gateway + multi-agent / workspace path — không spawn N container |
 | `workflow.md` “1 project = 1 container” | Chỉ áp dụng **Cloud** |
 | FE Cloud | Bắt đầu extend `oss-web`; tách `ui-kit` khi >3 màn hình khác biệt |
+| Avatar OSS | Blob trong DB (`avatar_data` + `avatar_mime_type`); **bỏ** `avatar_url`, `avatar_storage_key` — ngoại lệ cố ý cho 1 user. Cloud thêm storage qua repo private (§10.2) |
+| `AgentTemplate` | Bỏ bảng DB → bundle JSON/TS trong repo; `agent.service` đọc file, bỏ `db:seed` upsert (§10.2) |
+| `ModelPricing` | Bỏ bảng DB → JSON catalog; cost snapshot trên `model_usage_events.cost_usd` (§10.2) |
+| `ModelUsageEvent` / `NodeInvite` | **Giữ** — analytics local + companion device đã triển khai (§10.2) |
+| Tách 7 package | **Giữ** (Cloud 1–2 tháng = consumer thật); hoãn `ui-kit`; guardrail boundary (§10.3) |
+| DB Cloud | Repo private; bảng billing/fleet FK → `users.id`/`projects.id` trên **cùng** Postgres prod; ngoài schema OSS public |
 
 ---
 
@@ -829,4 +902,4 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 
 ---
 
-*AucoBot — OSS: 4 services (`web`, `api`, `gateway`, `postgres`) + volume `openclaw_data`; chỉ web/api là code AucoBot. Cloud: spawn per project. Monorepo pnpm tách package public và `packages/cloud` proprietary.*
+*AucoBot — OSS: 5 services (`web`, `api`, `mcp`, `gateway`, `postgres`) + 2 volume (`postgres_data`, `openclaw_data`); web/api build AucoBot, mcp pull Hub, gateway/postgres pull upstream. Cloud: spawn per project (repo private, FK → OSS). Monorepo pnpm tách package public; `packages/cloud` proprietary.*

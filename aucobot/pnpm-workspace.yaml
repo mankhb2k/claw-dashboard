@@ -1,6 +1,3 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "../cloud/api"
-  - "../cloud/web"
-  - "../cloud/packages/*"

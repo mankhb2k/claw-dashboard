@@ -1,38 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { CircleAlert, Info, Star, Trash2 } from "lucide-react";
-import { Button, Card, Typography, toast } from "@/components/ui";
-import { Box, Flex } from "@/components/layout";
-import { BackButton } from "@/components/dashboard";
-import { projectApi } from "@/lib/api/project";
-import { PROVIDER_TEST_TIMEOUT_MS } from "@/utils/ai-model/provider-test";
-import { useProjectStore } from "@/stores/project.store";
-import type {
-  ProjectEnvMaskedRow,
-  ProviderDefinition,
-  ProviderModelRow,
-  ProviderStarterModel,
-} from "@/schemas/project.schema";
-import {
-  getCatalogSource,
-  getProviderUiMetadata,
-  isPhase1ProviderId,
-  type ModelDef,
-} from "@/utils/ai-model/providers-data";
+import { useCallback, useEffect, useState } from "react";
+
+import styles from "./ClientProviderIdPage.module.css";
 import { CardApiKey } from "../CardApiKey/CardApiKey";
 import { CardChip } from "../CardChip/CardChip";
 import { ModalAddConnection } from "../ModalAddConnection/ModalAddConnection";
 import { ModalAddModel } from "../ModalAddModel/ModalAddModel";
 import { NoApiKey } from "../NoApiKey/NoApiKey";
 import { ProviderHeader } from "../ProviderHeader/ProviderHeader";
-import styles from "./ClientProviderIdPage.module.css";
+import { BackButton } from "@/components/dashboard";
+import { Box, Flex } from "@/components/layout";
+import { Button, Card, Typography, toast } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
+import { translate } from "@/lib/i18n/translate";
+import { useProjectStore } from "@/stores/project.store";
+import { PROVIDER_TEST_TIMEOUT_MS } from "@/utils/ai-model/provider-test";
+import {
+  getCatalogSource,
+  getProviderUiMetadata,
+  isPhase1ProviderId,
+  type ModelDef,
+} from "@/utils/ai-model/providers-data";
+
+import type {
+  ProjectEnvMaskedRow,
+  ProviderDefinition,
+  ProviderModelRow,
+  ProviderStarterModel,
+} from "@/schemas/project.schema";
 
 const TIER_ORDER = ["stable", "preview", "deprecated"] as const;
-const TIER_TITLE: Record<(typeof TIER_ORDER)[number], string> = {
-  stable: "Stable — production use",
-  preview: "Preview — may change / deprecate",
-  deprecated: "Deprecated — migrate when possible",
+const TIER_KEYS: Record<(typeof TIER_ORDER)[number], string> = {
+  stable: "aiModel.tiers.stable",
+  preview: "aiModel.tiers.preview",
+  deprecated: "aiModel.tiers.deprecated",
 };
 
 type ProviderConnection = {
@@ -100,6 +104,7 @@ function catalogModelsFromDefinition(
 export function ClientProviderIdPage({
   providerId,
 }: ClientProviderIdPageProps) {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [definition, setDefinition] = useState<ProviderDefinition | null>(
     null,
@@ -128,8 +133,13 @@ export function ClientProviderIdPage({
   const isProxy = definition?.category === "proxy";
   const defaultModel = definition?.defaultModel;
 
-  useEffect(() => {
+  const [trackedProviderId, setTrackedProviderId] = useState(providerId);
+  if (providerId !== trackedProviderId) {
+    setTrackedProviderId(providerId);
     setDefinitionLoading(true);
+  }
+
+  useEffect(() => {
     void projectApi
       .listProviderDefinitions()
       .then((defs) => {
@@ -139,7 +149,7 @@ export function ClientProviderIdPage({
       .catch((err) => {
         setDefinition(null);
         showError(
-          "Failed to load provider",
+          translate("aiModel.errors.loadProvider"),
           err instanceof Error ? err.message : undefined,
         );
       })
@@ -174,7 +184,7 @@ export function ClientProviderIdPage({
       .catch((err) => {
         closeModal();
         showError(
-          "Failed to load API key",
+          translate("aiModel.errors.loadApiKey"),
           err instanceof Error ? err.message : undefined,
         );
       })
@@ -183,31 +193,28 @@ export function ClientProviderIdPage({
       });
   };
 
-  const revealProviderApiKey = useCallback(
-    async (connId: string): Promise<string> => {
-      if (revealedKeys[connId]) {
-        return revealedKeys[connId];
-      }
-      if (!projectId) {
-        throw new Error("Missing project");
-      }
-      try {
-        const { apiKey } = await projectApi.revealProviderKey(
-          projectId,
-          providerId,
-        );
-        setRevealedKeys((prev) => ({ ...prev, [connId]: apiKey }));
-        return apiKey;
-      } catch (err) {
-        showError(
-          "Failed to load API key",
-          err instanceof Error ? err.message : undefined,
-        );
-        throw err;
-      }
-    },
-    [projectId, providerId, revealedKeys],
-  );
+  const revealProviderApiKey = async (connId: string): Promise<string> => {
+    if (revealedKeys[connId]) {
+      return revealedKeys[connId];
+    }
+    if (!projectId) {
+      throw new Error(translate("aiModel.errors.missingProject"));
+    }
+    try {
+      const { apiKey } = await projectApi.revealProviderKey(
+        projectId,
+        providerId,
+      );
+      setRevealedKeys((prev) => ({ ...prev, [connId]: apiKey }));
+      return apiKey;
+    } catch (err) {
+      showError(
+        translate("aiModel.errors.loadApiKey"),
+        err instanceof Error ? err.message : undefined,
+      );
+      throw err;
+    }
+  };
 
   const closeModal = () => {
     setShowForm(false);
@@ -216,6 +223,7 @@ export function ClientProviderIdPage({
   };
 
   const loadConnections = useCallback(async () => {
+    await Promise.resolve();
     if (!projectId) {
       setConnections([]);
       setIsLoaded(true);
@@ -229,7 +237,7 @@ export function ClientProviderIdPage({
     } catch (err) {
       setConnections([]);
       showError(
-        "Failed to load API key",
+        translate("aiModel.errors.loadApiKey"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -238,6 +246,7 @@ export function ClientProviderIdPage({
   }, [projectId, providerId]);
 
   const loadUserModels = useCallback(async () => {
+    await Promise.resolve();
     if (!projectId || !isProxy) {
       setUserModels([]);
       return;
@@ -249,7 +258,7 @@ export function ClientProviderIdPage({
     } catch (err) {
       setUserModels([]);
       showError(
-        "Failed to load models",
+        translate("aiModel.errors.loadModels"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -257,18 +266,40 @@ export function ClientProviderIdPage({
     }
   }, [projectId, providerId, isProxy]);
 
-  useEffect(() => {
+  const connectionsFetchKey = `${projectId}:${providerId}`;
+  const [trackedConnectionsFetchKey, setTrackedConnectionsFetchKey] = useState(
+    connectionsFetchKey,
+  );
+  if (connectionsFetchKey !== trackedConnectionsFetchKey) {
+    setTrackedConnectionsFetchKey(connectionsFetchKey);
     setIsLoaded(false);
-    void loadConnections();
-  }, [loadConnections]);
+  }
 
   useEffect(() => {
-    if (isProxy && connections.length > 0) {
-      void loadUserModels();
-    } else {
+    void (async () => {
+      await Promise.resolve();
+      await loadConnections();
+    })();
+  }, [loadConnections]);
+
+  const shouldLoadUserModels = isProxy && connections.length > 0;
+  const [trackedShouldLoadUserModels, setTrackedShouldLoadUserModels] = useState(
+    shouldLoadUserModels,
+  );
+  if (shouldLoadUserModels !== trackedShouldLoadUserModels) {
+    setTrackedShouldLoadUserModels(shouldLoadUserModels);
+    if (!shouldLoadUserModels) {
       setUserModels([]);
     }
-  }, [isProxy, connections.length, loadUserModels]);
+  }
+
+  useEffect(() => {
+    if (!shouldLoadUserModels) return;
+    void (async () => {
+      await Promise.resolve();
+      await loadUserModels();
+    })();
+  }, [shouldLoadUserModels, loadUserModels]);
 
   const handleSaveAdd = async (data: { keyName: string; apiKey: string }) => {
     if (!projectId || !definition) return;
@@ -300,19 +331,19 @@ export function ClientProviderIdPage({
           ),
         );
         showError(
-          "Connection api key failed",
+          translate("aiModel.errors.connectApiKeyFailed"),
           result.error ??
             `Api key is not working (timeout ${PROVIDER_TEST_TIMEOUT_MS / 1000}s)`,
         );
         return;
       }
 
-      toast.success("Saved and connected API key");
+      toast.success(t("aiModel.toasts.savedConnected"));
       await loadConnections();
     } catch (err) {
       setConnections((prev) => prev.filter((c) => c.id !== tempId));
       showError(
-        "Save API key failed",
+        translate("aiModel.errors.saveApiKeyFailed"),
         err instanceof Error ? err.message : undefined,
       );
     }
@@ -352,15 +383,15 @@ export function ClientProviderIdPage({
               : c,
           ),
         );
-        showError("Connection api key failed", result.error);
+        showError(t("aiModel.errors.connectApiKeyFailed"), result.error);
         return;
       }
 
-      toast.success("Updated API key successfully");
+      toast.success(t("aiModel.toasts.updatedApiKey"));
       await loadConnections();
     } catch (err) {
       showError(
-        "Update API key failed",
+        translate("aiModel.errors.updateApiKeyFailed"),
         err instanceof Error ? err.message : undefined,
       );
       await loadConnections();
@@ -395,9 +426,9 @@ export function ClientProviderIdPage({
         setConnections((prev) =>
           prev.map((c) => (c.id === connId ? { ...c, enabled: false } : c)),
         );
-        showError("Enable connection failed", result.error);
+        showError(t("aiModel.errors.enableConnectionFailed"), result.error);
       } else if (nextEnabled) {
-        toast.success("Connected API key successfully");
+        toast.success(t("aiModel.toasts.connectedApiKey"));
         await loadConnections();
       } else {
         await loadConnections();
@@ -409,7 +440,7 @@ export function ClientProviderIdPage({
         ),
       );
       showError(
-        "Change connection status failed",
+        translate("aiModel.errors.changeConnectionStatusFailed"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -424,10 +455,10 @@ export function ClientProviderIdPage({
       await projectApi.deleteProviderKey(projectId, providerId);
       setConnections((prev) => prev.filter((c) => c.id !== connId));
       setUserModels([]);
-      toast.success("Deleted API key successfully");
+      toast.success(t("aiModel.toasts.deletedApiKey"));
     } catch (err) {
       showError(
-        "Delete API key failed",
+        translate("aiModel.errors.deleteApiKeyFailed"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -449,12 +480,12 @@ export function ClientProviderIdPage({
     setAddingModel(true);
     try {
       await projectApi.addProviderModel(projectId, providerId, data);
-      toast.success("Model added");
+      toast.success(t("aiModel.toasts.modelAdded"));
       setShowAddModel(false);
       await loadUserModels();
     } catch (err) {
       showError(
-        "Add model failed",
+        translate("aiModel.errors.addModelFailed"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -469,11 +500,11 @@ export function ClientProviderIdPage({
       await projectApi.updateProviderModel(projectId, providerId, modelId, {
         setDefault: true,
       });
-      toast.success("Default model updated");
+      toast.success(t("aiModel.toasts.defaultModelUpdated"));
       await loadUserModels();
     } catch (err) {
       showError(
-        "Update default model failed",
+        translate("aiModel.errors.updateDefaultModelFailed"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -486,11 +517,11 @@ export function ClientProviderIdPage({
     setModelActionId(modelId);
     try {
       await projectApi.deleteProviderModel(projectId, providerId, modelId);
-      toast.success("Model removed");
+      toast.success(t("aiModel.toasts.modelRemoved"));
       await loadUserModels();
     } catch (err) {
       showError(
-        "Delete model failed",
+        translate("aiModel.errors.deleteModelFailed"),
         err instanceof Error ? err.message : undefined,
       );
     } finally {
@@ -741,7 +772,7 @@ export function ClientProviderIdPage({
                   weight="bold"
                   className={styles.modelTierTitle}
                 >
-                  {TIER_TITLE[tier as keyof typeof TIER_TITLE] ?? tier}
+                  {t(TIER_KEYS[tier as keyof typeof TIER_KEYS] ?? tier)}
                 </Typography>
                 <Flex wrap="wrap" gap={10}>
                   {tierModels.map((model) => (

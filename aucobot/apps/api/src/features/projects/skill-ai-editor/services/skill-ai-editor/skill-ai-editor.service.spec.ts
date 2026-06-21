@@ -6,7 +6,8 @@ const isSkillAiEditorProviderSupportedMock = jest.fn(
 );
 
 jest.mock('../../providers/skill-ai-editor-registry', () => ({
-  getSkillAiEditorAdapter: (...args: unknown[]) => getSkillAiEditorAdapterMock(...args),
+  getSkillAiEditorAdapter: (...args: unknown[]) =>
+    getSkillAiEditorAdapterMock(...args),
   isSkillAiEditorProviderSupported: (id: string) =>
     isSkillAiEditorProviderSupportedMock(id),
 }));
@@ -15,9 +16,12 @@ jest.mock('@aucobot/control-plane-core', () => ({
   decryptSecret: (ciphertext: string) => ciphertext.replace(/^enc:/, ''),
 }));
 
-jest.mock('../../../usage/services/model-usage-recorder/model-usage-recorder.service', () => ({
-  ModelUsageRecorderService: class MockModelUsageRecorderService {},
-}));
+jest.mock(
+  '../../../usage/services/model-usage-recorder/model-usage-recorder.service',
+  () => ({
+    ModelUsageRecorderService: class MockModelUsageRecorderService {},
+  }),
+);
 
 import { SkillAiEditorService } from './skill-ai-editor.service';
 
@@ -33,7 +37,10 @@ function createService() {
   const usageRecorder = {
     recordFireAndForget: jest.fn(),
   };
-  const service = new SkillAiEditorService(prisma as never, usageRecorder as never);
+  const service = new SkillAiEditorService(
+    prisma as never,
+    usageRecorder as never,
+  );
   return { service, prisma, usageRecorder };
 }
 

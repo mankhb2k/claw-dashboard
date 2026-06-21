@@ -1,8 +1,17 @@
 import * as React from "react";
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Skeleton } from "@/components/ui/Skeleton/Skeleton";
-import { Card, Typography } from "@/components/ui";
+
 import { Flex } from "@/components/layout";
+import { Card, Typography } from "@/components/ui";
+import { Skeleton } from "@/components/ui/Skeleton/Skeleton";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
+const SKELETON_CARD_KEYS = [
+  "skeleton-card-a",
+  "skeleton-card-b",
+  "skeleton-card-c",
+  "skeleton-card-d",
+] as const;
 
 const meta: Meta<typeof Skeleton> = {
   title: "UI/Skeleton",
@@ -119,8 +128,8 @@ export const GridLoading: Story = {
         gap: "var(--space-4)",
       }}
     >
-      {Array.from({ length: 4 }, (_, i) => (
-        <Card key={i} disableHover style={{ padding: "var(--space-4)", minHeight: "8.5rem" }}>
+      {SKELETON_CARD_KEYS.map((key) => (
+        <Card key={key} disableHover style={{ padding: "var(--space-4)", minHeight: "8.5rem" }}>
           <Flex direction="column" gap="var(--space-3)" fullWidth>
             <Skeleton variant="text" width="65%" />
             <Flex justify="between" gap="var(--space-3)" fullWidth>

@@ -1,8 +1,9 @@
 'use client'
 
-import * as React from 'react'
 import * as ToastPrimitive from '@radix-ui/react-toast'
 import { CircleAlert, CircleCheck } from 'lucide-react'
+import * as React from 'react'
+
 import styles from './Toast.module.css'
 
 const TOAST_DURATION_MS = 3000
@@ -39,7 +40,10 @@ function registerToastDispatcher(value: ToastContextValue | null) {
 export const toast: ToastContextValue = {
   toast: (options) => {
     if (!toastDispatcher) {
-      console.warn('[Toast] ToastProvider is not mounted.')
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console -- Toast dev guard when Provider is missing (§7.2.E)
+        console.warn('[Toast] ToastProvider is not mounted.')
+      }
       return ''
     }
     return toastDispatcher.toast(options)

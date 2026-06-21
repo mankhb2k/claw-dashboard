@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+
 import { PrismaClient, createPrismaPgAdapter } from '@aucobot/database';
 
 @Injectable()

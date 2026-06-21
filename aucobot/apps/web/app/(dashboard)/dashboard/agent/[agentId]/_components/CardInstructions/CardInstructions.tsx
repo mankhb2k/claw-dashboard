@@ -1,8 +1,20 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useFormContext } from "react-hook-form";
 import { compileAgentsMd } from "@aucobot/workspace-sync/agent-workspace-compile";
+import {
+  FileText,
+  LayoutList,
+  Zap,
+  ListChecks,
+  ShieldAlert,
+  TextQuote,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
+
+import styles from "./CardInstructions.module.css";
 import { Flex } from "@/components/layout";
 import {
   Typography,
@@ -14,20 +26,10 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui";
-import {
-  FileText,
-  LayoutList,
-  Zap,
-  ListChecks,
-  ShieldAlert,
-  TextQuote,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useAgentEditorStore } from "@/stores/agent/agent-editor.store";
+
 import type { AgentFormInput } from "@/schemas/agent-form.schema";
-import styles from "./CardInstructions.module.css";
 
 type InstructionsView = "editor" | "markdown";
 
@@ -65,12 +67,8 @@ export function CardInstructions() {
     instructionsMode === "advanced" ? "markdown" : "editor",
   );
   const [section, setSection] = useState<SimpleSection>("rules");
-
-  useEffect(() => {
-    if (instructionsMode === "advanced") {
-      setView("markdown");
-    }
-  }, [instructionsMode]);
+  const effectiveView: InstructionsView =
+    instructionsMode === "advanced" ? "markdown" : view;
 
   const agentsMdPreview = useMemo(
     () =>
@@ -95,7 +93,7 @@ export function CardInstructions() {
       <Flex justify="between" align="center" className={styles.header}>
         <ToggleGroup
           type="single"
-          value={view}
+          value={effectiveView}
           onValueChange={(value) => {
             if (value === "editor") {
               setView("editor");
@@ -134,7 +132,7 @@ export function CardInstructions() {
         {t("agent.instructions.title")}
       </Typography>
 
-      {view === "editor" ? (
+      {effectiveView === "editor" ? (
         <Flex
           direction="column"
           gap="var(--space-4)"

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { LogOut, Monitor, Moon, Palette, Settings, Sun, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Monitor, Moon, Palette, Settings, Sun, User } from "lucide-react";
+import { useMemo, useState } from "react";
+
+import styles from "./SidebarFooter.module.css";
 import {
   Avatar,
   DropdownMenu,
@@ -15,12 +17,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuTrigger,
 } from "@/components/ui";
-import type { ThemePreference } from "@/schemas/theme.schema";
-import { resolveUserAvatarSrc } from "@/utils/profile/user-avatar";
+import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/stores/theme.store";
-import { useI18n } from "@/lib/i18n";
-import styles from "./SidebarFooter.module.css";
+import { resolveUserAvatarSrc } from "@/utils/profile/user-avatar";
+
+import type { ThemePreference } from "@/schemas/theme.schema";
 
 const ICON_STROKE = 1.25;
 
@@ -99,6 +101,7 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
   const { t } = useI18n();
   const [openCollapsedMenu, setOpenCollapsedMenu] = useState(false);
   const [openExpandedMenu, setOpenExpandedMenu] = useState(false);
+  const [trackedCollapsed, setTrackedCollapsed] = useState(collapsed);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -114,10 +117,11 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
     router.push("/login");
   };
 
-  useEffect(() => {
+  if (collapsed !== trackedCollapsed) {
+    setTrackedCollapsed(collapsed);
     setOpenCollapsedMenu(false);
     setOpenExpandedMenu(false);
-  }, [collapsed]);
+  }
 
   return (
     <div

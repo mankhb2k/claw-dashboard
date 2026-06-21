@@ -44,12 +44,11 @@ export const enAgent = {
   },
   modalTemplate: {
     loadError:
-      'Could not load templates. Check that the API is running and the database is seeded (pnpm db:seed).',
+      'Could not load templates. Check that the API is running.',
     title: 'Choose a template to start your project',
     description:
       'Start your project faster by choosing from the optimized templates available in the OpenClaw library, or start from scratch.',
-    empty:
-      'No templates in the system. Run database seed from packages/database: pnpm db:seed',
+    empty: 'No templates available.',
   },
   editPanel: {
     tabs: {
@@ -378,6 +377,7 @@ export const enAgent = {
       loadApiKeys: 'Failed to load API keys',
       createApiKey: 'Failed to create API key',
       revokeApiKey: 'Failed to revoke API key',
+      copyApiKey: 'Unable to copy API key',
     },
     thirdParty: 'Third party',
     apiKeys: {
@@ -436,5 +436,30 @@ export const enAgent = {
       connected: 'Connected',
       notConnected: 'Not connected — connect now',
     },
+  },
+  validation: {
+    name: {
+      required: 'Agent name is required',
+      max: 'Agent name must be at most 120 characters',
+    },
+    description: {
+      max: 'Description must be at most 500 characters',
+    },
+    avatar: {
+      required: 'Avatar is required',
+    },
+    tags: {
+      max: 'At most 20 tags',
+    },
+    skillNames: {
+      max: 'At most 100 skills per agent',
+    },
+    instructions: {
+      roleRequired: 'Role description is required',
+      agentsMdRequired: 'AGENTS.md content is required',
+    },
+  },
+  defaults: {
+    newAgentName: 'New Agent',
   },
 } as const

@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+
+import styles from "./TitleHeader.module.css";
 import { Flex } from "../../layout";
 import { Typography } from "../../ui";
 import { useI18n } from "@/lib/i18n";
-import styles from "./TitleHeader.module.css";
 
 type TitleHeaderBaseProps = {
   badge?: string;

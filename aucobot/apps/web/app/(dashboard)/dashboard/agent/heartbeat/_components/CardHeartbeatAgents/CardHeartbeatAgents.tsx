@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useMemo } from "react";
 import Link from "next/link";
+import { useMemo } from "react";
+
+import styles from "./CardHeartbeatAgents.module.css";
 import { Typography, Card } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
-import type { HeartbeatSummaryEntry } from "@/schemas/project.schema";
 import { DASHBOARD_BASE_PATH, dashboardPath } from "@/lib/routing/dashboard-route";
-import styles from "./CardHeartbeatAgents.module.css";
+
+import type { HeartbeatSummaryEntry } from "@/schemas/project.schema";
 
 function agentHeartbeatHref(agentId: string): string {
   if (agentId === "main") {

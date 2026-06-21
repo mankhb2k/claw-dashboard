@@ -1,7 +1,8 @@
 'use client'
 
-import * as React from 'react'
 import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group'
+import * as React from 'react'
+
 import styles from './ToggleGroup.module.css'
 
 export type ToggleGroupProps = React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> & {
@@ -26,31 +27,33 @@ export const ToggleGroup = React.forwardRef<
   )
 
   React.useEffect(() => {
-    if (type === 'single' && rootRef.current) {
-      const updateIndicator = () => {
-        const activeItem = rootRef.current?.querySelector('[data-state="on"]') as HTMLElement
-        if (activeItem) {
-          setIndicatorStyle({
-            width: `${activeItem.offsetWidth}px`,
-            height: `${activeItem.offsetHeight}px`,
-            transform: `translate(${activeItem.offsetLeft}px, ${activeItem.offsetTop}px)`,
-          })
-        } else {
-          setIndicatorStyle({ width: 0, height: 0 })
-        }
-      }
-
-      updateIndicator()
-
-      const observer = new MutationObserver(updateIndicator)
-      observer.observe(rootRef.current, {
-        attributes: true,
-        subtree: true,
-        attributeFilter: ['data-state'],
-      })
-
-      return () => observer.disconnect()
+    if (type !== 'single' || !rootRef.current) {
+      return undefined
     }
+
+    const updateIndicator = () => {
+      const activeItem = rootRef.current?.querySelector('[data-state="on"]') as HTMLElement
+      if (activeItem) {
+        setIndicatorStyle({
+          width: `${activeItem.offsetWidth}px`,
+          height: `${activeItem.offsetHeight}px`,
+          transform: `translate(${activeItem.offsetLeft}px, ${activeItem.offsetTop}px)`,
+        })
+      } else {
+        setIndicatorStyle({ width: 0, height: 0 })
+      }
+    }
+
+    updateIndicator()
+
+    const observer = new MutationObserver(updateIndicator)
+    observer.observe(rootRef.current, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ['data-state'],
+    })
+
+    return () => observer.disconnect()
   }, [type])
 
   const isSingle = type === 'single'
@@ -63,7 +66,7 @@ export const ToggleGroup = React.forwardRef<
   return (
     <ToggleGroupPrimitive.Root
       ref={rootRef}
-      // Radix Root là discriminated union (single|multiple) khó biểu diễn khi spread props.
+      // Radix Root is a discriminated union (single|multiple) that is hard to type when spreading props.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       type={type as any}
       className={`${styles.root} ${styles[`root--${size}`]} ${isSingle ? styles.singleSelect : ''} ${className || ''}`}

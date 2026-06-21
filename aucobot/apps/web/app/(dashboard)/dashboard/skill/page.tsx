@@ -1,6 +1,6 @@
 import { ClientSkillPage } from "./_components/ClientSkillPage/ClientSkillPage";
-import { Container, Flex } from "@/components/layout";
 import styles from "./skill.module.css";
+import { Container, Flex } from "@/components/layout";
 
 export default function ProjectSkillDirectoryPage() {
   return (

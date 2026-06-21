@@ -1,4 +1,4 @@
-import type { InternalAxiosRequestConfig } from 'axios'
+
 import {
   mockUsers,
   mockPasswords,
@@ -8,8 +8,11 @@ import {
   currentUser,
   setCurrentUser,
 } from './data'
+import { translate } from '@/lib/i18n/translate'
+
 import type { User, LoginInput, RegisterInput } from '@/schemas/auth.schema'
 import type { CreateProjectInput, Project } from '@/schemas/project.schema'
+import type { InternalAxiosRequestConfig } from 'axios'
 
 export interface MockRequest {
   config: InternalAxiosRequestConfig
@@ -72,17 +75,17 @@ export const authHandlers = {
     const key = username.trim().toLowerCase()
 
     if (password.length < 6) {
-      throw new Error('Mật khẩu tối thiểu 6 ký tự')
+      throw new Error(translate('auth.validation.password.min'))
     }
 
     const user = mockUsers.get(key)
     if (!user) {
-      throw new Error('Tài khoản không tồn tại')
+      throw new Error(translate('auth.loginErrors.accountNotFound'))
     }
 
     const storedPassword = mockPasswords.get(key)
     if (storedPassword !== password) {
-      throw new Error('Mật khẩu không đúng')
+      throw new Error(translate('auth.loginErrors.wrongPassword'))
     }
 
     setCurrentUser(user)
@@ -94,11 +97,11 @@ export const authHandlers = {
     const key = username.trim().toLowerCase()
 
     if (password.length < 6) {
-      throw new Error('Mật khẩu tối thiểu 6 ký tự')
+      throw new Error(translate('auth.validation.password.min'))
     }
 
     if (mockUsers.has(key)) {
-      throw new Error('Tên đăng nhập đã tồn tại')
+      throw new Error(translate('auth.registerErrors.usernameTaken'))
     }
 
     const user: User = {
@@ -266,7 +269,7 @@ export const projectHandlers = {
       OPENROUTER_API_KEY: 'openrouter',
       GOOGLE_API_KEY: 'google',
       DEEPSEEK_API_KEY: 'deepseek',
-      GROQ_API_KEY: 'groq',
+      XAI_API_KEY: 'grok',
     }
     return Array.from(store.keys()).map((key) => ({
       key,
@@ -293,7 +296,7 @@ export const projectHandlers = {
       OPENROUTER_API_KEY: 'openrouter',
       GOOGLE_API_KEY: 'google',
       DEEPSEEK_API_KEY: 'deepseek',
-      GROQ_API_KEY: 'groq',
+      XAI_API_KEY: 'grok',
     }
     const providerIdToEnvKey = Object.fromEntries(
       Object.entries(envKeyToProviderId).map(([envKey, pid]) => [pid, envKey]),
@@ -319,7 +322,7 @@ export const projectHandlers = {
       openrouter: 'OPENROUTER_API_KEY',
       google: 'GOOGLE_API_KEY',
       deepseek: 'DEEPSEEK_API_KEY',
-      groq: 'GROQ_API_KEY',
+      grok: 'XAI_API_KEY',
     }
     const envKey = envKeyToProviderId[trimmed] ?? trimmed
     store.delete(envKey)

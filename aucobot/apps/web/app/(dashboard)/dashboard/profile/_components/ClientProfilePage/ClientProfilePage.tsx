@@ -1,38 +1,53 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Spinner, Typography } from "@/components/ui";
-import { usersApi } from "@/lib/api/users";
-import { useI18n } from "@/lib/i18n";
-import type { PublicUser } from "@/schemas/user.schema";
+
 import { TitleSection } from "../../../setting/_components/TitleSection/TitleSection";
+import styles from "../../profile.module.css";
 import { ProfileAccountSection } from "../ProfileAccountSection/ProfileAccountSection";
 import { ProfileHeroAvatar } from "../ProfileHeroAvatar/ProfileHeroAvatar";
 import { ProfileSecuritySection } from "../ProfileSecuritySection/ProfileSecuritySection";
-import styles from "../../profile.module.css";
+import { Spinner, Typography } from "@/components/ui";
+import { usersApi } from "@/lib/api/users";
+import { useI18n } from "@/lib/i18n";
+import { useAuthStore } from "@/stores/auth.store";
+
+import type { PublicUser } from "@/schemas/user.schema";
 
 export function ClientProfilePage() {
   const { t } = useI18n();
+  const setAuthUser = useAuthStore((s) => s.setUser);
   const [user, setUser] = useState<PublicUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
+    await Promise.resolve();
     setError(null);
     setLoading(true);
     try {
       const profile = await usersApi.me();
       setUser(profile);
+      setAuthUser({
+        id: profile.id,
+        username: profile.username,
+        name: profile.name,
+        avatarUrl: profile.avatarUrl,
+        createdAt: profile.createdAt,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("profile.loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t, setAuthUser]);
 
   useEffect(() => {
-    void loadProfile();
+    void (async () => {
+      await Promise.resolve();
+      await loadProfile();
+    })();
   }, [loadProfile, t]);
 
   if (loading) {

@@ -1,14 +1,15 @@
+import { toNativeModelId } from './model-id.util';
 import {
   SKILL_AI_EDITOR_MAX_OUTPUT_TOKENS,
   SKILL_AI_EDITOR_TIMEOUT_MS,
 } from '../lib/skill-ai-editor.constants';
+import { normalizeAssistantMarkdown } from '../lib/skill-ai-editor.prompt';
+
 import type {
   SkillAiEditorCompleteInput,
   SkillAiEditorCompleteResult,
   SkillAiEditorProviderAdapter,
 } from '../lib/skill-ai-editor.types';
-import { normalizeAssistantMarkdown } from '../lib/skill-ai-editor.prompt';
-import { toNativeModelId } from './model-id.util';
 
 type GeminiGenerateResponse = {
   candidates?: Array<{
@@ -24,12 +25,15 @@ type GeminiGenerateResponse = {
 export class GeminiAssistantProvider implements SkillAiEditorProviderAdapter {
   readonly id = 'gemini';
 
-  async complete(input: SkillAiEditorCompleteInput): Promise<SkillAiEditorCompleteResult> {
+  async complete(
+    input: SkillAiEditorCompleteInput,
+  ): Promise<SkillAiEditorCompleteResult> {
     const startedAt = Date.now();
     const modelId = toNativeModelId(input.model, 'google');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(input.apiKey)}`;
 
-    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> =
+      [];
     for (const msg of input.messages) {
       contents.push({
         role: msg.role === 'assistant' ? 'model' : 'user',
@@ -71,7 +75,10 @@ export class GeminiAssistantProvider implements SkillAiEditorProviderAdapter {
     }
 
     const reply =
-      parsed.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim() ?? '';
+      parsed.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? '')
+        .join('')
+        .trim() ?? '';
     if (!reply) {
       throw new Error('Empty response from Gemini');
     }

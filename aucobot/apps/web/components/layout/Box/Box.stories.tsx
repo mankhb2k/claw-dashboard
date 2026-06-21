@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import React from 'react'
+
 import { Box } from '@/components/layout/Box/Box'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<typeof Box> = {
   title: 'Layout/Box',

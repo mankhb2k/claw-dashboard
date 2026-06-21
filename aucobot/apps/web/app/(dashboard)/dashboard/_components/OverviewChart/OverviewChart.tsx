@@ -10,6 +10,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+import styles from "./OverviewChart.module.css";
 import { Box, Flex } from "@/components/layout";
 import {
   Card,
@@ -17,12 +19,12 @@ import {
   ToggleGroupItem,
   Typography,
 } from "@/components/ui";
-import type { OverviewChartPeriod } from "@/schemas/overview.schema";
 import {
   shouldShowChartTick,
   type OverviewChartDataPoint,
 } from "@/utils/overview/overview-mappers";
-import styles from "./OverviewChart.module.css";
+
+import type { OverviewChartPeriod } from "@/schemas/overview.schema";
 
 export type { OverviewChartDataPoint };
 

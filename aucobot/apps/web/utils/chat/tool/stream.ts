@@ -1,5 +1,5 @@
-import { isHiddenToolPayloadText } from '@/utils/chat/stream/history-filter'
 import { matchesSessionKey } from '@/utils/chat/session/key'
+import { isHiddenToolPayloadText } from '@/utils/chat/stream/history-filter'
 import {
   buildArgsPreview,
   buildToolSteps,
@@ -8,6 +8,7 @@ import {
   mergeToolOutput,
   truncateToolOutput,
 } from '@/utils/chat/tool/output'
+
 import type {
   AgentToolEventPayload,
   ToolActivity,

@@ -1,8 +1,7 @@
 "use client";
 
-import type { BlockNoteEditor as BlockNoteEditorInstance } from "@blocknote/core";
-import { BlockNoteViewEditor } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
+import { BlockNoteViewEditor } from "@blocknote/react";
 import "@blocknote/mantine/style.css";
 import {
   Check,
@@ -14,6 +13,8 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
+
+import styles from "./BlockNoteEditor.module.css";
 import { Flex } from "@/components/layout";
 import {
   Button,
@@ -21,7 +22,8 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui";
-import styles from "./BlockNoteEditor.module.css";
+
+import type { BlockNoteEditor as BlockNoteEditorInstance } from "@blocknote/core";
 
 const MAC_WINDOW_DOT_CLASSES = [
   styles.macDotClose,
@@ -75,9 +77,9 @@ export function BlockNoteEditor({
   // BlockNote mounts floating UI (table +, handles) on document.body by default,
   // which paints above in-flow headers. Keep portal inside the editor shell instead.
   useEffect(() => {
-    if (viewMode !== "editor") return;
+    if (viewMode !== "editor") return undefined;
     const shell = bnShellRef.current;
-    if (!shell) return;
+    if (!shell) return undefined;
 
     const reparentPortal = () => {
       const portal = editor.portalElement;

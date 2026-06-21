@@ -3,6 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+import { PrismaService } from '../../../../../core/database/prisma.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import {
   buildHeartbeatSummary,
   parseHeartbeatMode,
@@ -10,8 +13,7 @@ import {
   resolveMainHeartbeatEvery,
   validateHeartbeatEvery,
 } from '@aucobot/workspace-sync';
-import { PrismaService } from '../../../../../core/database/prisma.service';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+
 import type {
   UpdateAgentHeartbeatDto,
   UpdateProjectHeartbeatDto,
@@ -85,7 +87,10 @@ export class HeartbeatService {
     };
   }
 
-  async updateProjectHeartbeat(projectId: string, dto: UpdateProjectHeartbeatDto) {
+  async updateProjectHeartbeat(
+    projectId: string,
+    dto: UpdateProjectHeartbeatDto,
+  ) {
     let every: string;
     try {
       every = validateHeartbeatEvery(dto.every);
@@ -171,7 +176,9 @@ export class HeartbeatService {
     let heartbeatEvery: string | null = null;
     if (dto.mode === 'custom') {
       if (!dto.every?.trim()) {
-        throw new BadRequestException('Interval is required for custom heartbeat mode');
+        throw new BadRequestException(
+          'Interval is required for custom heartbeat mode',
+        );
       }
       try {
         heartbeatEvery = validateHeartbeatEvery(dto.every);

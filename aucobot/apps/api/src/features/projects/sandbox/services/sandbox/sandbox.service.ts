@@ -1,14 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
 import { parseCollaborationMemberSlugs } from '@aucobot/workspace-sync';
+
 import type { UpdateProjectSandboxDto } from '../../dto/sandbox.dto';
 
 function normalizeSlugList(slugs: string[]): string[] {
-  return [...new Set(slugs.map((slug) => slug.trim().toLowerCase()).filter(Boolean))];
+  return [
+    ...new Set(slugs.map((slug) => slug.trim().toLowerCase()).filter(Boolean)),
+  ];
 }
 
-function normalizeSandboxMode(raw: string | null | undefined): 'all' | 'selected' {
+function normalizeSandboxMode(
+  raw: string | null | undefined,
+): 'all' | 'selected' {
   if (raw === 'selected' || raw === 'non-main') {
     return 'selected';
   }
@@ -73,7 +79,9 @@ export class SandboxService {
     }
 
     const mode = normalizeSandboxMode(project.sandboxDefaultMode);
-    let appliedAgentSlugs = parseCollaborationMemberSlugs(project.sandboxAppliedAgentSlugs);
+    let appliedAgentSlugs = parseCollaborationMemberSlugs(
+      project.sandboxAppliedAgentSlugs,
+    );
 
     // Legacy non-main with empty applied list → all custom agents (not main)
     if (mode === 'selected' && appliedAgentSlugs.length === 0) {
@@ -85,7 +93,9 @@ export class SandboxService {
     return {
       enabled: project.sandboxDefaultEnabled,
       mode,
-      exemptAgentSlugs: parseCollaborationMemberSlugs(project.sandboxExemptAgentSlugs),
+      exemptAgentSlugs: parseCollaborationMemberSlugs(
+        project.sandboxExemptAgentSlugs,
+      ),
       appliedAgentSlugs,
       agents: this.buildAgentRows(agents),
     };
@@ -93,7 +103,8 @@ export class SandboxService {
 
   async updateProjectSandbox(projectId: string, dto: UpdateProjectSandboxDto) {
     const mode = dto.mode;
-    const exemptAgentSlugs = mode === 'all' ? normalizeSlugList(dto.exemptAgentSlugs) : [];
+    const exemptAgentSlugs =
+      mode === 'all' ? normalizeSlugList(dto.exemptAgentSlugs) : [];
     const appliedAgentSlugs =
       mode === 'selected' ? normalizeSlugList(dto.appliedAgentSlugs) : [];
 

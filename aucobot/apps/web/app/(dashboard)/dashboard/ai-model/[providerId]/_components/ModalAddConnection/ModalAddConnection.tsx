@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+
+import styles from "./ModalAddConnection.module.css";
 import {
   Input,
   Button,
@@ -11,7 +13,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui";
-import styles from "./ModalAddConnection.module.css";
 
 interface ModalAddConnectionProps {
   isOpen: boolean;
@@ -36,19 +37,24 @@ export function ModalAddConnection({
   const [keyName, setKeyName] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [trackedOpenKey, setTrackedOpenKey] = useState("");
 
-  useEffect(() => {
-    if (isOpen) {
-      if (isEdit && editingConn) {
-        setKeyName(editingConn.name);
-        setApiKey(editingConn.key);
-      } else {
-        setKeyName("");
-        setApiKey("");
-      }
-      setShowApiKey(isEdit);
+  const openKey = isOpen
+    ? `${mode}:${editingConn?.name ?? ""}:${editingConn?.key ?? ""}`
+    : "";
+
+  if (isOpen && openKey !== trackedOpenKey) {
+    setTrackedOpenKey(openKey);
+    if (isEdit && editingConn) {
+      setKeyName(editingConn.name);
+      setApiKey(editingConn.key);
+      setShowApiKey(true);
+    } else {
+      setKeyName("");
+      setApiKey("");
+      setShowApiKey(false);
     }
-  }, [isOpen, isEdit, editingConn]);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

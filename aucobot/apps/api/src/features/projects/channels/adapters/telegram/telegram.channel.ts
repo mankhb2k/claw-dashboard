@@ -2,6 +2,7 @@ import {
   type ChannelTestResult,
   validateTelegramAccessConfig,
 } from '@aucobot/shared';
+
 import type { ChannelAdapter } from '../../lib/channel-adapter.types';
 
 const BOT_TOKEN_RE = /^\d+:[A-Za-z0-9_-]+$/;
@@ -34,7 +35,7 @@ async function testTelegramConnection(
   }
 
   const username = data.result.username?.trim();
-  const label = username ? `@${username}` : data.result.first_name ?? 'bot';
+  const label = username ? `@${username}` : (data.result.first_name ?? 'bot');
   return {
     ok: true,
     message: `Connected as ${label}`,

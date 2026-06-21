@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+
 import { type ChatModelsResponse } from "@/lib/api/chat";
 import { resolveAgentPrimaryOpenClawId } from "@/utils/chat/model-catalog";
-import { THINKING_LEVEL_OPTIONS } from "@/utils/chat/thinking-level";
 import { resolveModelContextTokens } from "@/utils/chat/model-context-limit";
+import { THINKING_LEVEL_OPTIONS } from "@/utils/chat/thinking-level";
+
 import type { GatewaySessionRow } from "@/utils/chat/session/types";
 
 const MODEL_OVERRIDE_HINT =

@@ -15,7 +15,8 @@ export function resolveControlUiPath(): string {
   if (isCloudRuntime()) {
     return "/openclaw";
   }
-  const configured = process.env.NEXT_PUBLIC_OPENCLAW_CONTROL_UI_BASE_PATH?.trim();
+  const configured =
+    process.env.NEXT_PUBLIC_OPENCLAW_CONTROL_UI_BASE_PATH?.trim();
   if (!configured || configured === "/") {
     return "";
   }

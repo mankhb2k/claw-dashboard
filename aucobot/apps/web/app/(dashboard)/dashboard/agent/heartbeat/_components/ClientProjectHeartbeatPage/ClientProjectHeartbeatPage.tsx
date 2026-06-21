@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+
+import styles from "./ClientProjectHeartbeatPage.module.css";
+import { CardHeartbeatAgents } from "../CardHeartbeatAgents/CardHeartbeatAgents";
+import { CardHeartbeatConfig } from "../CardHeartbeatConfig/CardHeartbeatConfig";
+import { CardHeartbeatOverview } from "../CardHeartbeatOverview/CardHeartbeatOverview";
 import { Flex } from "@/components/layout";
 import { Typography, Spinner } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import { useProjectStore } from "@/stores/project.store";
-import type { HeartbeatSummaryEntry } from "@/schemas/project.schema";
 import {
   intervalFromPreset,
   presetFromInterval,
   type HeartbeatIntervalPreset,
 } from "@/utils/agent/heartbeat-interval";
-import { CardHeartbeatOverview } from "../CardHeartbeatOverview/CardHeartbeatOverview";
-import { CardHeartbeatConfig } from "../CardHeartbeatConfig/CardHeartbeatConfig";
-import { CardHeartbeatAgents } from "../CardHeartbeatAgents/CardHeartbeatAgents";
-import { useI18n } from "@/lib/i18n";
-import styles from "./ClientProjectHeartbeatPage.module.css";
+
+import type { HeartbeatSummaryEntry } from "@/schemas/project.schema";
 
 export function ClientProjectHeartbeatPage() {
   const { t } = useI18n();
@@ -29,35 +31,36 @@ export function ClientProjectHeartbeatPage() {
   const [heartbeatMd, setHeartbeatMd] = useState("");
   const [agents, setAgents] = useState<HeartbeatSummaryEntry[]>([]);
   const [effectiveEvery, setEffectiveEvery] = useState<string | null>(null);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
 
-  const load = useCallback(async () => {
-    if (!projectId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await projectApi.getProjectHeartbeat(projectId);
-      const mapped = presetFromInterval(data.enabled, data.every);
-      setPreset(mapped.preset);
-      setCustomAmount(mapped.customAmount);
-      setCustomUnit(mapped.customUnit);
-      setHeartbeatMd(data.heartbeatMd ?? "");
-      setAgents(data.agents);
-      setEffectiveEvery(data.effectiveEvery);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t("agent.heartbeat.errors.load"),
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+  }
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!projectId) {
+      return;
+    }
+    void projectApi
+      .getProjectHeartbeat(projectId)
+      .then((data) => {
+        const mapped = presetFromInterval(data.enabled, data.every);
+        setPreset(mapped.preset);
+        setCustomAmount(mapped.customAmount);
+        setCustomUnit(mapped.customUnit);
+        setHeartbeatMd(data.heartbeatMd ?? "");
+        setAgents(data.agents);
+        setEffectiveEvery(data.effectiveEvery);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(
+          err instanceof Error ? err.message : t("agent.heartbeat.errors.load"),
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [projectId, t]);
 
   const enabled = preset !== "off";
 

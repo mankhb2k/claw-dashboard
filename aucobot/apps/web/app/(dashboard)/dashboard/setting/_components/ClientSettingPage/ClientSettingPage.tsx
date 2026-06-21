@@ -1,12 +1,13 @@
 "use client";
 
-import type { Project, ProjectHealth } from "@/schemas/project.schema";
+import styles from "../../setting.module.css";
 import { DangerZone } from "../DangerZone/DangerZone";
 import { GatewayStatusSection } from "../GatewayStatusSection/GatewayStatusSection";
 import { GeneralSection } from "../GeneralSection/GeneralSection";
 import { SandboxSection } from "../SandboxSection/SandboxSection";
 import { ShellExecSection } from "../ShellExecSection/ShellExecSection";
-import styles from "../../setting.module.css";
+
+import type { Project, ProjectHealth } from "@/schemas/project.schema";
 
 interface ClientSettingPageProps {
   project: Project;

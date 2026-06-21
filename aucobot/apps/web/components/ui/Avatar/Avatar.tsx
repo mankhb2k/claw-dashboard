@@ -1,5 +1,6 @@
-import React from 'react';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import React from 'react';
+
 import styles from './Avatar.module.css';
 
 export interface AvatarProps extends AvatarPrimitive.AvatarProps {

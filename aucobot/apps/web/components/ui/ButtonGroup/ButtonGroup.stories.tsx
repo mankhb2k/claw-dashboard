@@ -1,5 +1,3 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import React, { useState } from 'react'
 import {
   ChevronDown,
   FileText,
@@ -9,8 +7,12 @@ import {
   TextQuote,
   Wrench,
 } from 'lucide-react'
-import { ButtonGroup } from '@/components/ui/ButtonGroup/ButtonGroup'
+import React, { useState } from 'react'
+
 import { Button, type ButtonProps } from '@/components/ui/Button/Button'
+import { ButtonGroup } from '@/components/ui/ButtonGroup/ButtonGroup'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 type ButtonGroupStoryArgs = {
   /** Button size applied to every child in the playground group */

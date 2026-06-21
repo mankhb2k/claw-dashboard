@@ -1,6 +1,6 @@
+import styles from "./ChatMessageBubble.module.css";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown/ChatMarkdown";
 import { isVisibleChatBubbleText } from "@/utils/chat/stream/history-filter";
-import styles from "./ChatMessageBubble.module.css";
 
 export type ChatMessageBubbleProps = {
   role: string;

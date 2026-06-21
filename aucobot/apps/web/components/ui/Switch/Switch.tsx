@@ -1,5 +1,6 @@
-import * as React from 'react'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
+import * as React from 'react'
+
 import styles from './Switch.module.css'
 
 export interface SwitchProps extends SwitchPrimitive.SwitchProps {

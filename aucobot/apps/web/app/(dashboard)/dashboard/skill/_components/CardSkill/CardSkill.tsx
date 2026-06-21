@@ -1,8 +1,10 @@
 "use client";
 
+import { Edit2, Download, Trash2, MoreVertical, Code } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Edit2, Download, Trash2, MoreVertical, Code } from "lucide-react";
+
+import styles from "./CardSkill.module.css";
 import {
   Card,
   Switch,
@@ -12,7 +14,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui";
-import styles from "./CardSkill.module.css";
 
 interface CardSkillProps {
   title: string;

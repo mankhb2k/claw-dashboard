@@ -1,10 +1,11 @@
-import type { Decorator } from '@storybook/react'
 import React from 'react'
 
+import styles from './chat-content-area-preview.module.css'
 import { ContentArea } from '@/app/(dashboard)/dashboard/chat/_components/ContentArea/ContentArea'
 import { I18nProvider } from '@/lib/i18n'
 
-import styles from './chat-content-area-preview.module.css'
+import type { Decorator } from '@storybook/react'
+
 
 export const withChatI18n: Decorator = (Story) => (
   <I18nProvider defaultLocale="en">

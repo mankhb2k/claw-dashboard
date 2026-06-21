@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+
 import {
   loadSidebarCollapsed,
   saveSidebarCollapsed,
@@ -8,12 +9,15 @@ import {
 
 /** Chat sidebar collapsed state, persisted per project. */
 export function useSidebarPreference(projectId: string) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
+    projectId ? loadSidebarCollapsed(projectId) : false,
+  );
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
 
-  useEffect(() => {
-    if (!projectId) return;
-    setSidebarCollapsed(loadSidebarCollapsed(projectId));
-  }, [projectId]);
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setSidebarCollapsed(projectId ? loadSidebarCollapsed(projectId) : false);
+  }
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => {

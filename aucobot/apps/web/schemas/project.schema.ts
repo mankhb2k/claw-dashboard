@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Backend trả uppercase, normalize về lowercase cho frontend
+// Backend returns uppercase; normalize to lowercase for the frontend
 export const projectStatusSchema = z
   .string()
   .transform((v) => v.toLowerCase())
@@ -25,13 +25,17 @@ export const projectSchema = z
     containerMissing: p.containerMissing ?? false,
   }))
 
-export const createProjectSchema = z.object({
-  displayName: z
-    .string()
-    .min(1, 'Tên tối thiểu 1 ký tự')
-    .max(200, 'Tên tối đa 200 ký tự')
-    .optional(),
-})
+export type ProjectTranslate = (path: string) => string
+
+export function createCreateProjectSchema(t: ProjectTranslate) {
+  return z.object({
+    displayName: z
+      .string()
+      .min(1, t('project.validation.displayName.min'))
+      .max(200, t('project.validation.displayName.max'))
+      .optional(),
+  })
+}
 
 export const projectHealthSchema = z.object({
   status: projectStatusSchema,
@@ -46,7 +50,7 @@ export const projectHealthSchema = z.object({
 
 export type Project = z.infer<typeof projectSchema>
 export type ProjectStatus = z.infer<typeof projectStatusSchema>
-export type CreateProjectInput = z.infer<typeof createProjectSchema>
+export type CreateProjectInput = z.infer<ReturnType<typeof createCreateProjectSchema>>
 export type ProjectHealth = z.infer<typeof projectHealthSchema>
 export const PROJECT_AGENT_ENV_KEYS = [
   'OPENAI_API_KEY',
@@ -619,22 +623,25 @@ export const projectCollaborationSchema = z.object({
   legacyDerived: z.boolean().optional().default(false),
 })
 
-export const updateProjectCollaborationSchema = z
-  .object({
-    enabled: z.boolean(),
-    memberSlugs: z.array(z.string().min(1)).max(50),
-  })
-  .superRefine((data, ctx) => {
-    if (data.enabled && data.memberSlugs.length === 0) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['memberSlugs'],
-        message: 'Select at least one agent when collaboration is enabled',
-      })
-    }
-  })
+export function createUpdateProjectCollaborationSchema(t: ProjectTranslate) {
+  return z
+    .object({
+      enabled: z.boolean(),
+      memberSlugs: z.array(z.string().min(1)).max(50),
+    })
+    .superRefine((data, ctx) => {
+      if (data.enabled && data.memberSlugs.length === 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['memberSlugs'],
+          message: t('agent.collaboration.needMember'),
+        })
+      }
+    })
+}
+
+export type UpdateProjectCollaborationInput = z.infer<
+  ReturnType<typeof createUpdateProjectCollaborationSchema>
+>
 
 export type ProjectCollaboration = z.infer<typeof projectCollaborationSchema>
-export type UpdateProjectCollaborationInput = z.infer<
-  typeof updateProjectCollaborationSchema
->

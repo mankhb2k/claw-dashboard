@@ -1,4 +1,10 @@
 import { writeFile } from 'node:fs/promises';
+
+import { WorkspaceService } from './workspace.service';
+import { resolveChannel } from '../../../channels/lib/channel-registry';
+import { resolveConnector } from '../../../connectors/lib/connector-registry';
+import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
+import { decryptSecret } from '@aucobot/control-plane-core';
 import {
   buildInitialOpenClawConfig,
   cleanupStaleMainAgentModels,
@@ -8,18 +14,11 @@ import {
   mergeConnectorsIntoConfig,
   syncGatewayAuthToken,
   mergeProviderKeysIntoConfig,
-  openClawConfigPath,
   readOpenClawConfigJson,
   removeLegacyDotEnv,
   resolveProjectDataDir,
-  type OpenClawProjectConfig,
   writeOpenClawConfigJson,
 } from '@aucobot/workspace-sync';
-import { decryptSecret } from '@aucobot/control-plane-core';
-import { resolveChannel } from '../../../channels/lib/channel-registry';
-import { resolveConnector } from '../../../connectors/lib/connector-registry';
-import { resolveOssGatewayToken } from '../../../runtime/gateway-endpoint';
-import { WorkspaceService } from './workspace.service';
 
 jest.mock('node:fs/promises', () => ({
   writeFile: jest.fn().mockResolvedValue(undefined),
@@ -27,7 +26,10 @@ jest.mock('node:fs/promises', () => ({
 
 jest.mock('@aucobot/workspace-sync', () => ({
   buildInitialOpenClawConfig: jest.fn((params: { gatewayToken: string }) => ({
-    gateway: { mode: 'local', auth: { mode: 'token', token: params.gatewayToken } },
+    gateway: {
+      mode: 'local',
+      auth: { mode: 'token', token: params.gatewayToken },
+    },
   })),
   cleanupStaleMainAgentModels: jest.fn().mockResolvedValue(undefined),
   ensureProjectLayout: jest.fn().mockResolvedValue('/data/proj_test_1'),
@@ -50,9 +52,12 @@ jest.mock('@aucobot/workspace-sync', () => ({
   stripLegacyExecKeysFromRawFormData: jest.fn(() => null),
   stripLegacyAgentSandboxKeysFromRawFormData: jest.fn(() => null),
   readLegacySandboxExemptFromRawFormData: jest.fn(() => false),
-  normalizeCollaborationSettings: jest.fn((input: { enabled: boolean; memberSlugs: string[] }) => input),
+  normalizeCollaborationSettings: jest.fn(
+    (input: { enabled: boolean; memberSlugs: string[] }) => input,
+  ),
   resolveProjectCollaborationSettings: jest.fn(
-    ({ stored }: { stored: { enabled: boolean; memberSlugs: string[] } }) => stored,
+    ({ stored }: { stored: { enabled: boolean; memberSlugs: string[] } }) =>
+      stored,
   ),
   shouldPersistDerivedCollaboration: jest.fn(() => false),
   legacyTeamFormSlice: jest.fn(() => ({})),
@@ -62,7 +67,9 @@ jest.mock('@aucobot/workspace-sync', () => ({
 }));
 
 jest.mock('@aucobot/control-plane-core', () => ({
-  decryptSecret: jest.fn((ciphertext: string) => ciphertext.replace(/^enc:/, '')),
+  decryptSecret: jest.fn((ciphertext: string) =>
+    ciphertext.replace(/^enc:/, ''),
+  ),
 }));
 
 jest.mock('../../../connectors/lib/connector-registry', () => ({
@@ -88,41 +95,49 @@ const ensureProjectLayoutMock = ensureProjectLayout as jest.MockedFunction<
 const resolveProjectDataDirMock = resolveProjectDataDir as jest.MockedFunction<
   typeof resolveProjectDataDir
 >;
-const buildInitialOpenClawConfigMock = buildInitialOpenClawConfig as jest.MockedFunction<
-  typeof buildInitialOpenClawConfig
->;
-const readOpenClawConfigJsonMock = readOpenClawConfigJson as jest.MockedFunction<
-  typeof readOpenClawConfigJson
->;
+const buildInitialOpenClawConfigMock =
+  buildInitialOpenClawConfig as jest.MockedFunction<
+    typeof buildInitialOpenClawConfig
+  >;
+const readOpenClawConfigJsonMock =
+  readOpenClawConfigJson as jest.MockedFunction<typeof readOpenClawConfigJson>;
 const syncGatewayAuthTokenMock = syncGatewayAuthToken as jest.MockedFunction<
   typeof syncGatewayAuthToken
 >;
-const mergeProviderKeysIntoConfigMock = mergeProviderKeysIntoConfig as jest.MockedFunction<
-  typeof mergeProviderKeysIntoConfig
->;
+const mergeProviderKeysIntoConfigMock =
+  mergeProviderKeysIntoConfig as jest.MockedFunction<
+    typeof mergeProviderKeysIntoConfig
+  >;
 const mergeAgentsIntoConfigMock = mergeAgentsIntoConfig as jest.MockedFunction<
   typeof mergeAgentsIntoConfig
 >;
-const mergeConnectorsIntoConfigMock = mergeConnectorsIntoConfig as jest.MockedFunction<
-  typeof mergeConnectorsIntoConfig
->;
-const mergeChannelsIntoConfigMock = mergeChannelsIntoConfig as jest.MockedFunction<
-  typeof mergeChannelsIntoConfig
->;
-const cleanupStaleMainAgentModelsMock = cleanupStaleMainAgentModels as jest.MockedFunction<
-  typeof cleanupStaleMainAgentModels
->;
-const writeOpenClawConfigJsonMock = writeOpenClawConfigJson as jest.MockedFunction<
-  typeof writeOpenClawConfigJson
->;
+const mergeConnectorsIntoConfigMock =
+  mergeConnectorsIntoConfig as jest.MockedFunction<
+    typeof mergeConnectorsIntoConfig
+  >;
+const mergeChannelsIntoConfigMock =
+  mergeChannelsIntoConfig as jest.MockedFunction<
+    typeof mergeChannelsIntoConfig
+  >;
+const cleanupStaleMainAgentModelsMock =
+  cleanupStaleMainAgentModels as jest.MockedFunction<
+    typeof cleanupStaleMainAgentModels
+  >;
+const writeOpenClawConfigJsonMock =
+  writeOpenClawConfigJson as jest.MockedFunction<
+    typeof writeOpenClawConfigJson
+  >;
 const removeLegacyDotEnvMock = removeLegacyDotEnv as jest.MockedFunction<
   typeof removeLegacyDotEnv
 >;
-const resolveOssGatewayTokenMock = resolveOssGatewayToken as jest.MockedFunction<
-  typeof resolveOssGatewayToken
+const resolveOssGatewayTokenMock =
+  resolveOssGatewayToken as jest.MockedFunction<typeof resolveOssGatewayToken>;
+const resolveConnectorMock = resolveConnector as jest.MockedFunction<
+  typeof resolveConnector
 >;
-const resolveConnectorMock = resolveConnector as jest.MockedFunction<typeof resolveConnector>;
-const resolveChannelMock = resolveChannel as jest.MockedFunction<typeof resolveChannel>;
+const resolveChannelMock = resolveChannel as jest.MockedFunction<
+  typeof resolveChannel
+>;
 
 function createService() {
   const prisma = {
@@ -235,8 +250,14 @@ describe('WorkspaceService', () => {
 
       await service.ensureGatewayConfigOnDisk(PROJECT_ID, 'new-token');
 
-      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith(config, 'new-token');
-      expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(CONFIG_PATH, config);
+      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith(
+        config,
+        'new-token',
+      );
+      expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(
+        CONFIG_PATH,
+        config,
+      );
     });
   });
 
@@ -337,8 +358,14 @@ describe('WorkspaceService', () => {
         expect.objectContaining({ projectId: PROJECT_ID }),
       );
       expect(mergeChannelsIntoConfigMock).toHaveBeenCalled();
-      expect(cleanupStaleMainAgentModelsMock).toHaveBeenCalledWith(DATA_DIR, config);
-      expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(CONFIG_PATH, config);
+      expect(cleanupStaleMainAgentModelsMock).toHaveBeenCalledWith(
+        DATA_DIR,
+        config,
+      );
+      expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(
+        CONFIG_PATH,
+        config,
+      );
       expect(removeLegacyDotEnvMock).toHaveBeenCalledWith(DATA_DIR);
     });
 
@@ -361,12 +388,16 @@ describe('WorkspaceService', () => {
       prisma.projectChannel.findMany.mockResolvedValue([]);
       resolveConnectorMock.mockReturnValue(undefined);
 
-      const decryptMock = decryptSecret as jest.MockedFunction<typeof decryptSecret>;
+      const decryptMock = decryptSecret as jest.MockedFunction<
+        typeof decryptSecret
+      >;
       decryptMock.mockImplementationOnce(() => {
         throw new Error('decrypt failed');
       });
 
-      await expect(service.syncProjectRuntime(PROJECT_ID)).resolves.toBeUndefined();
+      await expect(
+        service.syncProjectRuntime(PROJECT_ID),
+      ).resolves.toBeUndefined();
 
       expect(mergeConnectorsIntoConfigMock).toHaveBeenCalledWith(
         config,
@@ -389,7 +420,10 @@ describe('WorkspaceService', () => {
 
       await service.syncProjectRuntime(PROJECT_ID);
 
-      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith({}, 'resolved-oss-token');
+      expect(syncGatewayAuthTokenMock).toHaveBeenCalledWith(
+        {},
+        'resolved-oss-token',
+      );
       expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(CONFIG_PATH, {});
     });
   });

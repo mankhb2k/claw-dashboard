@@ -1,6 +1,6 @@
-import { Flex, Container } from "@/components/layout";
 import { ClientSkillEditorPage } from "./_components/ClientSkillEditorPage/ClientSkillEditorPage";
 import styles from "./skillEditorSlug.module.css";
+import { Flex, Container } from "@/components/layout";
 
 export default function ProjectSkillEditorPage() {
   return (

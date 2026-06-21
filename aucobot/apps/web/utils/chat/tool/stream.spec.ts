@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { REDACTED, redactSensitiveText } from './redact.js'
 import {
   extractWebSources,
   truncateToolOutput,
 } from './output.js'
+import { REDACTED, redactSensitiveText } from './redact.js'
 import {
   applyToolActivityPatch,
   CANONICAL_TOOL_IDS,
@@ -17,8 +17,8 @@ import {
   toActivityList,
 } from './stream.js'
 
-describe('parseAgentToolPayload', () => {
-  it('parses tool start as running', () => {
+void describe('parseAgentToolPayload', async () => {
+  await it('parses tool start as running', () => {
     const patch = parseAgentToolPayload(
       {
         sessionKey: 'agent:main:main',
@@ -36,7 +36,7 @@ describe('parseAgentToolPayload', () => {
     assert.equal(patch.id, 'call_1')
   })
 
-  it('parses tool result as done', () => {
+  await it('parses tool result as done', () => {
     const patch = parseAgentToolPayload(
       {
         sessionKey: 'agent:main:main',
@@ -54,7 +54,7 @@ describe('parseAgentToolPayload', () => {
     assert.equal(patch.status, 'done')
   })
 
-  it('parses tool result with isError as error', () => {
+  await it('parses tool result with isError as error', () => {
     const patch = parseAgentToolPayload(
       {
         sessionKey: 'agent:main:main',
@@ -72,7 +72,7 @@ describe('parseAgentToolPayload', () => {
     assert.equal(patch.status, 'error')
   })
 
-  it('parses flat tool fields on payload root', () => {
+  await it('parses flat tool fields on payload root', () => {
     const patch = parseAgentToolPayload(
       {
         sessionKey: 'agent:main:main',
@@ -88,7 +88,7 @@ describe('parseAgentToolPayload', () => {
     assert.equal(patch.status, 'running')
   })
 
-  it('accepts session key alias on payload.key', () => {
+  await it('accepts session key alias on payload.key', () => {
     const patch = parseToolGatewayEvent(
       'session.tool',
       {
@@ -104,8 +104,8 @@ describe('parseAgentToolPayload', () => {
   })
 })
 
-describe('parseToolGatewayEvent session filter', () => {
-  it('accepts matching session key', () => {
+void describe('parseToolGatewayEvent session filter', async () => {
+  await it('accepts matching session key', () => {
     const patch = parseToolGatewayEvent(
       'session.tool',
       {
@@ -122,7 +122,7 @@ describe('parseToolGatewayEvent session filter', () => {
     assert.equal(patch.name, 'read')
   })
 
-  it('rejects other session keys', () => {
+  await it('rejects other session keys', () => {
     const patch = parseToolGatewayEvent(
       'agent',
       {
@@ -140,8 +140,8 @@ describe('parseToolGatewayEvent session filter', () => {
   })
 })
 
-describe('resolveCanonicalToolId and i18n keys', () => {
-  it('maps search alias to web_search', () => {
+void describe('resolveCanonicalToolId and i18n keys', async () => {
+  await it('maps search alias to web_search', () => {
     assert.equal(resolveCanonicalToolId('search'), 'web_search')
     assert.equal(
       resolveToolActivityI18nKey('search', 'running'),
@@ -149,7 +149,7 @@ describe('resolveCanonicalToolId and i18n keys', () => {
     )
   })
 
-  it('maps bash alias to exec', () => {
+  await it('maps bash alias to exec', () => {
     assert.equal(resolveCanonicalToolId('bash'), 'exec')
     assert.equal(
       resolveToolActivityI18nKey('bash', 'done'),
@@ -157,7 +157,7 @@ describe('resolveCanonicalToolId and i18n keys', () => {
     )
   })
 
-  it('resolves all canonical tool ids to non-generic keys', () => {
+  await it('resolves all canonical tool ids to non-generic keys', () => {
     for (const id of CANONICAL_TOOL_IDS) {
       assert.equal(resolveCanonicalToolId(id), id)
       assert.equal(
@@ -167,7 +167,7 @@ describe('resolveCanonicalToolId and i18n keys', () => {
     }
   })
 
-  it('falls back to generic for unknown tools', () => {
+  await it('falls back to generic for unknown tools', () => {
     assert.equal(resolveCanonicalToolId('listCalendars'), null)
     assert.equal(
       resolveToolActivityI18nKey('listCalendars', 'running'),
@@ -176,8 +176,8 @@ describe('resolveCanonicalToolId and i18n keys', () => {
   })
 })
 
-describe('applyToolActivityPatch', () => {
-  it('tracks parallel tool calls independently', () => {
+void describe('applyToolActivityPatch', async () => {
+  await it('tracks parallel tool calls independently', () => {
     let map = new Map()
     map = applyToolActivityPatch(map, {
       id: 'a',
@@ -198,7 +198,7 @@ describe('applyToolActivityPatch', () => {
     assert.equal(list.length, 2)
   })
 
-  it('updates existing tool call on duplicate events', () => {
+  await it('updates existing tool call on duplicate events', () => {
     let map = new Map()
     map = applyToolActivityPatch(map, {
       id: 'a',
@@ -218,7 +218,7 @@ describe('applyToolActivityPatch', () => {
     assert.equal(map.get('a')?.startedAt, 1)
   })
 
-  it('limits activity list to max entries with running first', () => {
+  await it('limits activity list to max entries with running first', () => {
     let map = new Map()
     for (let i = 0; i < 6; i += 1) {
       map = applyToolActivityPatch(map, {
@@ -241,7 +241,7 @@ describe('applyToolActivityPatch', () => {
     assert.equal(list[0]?.id, 'running-1')
   })
 
-  it('stores partial output on update phase', () => {
+  await it('stores partial output on update phase', () => {
     let map = new Map()
     map = applyToolActivityPatch(map, {
       id: 'exec-1',
@@ -264,7 +264,7 @@ describe('applyToolActivityPatch', () => {
     assert.ok(entry?.outputPreview?.includes('hello'))
   })
 
-  it('redacts secrets in tool output', () => {
+  await it('redacts secrets in tool output', () => {
     let map = new Map()
     map = applyToolActivityPatch(map, {
       id: 'exec-secret',
@@ -280,7 +280,7 @@ describe('applyToolActivityPatch', () => {
     assert.equal(entry?.outputFull?.includes('sk-1234567890abcdef'), false)
   })
 
-  it('extracts web sources from search results', () => {
+  await it('extracts web sources from search results', () => {
     let map = new Map()
     map = applyToolActivityPatch(map, {
       id: 'search-1',
@@ -299,20 +299,20 @@ describe('applyToolActivityPatch', () => {
   })
 })
 
-describe('tool output helpers', () => {
-  it('redacts bearer tokens in plain text', () => {
+void describe('tool output helpers', async () => {
+  await it('redacts bearer tokens in plain text', () => {
     const text = redactSensitiveText('Authorization: Bearer abc.def.ghi')
     assert.ok(text.includes(REDACTED))
   })
 
-  it('truncates long output previews', () => {
+  await it('truncates long output previews', () => {
     const long = 'x'.repeat(600)
     const { preview, truncated } = truncateToolOutput(long, 500)
     assert.equal(truncated, true)
     assert.ok(preview.endsWith('…'))
   })
 
-  it('extracts urls from nested result objects', () => {
+  await it('extracts urls from nested result objects', () => {
     const sources = extractWebSources('web_search', { query: 'test' }, {
       items: [{ href: 'https://news.example.com/a' }],
     })
@@ -320,8 +320,8 @@ describe('tool output helpers', () => {
   })
 })
 
-describe('mergeLiveAssistantText', () => {
-  it('joins flushed segments and trailing stream text', () => {
+void describe('mergeLiveAssistantText', async () => {
+  await it('joins flushed segments and trailing stream text', () => {
     const merged = mergeLiveAssistantText(
       [{ type: 'text', text: 'Let me check.' }],
       'Here is the answer.',

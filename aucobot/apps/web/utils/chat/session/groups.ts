@@ -1,12 +1,14 @@
+import { translate } from '@/lib/i18n/translate'
+
 import type { GatewaySessionRow } from './types'
 
 export type SessionDateGroup = 'today' | 'yesterday' | 'thisWeek' | 'older'
 
 export const SESSION_GROUP_LABELS: Record<SessionDateGroup, string> = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  thisWeek: 'This week',
-  older: 'Older',
+  today: 'chat.sidebar.groups.today',
+  yesterday: 'chat.sidebar.groups.yesterday',
+  thisWeek: 'chat.sidebar.groups.thisWeek',
+  older: 'chat.sidebar.groups.older',
 }
 
 const GROUP_ORDER: SessionDateGroup[] = ['today', 'yesterday', 'thisWeek', 'older']
@@ -60,7 +62,7 @@ export function formatRelativeSessionTime(
   const diffMs = Math.max(0, now - updatedAt)
   const diffMin = Math.floor(diffMs / 60_000)
 
-  if (diffMin < 1) return 'Just now'
+  if (diffMin < 1) return translate('chat.sidebar.time.justNow')
   if (diffMin < 60) return `${diffMin}m`
 
   const diffHr = Math.floor(diffMin / 60)

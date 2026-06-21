@@ -1,8 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { LayoutDashboard, Brain, MessageSquareCodeIcon, Sparkles, Cable, Settings as SettingsIcon } from 'lucide-react';
 import React from 'react';
+
 import { Sidebar } from '@/components/dashboard/Sidebar/Sidebar';
 import { I18nProvider } from '@/lib/i18n';
-import { LayoutDashboard, Brain, MessageSquareCodeIcon, Sparkles, Cable, Settings as SettingsIcon } from 'lucide-react';
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 const meta: Meta<typeof Sidebar> = {
   title: 'Dashboard/Sidebar',
@@ -83,8 +85,8 @@ export const Collapsed: Story = {
 // Extra items to test scroll overflow
 const manyItems = [
   ...mockItems,
-  ...mockItems.map(item => ({ ...item, href: item.href + '-2' })),
-  ...mockItems.map(item => ({ ...item, href: item.href + '-3' })),
+  ...mockItems.map(item => ({ ...item, href: `${item.href}-2` })),
+  ...mockItems.map(item => ({ ...item, href: `${item.href}-3` })),
 ];
 
 export const Overflow: Story = {

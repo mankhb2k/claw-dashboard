@@ -1,6 +1,8 @@
-import { Project, ProjectStatus } from '@aucobot/database';
 import { resolveOssGatewayHttpBase } from './runtime/gateway-endpoint';
 import { isOssRuntime } from './runtime/runtime-mode';
+import { ProjectStatus } from '@aucobot/database';
+
+import type { Project } from '@aucobot/database';
 
 export type ProjectDto = {
   id: string;
@@ -9,7 +11,7 @@ export type ProjectDto = {
   publicUrl?: string;
   status: string;
   containerName: string | null;
-  /** Cloud-only — always false in OSS. */
+  /** Not used in self-host builds — always false. */
   containerMissing: boolean;
   errorMessage: string | null;
   lastActiveAt: string | null;

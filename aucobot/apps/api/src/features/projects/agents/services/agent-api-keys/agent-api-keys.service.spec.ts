@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+
 import { AgentApiKeysService } from './agent-api-keys.service';
 
 jest.mock('@aucobot/control-plane-core', () => ({
@@ -90,8 +91,8 @@ describe('AgentApiKeysService', () => {
   it('throws when revoke misses key', async () => {
     prisma.projectAgentApiKey.updateMany.mockResolvedValue({ count: 0 });
 
-    await expect(service.revoke(PROJECT_ID, AGENT_SLUG, 'missing')).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(
+      service.revoke(PROJECT_ID, AGENT_SLUG, 'missing'),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

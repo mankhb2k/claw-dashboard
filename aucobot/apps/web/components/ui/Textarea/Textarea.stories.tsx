@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import React from 'react'
+
 import { Textarea } from '@/components/ui/Textarea/Textarea'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 const meta: Meta<typeof Textarea> = {
   title: 'UI/Textarea',

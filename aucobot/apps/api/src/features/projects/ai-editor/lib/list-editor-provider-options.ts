@@ -1,12 +1,16 @@
+import { resolveProvider } from '../../ai-providers/lib/provider-registry';
 import {
   GEMINI_SKILL_AI_EDITOR_MODELS,
   OPENAI_SKILL_AI_EDITOR_MODELS,
   resolveGeminiSkillDefaultModel,
   resolveOpenAiSkillDefaultModel,
 } from '@aucobot/shared';
+
 import type { PrismaService } from '../../../../core/database/prisma.service';
-import { resolveProvider } from '../../ai-providers/lib/provider-registry';
-import type { EditorOptionModel, EditorOptionProvider } from '../ai-editor.types';
+import type {
+  EditorOptionModel,
+  EditorOptionProvider,
+} from '../ai-editor.types';
 
 type ProviderKeyRow = {
   providerId: string;

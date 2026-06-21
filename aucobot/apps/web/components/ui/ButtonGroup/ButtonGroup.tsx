@@ -1,5 +1,6 @@
-import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
+import * as React from 'react'
+
 import styles from './ButtonGroup.module.css'
 
 interface ButtonGroupProps extends React.HTMLAttributes<HTMLDivElement> {

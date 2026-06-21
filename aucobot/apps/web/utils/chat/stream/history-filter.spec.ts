@@ -7,8 +7,8 @@ import {
   shouldShowHistoryMessage,
 } from './history-filter.js'
 
-describe('isHiddenToolPayloadText', () => {
-  it('hides web_search JSON payloads', () => {
+void describe('isHiddenToolPayloadText', async () => {
+  await it('hides web_search JSON payloads', () => {
     const text = JSON.stringify({
       query: 'gold price',
       provider: 'duckduckgo',
@@ -19,7 +19,7 @@ describe('isHiddenToolPayloadText', () => {
     assert.equal(isHiddenToolPayloadText(text), true)
   })
 
-  it('hides JSON with EXTERNAL_UNTRUSTED_CONTENT blocks', () => {
+  await it('hides JSON with EXTERNAL_UNTRUSTED_CONTENT blocks', () => {
     const text = JSON.stringify({
       query: 'gold',
       provider: 'duckduckgo',
@@ -33,7 +33,7 @@ describe('isHiddenToolPayloadText', () => {
     )
   })
 
-  it('hides JSON embedded after a short prefix', () => {
+  await it('hides JSON embedded after a short prefix', () => {
     const payload = JSON.stringify({
       query: 'giá vàng hôm nay',
       provider: 'duckduckgo',
@@ -46,7 +46,7 @@ describe('isHiddenToolPayloadText', () => {
     )
   })
 
-  it('shows normal markdown assistant text', () => {
+  await it('shows normal markdown assistant text', () => {
     assert.equal(
       isHiddenToolPayloadText('**Gold price today:** 14.5M VND per tael'),
       false,
@@ -54,8 +54,8 @@ describe('isHiddenToolPayloadText', () => {
   })
 })
 
-describe('shouldShowHistoryMessage', () => {
-  it('always shows user messages', () => {
+void describe('shouldShowHistoryMessage', async () => {
+  await it('always shows user messages', () => {
     assert.equal(
       shouldShowHistoryMessage(
         'user',
@@ -65,12 +65,12 @@ describe('shouldShowHistoryMessage', () => {
     )
   })
 
-  it('hides tool roles', () => {
+  await it('hides tool roles', () => {
     assert.equal(shouldShowHistoryMessage('tool', '{"ok":true}'), false)
     assert.equal(shouldShowHistoryMessage('toolresult', '{"ok":true}'), false)
   })
 
-  it('hides assistant tool JSON', () => {
+  await it('hides assistant tool JSON', () => {
     assert.equal(
       shouldShowHistoryMessage(
         'assistant',
@@ -84,7 +84,7 @@ describe('shouldShowHistoryMessage', () => {
     )
   })
 
-  it('hides tool JSON for non-assistant roles', () => {
+  await it('hides tool JSON for non-assistant roles', () => {
     assert.equal(
       shouldShowHistoryMessage(
         'unknown',
@@ -98,7 +98,7 @@ describe('shouldShowHistoryMessage', () => {
     )
   })
 
-  it('shows assistant markdown answers', () => {
+  await it('shows assistant markdown answers', () => {
     assert.equal(
       shouldShowHistoryMessage('assistant', 'Here is the answer in plain text.'),
       true,
@@ -106,8 +106,8 @@ describe('shouldShowHistoryMessage', () => {
   })
 })
 
-describe('isVisibleChatBubbleText', () => {
-  it('hides assistant JSON bubbles', () => {
+void describe('isVisibleChatBubbleText', async () => {
+  await it('hides assistant JSON bubbles', () => {
     assert.equal(
       isVisibleChatBubbleText(
         'assistant',

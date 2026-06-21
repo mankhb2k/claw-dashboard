@@ -1,6 +1,3 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { runProviderKeyTest } from '../../lib/provider-key-test';
-
 jest.mock('../../../workspace/services/workspace/workspace.service', () => ({
   WorkspaceService: class MockWorkspaceService {},
 }));
@@ -9,13 +6,16 @@ jest.mock('../../lib/provider-key-test', () => ({
   runProviderKeyTest: jest.fn(),
 }));
 
-import { ProviderKeysService } from './provider-keys.service';
-
 jest.mock('@aucobot/control-plane-core', () => ({
   encryptSecret: (plaintext: string) => `enc:${plaintext}`,
   decryptSecret: (ciphertext: string) => ciphertext.replace(/^enc:/, ''),
   maskSecret: (value: string) => `***${value.slice(-4)}`,
 }));
+
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+
+import { ProviderKeysService } from './provider-keys.service';
+import { runProviderKeyTest } from '../../lib/provider-key-test';
 
 const runProviderKeyTestMock = runProviderKeyTest as jest.MockedFunction<
   typeof runProviderKeyTest
@@ -54,10 +54,7 @@ function createService() {
   const workspace = {
     syncProjectRuntime: jest.fn().mockResolvedValue(undefined),
   };
-  const service = new ProviderKeysService(
-    prisma as never,
-    workspace as never,
-  );
+  const service = new ProviderKeysService(prisma as never, workspace as never);
   return { service, prisma, workspace };
 }
 
@@ -222,7 +219,10 @@ describe('ProviderKeysService', () => {
         applyEnabled: true,
       });
 
-      expect(runProviderKeyTestMock).toHaveBeenCalledWith('openai', expect.any(String));
+      expect(runProviderKeyTestMock).toHaveBeenCalledWith(
+        'openai',
+        expect.any(String),
+      );
       expect(result.enabled).toBe(true);
       expect(prisma.projectProviderKey.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -335,7 +335,11 @@ describe('ProviderKeysService', () => {
       );
 
       await expect(
-        service.setDefaultModel(PROJECT_ID, 'gemini', 'google/gemini-2.5-flash'),
+        service.setDefaultModel(
+          PROJECT_ID,
+          'gemini',
+          'google/gemini-2.5-flash',
+        ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
@@ -364,7 +368,9 @@ describe('ProviderKeysService', () => {
   describe('resolveProviderIdFromEnvKey', () => {
     it('resolves env key to provider id', () => {
       const { service } = createService();
-      expect(service.resolveProviderIdFromEnvKey('GEMINI_API_KEY')).toBe('gemini');
+      expect(service.resolveProviderIdFromEnvKey('GEMINI_API_KEY')).toBe(
+        'gemini',
+      );
       expect(service.resolveProviderIdFromEnvKey('unknown')).toBeUndefined();
     });
   });

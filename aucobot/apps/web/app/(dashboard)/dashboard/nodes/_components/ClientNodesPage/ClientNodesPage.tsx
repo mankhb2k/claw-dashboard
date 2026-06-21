@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { projectApi } from "@/lib/api/project";
-import type {
-  DevicePairingPending,
-  NodeEntry,
-  NodeInviteListItem,
-  NodePairingPending,
-  NodesPairingResponse,
-} from "@/schemas/nodes.schema";
+
+import styles from "./ClientNodesPage.module.css";
+import { CardCreateInvite } from "../CardCreateInvite/CardCreateInvite";
+import { CardDeviceManager } from "../CardDeviceManager/CardDeviceManager";
+import { CardGuide } from "../CardGuide/CardGuide";
+import { CardInviteHistory } from "../CardInviteHistory/CardInviteHistory";
+import { TitleHeader } from "@/components/dashboard";
 import { Flex } from "@/components/layout";
 import {
   AlertDialog,
@@ -23,17 +22,21 @@ import {
   toast,
   Typography,
 } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import {
   buildApprovalGroups,
   errorMessage,
   isNodeDeviceRequest,
 } from "@/utils/nodes/nodes-utils";
-import { CardCreateInvite } from "../CardCreateInvite/CardCreateInvite";
-import { CardInviteHistory } from "../CardInviteHistory/CardInviteHistory";
-import { CardGuide } from "../CardGuide/CardGuide";
-import { CardDeviceManager } from "../CardDeviceManager/CardDeviceManager";
-import { TitleHeader } from "@/components/dashboard";
-import styles from "./ClientNodesPage.module.css";
+
+import type {
+  DevicePairingPending,
+  NodeEntry,
+  NodeInviteListItem,
+  NodePairingPending,
+  NodesPairingResponse,
+} from "@/schemas/nodes.schema";
 
 const POLL_MS = 4_000;
 const POLL_BURST_MS = 2_000;
@@ -44,7 +47,10 @@ type NodesConfirmAction =
   | { kind: "reject-device"; req: DevicePairingPending }
   | { kind: "reject-node"; req: NodePairingPending };
 
-function nodesConfirmCopy(action: NodesConfirmAction): {
+function nodesConfirmCopy(
+  action: NodesConfirmAction,
+  t: (path: string, vars?: Record<string, string>) => string,
+): {
   title: string;
   description: string;
   confirmLabel: string;
@@ -52,24 +58,26 @@ function nodesConfirmCopy(action: NodesConfirmAction): {
   switch (action.kind) {
     case "remove":
       return {
-        title: "Remove node from gateway?",
-        description: `Are you sure you want to remove "${action.title}"? The device will disconnect from the gateway.`,
-        confirmLabel: "Remove",
+        title: t("nodes.confirm.removeTitle"),
+        description: t("nodes.confirm.removeDescription", { title: action.title }),
+        confirmLabel: t("nodes.confirm.removeLabel"),
       };
     case "reject-device":
       return {
-        title: "Reject device pairing?",
-        description:
-          "The device pairing request will be cancelled. The device must submit a new request to connect again.",
-        confirmLabel: "Reject",
+        title: t("nodes.confirm.rejectDeviceTitle"),
+        description: t("nodes.confirm.rejectDeviceDescription"),
+        confirmLabel: t("nodes.confirm.rejectDeviceLabel"),
       };
     case "reject-node":
       return {
-        title: "Reject node pairing?",
-        description:
-          "The node upgrade request will be cancelled. The node app must pair again after the device is approved.",
-        confirmLabel: "Reject",
+        title: t("nodes.confirm.rejectNodeTitle"),
+        description: t("nodes.confirm.rejectNodeDescription"),
+        confirmLabel: t("nodes.confirm.rejectNodeLabel"),
       };
+    default: {
+      const _exhaustive: never = action;
+      return _exhaustive;
+    }
   }
 }
 
@@ -78,7 +86,7 @@ interface ClientNodesPageProps {
 }
 
 export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
-  const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [nodes, setNodes] = useState<NodeEntry[]>([]);
   const [pairing, setPairing] = useState<NodesPairingResponse | null>(null);
@@ -94,7 +102,14 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
   const [confirmAction, setConfirmAction] = useState<NodesConfirmAction | null>(
     null,
   );
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+  const [loading, setLoading] = useState(Boolean(projectId));
   const confirmActionRef = useRef<NodesConfirmAction | null>(null);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+  }
 
   const prevPendingRef = useRef(0);
   const didNotifyPendingRef = useRef(false);
@@ -125,22 +140,21 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       setInviteError(null);
     } else {
       setInviteError(
-        errorMessage(inviteRes.reason, "Failed to load invite codes."),
+        errorMessage(inviteRes.reason, t("nodes.page.loadInvitesFailed")),
       );
     }
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    void load().finally(() => setLoading(false));
-  }, [projectId, load]);
+  }, [projectId, t]);
 
   useEffect(() => {
     if (!projectId) return;
+    void (async () => {
+      await Promise.resolve();
+      await load().finally(() => setLoading(false));
+    })();
+  }, [projectId, load]);
+
+  useEffect(() => {
+    if (!projectId) return undefined;
 
     const burstUntil = Date.now() + POLL_BURST_DURATION_MS;
     let burstTimer: ReturnType<typeof setInterval> | null = null;
@@ -183,7 +197,10 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
     [pairing],
   );
 
-  const nodePending = pairing?.nodes.pending ?? [];
+  const nodePending = useMemo(
+    () => pairing?.nodes.pending ?? [],
+    [pairing],
+  );
   const pendingCount = nodeDevicePending.length + nodePending.length;
   const approvalGroups = useMemo(
     () => buildApprovalGroups(nodeDevicePending, nodePending),
@@ -197,13 +214,13 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       !didNotifyPendingRef.current
     ) {
       toast.success(
-        "New pairing request",
-        "Approve device and node in the device manager card below.",
+        t("nodes.toasts.newPairingTitle"),
+        t("nodes.toasts.newPairingDescription"),
       );
       didNotifyPendingRef.current = true;
     }
     prevPendingRef.current = pendingCount;
-  }, [pendingCount]);
+  }, [pendingCount, t]);
 
   const setConfirm = (action: NodesConfirmAction | null) => {
     confirmActionRef.current = action;
@@ -217,7 +234,7 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       await fn();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Action failed");
+      setError(err instanceof Error ? err.message : t("nodes.errors.actionFailed"));
     } finally {
       setActionId(null);
     }
@@ -305,11 +322,17 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
           projectApi.rejectNodePairing(projectId, action.req.requestId),
         );
         break;
+      default: {
+        const _exhaustive: never = action;
+        throw new Error(
+          `Unhandled nodes confirm action: ${String(_exhaustive)}`,
+        );
+      }
     }
   };
 
   const actionBusy = Boolean(actionId);
-  const confirmCopy = confirmAction ? nodesConfirmCopy(confirmAction) : null;
+  const confirmCopy = confirmAction ? nodesConfirmCopy(confirmAction, t) : null;
 
   const pageHeader = (
     <TitleHeader
@@ -324,7 +347,7 @@ export function ClientNodesPage({ projectId }: ClientNodesPageProps) {
       <>
         {pageHeader}
         <Typography variant="p" className={styles.error}>
-          No project yet. Create one on Overview first.
+          {t("nodes.page.noProject")}
         </Typography>
       </>
     );

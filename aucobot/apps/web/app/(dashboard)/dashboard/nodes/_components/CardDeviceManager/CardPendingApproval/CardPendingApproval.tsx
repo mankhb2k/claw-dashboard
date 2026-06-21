@@ -1,13 +1,14 @@
 "use client";
 
-import type { ApprovalGroup } from "@/utils/nodes/nodes-utils";
+import styles from "./CardPendingApproval.module.css";
+import pageStyles from "../../../nodes.module.css";
+import { Button, Typography } from "@/components/ui";
+
 import type {
   DevicePairingPending,
   NodePairingPending,
 } from "@/schemas/nodes.schema";
-import { Button, Typography } from "@/components/ui";
-import pageStyles from "../../../nodes.module.css";
-import styles from "./CardPendingApproval.module.css";
+import type { ApprovalGroup } from "@/utils/nodes/nodes-utils";
 
 type CardPendingApprovalProps = {
   group: ApprovalGroup;

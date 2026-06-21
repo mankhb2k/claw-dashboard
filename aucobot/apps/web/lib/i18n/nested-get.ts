@@ -1,4 +1,4 @@
-/** Lấy chuỗi theo path dạng `channels.page.title` từ object lồng nhau. */
+/** Look up a string by dot path such as `channels.page.title` from a nested object. */
 export function getNestedString(
   obj: Record<string, unknown>,
   path: string,
@@ -12,7 +12,7 @@ export function getNestedString(
   return typeof cur === 'string' ? cur : undefined
 }
 
-/** Thay `{{key}}` trong template bằng giá trị từ `vars`. */
+/** Replace `{{key}}` placeholders in a template with values from `vars`. */
 export function interpolate(
   template: string,
   vars?: Record<string, string>,

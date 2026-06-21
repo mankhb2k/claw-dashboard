@@ -1,11 +1,14 @@
 import { randomUUID } from 'node:crypto';
+
 import { BadRequestException, Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { getDecryptedProviderKey } from '../../../ai-editor/lib/get-decrypted-provider-key';
 import {
   recordEditorUsageFailure,
   recordEditorUsageSuccess,
 } from '../../../ai-editor/lib/record-editor-usage';
+import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
 import {
   AGENT_AI_EDITOR_MAX_MARKDOWN_CHARS,
   AGENT_AI_EDITOR_MAX_MESSAGES,
@@ -14,16 +17,16 @@ import {
   buildAgentAiEditorSystemPrompt,
   parseAgentAiEditorResponse,
 } from '../../lib/agent-ai-editor.prompt';
+import {
+  getAgentAiEditorAdapter,
+  isAgentAiEditorProviderSupported,
+} from '../../providers/agent-ai-editor-registry';
+
 import type {
   AgentAiEditorCompleteResult,
   AgentAiEditorMessage,
   AgentContextForPrompt,
 } from '../../lib/agent-ai-editor.types';
-import {
-  getAgentAiEditorAdapter,
-  isAgentAiEditorProviderSupported,
-} from '../../providers/agent-ai-editor-registry';
-import { ModelUsageRecorderService } from '../../../usage/services/model-usage-recorder/model-usage-recorder.service';
 
 @Injectable()
 export class AgentAiEditorService {
@@ -113,7 +116,12 @@ export class AgentAiEditorService {
 
       return parsed;
     } catch (err) {
-      recordEditorUsageFailure(this.usageRecorder, usageBase, err, usageMetadata);
+      recordEditorUsageFailure(
+        this.usageRecorder,
+        usageBase,
+        err,
+        usageMetadata,
+      );
       throw err;
     }
   }

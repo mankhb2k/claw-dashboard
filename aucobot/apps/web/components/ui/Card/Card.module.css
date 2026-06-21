@@ -6,7 +6,6 @@
   box-shadow: var(--shadow-sm);
   padding: 20px;
   transition:
-    border-color var(--transition-md) ease,
     box-shadow var(--transition-md) ease,
     transform var(--transition-fast) ease;
 }
@@ -37,18 +36,12 @@
 }
 
 /* --- HOVER STATE --- */
-.card:not([data-disable-hover="true"]):hover {
-  border-color: var(--color-card-boder-hover);
-}
-
-/* Keyboard focus on parent link should behave like hover */
 :global(a:focus-visible:has(> [data-hover])) {
   outline: none;
 }
 
 :global(a:focus-visible:has(> [data-hover]))
   > .card:not([data-disable-hover="true"]) {
-  border-color: var(--color-border-focus);
   box-shadow: var(--shadow-sm);
 }
 

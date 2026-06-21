@@ -1,5 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { IconProvider } from "@/components/ui/IconProvider/IconProvider";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
 
 const demoIcons = [
   {

@@ -1,4 +1,4 @@
-/** Max upload size for user avatars (OSS DB / Cloud object storage). */
+/** Max upload size for user avatars. */
 export const AVATAR_MAX_BYTES = 512 * 1024;
 
 export const AVATAR_ALLOWED_MIME_TYPES = new Set([

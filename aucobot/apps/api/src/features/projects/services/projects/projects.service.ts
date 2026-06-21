@@ -5,19 +5,20 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ProjectStatus } from '@aucobot/database';
 import { customAlphabet } from 'nanoid';
+
 import { PrismaService } from '../../../../core/database/prisma.service';
-import { toProjectDto, type ProjectDto } from '../../projects.mapper';
 import { CreateProjectDto } from '../../dto/create.dto';
-import { WorkspaceService } from '../../workspace/services/workspace/workspace.service';
+import { toProjectDto, type ProjectDto } from '../../projects.mapper';
 import {
   resolveGatewayEndpoint,
   resolveOssGatewayToken,
 } from '../../runtime/gateway-endpoint';
-import { gatewayTokenForNewProject } from '@aucobot/control-plane-core';
-import { StaticGatewayProvisioner } from '@aucobot/runtime-oss';
 import { isOssRuntime } from '../../runtime/runtime-mode';
+import { WorkspaceService } from '../../workspace/services/workspace/workspace.service';
+import { gatewayTokenForNewProject } from '@aucobot/control-plane-core';
+import { ProjectStatus } from '@aucobot/database';
+import { StaticGatewayProvisioner } from '@aucobot/runtime-oss';
 
 const subdomainId = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 10);
 
@@ -53,7 +54,9 @@ export class ProjectsService {
       throw new NotFoundException('User not found');
     }
 
-    const existing = await this.prisma.project.findUnique({ where: { userId } });
+    const existing = await this.prisma.project.findUnique({
+      where: { userId },
+    });
     if (existing) {
       throw new ConflictException('User already has a project');
     }
@@ -74,7 +77,10 @@ export class ProjectsService {
       await this.ossProvisioner.provision(project.id, {
         gatewayToken,
         onBootstrap: async (projectId, token) => {
-          await this.workspace.bootstrapProjectWorkspace({ projectId, gatewayToken: token });
+          await this.workspace.bootstrapProjectWorkspace({
+            projectId,
+            gatewayToken: token,
+          });
         },
       });
 
@@ -89,7 +95,8 @@ export class ProjectsService {
       });
       return toProjectDto(updated);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Project provisioning failed';
+      const message =
+        err instanceof Error ? err.message : 'Project provisioning failed';
       await this.prisma.project.update({
         where: { id: project.id },
         data: {
@@ -101,19 +108,19 @@ export class ProjectsService {
     }
   }
 
-  async respawn(_userId: string, _projectId: string): Promise<ProjectDto> {
+  respawn(_userId: string, _projectId: string): Promise<ProjectDto> {
     throw new BadRequestException(
       isOssRuntime() ? OSS_RUNTIME_ACTION_MSG : CLOUD_RUNTIME_MSG,
     );
   }
 
-  async start(_userId: string, _projectId: string): Promise<ProjectDto> {
+  start(_userId: string, _projectId: string): Promise<ProjectDto> {
     throw new BadRequestException(
       isOssRuntime() ? OSS_RUNTIME_ACTION_MSG : CLOUD_RUNTIME_MSG,
     );
   }
 
-  async stop(_userId: string, _projectId: string): Promise<ProjectDto> {
+  stop(_userId: string, _projectId: string): Promise<ProjectDto> {
     throw new BadRequestException(
       isOssRuntime() ? OSS_RUNTIME_ACTION_MSG : CLOUD_RUNTIME_MSG,
     );
@@ -144,49 +151,55 @@ export class ProjectsService {
     await this.workspace.syncGatewayAuthToDisk(project.id, canonicalToken);
 
     const envToken = process.env.OPENCLAW_GATEWAY_TOKEN?.trim();
-    if (envToken && project.gatewayToken !== canonicalToken) {
-      project = await this.prisma.project.update({
-        where: { id: project.id },
+    let currentProject = project;
+    if (envToken && currentProject.gatewayToken !== canonicalToken) {
+      currentProject = await this.prisma.project.update({
+        where: { id: currentProject.id },
         data: { gatewayToken: canonicalToken },
       });
     }
 
     const live = await this.ossProvisioner.getStatus({
-      projectId: project.id,
+      projectId: currentProject.id,
       mode: 'oss',
       gatewayToken: canonicalToken,
     });
 
     const gatewayDownMsg =
-      'Gateway is not reachable on port 18789. Run Openclaw and match OPENCLAW_GATEWAY_TOKEN in aucobot/.env.';
+      'Gateway is not reachable on port 18789. Run Openclaw and match OPENCLAW_GATEWAY_TOKEN in aucobot/apps/.env.';
 
-    let nextStatus = project.status;
-    let errorMessage = project.errorMessage;
+    let nextStatus = currentProject.status;
+    let errorMessage = currentProject.errorMessage;
 
     if (live === 'running') {
-      if (project.status !== ProjectStatus.RUNNING) {
+      if (currentProject.status !== ProjectStatus.RUNNING) {
         nextStatus = ProjectStatus.RUNNING;
         errorMessage = null;
       }
     } else if (
-      project.status === ProjectStatus.RUNNING ||
-      project.status === ProjectStatus.CREATING
+      currentProject.status === ProjectStatus.RUNNING ||
+      currentProject.status === ProjectStatus.CREATING
     ) {
       nextStatus = ProjectStatus.ERROR;
       errorMessage = errorMessage?.trim() || gatewayDownMsg;
     }
 
-    if (nextStatus === project.status && errorMessage === project.errorMessage) {
-      return project;
+    if (
+      nextStatus === currentProject.status &&
+      errorMessage === currentProject.errorMessage
+    ) {
+      return currentProject;
     }
 
     return this.prisma.project.update({
-      where: { id: project.id },
+      where: { id: currentProject.id },
       data: {
         status: nextStatus,
         errorMessage,
         lastActiveAt:
-          nextStatus === ProjectStatus.RUNNING ? new Date() : project.lastActiveAt,
+          nextStatus === ProjectStatus.RUNNING
+            ? new Date()
+            : currentProject.lastActiveAt,
       },
     });
   }
@@ -195,7 +208,10 @@ export class ProjectsService {
     return this.requireOwned(userId, projectId);
   }
 
-  async getGatewayToken(userId: string, projectId: string): Promise<{ token: string }> {
+  async getGatewayToken(
+    userId: string,
+    projectId: string,
+  ): Promise<{ token: string }> {
     const project = await this.requireOwned(userId, projectId);
     return { token: resolveOssGatewayToken(project.gatewayToken) };
   }

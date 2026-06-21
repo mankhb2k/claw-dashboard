@@ -43,13 +43,11 @@ export const viAgent = {
     collaboration: 'Cộng tác',
   },
   modalTemplate: {
-    loadError:
-      'Không tải được template. Kiểm tra API đang chạy và database đã seed (pnpm db:seed).',
+    loadError: 'Không tải được template. Kiểm tra API đang chạy.',
     title: 'Chọn template để bắt đầu dự án',
     description:
       'Bắt đầu nhanh hơn với template tối ưu từ thư viện OpenClaw, hoặc tạo từ đầu.',
-    empty:
-      'Chưa có template trong hệ thống. Chạy seed từ packages/database: pnpm db:seed',
+    empty: 'Chưa có template nào.',
   },
   editPanel: {
     tabs: {
@@ -378,6 +376,7 @@ export const viAgent = {
       loadApiKeys: 'Không tải được API keys',
       createApiKey: 'Không tạo được API key',
       revokeApiKey: 'Không thu hồi được API key',
+      copyApiKey: 'Không thể sao chép API key',
     },
     thirdParty: 'Bên thứ ba',
     apiKeys: {
@@ -436,5 +435,30 @@ export const viAgent = {
       connected: 'Đã kết nối',
       notConnected: 'Chưa kết nối — kết nối ngay',
     },
+  },
+  validation: {
+    name: {
+      required: 'Tên agent là bắt buộc',
+      max: 'Tên agent tối đa 120 ký tự',
+    },
+    description: {
+      max: 'Mô tả tối đa 500 ký tự',
+    },
+    avatar: {
+      required: 'Avatar là bắt buộc',
+    },
+    tags: {
+      max: 'Tối đa 20 tag',
+    },
+    skillNames: {
+      max: 'Tối đa 100 skill mỗi agent',
+    },
+    instructions: {
+      roleRequired: 'Mô tả vai trò là bắt buộc',
+      agentsMdRequired: 'Nội dung AGENTS.md là bắt buộc',
+    },
+  },
+  defaults: {
+    newAgentName: 'Agent mới',
   },
 } as const

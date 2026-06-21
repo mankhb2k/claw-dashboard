@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import React from 'react';
+
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -12,6 +12,8 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/AlertDialog/AlertDialog';
 import { Button } from '@/components/ui/Button/Button';
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 const meta: Meta<typeof AlertDialog> = {
   title: 'UI/AlertDialog',

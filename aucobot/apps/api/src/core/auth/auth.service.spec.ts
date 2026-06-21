@@ -106,7 +106,9 @@ describe('AuthService.resolveSession', () => {
       refreshToken: 'refresh-raw-new',
       user: publicUser,
     });
-    expect(prisma.refreshToken.delete).toHaveBeenCalledWith({ where: { id: 'rt_1' } });
+    expect(prisma.refreshToken.delete).toHaveBeenCalledWith({
+      where: { id: 'rt_1' },
+    });
   });
 
   it('throws when access and refresh are both missing or invalid', async () => {

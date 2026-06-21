@@ -1,5 +1,6 @@
-import type { ChannelDefinition, ProjectChannel } from '@/schemas/project.schema';
 import { channelIconFor } from './channel-icons';
+
+import type { ChannelDefinition, ProjectChannel } from '@/schemas/project.schema';
 
 export type ChannelCatalogCard = {
   channelId: string;

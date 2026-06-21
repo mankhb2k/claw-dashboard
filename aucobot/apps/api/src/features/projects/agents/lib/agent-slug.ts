@@ -11,7 +11,9 @@ export function validateAgentSlug(slug: string): string {
     );
   }
   if (RESERVED_SLUGS.has(normalized)) {
-    throw new BadRequestException('slug "main" is reserved for the system default agent');
+    throw new BadRequestException(
+      'slug "main" is reserved for the system default agent',
+    );
   }
   return normalized;
 }

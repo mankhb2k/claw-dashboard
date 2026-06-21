@@ -1,5 +1,6 @@
-import { api } from '@/lib/http/axios'
 import { z } from 'zod'
+
+import { api } from '@/lib/http/axios'
 
 const chatAgentSchema = z.object({
   id: z.string(),

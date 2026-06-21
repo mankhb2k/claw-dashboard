@@ -1,6 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
-import { ChatLiveThread } from '@/app/(dashboard)/dashboard/chat/_components/ChatLiveThread/ChatLiveThread'
 
 import { withChatContentArea } from './chat-story.decorators'
 import {
@@ -13,6 +11,9 @@ import {
   toolCardDefaultArgs,
   type ToolCardStoryArgs,
 } from './tool-activity.story-controls'
+import { ChatLiveThread } from '@/app/(dashboard)/dashboard/chat/_components/ChatLiveThread/ChatLiveThread'
+
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 type LiveThreadStoryArgs = ToolCardStoryArgs & {
   showToolPreparing: boolean

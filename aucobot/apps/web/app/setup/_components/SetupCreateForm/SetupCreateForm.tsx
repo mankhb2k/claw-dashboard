@@ -1,10 +1,12 @@
 "use client";
 
-import { Button, Typography } from "@/components/ui";
-import { Flex } from "@/components/layout";
-import { OSS_GATEWAY_DEV_URL } from "@/lib/runtime/oss-gateway";
-import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
 import sharedStyles from "../setup-shared.module.css";
+import { SetupSectionHeader } from "../SetupSectionHeader/SetupSectionHeader";
+import { Flex } from "@/components/layout";
+import { Button, Typography } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
+import { OSS_GATEWAY_DEV_URL } from "@/lib/runtime/oss-gateway";
+import { localizeSetupMessage } from "@/utils/setup/setup-i18n";
 
 interface SetupCreateFormProps {
   oss: boolean;
@@ -13,35 +15,40 @@ interface SetupCreateFormProps {
   onCreate: () => void;
 }
 
-export function SetupCreateForm({ oss, busy, error, onCreate }: SetupCreateFormProps) {
+export function SetupCreateForm({
+  oss,
+  busy,
+  error,
+  onCreate,
+}: SetupCreateFormProps) {
+  const { t } = useI18n();
+  const localizedError = localizeSetupMessage(error, t);
+
   return (
     <Flex direction="column" gap={24}>
       <SetupSectionHeader
-        badge="Step 1 · One time"
-        title="Get started"
+        badge={t("setup.create.badge")}
+        title={t("setup.create.title")}
         description={
           oss ? (
             <>
-              We will create your workspace and verify the shared OpenClaw gateway at{" "}
-              <strong>{OSS_GATEWAY_DEV_URL}</strong>. If the gateway is not running, you will stay
-              on this page with steps to fix it before opening the dashboard.
+              {t("setup.create.description.ossBefore")}{" "}
+              <strong>{OSS_GATEWAY_DEV_URL}</strong>.{" "}
+              {t("setup.create.description.ossAfter")}
             </>
           ) : (
-            <>
-              The backend will create your workspace and start an OpenClaw Docker container. If
-              startup fails, you can retry from this page instead of landing on a broken dashboard.
-            </>
+            t("setup.create.description.cloud")
           )
         }
       />
       <Flex direction="column" gap={16}>
-        {error && (
+        {localizedError && (
           <Typography variant="small" className={sharedStyles.errorText}>
-            {error}
+            {localizedError}
           </Typography>
         )}
         <Button type="button" loading={busy} fullWidth onClick={onCreate}>
-          {oss ? "Create workspace" : "Create & start container"}
+          {oss ? t("setup.create.submit.oss") : t("setup.create.submit.cloud")}
         </Button>
       </Flex>
     </Flex>

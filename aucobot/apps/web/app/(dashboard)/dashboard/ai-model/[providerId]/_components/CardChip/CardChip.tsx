@@ -1,8 +1,9 @@
 "use client";
 
-import { Card, Typography } from "@/components/ui";
-import type { ModelDef } from "@/utils/ai-model/providers-data";
 import styles from "./CardChip.module.css";
+import { Card, Typography } from "@/components/ui";
+
+import type { ModelDef } from "@/utils/ai-model/providers-data";
 
 interface CardChipProps {
   model: ModelDef;

@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React from "react";
+
 import styles from "./BackButton.module.css";
 
 const DEFAULT_HREF = "/dashboard/agent";

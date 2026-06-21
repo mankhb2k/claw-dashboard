@@ -1,9 +1,10 @@
-import type { CSSProperties } from "react";
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-
+import { SidebarFooter } from "./SidebarFooter";
 import { I18nProvider } from "@/lib/i18n";
 
-import { SidebarFooter } from "./SidebarFooter";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import type { CSSProperties } from "react";
+
+
 
 /** Sidebar-sized frame so spacing matches the real shell. */
 const frameStyle = (width: number): CSSProperties => ({

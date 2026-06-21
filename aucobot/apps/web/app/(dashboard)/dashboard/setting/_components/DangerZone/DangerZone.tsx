@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Flex } from "@/components/layout";
-import { Button, Input, Typography } from "@/components/ui";
 import { AlertTriangle, Trash2 } from "lucide-react";
-import { useProjectStore } from "@/stores/project.store";
-import { useI18n } from "@/lib/i18n";
-import type { Project } from "@/schemas/project.schema";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import styles from "./DangerZone.module.css";
 import { TitleSection } from "../TitleSection/TitleSection";
+import { Flex } from "@/components/layout";
+import { Button, Input, Typography } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
+import { useProjectStore } from "@/stores/project.store";
+
+import type { Project } from "@/schemas/project.schema";
 
 interface Props {
   project: Project;

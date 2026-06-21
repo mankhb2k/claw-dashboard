@@ -1,28 +1,34 @@
-import { Logger } from '@nestjs/common';
-import {
-  extractAccessTokenFromRequest,
-  verifyAccessToken,
-} from '@aucobot/control-plane-core';
-
 jest.mock('../../../services/projects/projects.service', () => ({
   ProjectsService: class MockProjectsService {},
 }));
 
-jest.mock('../../services/chat-gateway-proxy/chat.gateway-proxy.service', () => ({
-  ChatGatewayProxyService: class MockChatGatewayProxyService {},
-}));
+jest.mock(
+  '../../services/chat-gateway-proxy/chat.gateway-proxy.service',
+  () => ({
+    ChatGatewayProxyService: class MockChatGatewayProxyService {},
+  }),
+);
 
 jest.mock('@aucobot/control-plane-core', () => ({
   extractAccessTokenFromRequest: jest.fn(),
   verifyAccessToken: jest.fn(),
 }));
 
-const extractAccessTokenFromRequestMock = extractAccessTokenFromRequest as jest.MockedFunction<
-  typeof extractAccessTokenFromRequest
->;
-const verifyAccessTokenMock = verifyAccessToken as jest.MockedFunction<typeof verifyAccessToken>;
+import { Logger } from '@nestjs/common';
 
 import { ChatWsRegistrar } from './chat-ws.registrar';
+import {
+  extractAccessTokenFromRequest,
+  verifyAccessToken,
+} from '@aucobot/control-plane-core';
+
+const extractAccessTokenFromRequestMock =
+  extractAccessTokenFromRequest as jest.MockedFunction<
+    typeof extractAccessTokenFromRequest
+  >;
+const verifyAccessTokenMock = verifyAccessToken as jest.MockedFunction<
+  typeof verifyAccessToken
+>;
 
 const PROJECT_ID = 'proj_test_1';
 const USER_ID = 'user_test_1';
@@ -68,8 +74,12 @@ describe('ChatWsRegistrar', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined);
+    logSpy = jest
+      .spyOn(Logger.prototype, 'log')
+      .mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -79,7 +89,9 @@ describe('ChatWsRegistrar', () => {
 
   describe('onApplicationBootstrap', () => {
     it('warns and skips route when @fastify/websocket is missing', () => {
-      const { registrar, getHandler } = createRegistrar({ hasWebsocket: false });
+      const { registrar, getHandler } = createRegistrar({
+        hasWebsocket: false,
+      });
 
       registrar.onApplicationBootstrap();
 
@@ -117,14 +129,19 @@ describe('ChatWsRegistrar', () => {
         socket: ReturnType<typeof createSocket>,
         req: Record<string, unknown>,
       ) => void;
-      await handler(socket, req);
+      handler(socket, req);
+      await new Promise<void>((resolve) => {
+        setImmediate(resolve);
+      });
     }
 
     it('closes with 1008 when project id is missing', async () => {
       const { registrar, getHandler } = createRegistrar();
       const socket = createSocket();
 
-      await invokeHandler(registrar, getHandler, socket, { params: { projectId: '   ' } });
+      await invokeHandler(registrar, getHandler, socket, {
+        params: { projectId: '   ' },
+      });
 
       expect(socket.close).toHaveBeenCalledWith(1008, 'missing project id');
     });
@@ -181,7 +198,10 @@ describe('ChatWsRegistrar', () => {
         gatewayWsUrl: 'ws://127.0.0.1:18789',
         gatewayToken: 'gw-token',
       });
-      const { registrar, getHandler, proxy } = createRegistrar({ getRuntime, bridge });
+      const { registrar, getHandler, proxy } = createRegistrar({
+        getRuntime,
+        bridge,
+      });
       const socket = createSocket();
       extractAccessTokenFromRequestMock.mockReturnValue('token');
       verifyAccessTokenMock.mockReturnValue({ sub: USER_ID } as never);

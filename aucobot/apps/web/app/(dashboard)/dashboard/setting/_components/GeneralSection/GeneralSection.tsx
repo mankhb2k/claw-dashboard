@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button, Input, Select, Typography } from "@/components/ui";
 import { Copy, Check } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import styles from "./GeneralSection.module.css";
+import { CardSection } from "../CardSection/CardSection";
+import { TitleSection } from "../TitleSection/TitleSection";
 import { Flex } from "@/components/layout";
+import { Button, Input, Select, Typography } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
 import {
   useI18n,
   SUPPORTED_LOCALES,
   writeLocale,
   type Locale,
 } from "@/lib/i18n";
-import { projectApi } from "@/lib/api/project";
+import { isOssRuntime } from "@/lib/runtime/runtime-mode";
+
 import type { Project } from "@/schemas/project.schema";
-import styles from "./GeneralSection.module.css";
-import { CardSection } from "../CardSection/CardSection";
-import { TitleSection } from "../TitleSection/TitleSection";
 
 interface Props {
   project: Project;
@@ -29,15 +32,18 @@ type FormValues = {
 
 export function GeneralSection({ project }: Props) {
   const { t, locale } = useI18n();
+  const isOss = isOssRuntime();
   const [pendingLocale, setPendingLocale] = useState<Locale>(locale);
+  const [trackedLocale, setTrackedLocale] = useState(locale);
   const [copied, setCopied] = useState<"subdomain" | "id" | null>(null);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  useEffect(() => {
+  if (locale !== trackedLocale) {
+    setTrackedLocale(locale);
     setPendingLocale(locale);
-  }, [locale]);
+  }
 
   const formSchema = useMemo(
     () =>
@@ -102,10 +108,14 @@ export function GeneralSection({ project }: Props) {
     }
   };
 
-  const copyToClipboard = (text: string, type: "subdomain" | "id") => {
-    void navigator.clipboard.writeText(text);
-    setCopied(type);
-    setTimeout(() => setCopied(null), 2000);
+  const copyToClipboard = async (text: string, type: "subdomain" | "id") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(type);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      // Clipboard blocked — do not show false "copied" state.
+    }
   };
 
   const renderCopyField = (
@@ -128,7 +138,7 @@ export function GeneralSection({ project }: Props) {
         iconOnly
         className={styles.copyBtn}
         aria-label={ariaLabel}
-        onClick={() => copyToClipboard(value, type)}
+        onClick={() => void copyToClipboard(value, type)}
       >
         {copied === type ? (
           <Check size={14} aria-hidden />
@@ -184,23 +194,25 @@ export function GeneralSection({ project }: Props) {
             </CardSection.Action>
           </CardSection.Row>
 
-          <CardSection.Row className={styles.cardRow}>
-            <CardSection.Info className={styles.rowInfo}>
-              <Typography variant="p" weight="medium">
-                {t("settings.general.subdomain.label")}
-              </Typography>
-              <Typography variant="small" color="muted">
-                {t("settings.general.subdomain.description")}
-              </Typography>
-            </CardSection.Info>
-            <CardSection.Action className={styles.rowAction}>
-              {renderCopyField(
-                subdomainValue,
-                "subdomain",
-                t("settings.general.subdomain.copyAria"),
-              )}
-            </CardSection.Action>
-          </CardSection.Row>
+          {!isOss ? (
+            <CardSection.Row className={styles.cardRow}>
+              <CardSection.Info className={styles.rowInfo}>
+                <Typography variant="p" weight="medium">
+                  {t("settings.general.subdomain.label")}
+                </Typography>
+                <Typography variant="small" color="muted">
+                  {t("settings.general.subdomain.description")}
+                </Typography>
+              </CardSection.Info>
+              <CardSection.Action className={styles.rowAction}>
+                {renderCopyField(
+                  subdomainValue,
+                  "subdomain",
+                  t("settings.general.subdomain.copyAria"),
+                )}
+              </CardSection.Action>
+            </CardSection.Row>
+          ) : null}
 
           <CardSection.Row className={styles.cardRow}>
             <CardSection.Info className={styles.rowInfo}>

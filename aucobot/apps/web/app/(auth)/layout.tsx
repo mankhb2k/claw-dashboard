@@ -1,4 +1,9 @@
+import Image from "next/image";
+
 import styles from "./auth.module.css";
+import { shouldUseUnoptimized } from "@/utils/image/app-image.utils";
+
+const BRAND_ICON = "/aucobot-icon.svg";
 
 export default function AuthLayout({
   children,
@@ -9,14 +14,14 @@ export default function AuthLayout({
     <div className={styles.shell}>
       <div className={styles.card}>
         <div className={styles.logo}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/aucobot-icon.svg"
+          <Image
+            src={BRAND_ICON}
             alt=""
             aria-hidden
             className={styles.logoIcon}
             width={28}
             height={28}
+            unoptimized={shouldUseUnoptimized(BRAND_ICON)}
           />
           <span className={styles.logoText}>AUCOBOT</span>
         </div>

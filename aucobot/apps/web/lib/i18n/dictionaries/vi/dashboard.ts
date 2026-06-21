@@ -66,4 +66,14 @@ export const viDashboard = {
       createFailed: "Tạo project thất bại",
     },
   },
+  schedule: {
+    title: 'Lịch chạy',
+    subtitle: 'Cron job của tất cả agent trong project (gateway).',
+    viewAll: 'Xem tất cả',
+    jobsUsed: '/ {{limit}} job đã dùng · còn {{remaining}}',
+    failedJobs: '{{count}} job có lần chạy cuối thất bại',
+    review: 'Xem lại →',
+    projectSchedules: 'Lịch project →',
+    manageAgents: 'Quản lý agents →',
+  },
 } as const;

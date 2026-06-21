@@ -4,15 +4,29 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConnectorConnectionStatus } from '@aucobot/database';
 import { JwtService } from '@nestjs/jwt';
+
+import { toPrismaInputJson } from '../../../../../core/common/utils/prisma-json.util';
 import { PrismaService } from '../../../../../core/database/prisma.service';
-import { decryptSecret, encryptSecret, maskSecret } from '@aucobot/control-plane-core';
 import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
-import { listActiveConnectors, resolveConnector } from '../../lib/connector-registry';
+import {
+  listActiveConnectors,
+  resolveConnector,
+} from '../../lib/connector-registry';
+import {
+  decryptSecret,
+  encryptSecret,
+  maskSecret,
+} from '@aucobot/control-plane-core';
+import { ConnectorConnectionStatus, Prisma } from '@aucobot/database';
+
 import type { ProjectConnectorDto } from '../../lib/connectors.types';
 
 export type { ProjectConnectorDto } from '../../lib/connectors.types';
+
+type ConnectorRowWithSecrets = Prisma.ProjectConnectorGetPayload<{
+  include: { secrets: true };
+}>;
 
 @Injectable()
 export class ProjectConnectorsService {
@@ -57,11 +71,15 @@ export class ProjectConnectorsService {
   ): Promise<ProjectConnectorDto> {
     const adapter = resolveConnector(input.connectorSlug);
     if (!adapter) {
-      throw new BadRequestException(`Unknown connector: ${input.connectorSlug}`);
+      throw new BadRequestException(
+        `Unknown connector: ${input.connectorSlug}`,
+      );
     }
 
     const existing = await this.prisma.projectConnector.findUnique({
-      where: { projectId_connectorSlug: { projectId, connectorSlug: adapter.slug } },
+      where: {
+        projectId_connectorSlug: { projectId, connectorSlug: adapter.slug },
+      },
     });
     if (existing) {
       throw new ConflictException('Connector already exists for this project');
@@ -77,7 +95,7 @@ export class ProjectConnectorsService {
         connectionStatus: enabled
           ? ConnectorConnectionStatus.CONNECTED
           : ConnectorConnectionStatus.DISCONNECTED,
-        config: (input.config ?? {}) as object,
+        config: toPrismaInputJson(input.config ?? {}),
       },
       include: { secrets: true },
     });
@@ -92,13 +110,17 @@ export class ProjectConnectorsService {
   async update(
     projectId: string,
     connectorId: string,
-    input: { displayName?: string; enabled?: boolean; config?: Record<string, unknown> },
+    input: {
+      displayName?: string;
+      enabled?: boolean;
+      config?: Record<string, unknown>;
+    },
   ): Promise<ProjectConnectorDto> {
     const row = await this.requireConnector(projectId, connectorId);
     const data: {
       displayName?: string;
       enabled?: boolean;
-      config?: object;
+      config?: Prisma.InputJsonValue;
       connectionStatus?: ConnectorConnectionStatus;
     } = {};
 
@@ -106,14 +128,16 @@ export class ProjectConnectorsService {
       data.displayName = input.displayName.trim() || row.displayName;
     }
     if (input.config !== undefined) {
-      data.config = input.config as object;
+      data.config = toPrismaInputJson(input.config);
     }
     if (input.enabled !== undefined) {
       data.enabled = input.enabled;
       if (!input.enabled) {
         data.connectionStatus = ConnectorConnectionStatus.DISCONNECTED;
       } else if (row.connectionStatus !== ConnectorConnectionStatus.CONNECTED) {
-        throw new BadRequestException('Connector chưa được xác thực OAuth — hãy kết nối trước');
+        throw new BadRequestException(
+          'Connector chưa được xác thực OAuth — hãy kết nối trước',
+        );
       }
     }
 
@@ -145,7 +169,10 @@ export class ProjectConnectorsService {
 
     await this.prisma.projectConnectorSecret.upsert({
       where: {
-        projectConnectorId_secretKey: { projectConnectorId: row.id, secretKey: key },
+        projectConnectorId_secretKey: {
+          projectConnectorId: row.id,
+          secretKey: key,
+        },
       },
       create: {
         projectConnectorId: row.id,
@@ -156,7 +183,11 @@ export class ProjectConnectorsService {
     });
   }
 
-  async deleteSecret(projectId: string, connectorId: string, secretKey: string): Promise<void> {
+  async deleteSecret(
+    projectId: string,
+    connectorId: string,
+    secretKey: string,
+  ): Promise<void> {
     const row = await this.requireConnector(projectId, connectorId);
     const key = secretKey.trim();
     if (!key) throw new BadRequestException('secretKey required');
@@ -166,7 +197,10 @@ export class ProjectConnectorsService {
     await this.syncOpenClawConfig(projectId);
   }
 
-  async test(projectId: string, connectorId: string): Promise<{ ok: boolean; message?: string }> {
+  async test(
+    projectId: string,
+    connectorId: string,
+  ): Promise<{ ok: boolean; message?: string }> {
     const row = await this.requireConnector(projectId, connectorId);
     const adapter = resolveConnector(row.connectorSlug);
     if (!adapter) {
@@ -175,19 +209,31 @@ export class ProjectConnectorsService {
 
     const secrets = this.decryptSecrets(row.secrets);
     if (!secrets.refresh_token) {
-      await this.markTestResult(row.id, false, 'Chưa có refresh token — kết nối OAuth trước');
+      await this.markTestResult(
+        row.id,
+        false,
+        'Chưa có refresh token — kết nối OAuth trước',
+      );
       return { ok: false, message: 'Chưa có refresh token' };
     }
 
     const result = await adapter.testConnection(secrets);
-    await this.markTestResult(row.id, result.ok, result.ok ? null : (result.message ?? 'Test failed'));
+    await this.markTestResult(
+      row.id,
+      result.ok,
+      result.ok ? null : (result.message ?? 'Test failed'),
+    );
     if (result.ok) {
       await this.syncOpenClawConfig(projectId);
     }
     return result;
   }
 
-  async startOAuth(userId: string, projectId: string, connectorSlug: string): Promise<{ url: string }> {
+  async startOAuth(
+    userId: string,
+    projectId: string,
+    connectorSlug: string,
+  ): Promise<{ url: string }> {
     const adapter = resolveConnector(connectorSlug);
     if (!adapter?.oauthScopes?.length) {
       throw new BadRequestException('Connector does not support OAuth');
@@ -199,7 +245,9 @@ export class ProjectConnectorsService {
     }
 
     let row = await this.prisma.projectConnector.findUnique({
-      where: { projectId_connectorSlug: { projectId, connectorSlug: adapter.slug } },
+      where: {
+        projectId_connectorSlug: { projectId, connectorSlug: adapter.slug },
+      },
     });
     if (!row) {
       row = await this.prisma.projectConnector.create({
@@ -214,7 +262,12 @@ export class ProjectConnectorsService {
     }
 
     const state = await this.jwt.signAsync(
-      { purpose: 'connector_oauth', sub: userId, projectId, connectorSlug: adapter.slug },
+      {
+        purpose: 'connector_oauth',
+        sub: userId,
+        projectId,
+        connectorSlug: adapter.slug,
+      },
       { expiresIn: '15m' },
     );
 
@@ -222,8 +275,16 @@ export class ProjectConnectorsService {
     return { url };
   }
 
-  async handleOAuthCallback(code: string, state: string): Promise<{ redirectUrl: string }> {
-    let payload: { purpose?: string; sub?: string; projectId?: string; connectorSlug?: string };
+  async handleOAuthCallback(
+    code: string,
+    state: string,
+  ): Promise<{ redirectUrl: string }> {
+    let payload: {
+      purpose?: string;
+      sub?: string;
+      projectId?: string;
+      connectorSlug?: string;
+    };
     try {
       payload = await this.jwt.verifyAsync(state);
     } catch {
@@ -294,7 +355,9 @@ export class ProjectConnectorsService {
 
     await this.syncOpenClawConfig(payload.projectId);
 
-    const frontend = (process.env.FRONTEND_URL ?? 'http://localhost:8386').replace(/\/$/, '');
+    const frontend = (
+      process.env.FRONTEND_URL ?? 'http://localhost:8386'
+    ).replace(/\/$/, '');
     const redirectUrl = `${frontend}/dashboard/connector/${adapter.slug}?connected=1`;
     return { redirectUrl };
   }
@@ -303,7 +366,11 @@ export class ProjectConnectorsService {
     await this.workspace.syncProjectRuntime(projectId);
   }
 
-  private async markTestResult(connectorId: string, ok: boolean, error: string | null) {
+  private async markTestResult(
+    connectorId: string,
+    ok: boolean,
+    error: string | null,
+  ) {
     await this.prisma.projectConnector.update({
       where: { id: connectorId },
       data: {
@@ -339,22 +406,7 @@ export class ProjectConnectorsService {
     return out;
   }
 
-  private toDto(
-    row: {
-      id: string;
-      projectId: string;
-      connectorSlug: string;
-      displayName: string;
-      enabled: boolean;
-      connectionStatus: ConnectorConnectionStatus;
-      config: unknown;
-      lastTestedAt: Date | null;
-      lastError: string | null;
-      createdAt: Date;
-      updatedAt: Date;
-      secrets: Array<{ secretKey: string; ciphertext: string; updatedAt: Date }>;
-    },
-  ): ProjectConnectorDto {
+  private toDto(row: ConnectorRowWithSecrets): ProjectConnectorDto {
     const adapter = resolveConnector(row.connectorSlug);
     return {
       id: row.id,
@@ -365,7 +417,7 @@ export class ProjectConnectorsService {
       connectorKind: adapter?.kind ?? 'OAUTH',
       displayName: row.displayName,
       enabled: row.enabled,
-      connectionStatus: row.connectionStatus.toLowerCase() as ProjectConnectorDto['connectionStatus'],
+      connectionStatus: row.connectionStatus.toLowerCase(),
       config: row.config,
       lastTestedAt: row.lastTestedAt?.toISOString() ?? null,
       lastError: row.lastError,
@@ -377,7 +429,11 @@ export class ProjectConnectorsService {
         masked: maskSecret(decryptSecret(s.ciphertext)),
       })),
       definition: adapter
-        ? { description: adapter.description, status: adapter.status, configSchema: null }
+        ? {
+            description: adapter.description,
+            status: adapter.status,
+            configSchema: null,
+          }
         : undefined,
     };
   }

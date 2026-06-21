@@ -44,7 +44,7 @@ const PLUGIN_ENTRY_BY_PROVIDER: Record<string, string> = {
   gemini: 'google',
   google: 'google',
   deepseek: 'deepseek',
-  groq: 'groq',
+  grok: 'xai',
   mistral: 'mistral',
   openrouter: 'openrouter',
   together: 'together',

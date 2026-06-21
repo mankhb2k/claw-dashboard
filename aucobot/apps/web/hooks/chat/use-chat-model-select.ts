@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { migrateFoundationOpenClawId } from '@aucobot/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { chatApi } from '@/lib/api/chat';
+import { translate } from '@/lib/i18n/translate';
 
 const STORAGE_PREFIX = 'agent-panel-model:';
 
@@ -33,6 +35,8 @@ function saveStoredSelection(
 }
 
 export function useChatModelSelect(projectId: string) {
+  const fetchKey = projectId || null;
+  const [trackedFetchKey, setTrackedFetchKey] = useState<string | null>(null);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [providerId, setProviderId] = useState<string | undefined>();
   const [modelId, setModelId] = useState<string | undefined>();
@@ -41,14 +45,23 @@ export function useChatModelSelect(projectId: string) {
   >(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!projectId) {
+  if (fetchKey !== trackedFetchKey) {
+    setTrackedFetchKey(fetchKey);
+    if (fetchKey) {
+      setModelsLoading(true);
+      setLoadError(null);
+    } else {
       setModelsLoading(false);
       setModelOptions(null);
-      return;
+      setProviderId(undefined);
+      setModelId(undefined);
+      setLoadError(null);
     }
+  }
 
-    setModelsLoading(true);
+  useEffect(() => {
+    if (!projectId) return;
+
     void chatApi
       .listModels(projectId)
       .then((res) => {
@@ -100,7 +113,7 @@ export function useChatModelSelect(projectId: string) {
       .catch((err) => {
         setModelOptions({ primaryModel: null, providers: [] });
         setLoadError(
-          err instanceof Error ? err.message : 'Không tải danh sách model',
+          err instanceof Error ? err.message : translate('aiModel.errors.loadModels'),
         );
       })
       .finally(() => setModelsLoading(false));

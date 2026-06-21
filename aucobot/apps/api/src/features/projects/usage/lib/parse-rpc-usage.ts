@@ -1,23 +1,32 @@
-import type { UsageSource, UsageStatus } from '@aucobot/database';
-import type { RecordUsageInput } from './usage-record.types';
 import { parseModelRef } from './parse-model-ref';
+
+import type { RecordUsageInput } from './usage-record.types';
+import type { UsageSource, UsageStatus } from '@aucobot/shared';
 
 type RpcUsageRecord = Omit<RecordUsageInput, 'projectId' | 'userId'> & {
   externalId: string;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
-function readTokenPair(raw: unknown): { inputTokens: number; outputTokens: number } {
+function readTokenPair(raw: unknown): {
+  inputTokens: number;
+  outputTokens: number;
+} {
   const o = asRecord(raw);
   if (!o) return { inputTokens: 0, outputTokens: 0 };
-  const input = o.inputTokens ?? o.input ?? o.prompt_tokens ?? o.promptTokenCount;
-  const output = o.outputTokens ?? o.output ?? o.completion_tokens ?? o.candidatesTokenCount;
+  const input =
+    o.inputTokens ?? o.input ?? o.prompt_tokens ?? o.promptTokenCount;
+  const output =
+    o.outputTokens ?? o.output ?? o.completion_tokens ?? o.candidatesTokenCount;
   return {
     inputTokens: typeof input === 'number' ? Math.max(0, Math.round(input)) : 0,
-    outputTokens: typeof output === 'number' ? Math.max(0, Math.round(output)) : 0,
+    outputTokens:
+      typeof output === 'number' ? Math.max(0, Math.round(output)) : 0,
   };
 }
 
@@ -63,7 +72,8 @@ export function parseCronRunRpcUsage(
     agentSlug: typeof root.agentId === 'string' ? root.agentId : null,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
-    latencyMs: typeof root.latencyMs === 'number' ? Math.round(root.latencyMs) : null,
+    latencyMs:
+      typeof root.latencyMs === 'number' ? Math.round(root.latencyMs) : null,
     metadata: {
       jobId,
       runId,

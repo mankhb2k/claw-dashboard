@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { Users, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import styles from "./CardCollaborationPanel.module.css";
 import { Flex } from "@/components/layout";
 import { Typography, Card, Spinner } from "@/components/ui";
-import { Users, ExternalLink } from "lucide-react";
-import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { projectApi } from "@/lib/api/project";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
 import { useProjectStore } from "@/stores/project.store";
+
 import type { ProjectCollaboration } from "@/schemas/project.schema";
-import styles from "./CardCollaborationPanel.module.css";
 
 const COLLABORATION_HREF = `${DASHBOARD_BASE_PATH}/agent/collaboration`;
 
@@ -24,15 +26,18 @@ export function CardCollaborationPanel({ agentSlug }: CardCollaborationPanelProp
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setCollaboration(null);
+    setLoading(Boolean(projectId));
+  }
 
   useEffect(() => {
     if (!projectId) {
-      setCollaboration(null);
-      setLoading(false);
       return;
     }
-
-    setLoading(true);
     void projectApi
       .getCollaboration(projectId)
       .then(setCollaboration)

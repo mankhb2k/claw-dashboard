@@ -1,11 +1,12 @@
-import type { AnthropicApiKeySmokeResult } from '../adapters/anthropic/anthropic-test-key.types';
+import { resolveProvider } from './provider-registry';
 import { smokeTestAnthropicApiKey } from '../adapters/anthropic/anthropic-test-key';
-import type { GeminiApiKeySmokeResult } from '../adapters/gemini/gemini-test-key.types';
 import { smokeTestGeminiApiKey } from '../adapters/gemini/gemini-test-key';
-import type { OpenAiApiKeySmokeResult } from '../adapters/openai/openai-test-key.types';
 import { smokeTestOpenAiApiKey } from '../adapters/openai/openai-test-key';
 import { smokeTestOpenAiCompatApiKey } from '../adapters/openai-compat/openai-compat-test-key';
-import { resolveProvider } from './provider-registry';
+
+import type { AnthropicApiKeySmokeResult } from '../adapters/anthropic/anthropic-test-key.types';
+import type { GeminiApiKeySmokeResult } from '../adapters/gemini/gemini-test-key.types';
+import type { OpenAiApiKeySmokeResult } from '../adapters/openai/openai-test-key.types';
 
 export type ProviderApiKeySmokeResult =
   | AnthropicApiKeySmokeResult

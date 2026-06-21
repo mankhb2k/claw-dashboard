@@ -1,7 +1,9 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { FastifyReply } from 'fastify';
+
 import { ProjectConnectorsService } from './services/project-connectors/project-connectors.service';
+
+import type { FastifyReply } from 'fastify';
 
 @ApiTags('connectors-oauth')
 @Controller('connectors/oauth')
@@ -16,7 +18,9 @@ export class ConnectorsOAuthController {
     @Query('error') error: string | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const frontend = (process.env.FRONTEND_URL ?? 'http://localhost:8386').replace(/\/$/, '');
+    const frontend = (
+      process.env.FRONTEND_URL ?? 'http://localhost:8386'
+    ).replace(/\/$/, '');
 
     if (error || !code || !state) {
       return reply.redirect(
@@ -25,7 +29,10 @@ export class ConnectorsOAuthController {
     }
 
     try {
-      const { redirectUrl } = await this.connectors.handleOAuthCallback(code, state);
+      const { redirectUrl } = await this.connectors.handleOAuthCallback(
+        code,
+        state,
+      );
       return reply.redirect(redirectUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'oauth_failed';

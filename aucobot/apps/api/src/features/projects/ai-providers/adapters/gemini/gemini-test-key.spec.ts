@@ -7,7 +7,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
-    text: async () => JSON.stringify(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   } as Response;
 }
 
@@ -25,7 +25,11 @@ describe('smokeTestGeminiApiKey', () => {
 
     const result = await smokeTestGeminiApiKey('test-gemini-key');
 
-    expect(result).toEqual({ ok: true, model: 'gemini-3.5-flash', message: 'ok' });
+    expect(result).toEqual({
+      ok: true,
+      model: 'gemini-3.5-flash',
+      message: 'ok',
+    });
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('generativelanguage.googleapis.com');
@@ -55,8 +59,8 @@ describe('smokeTestGeminiApiKey', () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 403,
-      text: async () => 'API key invalid',
-    } as Response);
+      text: () => Promise.resolve('API key invalid'),
+    });
 
     const result = await smokeTestGeminiApiKey('bad-key');
 
@@ -69,12 +73,15 @@ describe('smokeTestGeminiApiKey', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      text: async () => 'not-json',
-    } as Response);
+      text: () => Promise.resolve('not-json'),
+    });
 
     const result = await smokeTestGeminiApiKey('key');
 
-    expect(result).toEqual({ ok: false, error: 'Invalid JSON from Gemini API' });
+    expect(result).toEqual({
+      ok: false,
+      error: 'Invalid JSON from Gemini API',
+    });
   });
 
   it('returns error when prompt is blocked', async () => {

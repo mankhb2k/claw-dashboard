@@ -1,0 +1,8 @@
+{
+  "google-drive": "google/google-drive.svg",
+  "google-calendar": "google/google-calendar.svg",
+  "gmail": "google/gmail.svg",
+  "notion": "design/notion.svg",
+  "github": "social/github.svg",
+  "slack": "social/slack.svg"
+}

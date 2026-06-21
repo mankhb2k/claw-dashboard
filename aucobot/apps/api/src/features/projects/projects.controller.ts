@@ -1,9 +1,13 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { CurrentUser, JwtPayloadUser } from '../../core/common/decorators/current-user.decorator';
-import { ProjectsService } from './services/projects/projects.service';
+
 import { CreateProjectDto } from './dto/create.dto';
+import { ProjectsService } from './services/projects/projects.service';
+import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  JwtPayloadUser,
+} from '../../core/common/decorators/current-user.decorator';
 
 @ApiTags('projects')
 @ApiBearerAuth()

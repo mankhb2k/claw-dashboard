@@ -1,3 +1,5 @@
+import { translate } from '@/lib/i18n/translate'
+
 export const MAX_ATTACHMENTS = 10;
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_DOC_BYTES = 20 * 1024 * 1024;
@@ -91,14 +93,14 @@ function formatBytes(bytes: number): string {
 }
 
 export function formatFileKindLabel(kind: AttachmentKind, file: File): string {
-  if (kind === "image") return "Image";
-  if (kind === "pdf") return "PDF";
+  if (kind === "image") return translate('chat.composer.kindLabels.image');
+  if (kind === "pdf") return translate('chat.composer.kindLabels.pdf');
   if (kind === "document") {
     const ext = getExtension(file.name).replace(".", "").toUpperCase();
-    return ext || "Document";
+    return ext || translate('chat.composer.kindLabels.document');
   }
   const ext = getExtension(file.name).replace(".", "").toUpperCase();
-  return ext || "File";
+  return ext || translate('chat.composer.kindLabels.file');
 }
 
 export function validateFile(
@@ -106,19 +108,26 @@ export function validateFile(
   existingCount: number,
 ): { attachment?: Omit<ComposerAttachment, "id">; error?: string } {
   if (existingCount >= MAX_ATTACHMENTS) {
-    return { error: `Maximum ${MAX_ATTACHMENTS} files.` };
+    return { error: translate('chat.composer.maxFiles', { max: String(MAX_ATTACHMENTS) }) };
   }
 
   if (!isAllowedFile(file)) {
-    return { error: `"${file.name}" is not supported.` };
+    return { error: translate('chat.composer.unsupportedFile', { name: file.name }) };
   }
 
   const kind = classifyFile(file);
   const maxBytes = getMaxBytesForKind(kind);
   if (file.size > maxBytes) {
-    const limitLabel = kind === "image" ? "image" : "document";
+    const limitLabel =
+      kind === "image"
+        ? translate('chat.composer.kindImage')
+        : translate('chat.composer.kindDocument');
     return {
-      error: `"${file.name}" exceeds ${formatBytes(maxBytes)} (${limitLabel} limit).`,
+      error: translate('chat.composer.fileTooLarge', {
+        name: file.name,
+        limit: formatBytes(maxBytes),
+        kind: limitLabel,
+      }),
     };
   }
 

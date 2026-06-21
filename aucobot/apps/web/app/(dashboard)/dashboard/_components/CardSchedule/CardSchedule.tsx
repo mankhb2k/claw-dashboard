@@ -1,35 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import styles from "./CardSchedule.module.css";
 import { Box, Flex } from "@/components/layout";
 import { Button, Card, Spinner, Typography } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
+import { useI18n } from "@/lib/i18n";
 import { dashboardPath } from "@/lib/routing/dashboard-route";
-import type { CronSummary } from "@/schemas/cron.schema";
 import { useProjectStore } from "@/stores/project.store";
-import styles from "./CardSchedule.module.css";
+
+import type { CronSummary } from "@/schemas/cron.schema";
 
 export function CardSchedule() {
+  const { t } = useI18n();
   const projectId = useProjectStore((s) => s.projects[0]?.id ?? "");
   const [summary, setSummary] = useState<CronSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId);
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId);
+    setLoading(Boolean(projectId));
+    setSummary(null);
+    setError(null);
+  }
 
   useEffect(() => {
     if (!projectId) {
       return;
     }
-    setLoading(true);
     void projectApi
       .getCronSummary(projectId)
       .then(setSummary)
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Cannot load schedules");
+        setError(err instanceof Error ? err.message : t("agent.schedules.errors.load"));
         setSummary(null);
       })
       .finally(() => setLoading(false));
-  }, [projectId]);
+  }, [projectId, t]);
 
   const failedCount = summary?.failedCount ?? 0;
   const schedulesHref = dashboardPath("agent", "schedules");
@@ -40,14 +51,14 @@ export function CardSchedule() {
         <Flex justify="between" align="start" gap={4}>
           <Flex direction="column" gap={4}>
             <Typography variant="p" weight="bold">
-              Scheduled tasks
+              {t("dashboard.schedule.title")}
             </Typography>
             <Typography variant="small" color="muted">
-              Cron jobs across all agents in this project (gateway).
+              {t("dashboard.schedule.subtitle")}
             </Typography>
           </Flex>
           <Button variant="link" size="sm" asChild>
-            <Link href={schedulesHref}>View all</Link>
+            <Link href={schedulesHref}>{t("dashboard.schedule.viewAll")}</Link>
           </Button>
         </Flex>
 
@@ -66,7 +77,10 @@ export function CardSchedule() {
                 {summary.total}
               </Typography>
               <Typography variant="small" color="muted">
-                / {summary.limit} jobs used · {summary.remaining} remaining
+                {t("dashboard.schedule.jobsUsed", {
+                  limit: String(summary.limit),
+                  remaining: String(summary.remaining),
+                })}
               </Typography>
             </Flex>
 
@@ -84,11 +98,13 @@ export function CardSchedule() {
                   wrap="wrap"
                 >
                   <Typography variant="small" className={styles.alertText}>
-                    {failedCount} job{failedCount === 1 ? "" : "s"} with a
-                    failed last run
+                    {t("dashboard.schedule.failedJobs", {
+                      count: String(failedCount),
+                      suffix: failedCount === 1 ? "" : "s",
+                    })}
                   </Typography>
                   <Button variant="link" size="sm" asChild>
-                    <Link href={schedulesHref}>Review →</Link>
+                    <Link href={schedulesHref}>{t("dashboard.schedule.review")}</Link>
                   </Button>
                 </Flex>
               </Box>
@@ -118,10 +134,10 @@ export function CardSchedule() {
 
         <Flex gap={16} wrap="wrap" className={styles.footerLinks}>
           <Button variant="link" size="sm" asChild>
-            <Link href={schedulesHref}>Project schedules →</Link>
+            <Link href={schedulesHref}>{t("dashboard.schedule.projectSchedules")}</Link>
           </Button>
           <Button variant="link" size="sm" asChild>
-            <Link href={dashboardPath("agent")}>Manage agents →</Link>
+            <Link href={dashboardPath("agent")}>{t("dashboard.schedule.manageAgents")}</Link>
           </Button>
         </Flex>
       </Flex>

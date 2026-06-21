@@ -1,7 +1,8 @@
 import { compileAgentsMd } from '@aucobot/workspace-sync/agent-workspace-compile';
+
 import type { AgentFormInput } from '@/schemas/agent-form.schema';
-import type { AgentEditTab } from '@/stores/agent/agent-editor.store';
 import type { AgentAiEditorCompleteInput } from '@/schemas/project.schema';
+import type { AgentEditTab } from '@/stores/agent/agent-editor.store';
 
 export function buildAgentContextFromForm(
   form: Partial<AgentFormInput>,

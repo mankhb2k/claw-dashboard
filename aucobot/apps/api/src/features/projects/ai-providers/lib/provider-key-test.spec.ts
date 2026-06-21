@@ -1,10 +1,12 @@
-import { runProviderKeyTest } from './provider-key-test';
-
 jest.mock('../adapters/gemini/gemini-test-key', () => ({
-  smokeTestGeminiApiKey: jest.fn().mockResolvedValue({ ok: true, model: 'gemini-3.5-flash' }),
+  smokeTestGeminiApiKey: jest
+    .fn()
+    .mockResolvedValue({ ok: true, model: 'gemini-3.5-flash' }),
 }));
 jest.mock('../adapters/openai/openai-test-key', () => ({
-  smokeTestOpenAiApiKey: jest.fn().mockResolvedValue({ ok: true, model: 'gpt-5.4-mini' }),
+  smokeTestOpenAiApiKey: jest
+    .fn()
+    .mockResolvedValue({ ok: true, model: 'gpt-5.4-mini' }),
 }));
 jest.mock('../adapters/anthropic/anthropic-test-key', () => ({
   smokeTestAnthropicApiKey: jest
@@ -17,9 +19,10 @@ jest.mock('../adapters/openai-compat/openai-compat-test-key', () => ({
     .mockResolvedValue({ ok: true, model: 'deepseek-v4-flash' }),
 }));
 
+import { runProviderKeyTest } from './provider-key-test';
+import { smokeTestAnthropicApiKey } from '../adapters/anthropic/anthropic-test-key';
 import { smokeTestGeminiApiKey } from '../adapters/gemini/gemini-test-key';
 import { smokeTestOpenAiApiKey } from '../adapters/openai/openai-test-key';
-import { smokeTestAnthropicApiKey } from '../adapters/anthropic/anthropic-test-key';
 import { smokeTestOpenAiCompatApiKey } from '../adapters/openai-compat/openai-compat-test-key';
 
 describe('runProviderKeyTest', () => {
@@ -56,12 +59,12 @@ describe('runProviderKeyTest', () => {
     });
   });
 
-  it('delegates Groq to OpenAI-compat adapter', async () => {
-    await runProviderKeyTest('groq', 'q-key');
+  it('delegates Grok (xAI) to OpenAI-compat adapter', async () => {
+    await runProviderKeyTest('grok', 'x-key');
     expect(smokeTestOpenAiCompatApiKey).toHaveBeenCalledWith({
-      apiKey: 'q-key',
-      baseUrl: 'https://api.groq.com/openai/v1',
-      model: 'llama-3.3-70b-versatile',
+      apiKey: 'x-key',
+      baseUrl: 'https://api.x.ai/v1',
+      model: 'grok-4.3',
     });
   });
 

@@ -8,26 +8,26 @@ import {
   THINKING_LEVEL_OPTIONS,
 } from './thinking-level.js';
 
-describe('thinking-level', () => {
-  it('exposes curated UI options', () => {
+void describe('thinking-level', async () => {
+  await it('exposes curated UI options', () => {
     assert.deepEqual(
       THINKING_LEVEL_OPTIONS.map((o) => o.value),
       ['off', 'low', 'medium', 'high', 'adaptive'],
     );
   });
 
-  it('defaults to off', () => {
+  await it('defaults to off', () => {
     assert.equal(DEFAULT_THINKING_LEVEL, 'off');
     assert.equal(resolveThinkingLevel(undefined), 'off');
     assert.equal(resolveThinkingLevel(''), 'off');
   });
 
-  it('normalizes known levels', () => {
+  await it('normalizes known levels', () => {
     assert.equal(normalizeThinkingLevel('HIGH'), 'high');
     assert.equal(normalizeThinkingLevel(' adaptive '), 'adaptive');
   });
 
-  it('rejects unknown levels', () => {
+  await it('rejects unknown levels', () => {
     assert.equal(normalizeThinkingLevel('max'), null);
     assert.equal(normalizeThinkingLevel('xhigh'), null);
   });

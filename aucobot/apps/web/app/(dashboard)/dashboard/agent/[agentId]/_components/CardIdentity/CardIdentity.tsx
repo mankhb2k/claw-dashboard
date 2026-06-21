@@ -1,13 +1,15 @@
 'use client'
 
+import { X } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
+
+import styles from './CardIdentity.module.css'
 import { Flex } from '@/components/layout'
 import { Typography, Input, Button, Avatar, Select, Card } from '@/components/ui'
-import { X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
+
 import type { AgentFormInput, AgentVibe } from '@/schemas/agent-form.schema'
-import styles from './CardIdentity.module.css'
 
 function normalizeTag(raw: string) {
   return raw.trim().toLowerCase().replace(/[\s#]/g, '-')

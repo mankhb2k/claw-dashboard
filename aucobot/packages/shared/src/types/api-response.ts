@@ -1,4 +1,4 @@
-/** Envelope for REST JSON from AucoBot API (OSS + Cloud). */
+/** Envelope for REST JSON from the AucoBot API. */
 export type ApiResponse<T = unknown> = {
   success: boolean;
   data: T | null;

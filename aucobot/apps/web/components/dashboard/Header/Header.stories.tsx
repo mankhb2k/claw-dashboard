@@ -1,7 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import React from "react";
-import { Header } from "@/components/dashboard/Header/Header";
-import { I18nProvider } from "@/lib/i18n";
 import {
   LayoutDashboard,
   Brain,
@@ -10,6 +6,12 @@ import {
   Cable,
   Settings as SettingsIcon,
 } from "lucide-react";
+import React from "react";
+
+import { Header } from "@/components/dashboard/Header/Header";
+import { I18nProvider } from "@/lib/i18n";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof Header> = {
   title: "Dashboard/Header",

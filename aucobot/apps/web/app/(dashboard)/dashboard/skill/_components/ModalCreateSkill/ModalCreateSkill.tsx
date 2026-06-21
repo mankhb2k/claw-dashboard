@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
+
+import styles from "./ModalCreateSkill.module.css";
 import {
   Button,
   Dialog,
@@ -12,7 +14,6 @@ import {
   Input,
 } from "@/components/ui";
 import { skillDraftSchema, type SkillDraft } from "@/utils/skill/skill-markdown";
-import styles from "./ModalCreateSkill.module.css";
 
 interface ModalCreateSkillProps {
   isOpen: boolean;
@@ -37,17 +38,17 @@ export function ModalCreateSkill({
 }: ModalCreateSkillProps) {
   const [draft, setDraft] = useState<SkillDraft>(EMPTY_DRAFT);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [trackedOpenKey, setTrackedOpenKey] = useState("");
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsSubmitted(false);
-      if (initialData) {
-        setDraft(initialData);
-      } else {
-        setDraft(EMPTY_DRAFT);
-      }
-    }
-  }, [initialData, isOpen]);
+  const openKey = isOpen
+    ? `${editingSlug ?? ""}:${initialData?.name ?? ""}`
+    : "";
+
+  if (isOpen && openKey !== trackedOpenKey) {
+    setTrackedOpenKey(openKey);
+    setIsSubmitted(false);
+    setDraft(initialData ?? EMPTY_DRAFT);
+  }
 
   const parsedDraft = useMemo(() => skillDraftSchema.safeParse(draft), [draft]);
 

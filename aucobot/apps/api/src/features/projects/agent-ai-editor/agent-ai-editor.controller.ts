@@ -1,5 +1,7 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { AgentAiCompleteDto } from './dto/agent-ai-complete.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -7,7 +9,6 @@ import {
 } from '../../../core/common/decorators/current-user.decorator';
 import { ProjectsService } from '../services/projects/projects.service';
 import { AgentAiEditorService } from './services/agent-ai-editor/agent-ai-editor.service';
-import { AgentAiCompleteDto } from './dto/agent-ai-complete.dto';
 
 @ApiTags('agent-ai-editor')
 @ApiBearerAuth()

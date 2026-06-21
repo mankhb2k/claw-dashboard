@@ -1,22 +1,27 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import { AgentService } from '../../../agents/services/agent/agent.service';
+import { resolveProvider } from '../../../ai-providers/lib/provider-registry';
+import { ProviderKeysService } from '../../../ai-providers/services/provider-keys/provider-keys.service';
+import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
+import { loadProjectModelCatalog } from '../../lib/project-model-catalog';
 import {
   resolveEffectiveAgentModel,
   type ChatModelProviderGroup,
 } from '@aucobot/shared';
 import { parseAgentFormData } from '@aucobot/workspace-sync';
-import { ProviderKeysService } from '../../../ai-providers/services/provider-keys/provider-keys.service';
-import { resolveProvider } from '../../../ai-providers/lib/provider-registry';
-import { WorkspaceService } from '../../../workspace/services/workspace/workspace.service';
-import { loadProjectModelCatalog } from '../../lib/project-model-catalog';
 
 const OPENCLAW_PREFIX_TO_PROVIDER: Record<string, string> = {
   google: 'gemini',
   openai: 'openai',
   anthropic: 'anthropic',
   deepseek: 'deepseek',
-  groq: 'groq',
+  xai: 'grok',
   mistral: 'mistral',
   openrouter: 'openrouter',
   together: 'together',
@@ -44,7 +49,9 @@ export class ChatModelService {
     if (/^gemini-/i.test(trimmed)) return 'gemini';
     if (/^gpt-/i.test(trimmed) || /^o\d/i.test(trimmed)) return 'openai';
     if (/^claude-/i.test(trimmed)) return 'anthropic';
-    throw new BadRequestException(`Cannot resolve provider for model: ${openclawId}`);
+    throw new BadRequestException(
+      `Cannot resolve provider for model: ${openclawId}`,
+    );
   }
 
   private async resolveAgentPrimaryModel(
@@ -135,18 +142,28 @@ export class ChatModelService {
     }
 
     if (params.agentId === 'main') {
-      await this.providerKeys.setDefaultModel(params.projectId, providerId, openclawId);
+      await this.providerKeys.setDefaultModel(
+        params.projectId,
+        providerId,
+        openclawId,
+      );
     } else {
-      const agent = await this.agents.get(params.projectId, params.agentId).catch(() => null);
+      const agent = await this.agents
+        .get(params.projectId, params.agentId)
+        .catch(() => null);
       if (!agent) {
         throw new NotFoundException(`Agent not found: ${params.agentId}`);
       }
       const form = parseAgentFormData(agent.formData);
       form.model = openclawId;
       await this.agents.update(params.projectId, params.agentId, {
-        formData: { ...form } as Record<string, unknown>,
+        formData: { ...form },
       });
-      await this.providerKeys.setDefaultModel(params.projectId, providerId, openclawId);
+      await this.providerKeys.setDefaultModel(
+        params.projectId,
+        providerId,
+        openclawId,
+      );
     }
 
     const listed = await this.listModels(params.projectId);

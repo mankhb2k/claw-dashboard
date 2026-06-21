@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
+
 import { BackButton } from "@/components/dashboard/BackButton/BackButton";
+
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta: Meta<typeof BackButton> = {
   title: "Dashboard/BackButton",

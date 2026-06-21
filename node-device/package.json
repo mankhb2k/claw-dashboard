@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/node-device",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "OpenClaw companion node desktop app (Electron)",
   "main": "dist/main/index.js",

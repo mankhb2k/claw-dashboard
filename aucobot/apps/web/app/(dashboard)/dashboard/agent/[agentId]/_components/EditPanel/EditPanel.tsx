@@ -1,23 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Container, Flex } from "@/components/layout";
-import { Typography, Button, toast, Tabs, type TabItem } from "@/components/ui";
-import {
-  agentFormSchema,
-  agentTemplateToDefaults,
-  buildAgentFormDefaults,
-  type AgentFormInput,
-} from "@/schemas/agent-form.schema";
-import { projectApi } from "@/lib/api/project";
-import { useProjectStore } from "@/stores/project.store";
-import { useAgentEditorStore, type AgentEditTab } from "@/stores/agent/agent-editor.store";
-import {
-  AGENT_PANEL_APPLY_AGENTS_MD,
-  type AgentPanelApplyAgentsMdDetail,
-} from "@/utils/agent/agent-panel-events";
 import {
   PanelRightClose,
   PanelRightOpen,
@@ -30,22 +13,40 @@ import {
   Activity,
   type LucideIcon,
 } from "lucide-react";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BackButton } from "@/components/dashboard";
-import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
-import { Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+
+import styles from "./EditPanel.module.css";
+import { AgentSkillAllowlistCard } from "../AgentSkillAllowlistCard/AgentSkillAllowlistCard";
+import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
+import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
 import { CardIdentity } from "../CardIdentity/CardIdentity";
 import { CardInstructions } from "../CardInstructions/CardInstructions";
-import { CardCapabilities } from "../CardCapabilities/CardCapabilities";
-import { AgentSkillAllowlistCard } from "../AgentSkillAllowlistCard/AgentSkillAllowlistCard";
 import { CardIntegrations } from "../CardIntegrations/CardIntegrations";
 import { CardSchedules } from "../CardSchedules/CardSchedules";
-import { CardHeartbeat } from "../CardHeartbeat/CardHeartbeat";
 import { JoinCollaborationOnCreate } from "../JoinCollaborationOnCreate/JoinCollaborationOnCreate";
-import { addAgentToProjectCollaboration } from "@/utils/agent/agent-collaboration";
+import { BackButton } from "@/components/dashboard";
+import { Container, Flex } from "@/components/layout";
+import { Typography, Button, toast, Tabs, type TabItem } from "@/components/ui";
+import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
-import styles from "./EditPanel.module.css";
+import { DASHBOARD_BASE_PATH } from "@/lib/routing/dashboard-route";
+import {
+  agentTemplateToDefaults,
+  buildAgentFormDefaults,
+  createAgentFormSchema,
+  type AgentFormInput,
+} from "@/schemas/agent-form.schema";
+import { useAgentEditorStore, type AgentEditTab } from "@/stores/agent/agent-editor.store";
+import { useProjectStore } from "@/stores/project.store";
+import { addAgentToProjectCollaboration } from "@/utils/agent/agent-collaboration";
+import {
+  AGENT_PANEL_APPLY_AGENTS_MD,
+  type AgentPanelApplyAgentsMdDetail,
+} from "@/utils/agent/agent-panel-events";
 
 interface EditPanelProps {
   /** Required when editing an existing agent; omitted on create flow. */
@@ -108,6 +109,8 @@ export function EditPanel({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(!isEditing && !templateId);
 
+  const agentFormSchema = useMemo(() => createAgentFormSchema(t), [t]);
+
   const formMethods = useForm<AgentFormInput>({
     resolver: zodResolver(agentFormSchema),
     defaultValues: buildAgentFormDefaults(),
@@ -116,6 +119,11 @@ export function EditPanel({
   const { handleSubmit, setValue, watch, reset } = formMethods;
 
   useEffect(() => {
+    // RHF `watch()` is a subscription React Compiler cannot memoize. This is the
+    // correct way to push snapshots to the store WITHOUT re-rendering EditPanel on
+    // every keystroke; switching to useWatch causes extra re-renders. Compiler is off
+    // → no runtime impact.
+    // eslint-disable-next-line react-hooks/incompatible-library -- §9.11
     const sub = watch((values) => {
       setFormSnapshot(values as AgentFormInput);
     });
@@ -227,6 +235,9 @@ export function EditPanel({
 
     reset(buildAgentFormDefaults());
     setFormReady(true);
+    // Omit `t` on purpose: only used for fallback error messages. Adding `t` would
+    // re-fetch + reset the form on locale change → lose unsaved edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- §9.11
   }, [projectId, isEditing, agentId, templateId, reset]);
 
   /* ── Selected tab (Identity / Instructions / …) ─────────────────────── */

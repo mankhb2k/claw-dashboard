@@ -14,3 +14,4 @@ export {
   writeLocale,
 } from './locale-storage'
 export { getNestedString, interpolate } from './nested-get'
+export { translate } from './translate'

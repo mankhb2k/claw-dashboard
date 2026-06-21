@@ -59,6 +59,7 @@ npm run lint     # ESLint
 
 - **Quy trình & checklist:** [.agent/workflow.md](.agent/workflow.md)
 - **Quy tắc code:** [.agent/rule.md](.agent/rule.md)
+- **Tiến độ & nợ kỹ thuật:** [.agent/note.md](.agent/note.md)
 
 ## Stack ngắn gọn
 

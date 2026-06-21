@@ -1,20 +1,21 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Box, Flex } from "@/components/layout";
-import { Typography, Button, Spinner } from "@/components/ui";
 import { RotateCcw, Sparkles } from "lucide-react";
-import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble";
-import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
-import { useProjectStore } from "@/stores/project.store";
-import { useSkillModelSelect } from "@/hooks/skill/use-skill-model-select";
-import { projectApi } from "@/lib/api/project";
-import { MessageBox } from "@/components/chat/MessageBox";
-import { SkillAgentPanelNoModelBanner } from "./SkillAgentPanelModelBar";
+import Link from "next/link";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+
 import styles from "./SkillAgentPanel.module.css";
 import panelStyles from "./SkillAgentPanelLayout.module.css";
+import { SkillAgentPanelNoModelBanner } from "./SkillAgentPanelModelBar";
 import barStyles from "./SkillAgentPanelModelBar.module.css";
+import { ChatMessageBubble } from "@/app/(dashboard)/dashboard/chat/_components/ChatMessageBubble/ChatMessageBubble";
+import { MessageBox } from "@/components/chat/MessageBox";
+import { Box, Flex } from "@/components/layout";
+import { Typography, Button, Spinner } from "@/components/ui";
+import { useSkillModelSelect } from "@/hooks/skill/use-skill-model-select";
+import { projectApi } from "@/lib/api/project";
+import { useProjectStore } from "@/stores/project.store";
+import { useSkillEditorStore } from "@/stores/skill/skill-editor.store";
 
 const QUICK_PROMPTS = [
   {
@@ -58,9 +59,9 @@ type PanelChatMessage = {
 
 function renderSimpleMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
+  return parts.map((part) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+      return <strong key={`md-bold:${part}`}>{part.slice(2, -2)}</strong>;
     }
     return part;
   });
@@ -214,8 +215,12 @@ export function SkillAgentPanel({ onApplyMarkdown }: SkillAgentPanelProps) {
 
   useEffect(() => {
     if (!pendingPanelMessage) return;
-    void sendMessage(pendingPanelMessage);
+    const message = pendingPanelMessage;
     clearPendingPanelMessage();
+    void (async () => {
+      await Promise.resolve();
+      await sendMessage(message);
+    })();
   }, [pendingPanelMessage, sendMessage, clearPendingPanelMessage]);
 
   const resetChat = () => {

@@ -75,7 +75,10 @@ describe('HeartbeatService', () => {
   describe('updateAgentHeartbeat', () => {
     it('requires interval for custom mode', async () => {
       const { service, prisma } = createService();
-      prisma.projectAgent.findUnique.mockResolvedValue({ id: 'a1', slug: 'ops' });
+      prisma.projectAgent.findUnique.mockResolvedValue({
+        id: 'a1',
+        slug: 'ops',
+      });
 
       await expect(
         service.updateAgentHeartbeat(PROJECT_ID, 'ops', {

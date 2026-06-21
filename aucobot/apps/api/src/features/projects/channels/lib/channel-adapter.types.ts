@@ -20,5 +20,8 @@ export type ChannelAdapter = {
     config: Record<string, unknown>,
   ): Record<string, unknown>;
   defaultConfig(): Record<string, unknown>;
-  normalizeConfig(existing: unknown, patch: Record<string, unknown>): Record<string, unknown>;
+  normalizeConfig(
+    existing: unknown,
+    patch: Record<string, unknown>,
+  ): Record<string, unknown>;
 };

@@ -1,9 +1,10 @@
-import type { UsageSource, UsageStatus } from '@aucobot/database';
-import type { PendingChatRun, RecordUsageInput } from './usage-record.types';
 import {
   extractAgentSlugFromSessionKey,
   parseModelRef,
 } from './parse-model-ref';
+
+import type { PendingChatRun, RecordUsageInput } from './usage-record.types';
+import type { UsageSource, UsageStatus } from '@aucobot/shared';
 
 export type ParsedGatewayUsage = Omit<
   RecordUsageInput,
@@ -20,7 +21,9 @@ type UsageNumbers = {
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 function asNonNegativeInt(value: unknown): number {
@@ -148,7 +151,9 @@ function resolvePendingRun(
   pendingRuns: Map<string, PendingChatRun>,
 ): PendingChatRun | undefined {
   const idempotencyKey =
-    typeof payload.idempotencyKey === 'string' ? payload.idempotencyKey.trim() : '';
+    typeof payload.idempotencyKey === 'string'
+      ? payload.idempotencyKey.trim()
+      : '';
   if (idempotencyKey && pendingRuns.has(idempotencyKey)) {
     return pendingRuns.get(idempotencyKey);
   }
@@ -158,7 +163,8 @@ function resolvePendingRun(
     return pendingRuns.get(runId);
   }
 
-  const sessionKey = typeof payload.sessionKey === 'string' ? payload.sessionKey.trim() : '';
+  const sessionKey =
+    typeof payload.sessionKey === 'string' ? payload.sessionKey.trim() : '';
   if (!sessionKey) return undefined;
 
   for (const run of pendingRuns.values()) {
@@ -173,7 +179,9 @@ function buildExternalId(
   prefix: string,
   parts: Array<string | undefined | null>,
 ): string | null {
-  const values = parts.map((p) => p?.trim()).filter((p): p is string => Boolean(p));
+  const values = parts
+    .map((p) => p?.trim())
+    .filter((p): p is string => Boolean(p));
   if (values.length === 0) return null;
   return `${prefix}:${values.join(':')}`;
 }
@@ -199,11 +207,9 @@ function parseChatEvent(
   const sessionKey =
     typeof payload.sessionKey === 'string'
       ? payload.sessionKey
-      : pending?.sessionKey ?? '';
+      : (pending?.sessionKey ?? '');
   const runId =
-    typeof payload.runId === 'string'
-      ? payload.runId
-      : pending?.idempotencyKey;
+    typeof payload.runId === 'string' ? payload.runId : pending?.idempotencyKey;
   const idempotencyKey =
     typeof payload.idempotencyKey === 'string'
       ? payload.idempotencyKey
@@ -255,9 +261,7 @@ function parseAgentLifecycleUsage(
   const externalId = buildRunExternalId(runId);
   if (!externalId) return null;
 
-  const usage = readUsageNumbers(
-    data.usage ?? data.lastCallUsage ?? data,
-  );
+  const usage = readUsageNumbers(data.usage ?? data.lastCallUsage ?? data);
   const model = readModelRef({
     provider: data.provider,
     model: data.model,
@@ -290,7 +294,9 @@ function parseAgentLifecycleUsage(
   };
 }
 
-function parseAgentEvent(payload: Record<string, unknown>): ParsedGatewayUsage | null {
+function parseAgentEvent(
+  payload: Record<string, unknown>,
+): ParsedGatewayUsage | null {
   const stream = typeof payload.stream === 'string' ? payload.stream : '';
   const data = asRecord(payload.data);
   if (stream === 'lifecycle' && data?.phase === 'usage') {
@@ -321,7 +327,8 @@ function parseAgentEvent(payload: Record<string, unknown>): ParsedGatewayUsage |
         ? payload.id
         : undefined;
   const jobId = typeof payload.jobId === 'string' ? payload.jobId : undefined;
-  const sessionKey = typeof payload.sessionKey === 'string' ? payload.sessionKey : '';
+  const sessionKey =
+    typeof payload.sessionKey === 'string' ? payload.sessionKey : '';
 
   let externalId: string | null = buildRunExternalId(runId);
   let source: UsageSource = 'OTHER';
@@ -386,22 +393,26 @@ function parseAgentEvent(payload: Record<string, unknown>): ParsedGatewayUsage |
   };
 }
 
-function parseUsageEvent(payload: Record<string, unknown>): ParsedGatewayUsage | null {
+function parseUsageEvent(
+  payload: Record<string, unknown>,
+): ParsedGatewayUsage | null {
   const runId = typeof payload.runId === 'string' ? payload.runId : undefined;
   const externalId =
-    buildRunExternalId(runId) ?? buildExternalId('usage', [runId ?? String(Date.now())]);
+    buildRunExternalId(runId) ??
+    buildExternalId('usage', [runId ?? String(Date.now())]);
   if (!externalId) return null;
 
   const usage = readUsageNumbers(payload.usage ?? payload);
   const model = readModelRef(payload);
-  const sourceRaw = typeof payload.source === 'string' ? payload.source.toUpperCase() : '';
+  const sourceRaw =
+    typeof payload.source === 'string' ? payload.source.toUpperCase() : '';
   const source: UsageSource =
     sourceRaw === 'CRON' ||
     sourceRaw === 'CHANNEL' ||
     sourceRaw === 'HEARTBEAT' ||
     sourceRaw === 'CHAT_UI' ||
     sourceRaw === 'API_KEY'
-      ? (sourceRaw as UsageSource)
+      ? sourceRaw
       : 'OTHER';
 
   return {
@@ -414,7 +425,9 @@ function parseUsageEvent(payload: Record<string, unknown>): ParsedGatewayUsage |
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     latencyMs:
-      typeof payload.latencyMs === 'number' ? asNonNegativeInt(payload.latencyMs) : null,
+      typeof payload.latencyMs === 'number'
+        ? asNonNegativeInt(payload.latencyMs)
+        : null,
     metadata: {
       runId,
     },

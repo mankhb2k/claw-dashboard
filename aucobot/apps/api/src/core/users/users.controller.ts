@@ -10,12 +10,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import type { FastifyReply, FastifyRequest } from 'fastify';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser, JwtPayloadUser } from '../common/decorators/current-user.decorator';
-import { UsersService } from './users.service';
+
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserNameDto } from './dto/update-user-name.dto';
+import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  JwtPayloadUser,
+} from '../common/decorators/current-user.decorator';
+
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -43,7 +48,10 @@ export class UsersController {
 
   @Put('me/avatar')
   @ApiConsumes('multipart/form-data')
-  uploadAvatar(@CurrentUser() user: JwtPayloadUser, @Req() req: FastifyRequest) {
+  uploadAvatar(
+    @CurrentUser() user: JwtPayloadUser,
+    @Req() req: FastifyRequest,
+  ) {
     return this.users.uploadAvatar(user.sub, req);
   }
 
@@ -53,7 +61,10 @@ export class UsersController {
   }
 
   @Patch('me/name')
-  updateName(@CurrentUser() user: JwtPayloadUser, @Body() dto: UpdateUserNameDto) {
+  updateName(
+    @CurrentUser() user: JwtPayloadUser,
+    @Body() dto: UpdateUserNameDto,
+  ) {
     return this.users.updateName(user.sub, dto);
   }
 
