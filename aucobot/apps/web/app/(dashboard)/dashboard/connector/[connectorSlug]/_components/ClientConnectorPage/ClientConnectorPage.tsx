@@ -16,6 +16,7 @@ import { Container, Flex } from "@/components/layout";
 import { Typography, Spinner } from "@/components/ui";
 import { projectApi } from "@/lib/api/project";
 import { useI18n } from "@/lib/i18n";
+import { openOAuthPopup, waitForOAuthPopupResult } from "@/lib/oauth/oauth-popup";
 import { useProjectStore } from "@/stores/project.store";
 
 import type { ConnectorDefinition, ProjectConnector } from "@/schemas/project.schema";
@@ -110,7 +111,26 @@ export function ClientConnectorPage({ projectId, connectorSlug }: Props) {
     setIsConnecting(true);
     try {
       const { url } = await projectApi.startConnectorOAuth(projectId, service.slug);
-      window.location.href = url;
+      const popup = openOAuthPopup(url);
+      if (!popup) {
+        window.location.href = url;
+        return;
+      }
+      waitForOAuthPopupResult(popup, {
+        expectedSlug: service.slug,
+        onComplete: () => {
+          void reload();
+          setIsConnecting(false);
+        },
+        onError: (message) => {
+          alert(message);
+          setIsConnecting(false);
+        },
+        onClosed: () => {
+          void reload();
+          setIsConnecting(false);
+        },
+      });
     } catch (err) {
       alert(err instanceof Error ? err.message : t("connect.detail.connectionFailed"));
       setIsConnecting(false);

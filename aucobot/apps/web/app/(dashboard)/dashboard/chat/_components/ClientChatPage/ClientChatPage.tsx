@@ -65,10 +65,8 @@ export function ClientChatPage() {
         messages={chat.messages}
         streamText={chat.streamText}
         sending={chat.sending}
-        input={chat.input}
-        onInputChange={chat.setInput}
-        onSend={(payload) => void chat.handleSend(payload)}
-        onAbort={() => void chat.handleAbort()}
+        onSend={chat.handleSend}
+        onAbort={chat.handleAbort}
         sessionActionsDisabled={chat.sessionSidebarDisabled}
         onNewSession={() => void chat.handleNewSession()}
         projectId={chat.projectId}

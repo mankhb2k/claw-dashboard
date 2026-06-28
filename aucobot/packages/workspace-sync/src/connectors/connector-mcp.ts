@@ -100,13 +100,21 @@ export function buildMcpServerEntry(
     const creds =
       containerPaths.credentialsPath ??
       `${CONTAINER_STATE_DIR}/connectors/google-drive/credentials.json`;
+    const env = {
+      GDRIVE_OAUTH_PATH: oauth,
+      GDRIVE_CREDENTIALS_PATH: creds,
+    };
+    // Pre-baked in gateway image (Dockerfile.gateway). Dev fallback: npx @aucobot/mcp-google-drive
+    if (process.env.AUCOBOT_MCP_GOOGLE_DRIVE_USE_NPX === '1') {
+      return {
+        command: 'npx',
+        args: ['-y', '@aucobot/mcp-google-drive'],
+        env,
+      };
+    }
     return {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-gdrive'],
-      env: {
-        GDRIVE_OAUTH_PATH: oauth,
-        GDRIVE_CREDENTIALS_PATH: creds,
-      },
+      command: 'aucobot-mcp-google-drive',
+      env,
     };
   }
 

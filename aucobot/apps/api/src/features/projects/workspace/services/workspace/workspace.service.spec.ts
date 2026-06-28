@@ -8,6 +8,7 @@ import { decryptSecret } from '@aucobot/control-plane-core';
 import {
   buildInitialOpenClawConfig,
   cleanupStaleMainAgentModels,
+  collectAgentIdsFromOpenClawConfig,
   ensureProjectLayout,
   mergeAgentsIntoConfig,
   mergeChannelsIntoConfig,
@@ -16,7 +17,9 @@ import {
   mergeProviderKeysIntoConfig,
   readOpenClawConfigJson,
   removeLegacyDotEnv,
+  repairOssProjectWorkspace,
   resolveProjectDataDir,
+  syncAgentAuthProfiles,
   writeOpenClawConfigJson,
 } from '@aucobot/workspace-sync';
 
@@ -32,6 +35,7 @@ jest.mock('@aucobot/workspace-sync', () => ({
     },
   })),
   cleanupStaleMainAgentModels: jest.fn().mockResolvedValue(undefined),
+  collectAgentIdsFromOpenClawConfig: jest.fn(() => ['main']),
   ensureProjectLayout: jest.fn().mockResolvedValue('/data/proj_test_1'),
   mergeAgentsIntoConfig: jest.fn(),
   mergeChannelsIntoConfig: jest.fn(),
@@ -42,6 +46,7 @@ jest.mock('@aucobot/workspace-sync', () => ({
   readOpenClawConfigJson: jest.fn(),
   removeLegacyDotEnv: jest.fn().mockResolvedValue(undefined),
   resolveProjectDataDir: jest.fn((projectId: string) => `/data/${projectId}`),
+  syncAgentAuthProfiles: jest.fn().mockResolvedValue(undefined),
   parseAgentFormData: jest.fn((formData: unknown) => formData),
   parseCollaborationMemberSlugs: jest.fn((raw: unknown) =>
     Array.isArray(raw)
@@ -64,12 +69,15 @@ jest.mock('@aucobot/workspace-sync', () => ({
   mergeHeartbeatIntoConfig: jest.fn(),
   writeHeartbeatFiles: jest.fn().mockResolvedValue(undefined),
   writeOpenClawConfigJson: jest.fn().mockResolvedValue(undefined),
+  repairOssProjectWorkspace: jest.fn().mockResolvedValue(false),
 }));
 
 jest.mock('@aucobot/control-plane-core', () => ({
   decryptSecret: jest.fn((ciphertext: string) =>
     ciphertext.replace(/^enc:/, ''),
   ),
+  getMcpServiceSecret: jest.fn(() => undefined),
+  signProjectMcpToken: jest.fn(),
 }));
 
 jest.mock('../../../connectors/lib/connector-registry', () => ({
@@ -99,6 +107,10 @@ const buildInitialOpenClawConfigMock =
   buildInitialOpenClawConfig as jest.MockedFunction<
     typeof buildInitialOpenClawConfig
   >;
+const repairOssProjectWorkspaceMock =
+  repairOssProjectWorkspace as jest.MockedFunction<
+    typeof repairOssProjectWorkspace
+  >;
 const readOpenClawConfigJsonMock =
   readOpenClawConfigJson as jest.MockedFunction<typeof readOpenClawConfigJson>;
 const syncGatewayAuthTokenMock = syncGatewayAuthToken as jest.MockedFunction<
@@ -123,6 +135,8 @@ const cleanupStaleMainAgentModelsMock =
   cleanupStaleMainAgentModels as jest.MockedFunction<
     typeof cleanupStaleMainAgentModels
   >;
+const syncAgentAuthProfilesMock =
+  syncAgentAuthProfiles as jest.MockedFunction<typeof syncAgentAuthProfiles>;
 const writeOpenClawConfigJsonMock =
   writeOpenClawConfigJson as jest.MockedFunction<
     typeof writeOpenClawConfigJson
@@ -211,18 +225,30 @@ describe('WorkspaceService', () => {
   });
 
   describe('bootstrapProjectWorkspace', () => {
-    it('builds initial config and returns dataDir', async () => {
-      const { service } = createService();
+    it('repairs workspace and runs full runtime sync', async () => {
+      const { service, prisma } = createService();
+      readOpenClawConfigJsonMock.mockResolvedValue({});
+      prisma.project.findUnique.mockResolvedValue({
+        gatewayToken: 'gw-token-abc',
+        collaborationEnabled: false,
+        collaborationMemberSlugs: [],
+      });
+      prisma.projectProviderKey.findMany.mockResolvedValue([]);
+      prisma.projectAgent.findMany.mockResolvedValue([]);
+      prisma.projectConnector.findMany.mockResolvedValue([]);
+      prisma.projectChannel.findMany.mockResolvedValue([]);
 
       const result = await service.bootstrapProjectWorkspace({
         projectId: PROJECT_ID,
         gatewayToken: 'gw-token-abc',
       });
 
-      expect(buildInitialOpenClawConfigMock).toHaveBeenCalledWith({
-        gatewayToken: 'gw-token-abc',
-      });
-      expect(writeFileMock).toHaveBeenCalled();
+      expect(ensureProjectLayoutMock).toHaveBeenCalledWith(
+        PROJECT_ID,
+        expect.objectContaining({ dataRoot: '/tmp/openclaw-test' }),
+      );
+      expect(repairOssProjectWorkspaceMock).toHaveBeenCalledWith(DATA_DIR);
+      expect(writeOpenClawConfigJsonMock).toHaveBeenCalled();
       expect(result).toEqual({ dataDir: DATA_DIR });
     });
   });
@@ -341,6 +367,7 @@ describe('WorkspaceService', () => {
         expect.objectContaining({
           foundationAllowlistOpenclawIds: expect.any(Array),
           proxyModelOpenclawIds: [],
+          providerModelsSync: expect.any(Array),
         }),
       );
       expect(mergeAgentsIntoConfigMock).toHaveBeenCalled();
@@ -361,6 +388,13 @@ describe('WorkspaceService', () => {
       expect(cleanupStaleMainAgentModelsMock).toHaveBeenCalledWith(
         DATA_DIR,
         config,
+      );
+      expect(syncAgentAuthProfilesMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dataDir: DATA_DIR,
+          agentIds: ['main'],
+          decrypt: decryptSecret,
+        }),
       );
       expect(writeOpenClawConfigJsonMock).toHaveBeenCalledWith(
         CONFIG_PATH,

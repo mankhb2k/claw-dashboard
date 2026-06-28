@@ -14,6 +14,16 @@ import {
   resolveConnector,
 } from '../../lib/connector-registry';
 import {
+  connectorSlugToRelayProvider,
+  getApiOAuthCallbackUrl,
+  getOAuthRelayPublicMode,
+  isRelayOAuthEnabled,
+} from '../../lib/oauth-mode';
+import {
+  buildRelayOAuthStartUrl,
+  exchangeRelayCode,
+} from '../../lib/oauth-relay-client';
+import {
   decryptSecret,
   encryptSecret,
   maskSecret,
@@ -38,6 +48,7 @@ export class ProjectConnectorsService {
 
   listDefinitions() {
     const now = new Date().toISOString();
+    const oauthMode = getOAuthRelayPublicMode();
     return listActiveConnectors().map((def) => ({
       id: def.id,
       slug: def.slug,
@@ -46,6 +57,7 @@ export class ProjectConnectorsService {
       kind: def.kind,
       status: def.status,
       configSchema: null,
+      oauthMode,
       createdAt: now,
       updatedAt: now,
     }));
@@ -208,13 +220,23 @@ export class ProjectConnectorsService {
     }
 
     const secrets = this.decryptSecrets(row.secrets);
-    if (!secrets.refresh_token) {
-      await this.markTestResult(
-        row.id,
-        false,
-        'Chưa có refresh token — kết nối OAuth trước',
-      );
-      return { ok: false, message: 'Chưa có refresh token' };
+    const hasCredential =
+      adapter.slug === 'github'
+        ? Boolean(secrets.access_token)
+        : Boolean(secrets.refresh_token);
+    if (!hasCredential) {
+      const message =
+        adapter.slug === 'github'
+          ? 'Chưa có access token — kết nối OAuth trước'
+          : 'Chưa có refresh token — kết nối OAuth trước';
+      await this.markTestResult(row.id, false, message);
+      return {
+        ok: false,
+        message:
+          adapter.slug === 'github'
+            ? 'Chưa có access token'
+            : 'Chưa có refresh token',
+      };
     }
 
     const result = await adapter.testConnection(secrets);
@@ -240,7 +262,9 @@ export class ProjectConnectorsService {
     }
     if (!adapter.isOAuthConfigured()) {
       throw new BadRequestException(
-        'Cấu hình GOOGLE_OAUTH_CLIENT_ID và GOOGLE_OAUTH_CLIENT_SECRET trên backend',
+        isRelayOAuthEnabled()
+          ? 'OAuth relay chưa cấu hình (OAUTH_RELAY_URL / OAUTH_RELAY_API_SECRET)'
+          : 'Cấu hình OAuth credentials trên backend (local) hoặc bật OAUTH_MODE=relay',
       );
     }
 
@@ -271,14 +295,121 @@ export class ProjectConnectorsService {
       { expiresIn: '15m' },
     );
 
+    if (isRelayOAuthEnabled()) {
+      const provider = connectorSlugToRelayProvider(adapter.slug);
+      if (!provider) {
+        throw new BadRequestException(
+          `Connector ${adapter.slug} chưa hỗ trợ OAuth relay`,
+        );
+      }
+      const url = buildRelayOAuthStartUrl({
+        provider,
+        state,
+        returnUrl: getApiOAuthCallbackUrl(),
+        connectorSlug: adapter.slug,
+        scopes: adapter.oauthScopes,
+      });
+      return { url };
+    }
+
     const url = adapter.buildOAuthUrl({ state, prompt: 'consent' });
     return { url };
   }
 
   async handleOAuthCallback(
+    code: string | undefined,
+    state: string,
+    relayCode?: string,
+  ): Promise<{ redirectUrl: string }> {
+    if (relayCode?.trim()) {
+      return this.handleRelayOAuthCallback(relayCode.trim(), state);
+    }
+    if (!code?.trim()) {
+      throw new BadRequestException('Missing authorization code');
+    }
+    return this.handleLocalOAuthCallback(code.trim(), state);
+  }
+
+  private async handleRelayOAuthCallback(
+    relayCode: string,
+    state: string,
+  ): Promise<{ redirectUrl: string }> {
+    const payload = await this.parseOAuthState(state);
+    const adapter = resolveConnector(payload.connectorSlug);
+    if (!adapter) {
+      throw new BadRequestException('Unknown connector');
+    }
+
+    let relayPayload: Awaited<ReturnType<typeof exchangeRelayCode>>;
+    try {
+      relayPayload = await exchangeRelayCode(relayCode);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Relay failed';
+      throw new BadRequestException(message);
+    }
+
+    const isGoogle =
+      payload.connectorSlug === 'google-drive' ||
+      payload.connectorSlug === 'google-calendar';
+    if (isGoogle && !relayPayload.refresh_token) {
+      throw new BadRequestException(
+        'Google không trả refresh_token — thử thu hồi quyền app và kết nối lại',
+      );
+    }
+
+    return this.persistOAuthConnection({
+      projectId: payload.projectId,
+      adapter,
+      tokens: {
+        accessToken: relayPayload.access_token,
+        refreshToken: relayPayload.refresh_token,
+      },
+      clientSecrets: {
+        clientId: relayPayload.client_id,
+        clientSecret: relayPayload.client_secret,
+      },
+    });
+  }
+
+  private async handleLocalOAuthCallback(
     code: string,
     state: string,
   ): Promise<{ redirectUrl: string }> {
+    const payload = await this.parseOAuthState(state);
+    const adapter = resolveConnector(payload.connectorSlug);
+    if (!adapter) {
+      throw new BadRequestException('Unknown connector');
+    }
+
+    const tokens = await adapter.exchangeOAuthCode(code);
+    if (adapter.slug === 'github') {
+      if (!tokens.accessToken) {
+        throw new BadRequestException('GitHub không trả access_token');
+      }
+    } else if (!tokens.refreshToken) {
+      throw new BadRequestException(
+        'Google không trả refresh_token — thử thu hồi quyền app và kết nối lại (prompt=consent)',
+      );
+    }
+
+    const clientSecrets = adapter.oauthClientSecrets();
+    if (!clientSecrets) {
+      throw new BadRequestException('OAuth not configured');
+    }
+
+    return this.persistOAuthConnection({
+      projectId: payload.projectId,
+      adapter,
+      tokens,
+      clientSecrets,
+    });
+  }
+
+  private async parseOAuthState(state: string): Promise<{
+    sub: string;
+    projectId: string;
+    connectorSlug: string;
+  }> {
     let payload: {
       purpose?: string;
       sub?: string;
@@ -300,32 +431,33 @@ export class ProjectConnectorsService {
       throw new BadRequestException('Invalid OAuth state payload');
     }
 
-    const adapter = resolveConnector(payload.connectorSlug);
-    if (!adapter) {
-      throw new BadRequestException('Unknown connector');
-    }
+    return {
+      sub: payload.sub,
+      projectId: payload.projectId,
+      connectorSlug: payload.connectorSlug,
+    };
+  }
 
-    const tokens = await adapter.exchangeOAuthCode(code);
-    if (!tokens.refreshToken) {
-      throw new BadRequestException(
-        'Google không trả refresh_token — thử thu hồi quyền app và kết nối lại (prompt=consent)',
-      );
-    }
-
-    const clientSecrets = adapter.oauthClientSecrets();
-    if (!clientSecrets) {
-      throw new BadRequestException('Google OAuth not configured');
-    }
+  private async persistOAuthConnection(input: {
+    projectId: string;
+    adapter: NonNullable<ReturnType<typeof resolveConnector>>;
+    tokens: {
+      accessToken: string;
+      refreshToken?: string;
+    };
+    clientSecrets: { clientId: string; clientSecret: string };
+  }): Promise<{ redirectUrl: string }> {
+    const { projectId, adapter, tokens, clientSecrets } = input;
 
     const row = await this.prisma.projectConnector.upsert({
       where: {
         projectId_connectorSlug: {
-          projectId: payload.projectId,
+          projectId,
           connectorSlug: adapter.slug,
         },
       },
       create: {
-        projectId: payload.projectId,
+        projectId,
         connectorSlug: adapter.slug,
         displayName: adapter.displayName,
         enabled: true,
@@ -339,13 +471,19 @@ export class ProjectConnectorsService {
       include: { secrets: true },
     });
 
-    const secretPayload = [
+    const secretPayload: Array<{ key: string; value: string }> = [
       { key: 'client_id', value: clientSecrets.clientId },
       { key: 'client_secret', value: clientSecrets.clientSecret },
-      { key: 'refresh_token', value: tokens.refreshToken },
     ];
+    if (tokens.refreshToken) {
+      secretPayload.push({ key: 'refresh_token', value: tokens.refreshToken });
+    }
+    if (adapter.slug === 'github' && tokens.accessToken) {
+      secretPayload.push({ key: 'access_token', value: tokens.accessToken });
+    }
+
     for (const { key, value } of secretPayload) {
-      await this.upsertSecret(payload.projectId, row.id, key, value);
+      await this.upsertSecret(projectId, row.id, key, value);
     }
 
     await this.prisma.projectConnector.update({
@@ -353,7 +491,7 @@ export class ProjectConnectorsService {
       data: { lastTestedAt: new Date(), lastError: null },
     });
 
-    await this.syncOpenClawConfig(payload.projectId);
+    await this.syncOpenClawConfig(projectId);
 
     const frontend = (
       process.env.FRONTEND_URL ?? 'http://localhost:8386'

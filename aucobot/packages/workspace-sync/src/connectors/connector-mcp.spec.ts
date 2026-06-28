@@ -38,6 +38,22 @@ describe('buildMcpServerEntry dual mode', () => {
     assert.equal((entry as { command?: string }).command, undefined);
   });
 
+  it('uses pre-baked google-drive command when remote not provided', () => {
+    const entry = buildMcpServerEntry(
+      { slug: 'google-drive', mcpServerId: 'google-drive' },
+      { refresh_token: 'rt', client_id: 'id', client_secret: 'sec' },
+      {
+        oauthPath: '/data/oauth.json',
+        credentialsPath: '/data/credentials.json',
+      },
+    );
+    assert.equal((entry as { command?: string }).command, 'aucobot-mcp-google-drive');
+    assert.deepEqual((entry as { env?: Record<string, string> }).env, {
+      GDRIVE_OAUTH_PATH: '/data/oauth.json',
+      GDRIVE_CREDENTIALS_PATH: '/data/credentials.json',
+    });
+  });
+
   it('uses npx when remote not provided', () => {
     const entry = buildMcpServerEntry(
       { slug: 'google-calendar', mcpServerId: 'google-calendar' },

@@ -8,6 +8,7 @@ import type { ProjectCollaborationSettings } from '../../agents/agent-collaborat
 import {
   mergeAgentCollaborationToolsIntoConfig,
   mergeAgentsIntoConfig,
+  mergeDefaultWebToolsIntoConfig,
   mergeExecToolsIntoConfig,
   mergeProviderKeysIntoConfig,
   mergeSharedSkillsLoadIntoConfig,
@@ -95,7 +96,7 @@ describe('mergeProviderKeysIntoConfig', () => {
     assert.equal(entries.google.enabled, true);
   });
 
-  it('enables deepseek plugin when deepseek provider is enabled', () => {
+  it('keeps deepseek plugin disabled (not bundled in gateway image) even when enabled', () => {
     const result = mergeProviderKeysIntoConfig(
       {},
       [
@@ -109,7 +110,8 @@ describe('mergeProviderKeysIntoConfig', () => {
     );
 
     const entries = (result.plugins as { entries: Record<string, { enabled: boolean }> }).entries;
-    assert.equal(entries.deepseek.enabled, true);
+    // DeepSeek has no stock plugin; it resolves via models.providers instead.
+    assert.equal(entries.deepseek.enabled, false);
     assert.equal(entries.google.enabled, false);
   });
 
@@ -180,6 +182,73 @@ describe('mergeProviderKeysIntoConfig', () => {
     );
     assert.equal(primary, 'deepseek/deepseek-v4-flash');
   });
+
+  it('syncs models.providers for enabled foundation providers', () => {
+    const config: Record<string, unknown> = {
+      models: {
+        mode: 'replace',
+        providers: {
+          custom: { models: [{ id: 'keep-me', name: 'Keep' }] },
+          deepseek: { models: [{ id: 'stale', name: 'Stale' }] },
+        },
+      },
+    };
+
+    const result = mergeProviderKeysIntoConfig(config, [], () => '', {
+      providerModelsSync: [
+        {
+          openclawProviderId: 'deepseek',
+          models: [
+            { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' },
+            { id: 'deepseek-v3', name: 'DeepSeek V3' },
+          ],
+          openAiCompat: {
+            baseUrl: 'https://api.deepseek.com/v1',
+            api: 'openai-completions',
+          },
+        },
+      ],
+    });
+
+    const models = result.models as {
+      mode: string;
+      providers: Record<string, Record<string, unknown>>;
+    };
+    assert.equal(models.mode, 'merge');
+    assert.deepEqual(models.providers.custom, {
+      models: [{ id: 'keep-me', name: 'Keep' }],
+    });
+    assert.deepEqual(models.providers.deepseek, {
+      baseUrl: 'https://api.deepseek.com/v1',
+      api: 'openai-completions',
+      models: [
+        { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' },
+        { id: 'deepseek-v3', name: 'DeepSeek V3' },
+      ],
+    });
+  });
+
+  it('writes literal apiKey into models.providers for custom providers', () => {
+    const result = mergeProviderKeysIntoConfig({}, [], () => '', {
+      providerModelsSync: [
+        {
+          openclawProviderId: 'deepseek',
+          models: [{ id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' }],
+          openAiCompat: {
+            baseUrl: 'https://api.deepseek.com',
+            api: 'openai-completions',
+          },
+          apiKey: 'sk-deepseek-test\n',
+        },
+      ],
+    });
+
+    const models = result.models as {
+      providers: Record<string, Record<string, unknown>>;
+    };
+    // Newlines/whitespace stripped; gateway resolves auth from this field.
+    assert.equal(models.providers.deepseek.apiKey, 'sk-deepseek-test');
+  });
 });
 
 describe('mergeSharedSkillsLoadIntoConfig', () => {
@@ -206,6 +275,58 @@ describe('mergeSharedSkillsLoadIntoConfig', () => {
       (again.skills as { load: { extraDirs: string[] } }).load.extraDirs
     );
     assert.equal(againDirs.length, 2);
+  });
+});
+
+describe('mergeDefaultWebToolsIntoConfig', () => {
+  it('sets duckduckgo search provider and enables the bundled plugin', () => {
+    const config: Record<string, unknown> = {};
+
+    const result = mergeDefaultWebToolsIntoConfig(config);
+
+    const web = (result.tools as { web: Record<string, unknown> }).web;
+    assert.deepEqual(web.search, { provider: 'duckduckgo', enabled: true });
+    assert.deepEqual(web.fetch, { enabled: true, readability: true });
+    assert.deepEqual(
+      (result.plugins as { entries: Record<string, { enabled: boolean }> }).entries.duckduckgo,
+      { enabled: true },
+    );
+  });
+
+  it('preserves an explicit search provider', () => {
+    const config: Record<string, unknown> = {
+      tools: { web: { search: { provider: 'brave', enabled: true } } },
+      plugins: { entries: { brave: { enabled: true } } },
+    };
+
+    const result = mergeDefaultWebToolsIntoConfig(config);
+
+    const web = (result.tools as { web: Record<string, unknown> }).web;
+    assert.deepEqual(web.search, { provider: 'brave', enabled: true });
+    assert.deepEqual(
+      (result.plugins as { entries: Record<string, { enabled?: boolean }> }).entries.brave,
+      { enabled: true },
+    );
+    assert.equal(
+      (result.plugins as { entries: Record<string, { enabled?: boolean }> }).entries.duckduckgo,
+      undefined,
+    );
+  });
+
+  it('does not override search when explicitly disabled', () => {
+    const config: Record<string, unknown> = {
+      tools: { web: { search: { enabled: false } } },
+    };
+
+    const result = mergeDefaultWebToolsIntoConfig(config);
+
+    const web = (result.tools as { web: Record<string, unknown> }).web;
+    assert.deepEqual(web.search, { enabled: false });
+    assert.deepEqual(web.fetch, { enabled: true, readability: true });
+    assert.equal(
+      (result.plugins as { entries?: Record<string, unknown> } | undefined)?.entries?.duckduckgo,
+      undefined,
+    );
   });
 });
 
@@ -268,11 +389,17 @@ describe('mergeAgentsIntoConfig', () => {
     assert.equal(list.length, 2);
     assert.equal(list[0].id, 'main');
     assert.deepEqual(list[0].skills, []);
-    assert.deepEqual((list[0].tools as { profile: string }).profile, 'messaging');
+    assert.deepEqual((list[0].tools as { profile: string }).profile, 'coding');
     assert.equal(list[1].id, 'researcher');
     assert.match(String(list[1].workspace), /workspace-researcher$/);
     assert.deepEqual(list[1].skills, ['web-search']);
     assert.ok((result.skills as { load: { extraDirs: string[] } }).load.extraDirs.length >= 1);
+    const web = (result.tools as { web: Record<string, unknown> }).web;
+    assert.deepEqual(web.search, { provider: 'duckduckgo', enabled: true });
+    assert.deepEqual(
+      (result.plugins as { entries: Record<string, { enabled: boolean }> }).entries.duckduckgo,
+      { enabled: true },
+    );
   });
 
   it('denies exec tools when shellExecEnabled is false', () => {

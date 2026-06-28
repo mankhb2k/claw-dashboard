@@ -736,7 +736,7 @@ export function MessageBox(props: MessageBoxProps) {
                 aria-label={t("chat.composer.stopAria")}
                 title={t("chat.composer.stopTitle")}
               >
-                <Square size={16} fill="currentColor" strokeWidth={0} />
+                <Square size={12} fill="currentColor" strokeWidth={0} />
               </button>
             ) : (
               <button

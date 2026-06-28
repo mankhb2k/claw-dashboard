@@ -1,0 +1,22 @@
+# Gateway image: upstream OpenClaw + pre-baked @aucobot/mcp-google-drive
+#
+# Build from repo root (openclaw-saas):
+#   docker build -f aucobot/deploy/Dockerfile.gateway -t aucobot/gateway:latest .
+#
+# Context must include sibling mcp-hub/ and aucobot/deploy/scripts/
+
+FROM node:24-alpine AS mcp-build
+WORKDIR /build/mcp-hub
+RUN corepack enable
+COPY mcp-hub/package.json mcp-hub/pnpm-workspace.yaml mcp-hub/pnpm-lock.yaml mcp-hub/.npmrc ./
+COPY mcp-hub/packages ./packages
+RUN pnpm install --frozen-lockfile && pnpm build && pnpm -r exec npm pack
+
+FROM alpine/openclaw:latest
+USER root
+COPY --from=mcp-build /build/mcp-hub/packages/core/aucobot-mcp-core-*.tgz /tmp/mcp/
+COPY --from=mcp-build /build/mcp-hub/packages/mcp-google-drive/aucobot-mcp-google-drive-*.tgz /tmp/mcp/
+RUN npm install -g /tmp/mcp/aucobot-mcp-core-*.tgz /tmp/mcp/aucobot-mcp-google-drive-*.tgz \
+  && rm -rf /tmp/mcp \
+  && npm cache clean --force
+USER node

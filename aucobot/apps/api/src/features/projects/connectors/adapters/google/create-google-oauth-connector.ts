@@ -4,6 +4,7 @@ import {
   getGoogleOAuthConfig,
   refreshGoogleAccessToken,
 } from './google-oauth';
+import { isRelayOAuthEnabled } from '../../lib/oauth-mode';
 
 import type { ConnectorAdapter } from '../../lib/connector-adapter.types';
 
@@ -39,6 +40,9 @@ export function createGoogleOAuthConnector(def: {
       }
     },
     isOAuthConfigured() {
+      if (isRelayOAuthEnabled()) {
+        return true;
+      }
       return getGoogleOAuthConfig() !== null;
     },
     buildOAuthUrl(params) {

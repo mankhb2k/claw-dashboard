@@ -1,19 +1,20 @@
-# AucoBot OSS — full stack: postgres + api + web + gateway + mcp
+# AucoBot OSS — full stack: postgres + api + web + gateway (4 services)
 #
 # Pull pre-built images (recommended — no --build):
 #   cp deploy/.env.example deploy/.env
 #   docker compose -f deploy/docker-compose.yml pull
 #   docker compose -f deploy/docker-compose.yml up -d
 #
-# Build api/web from source (dev — mcp always pulls from Hub):
+# Build api/web from source (dev):
 #   docker compose -f deploy/docker-compose.yml up -d --build api web
+#
+# Gateway: official image alpine/openclaw (not aucobot/gateway)
 #
 # Images: https://hub.docker.com/u/aucobot
 #
 # URLs:
 #   Web:     http://localhost:8386
 #   API:     http://localhost:8387
-#   MCP:     http://localhost:8388
 #   Gateway: http://localhost:18789
 
 services:
@@ -43,11 +44,15 @@ services:
     image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
     pull_policy: always
     container_name: aucobot-gateway
-    entrypoint: ["sh", "/entrypoint/gateway-entrypoint.sh"]
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "sed 's/\\r$//' /entrypoint/gateway-entrypoint.sh > /tmp/gateway-entrypoint.sh && exec sh /tmp/gateway-entrypoint.sh",
+      ]
     environment:
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
       OPENCLAW_DATA_ROOT: /data/projects
-      OSS_PROJECT_ID: ${OSS_PROJECT_ID:-}
     volumes:
       - openclaw_data:/data/projects
       - ./scripts/gateway-entrypoint.sh:/entrypoint/gateway-entrypoint.sh:ro
@@ -100,8 +105,9 @@ services:
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
       GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:8387/api/connectors/oauth/callback}
-      MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-change-me-mcp-service-secret}
-      AUCOMCP_BASE_URL: ${AUCOMCP_BASE_URL:-http://mcp:8388}
+      OAUTH_MODE: ${OAUTH_MODE:-}
+      OAUTH_RELAY_URL: ${OAUTH_RELAY_URL:-}
+      OAUTH_RELAY_API_SECRET: ${OAUTH_RELAY_API_SECRET:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:
       - openclaw_data:/data/projects
@@ -111,22 +117,6 @@ services:
       postgres:
         condition: service_healthy
       gateway:
-        condition: service_started
-    restart: unless-stopped
-
-  mcp:
-    image: ${AUCOBOT_MCP_IMAGE:-docker.io/aucobot/mcp:${AUCOBOT_IMAGE_TAG:-latest}}
-    pull_policy: always
-    container_name: aucobot-mcp
-    environment:
-      PORT: 8388
-      HOST: 0.0.0.0
-      MCP_SERVICE_SECRET: ${MCP_SERVICE_SECRET:-change-me-mcp-service-secret}
-      AUCOBOT_INTERNAL_API_URL: http://api:8387
-    ports:
-      - "127.0.0.1:8388:8388"
-    depends_on:
-      api:
         condition: service_started
     restart: unless-stopped
 

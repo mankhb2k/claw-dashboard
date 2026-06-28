@@ -42,7 +42,7 @@ export async function proxy(request: NextRequest) {
   const validSession = session.valid;
 
   if (!isPublic && !validSession) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/register", request.url));
   }
 
   if ((pathname === "/" || isPublic) && validSession) {

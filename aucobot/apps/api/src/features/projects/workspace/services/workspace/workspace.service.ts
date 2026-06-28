@@ -5,6 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../../core/database/prisma.service';
 import {
   collectFoundationAllowlist,
+  collectFoundationProviderModelsSync,
   resolveProvider,
 } from '../../../ai-providers/lib/provider-registry';
 import { resolveChannel } from '../../../channels/lib/channel-registry';
@@ -17,8 +18,8 @@ import {
 } from '@aucobot/control-plane-core';
 import { migrateFoundationOpenClawId } from '@aucobot/shared';
 import {
-  buildInitialOpenClawConfig,
   cleanupStaleMainAgentModels,
+  collectAgentIdsFromOpenClawConfig,
   ensureProjectLayout,
   mergeAgentsIntoConfig,
   mergeChannelsIntoConfig,
@@ -30,7 +31,9 @@ import {
   openClawConfigPath,
   readOpenClawConfigJson,
   removeLegacyDotEnv,
+  repairOssProjectWorkspace,
   resolveProjectDataDir,
+  syncAgentAuthProfiles,
   type OpenClawProjectConfig,
   legacyTeamFormSlice,
   normalizeCollaborationSettings,
@@ -75,16 +78,14 @@ export class WorkspaceService {
     );
   }
 
-  /** Bootstrap layout + `openclaw.json` on disk (OSS — path is not stored in DB). */
+  /** Bootstrap layout + workspace seed + full runtime sync (OSS desktop-safe). */
   async bootstrapProjectWorkspace(params: {
     projectId: string;
     gatewayToken: string;
   }): Promise<{ dataDir: string }> {
-    const config = buildInitialOpenClawConfig({
-      gatewayToken: params.gatewayToken,
-    });
     const dataDir = await this.ensureProjectLayout(params.projectId);
-    await this.syncOpenClawJsonToDisk(params.projectId, config);
+    await repairOssProjectWorkspace(dataDir);
+    await this.syncProjectRuntime(params.projectId);
     return { dataDir };
   }
 
@@ -110,6 +111,9 @@ export class WorkspaceService {
 
   async syncProjectRuntime(projectId: string): Promise<void> {
     const dataDir = await this.ensureProjectLayout(projectId);
+    if (process.env.RUNTIME_MODE === 'oss') {
+      await repairOssProjectWorkspace(dataDir);
+    }
     const configPath = openClawConfigPath(dataDir);
     const config = (await readOpenClawConfigJson(configPath)) ?? {};
 
@@ -165,10 +169,25 @@ export class WorkspaceService {
           },
         })
       : [];
+    const apiKeyByProviderId = new Map<string, string>();
+    for (const row of providerRows) {
+      if (!row.enabled) continue;
+      const providerId = row.providerId.trim();
+      if (!providerId) continue;
+      try {
+        apiKeyByProviderId.set(providerId, decryptSecret(row.ciphertext));
+      } catch {
+        // Skip rows whose ciphertext cannot be decrypted (rotated/legacy key).
+      }
+    }
     mergeProviderKeysIntoConfig(config, providerRows, decryptSecret, {
       foundationAllowlistOpenclawIds:
         collectFoundationAllowlist(enabledProviderIds),
       proxyModelOpenclawIds: proxyModelRows.map((row) => row.openclawId),
+      providerModelsSync: collectFoundationProviderModelsSync(
+        enabledProviderIds,
+        apiKeyByProviderId,
+      ),
     });
 
     const agentRows = await this.prisma.projectAgent.findMany({
@@ -424,6 +443,19 @@ export class WorkspaceService {
     );
 
     await cleanupStaleMainAgentModels(dataDir, config);
+    await syncAgentAuthProfiles({
+      dataDir,
+      agentIds: collectAgentIdsFromOpenClawConfig(config),
+      providerRows: providerRows.map((row) => ({
+        providerId: row.providerId,
+        envKey: row.envKey,
+        ciphertext: row.ciphertext,
+        defaultModel: row.defaultModel,
+        updatedAt: row.updatedAt,
+        enabled: row.enabled,
+      })),
+      decrypt: decryptSecret,
+    });
     await writeOpenClawConfigJson(configPath, config);
     await removeLegacyDotEnv(dataDir);
   }

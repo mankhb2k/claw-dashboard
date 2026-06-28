@@ -7,7 +7,9 @@ export {
 
 export {
   mergeAgentsIntoConfig,
+  mergeDefaultWebToolsIntoConfig,
   mergeExecToolsIntoConfig,
+  DEFAULT_WEB_SEARCH_PROVIDER,
   mergeSharedSkillsLoadIntoConfig,
   mergeAgentCollaborationToolsIntoConfig,
   mergeProviderKeysIntoConfig,
@@ -19,6 +21,7 @@ export {
   type ProjectSandboxPolicy,
   type ProviderKeyRow,
   type MergeProviderKeysOptions,
+  type ProviderModelsSyncEntry,
 } from './config/merge-openclaw/merge-openclaw.js';
 
 export {
@@ -108,8 +111,17 @@ export {
   ensureGatewayWritableProjectDir,
   ensureProjectLayout,
   openClawConfigPath,
+  OSS_FIXED_PROJECT_DISK_DIR,
   resolveProjectDataDir,
+  resolveProjectDiskDirName,
+  resolveProjectsDataRoot,
+  type ProjectLayoutOptions,
 } from './paths/project-paths.js';
+
+export {
+  migrateOssProjectDiskLayout,
+  type OssDiskMigrationResult,
+} from './paths/migrate-oss-disk-layout.js';
 
 export {
   cleanupStaleMainAgentModels,
@@ -143,3 +155,10 @@ export {
   type HeartbeatSummaryEntry,
   type ProjectHeartbeatRow,
 } from './heartbeat/heartbeat-sync.js';
+
+export {
+  DEFAULT_MAIN_AGENT_FORM,
+  hasWorkspaceBootstrapFiles,
+  repairOssProjectWorkspace,
+  seedMainAgentWorkspace,
+} from './workspace/seed-main-workspace.js';

@@ -652,49 +652,165 @@ flowchart LR
 
 ## 8. Built-in Tools (Công Cụ Tích Hợp)
 
-### 8.1 Bảng Tổng Hợp Tất Cả Tools
+> **Nguồn (sync từ `openclaw-worker`):** `src/agents/tool-catalog.ts` (catalog + profile defaults), `src/agents/openclaw-tools.ts` (runtime assembly), `src/agents/tool-policy-shared.ts` (`group:*` expansion). Gateway Docker hiện dùng image `alpine/openclaw` (ví dụ **2026.6.9**); repo local có thể lệch patch (ví dụ `2026.6.6`).
 
-| Tool               | Mô tả                                                | Group              |
-| ------------------ | ---------------------------------------------------- | ------------------ |
-| `exec` / `process` | Chạy lệnh shell, quản lý background processes        | `group:runtime`    |
-| `code_execution`   | Chạy Python trong sandbox từ xa                      | `group:runtime`    |
-| `browser`          | Điều khiển Chromium (navigate, click, screenshot)    | `group:ui`         |
-| `read`             | Đọc file trong workspace                             | `group:fs`         |
-| `write`            | Ghi file trong workspace                             | `group:fs`         |
-| `edit`             | Sá»­a file trong workspace                           | `group:fs`         |
-| `apply_patch`      | Multi-hunk file patches                              | `group:fs`         |
-| `web_search`       | Tìm kiếm web                                         | `group:web`        |
-| `x_search`         | Tìm kiếm X (Twitter) posts                           | `group:web`        |
-| `web_fetch`        | Fetch ná»™i dung trang web                           | `group:web`        |
-| `message`          | Gửi tin nhắn qua tất cả các kênh                     | `group:messaging`  |
-| `canvas`           | Điều khiển Canvas node (present, eval, snapshot)     | `group:ui`         |
-| `nodes`            | Discover và target paired devices                    | `group:nodes`      |
-| `cron`             | Quản lý scheduled jobs                               | `group:automation` |
-| `gateway`          | Inspect / patch / restart gateway, config management | `group:automation` |
-| `image`            | Phân tích ảnh (media understanding)                  | `group:media`      |
-| `image_generate`   | Tạo ảnh (DALL-E, Imagen, fal, v.v.)                  | `group:media`      |
-| `music_generate`   | Tạo nhạc                                             | `group:media`      |
-| `video_generate`   | Tạo video                                            | `group:media`      |
-| `tts`              | Text-to-speech (one-shot)                            | `group:media`      |
-| `sessions_list`    | Liệt kê sessions                                     | `group:sessions`   |
-| `sessions_history` | Xem lịch sử session (filtered, safe)                 | `group:sessions`   |
-| `sessions_send`    | Gửi tin nhắn vào session khác                        | `group:sessions`   |
-| `sessions_spawn`   | Tạo session mới                                      | `group:sessions`   |
-| `sessions_yield`   | Yield control                                        | `group:sessions`   |
-| `subagents`        | Khởi chạy sub-agent                                  | `group:sessions`   |
-| `agents_list`      | Liệt kê agents                                       | `group:agents`     |
-| `session_status`   | Đọc trạng thái session, override model               | `group:sessions`   |
-| `memory_search`    | Tìm trong memory                                     | `group:memory`     |
-| `memory_get`       | Lấy memory item                                      | `group:memory`     |
+### 8.1 Bảng Tổng Hợp Core Tools
+
+Core tools được định nghĩa tập trung trong `CORE_TOOL_DEFINITIONS`. Mỗi tool thuộc một **section** (nhóm UI) và map sang **`group:<section>`** trong policy.
+
+#### Files (`group:fs`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `read` | Đọc file trong workspace | `coding` |
+| `write` | Tạo hoặc ghi đè file | `coding` |
+| `edit` | Sửa file chính xác (hunk/patch) | `coding` |
+| `apply_patch` | Multi-hunk file patches | `coding` |
+
+#### Runtime (`group:runtime`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `exec` | Chạy lệnh shell | `coding` |
+| `process` | Quản lý background processes | `coding` |
+| `code_execution` | Chạy phân tích sandbox từ xa | `coding` |
+
+#### Web (`group:web`)
+
+| Tool | Mô tả | Profiles mặc định | Ghi chú provider |
+| ---- | ----- | ----------------- | ---------------- |
+| `web_search` | Tìm kiếm web | `coding` | Cần **chọn search provider** (xem §8.6) — code tool có sẵn, backend search là plugin |
+| `web_fetch` | Fetch URL → markdown/text | `coding` | Built-in HTTP + readability; Firecrawl là provider nâng cao (API key) |
+| `x_search` | Tìm posts trên X (Twitter) | `coding` | Cần `TWITTER_BEARER_TOKEN` / auth X |
+
+#### Memory (`group:memory`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `memory_search` | Semantic search trong memory files | `coding` |
+| `memory_get` | Đọc memory item | `coding` |
+
+#### Sessions (`group:sessions`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `sessions_list` | Liệt kê sessions | `coding`, `messaging` |
+| `sessions_history` | Xem lịch sử session (filtered) | `coding`, `messaging` |
+| `sessions_send` | Gửi tin vào session khác | `coding`, `messaging` |
+| `sessions_spawn` | Tạo session / sub-agent run mới | `coding` |
+| `sessions_yield` | Yield turn để nhận kết quả sub-agent | `coding` |
+| `subagents` | Quản lý sub-agents (spawn, status, kill) | `coding` |
+| `session_status` | Trạng thái session, override model | `minimal`, `coding`, `messaging` |
+
+#### UI (`group:ui`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `browser` | Điều khiển Chromium (navigate, click, screenshot) | *(không có — cần `allow` explicit hoặc `full`)* |
+| `canvas` | Điều khiển Canvas node (plugin Canvas bật) | *(không có — cần `allow` explicit hoặc `full`)* |
+
+#### Messaging (`group:messaging`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `message` | Gửi tin qua các kênh đã kết nối | `messaging` |
+
+#### Automation (`group:automation`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `heartbeat_respond` | Ghi kết quả heartbeat có cấu trúc | *(không có — bật qua `enableHeartbeatTool` runtime)* |
+| `cron` | Quản lý scheduled jobs | `coding` |
+| `gateway` | Inspect / patch / restart gateway | *(không có — cần `allow` explicit hoặc `full`)* |
+
+#### Nodes (`group:nodes`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `nodes` | Discover và điều khiển paired devices | *(không có — cần `allow` explicit hoặc `full`)* |
+
+#### Agents (`group:agents`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `agents_list` | Liệt kê agents | *(không có — cần `allow` explicit hoặc `full`)* |
+| `get_goal` | Lấy goal của thread hiện tại | `coding` |
+| `create_goal` | Tạo goal cho thread | `coding` |
+| `update_goal` | Hoàn thành / block goal | `coding` |
+| `update_plan` | Cập nhật plan agentic (experimental) | `coding` *(hoặc explicit allow — xem §8.1.2)* |
+| `skill_workshop` | Skill Workshop proposals (create/apply/reject…) | `coding` |
+
+#### Media (`group:media`)
+
+| Tool | Mô tả | Profiles mặc định |
+| ---- | ----- | ----------------- |
+| `image` | Phân tích / hiểu ảnh | `coding` |
+| `image_generate` | Tạo ảnh | `coding` |
+| `music_generate` | Tạo nhạc | `coding` |
+| `video_generate` | Tạo video | `coding` |
+| `tts` | Text-to-speech one-shot | *(không có — cần `allow` explicit hoặc `full`)* |
+
+### 8.1.1 Tools runtime bổ sung (không có trong catalog tĩnh)
+
+Được gắn trong `createOpenClawTools()` khi điều kiện config/runtime thỏa:
+
+| Tool | Khi nào xuất hiện | Ghi chú |
+| ---- | ----------------- | ------- |
+| `pdf` | `tools` media plan + có `agentDir` | Phân tích PDF qua media provider |
+| `transcripts` | `transcripts.enabled` trong config | Truy vấn transcript store |
+
+Ngoài core catalog, gateway còn merge **plugin tools** qua `tools.catalog` RPC (`src/gateway/server-methods/tools-catalog.ts`).
+
+### 8.1.2 `update_plan` — ngoại lệ profile
+
+`update_plan` nằm trong profile `coding`, nhưng runtime chỉ include khi:
+
+- `tools.experimental.planTool === true`, **hoặc**
+- strict agentic execution contract active, **hoặc**
+- tool được **explicit allow** trong `tools.allow` / `tools.alsoAllow`.
 
 ### 8.2 Tool Groups & Profiles
 
-| Profile     | Tools được phép                                                                                 |
-| ----------- | ----------------------------------------------------------------------------------------------- |
-| `full`      | Tất cả (không hạn chế)                                                                          |
-| `coding`    | `group:fs`, `group:runtime`, `group:web`, `group:sessions`, `group:memory`, `cron`, media tools |
-| `messaging` | `group:messaging`, session tools cơ bản                                                         |
-| `minimal`   | Chỉ `session_status`                                                                            |
+**Profiles** (`tools.profile` hoặc `agents.list[].tools.profile`) expand thành allow-list cụ thể trong `src/agents/tool-catalog.ts`:
+
+| Profile | Allow policy | Ý nghĩa |
+| ------- | ------------ | ------- |
+| `minimal` | `session_status` | Chỉ đọc trạng thái session |
+| `coding` | Mọi core tool có `profiles` chứa `coding` + `bundle-mcp` | Dev/agent làm việc: fs, runtime, web, memory, sessions, cron, goals, media gen… |
+| `messaging` | Core tools có `profiles` chứa `messaging` + `bundle-mcp` | `message` + session tools cơ bản |
+| `full` | `["*"]` | Không giới hạn core tools (plugin tools vẫn theo plugin policy) |
+
+**Alias policy:** `bash` → `exec`, `apply-patch` → `apply_patch`.
+
+### 8.2.1 Tool groups (`group:*`)
+
+Dùng trong `tools.allow` / `tools.deny` — expand qua `expandToolGroups()` (`tool-policy-shared.ts`):
+
+| Group id | Tools |
+| -------- | ----- |
+| `group:fs` | `read`, `write`, `edit`, `apply_patch` |
+| `group:runtime` | `exec`, `process`, `code_execution` |
+| `group:web` | `web_search`, `web_fetch`, `x_search` |
+| `group:memory` | `memory_search`, `memory_get` |
+| `group:sessions` | `sessions_*`, `subagents`, `session_status` |
+| `group:ui` | `browser`, `canvas` |
+| `group:messaging` | `message` |
+| `group:automation` | `heartbeat_respond`, `cron`, `gateway` |
+| `group:nodes` | `nodes` |
+| `group:agents` | `agents_list`, `get_goal`, `create_goal`, `update_goal`, `update_plan`, `skill_workshop` |
+| `group:media` | `image`, `image_generate`, `music_generate`, `video_generate`, `tts` |
+| `group:openclaw` | Superset các tool có `includeInOpenClawGroup` (hầu hết trừ pure fs/runtime cơ bản) |
+| `group:plugins` | Plugin-provided tools (resolve runtime) |
+
+### 8.2.2 Ba lớp “có tool” vs “chạy được”
+
+| Lớp | Câu hỏi | Ví dụ |
+| --- | ------- | ----- |
+| **1. Tool availability** | Agent được **phép gọi** tool? | `tools.profile: coding`, `tools.deny: ["exec"]` |
+| **2. Runtime assembly** | Gateway **đăng ký** tool instance? | `browser` cần allow; `heartbeat_respond` cần heartbeat mode |
+| **3. Provider / backend** | Lệnh gọi tool **thực sự chạy**? | `web_search` cần `tools.web.search.provider`; `image_generate` cần API key provider |
+
+Docker image **cài sẵn lớp 1–2** (code handler). **Lớp 3** vẫn cần config (API key, OAuth, search provider, Ollama host…).
 
 ### 8.3 Tool Policy
 
@@ -714,12 +830,64 @@ flowchart LR
 
 **Tắt `exec` cho một agent cụ thể:** dùng `tools.deny: ["exec"]` ở global, hoặc per-agent qua `agents.list[].tools.profile` / profile kế thừa (ví dụ `minimal` không có `group:runtime`). Đây là **bật/tắt tool**, khác hẳn `tools.exec` (policy khi tool đã được phép).
 
+### 8.6 Web Search & Fetch Providers
+
+> **Nguồn:** `extensions/*/web-search*.ts`, `extensions/duckduckgo`, `extensions/parallel`, `src/agents/tools/web-tools.ts`, `src/web-fetch/runtime.ts`.
+
+`web_search` và `web_fetch` là **core tools** (profile `coding`), nhưng **backend** resolve qua plugin providers. Gateway **không auto-chọn** provider miễn phí nếu không có credential — trừ khi config **chỉ định provider keyless** hoặc auto-detect tìm thấy credential.
+
+#### Search providers (`tools.web.search`)
+
+| Provider id | Plugin | API key | Ghi chú |
+| ----------- | ------ | ------- | ------- |
+| **`parallel-free`** | `parallel` | Không | Free hosted Search MCP; `autoDetectOrder: 76` (ưu tiên keyless cao nhất) |
+| **`duckduckgo`** | `duckduckgo` | Không | HTML scrape DuckDuckGo; experimental; `autoDetectOrder: 100` |
+| **`ollama`** | `ollama` | Không* | *Cần Ollama host + `ollama signin` / cloud auth |
+| **`codex`** | `codex` | Không* | *Codex app-server / subscription context |
+| `brave` | `brave` | `BRAVE_API_KEY` | Structured results, LLM Context mode |
+| `perplexity` | `perplexity` | `PERPLEXITY_API_KEY` | AI-synthesized answers + citations |
+| `tavily` | `tavily` | `TAVILY_API_KEY` | Structured + domain filters |
+| `kimi` | `moonshot` | `KIMI_API_KEY` / `MOONSHOT_API_KEY` | Kimi web search |
+| `minimax` | `minimax` | MiniMax keys | MiniMax web search |
+| `searxng` | `searxng` | `SEARXNG_BASE_URL` | Self-hosted SearXNG |
+| `gemini` / Google | `google` | `GEMINI_API_KEY` | Google Search integration |
+| `firecrawl` | `firecrawl` | `FIRECRAWL_API_KEY` | Cũng có search contract |
+
+**Config tối thiểu (DuckDuckGo — AucoBot OSS default sau sync):**
+
+```json5
+{
+  tools: {
+    web: {
+      search: { provider: "duckduckgo", enabled: true },
+      fetch: { enabled: true, readability: true },
+    },
+  },
+  plugins: {
+    entries: {
+      duckduckgo: { enabled: true },
+    },
+  },
+}
+```
+
+**Lỗi thường gặp:** agent báo *“web_search chưa được cấu hình”* khi thiếu `tools.web.search.provider` — dù Docker đã cài plugin `duckduckgo`.
+
+#### Fetch providers (`tools.web.fetch`)
+
+| Mode | Mô tả |
+| ---- | ----- |
+| **Built-in** | `createWebFetchTool` → HTTP(S) + SSRF guard + readability extraction (plugin `web-readability`) |
+| **Firecrawl** | Provider plugin — markdown sạch, chống anti-scraping; cần API key |
+
+CLI kiểm tra: `openclaw infer web providers`, `openclaw infer web search --query "..." --provider duckduckgo`.
+
 ### 8.4 Plugin-Provided Tools (Ví dụ)
 
 | Tool         | Plugin     | Mô tả                                    |
 | ------------ | ---------- | ---------------------------------------- |
 | `llm_task`   | LLM Task   | JSON-only LLM step, structured output    |
-| `lobster`    | Lobster    | Typed workflow vá»›i resumable approvals |
+| `lobster`    | Lobster    | Typed workflow với resumable approvals |
 | `diff`       | Diffs      | Diff viewer và renderer                  |
 | `tokenjuice` | Tokenjuice | Compact exec output                      |
 
@@ -3294,14 +3462,17 @@ Transports:
 
 ### 30.6 Web Search Providers (Kết Nối Tìm Kiếm)
 
-Agent dùng `web_search` tool với nhiều provider khác nhau:
+Agent dùng `web_search` tool với nhiều provider khác nhau. Chi tiết catalog đầy đủ: **§8.6**.
 
-| Provider          | Config Key                                | Auth                 | Đặc điểm                               |
-| ----------------- | ----------------------------------------- | -------------------- | -------------------------------------- |
-| **Brave Search**  | `tools.web.search.provider: "brave"`      | `BRAVE_API_KEY`      | Structured results, LLM Context mode   |
-| **Perplexity**    | `tools.web.search.provider: "perplexity"` | `PERPLEXITY_API_KEY` | AI-synthesized answers vá»›i citations |
-| **Google Search** | Google plugin                             | `GEMINI_API_KEY`     | Google Search integration              |
-| **Exa**           | MCP server                                | `EXA_API_KEY`        | Semantic search                        |
+| Provider | Config Key | Auth | Đặc điểm |
+| -------- | ---------- | ---- | -------- |
+| **Parallel (Free)** | `tools.web.search.provider: "parallel-free"` | Không | Free Search MCP hosted |
+| **DuckDuckGo** | `tools.web.search.provider: "duckduckgo"` | Không | Experimental HTML search |
+| **Ollama Web Search** | `tools.web.search.provider: "ollama"` | Ollama host + signin | Local/cloud Ollama |
+| **Brave Search** | `tools.web.search.provider: "brave"` | `BRAVE_API_KEY` | Structured results, LLM Context mode |
+| **Perplexity** | `tools.web.search.provider: "perplexity"` | `PERPLEXITY_API_KEY` | AI-synthesized answers với citations |
+| **Google Search** | Google plugin | `GEMINI_API_KEY` | Google Search integration |
+| **Exa** | MCP server | `EXA_API_KEY` | Semantic search |
 
 #### Brave Search Config
 

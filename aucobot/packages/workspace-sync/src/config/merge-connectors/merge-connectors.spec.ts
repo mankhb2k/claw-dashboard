@@ -125,7 +125,7 @@ describe('mergeConnectorsIntoConfig', () => {
     assert.equal(await pathExists(join(dataDir, 'connectors', 'google-drive')), false);
   });
 
-  it('writes Google Drive credential files in local (npx) mode', async () => {
+  it('writes Google Drive credential files in local (stdio) mode', async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'ws-merge-local-'));
     const config: Record<string, unknown> = {};
 
@@ -136,7 +136,7 @@ describe('mergeConnectorsIntoConfig', () => {
 
     const servers = (config.mcp as { servers: Record<string, Record<string, unknown>> }).servers;
     const entry = servers['google-drive'];
-    assert.equal(entry.command, 'npx');
+    assert.equal(entry.command, 'aucobot-mcp-google-drive');
     assert.match(String(entry.env?.GDRIVE_OAUTH_PATH), /google-drive\/gcp-oauth\.keys\.json$/);
   });
 

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ensureRuntimeFileOwnership } from '../fs-runtime-ownership.js';
 
@@ -71,29 +71,91 @@ function hasOperatorWrite(device: PairedDevice | undefined): boolean {
   return scopes.includes('operator.write') || scopes.includes('operator.admin');
 }
 
+type DeviceStore = {
+  pendingPath: string;
+  pairedPath: string;
+};
+
+async function listProjectDeviceStores(projectDataDir: string): Promise<DeviceStore[]> {
+  const stores: DeviceStore[] = [];
+  const ownDevicesDir = path.join(projectDataDir, 'devices');
+  stores.push({
+    pendingPath: path.join(ownDevicesDir, 'pending.json'),
+    pairedPath: path.join(ownDevicesDir, 'paired.json'),
+  });
+
+  const projectsRoot = path.dirname(projectDataDir);
+  let entries: string[] = [];
+  try {
+    entries = await readdir(projectsRoot);
+  } catch {
+    return stores;
+  }
+
+  const ownProjectId = path.basename(projectDataDir);
+  for (const entry of entries) {
+    if (entry === ownProjectId) continue;
+    const devicesDir = path.join(projectsRoot, entry, 'devices');
+    stores.push({
+      pendingPath: path.join(devicesDir, 'pending.json'),
+      pairedPath: path.join(devicesDir, 'paired.json'),
+    });
+  }
+  return stores;
+}
+
+async function isDeviceApprovedAnywhere(
+  projectDataDir: string,
+  deviceId: string,
+): Promise<boolean> {
+  for (const store of await listProjectDeviceStores(projectDataDir)) {
+    const pairedByDeviceId = await readJsonMap<PairedDevice>(store.pairedPath);
+    if (hasOperatorWrite(pairedByDeviceId[deviceId])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function findPendingForDevice(
+  projectDataDir: string,
+  deviceId: string,
+): Promise<{
+  store: DeviceStore;
+  pending: PendingRequest;
+  pendingById: Record<string, PendingRequest>;
+} | null> {
+  for (const store of await listProjectDeviceStores(projectDataDir)) {
+    const pendingById = await readJsonMap<PendingRequest>(store.pendingPath);
+    const pending = Object.values(pendingById).find((p) => p.deviceId === deviceId);
+    if (pending) {
+      return { store, pending, pendingById };
+    }
+  }
+  return null;
+}
+
 /**
  * Self-host SaaS: auto-approve pending pairing for the backend proxy device.
  * Gateway sees Docker bridge IP (172.17.x) so loopback auto-approve does not apply.
+ * OSS shared gateway may bind a different project folder than the chat project —
+ * scan sibling project dirs under OPENCLAW_DATA_ROOT for pending.json.
  */
 export async function approveProxyDeviceIfPending(
   projectDataDir: string,
   deviceId: string,
 ): Promise<boolean> {
-  const devicesDir = path.join(projectDataDir, 'devices');
-  const pendingPath = path.join(devicesDir, 'pending.json');
-  const pairedPath = path.join(devicesDir, 'paired.json');
-
-  const pendingById = await readJsonMap<PendingRequest>(pendingPath);
-  const pairedByDeviceId = await readJsonMap<PairedDevice>(pairedPath);
-
-  if (hasOperatorWrite(pairedByDeviceId[deviceId])) {
+  if (await isDeviceApprovedAnywhere(projectDataDir, deviceId)) {
     return false;
   }
 
-  const pending = Object.values(pendingById).find((p) => p.deviceId === deviceId);
-  if (!pending) {
+  const resolved = await findPendingForDevice(projectDataDir, deviceId);
+  if (!resolved) {
     return false;
   }
+
+  const { store, pending, pendingById } = resolved;
+  const pairedByDeviceId = await readJsonMap<PairedDevice>(store.pairedPath);
 
   const now = Date.now();
   const role = pending.role ?? 'operator';
@@ -126,8 +188,8 @@ export async function approveProxyDeviceIfPending(
   };
 
   delete pendingById[pending.requestId];
-  await writeJsonMap(pairedPath, pairedByDeviceId as Record<string, unknown>);
-  await writeJsonMap(pendingPath, pendingById as Record<string, unknown>);
+  await writeJsonMap(store.pairedPath, pairedByDeviceId as Record<string, unknown>);
+  await writeJsonMap(store.pendingPath, pendingById as Record<string, unknown>);
   return true;
 }
 

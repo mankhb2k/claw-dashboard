@@ -2,20 +2,17 @@
 
 import { AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import styles from "./ChatPanel.module.css";
-import { ChatLiveThread } from "../ChatLiveThread/ChatLiveThread";
-import { ChatMessageBubble } from "../ChatMessageBubble/ChatMessageBubble";
+import { ChatComposerIsland } from "../ChatComposerIsland/ChatComposerIsland";
+import { ChatThreadIsland } from "../ChatThreadIsland/ChatThreadIsland";
 import { ContentArea } from "../ContentArea/ContentArea";
-import {
-  MessageBox,
-  type ComposerSendPayload,
-} from "@/components/chat/MessageBox";
-import { Box } from "@/components/layout";
 import { Button, Select } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import { isOssRuntime } from "@/lib/runtime/runtime-mode";
 
+import type { ComposerSendPayload } from "@/components/chat/MessageBox";
 import type { InvokableSkill } from "@/utils/chat/skill-slash";
 import type { LiveThreadItem } from "@/utils/chat/tool/types";
 
@@ -72,8 +69,6 @@ export type ChatPanelProps = {
   messages: ChatPanelMessage[];
   streamText: string;
   sending: boolean;
-  input: string;
-  onInputChange: (value: string) => void;
   onSend: (payload: ComposerSendPayload) => void;
   onAbort: () => void;
   sessionActionsDisabled: boolean;
@@ -123,8 +118,6 @@ export function ChatPanel({
   messages,
   streamText,
   sending,
-  input,
-  onInputChange,
   onSend,
   onAbort,
   sessionActionsDisabled,
@@ -161,8 +154,111 @@ export function ChatPanel({
           ? styles.statusError
           : styles.statusIdle;
 
+  const composerDisabled = !ready || connectionState !== "connected";
+
+  const composerPlaceholder = useMemo(
+    () =>
+      ready && connectionState === "connected"
+        ? t("chat.panel.placeholderConnected")
+        : t("chat.panel.placeholderDisconnected"),
+    [connectionState, ready, t],
+  );
+
+  const thread = useMemo(
+    () => (
+      <ChatThreadIsland
+        messages={messages}
+        streamText={streamText}
+        liveItems={liveItems}
+        showToolPreparing={showToolPreparing}
+      />
+    ),
+    [liveItems, messages, showToolPreparing, streamText],
+  );
+
+  const composer = useMemo(
+    () => (
+      <ChatComposerIsland
+        sessionKey={sessionKey}
+        onSend={onSend}
+        onAbort={onAbort}
+        sending={sending}
+        canSend={canSend}
+        disabled={composerDisabled}
+        ariaLabel={t("chat.panel.messageInputAria")}
+        placeholder={composerPlaceholder}
+        providerId={providerId}
+        providerOptions={providerOptions}
+        onProviderChange={onProviderChange}
+        modelId={modelId}
+        modelOptions={modelOptions}
+        onModelChange={onModelChange}
+        modelsLoading={modelsLoading}
+        modelSaving={modelSaving}
+        modelHint={modelHint}
+        contextUsage={contextUsage}
+        projectId={projectId}
+        sandboxActive={sandboxActive}
+        stagingMaxBytes={stagingMaxBytes}
+        invokableSkills={invokableSkills}
+        invokableSkillsLoading={invokableSkillsLoading}
+      />
+    ),
+    [
+      canSend,
+      composerDisabled,
+      composerPlaceholder,
+      contextUsage,
+      invokableSkills,
+      invokableSkillsLoading,
+      modelHint,
+      modelId,
+      modelOptions,
+      modelSaving,
+      modelsLoading,
+      onAbort,
+      onModelChange,
+      onProviderChange,
+      onSend,
+      projectId,
+      providerId,
+      providerOptions,
+      sandboxActive,
+      sending,
+      sessionKey,
+      stagingMaxBytes,
+      t,
+    ],
+  );
+
+  const emptyState = useMemo(
+    () =>
+      showEmpty ? (
+        <div className={styles.empty}>
+          <div className={styles.emptyIcon}>
+            <MessageSquare size={28} />
+          </div>
+          <h2 className={styles.emptyTitle}>{t("chat.panel.emptyTitle")}</h2>
+          <p className={styles.emptyHint}>
+            {isOssRuntime()
+              ? t("chat.panel.emptyHintOss")
+              : t("chat.panel.emptyHintContainer")}{" "}
+            {t("chat.panel.emptyHintKeys")}
+          </p>
+          <Button
+            size="sm"
+            onClick={onNewSession}
+            disabled={sessionActionsDisabled}
+          >
+            {t("chat.panel.newChat")}
+          </Button>
+        </div>
+      ) : undefined,
+    [onNewSession, sessionActionsDisabled, showEmpty, t],
+  );
+
   return (
-    <Box as="section" className={styles.panel} aria-label={t("chat.panel.ariaConversation")}>
+    <section className={styles.panel} aria-label={t("chat.panel.ariaConversation")}>
       <header className={styles.header}>
         <div className={styles.headerMain}>
           <p className={styles.headerTitle}>{t("chat.panel.title")}</p>
@@ -259,87 +355,9 @@ export function ChatPanel({
         </div>
       )}
 
-      <ContentArea
-        scrollResetKey={sessionKey}
-        emptyState={
-          showEmpty ? (
-            <div className={styles.empty}>
-              <div className={styles.emptyIcon}>
-                <MessageSquare size={28} />
-              </div>
-              <h2 className={styles.emptyTitle}>{t("chat.panel.emptyTitle")}</h2>
-              <p className={styles.emptyHint}>
-                {isOssRuntime()
-                  ? t("chat.panel.emptyHintOss")
-                  : t("chat.panel.emptyHintContainer")}{" "}
-                {t("chat.panel.emptyHintKeys")}
-              </p>
-              <Button
-                size="sm"
-                onClick={onNewSession}
-                disabled={sessionActionsDisabled}
-              >
-                {t("chat.panel.newChat")}
-              </Button>
-            </div>
-          ) : undefined
-        }
-        footer={
-          <MessageBox
-            enableAttachments
-            value={input}
-            onChange={onInputChange}
-            onSend={onSend}
-            onAbort={onAbort}
-            sending={sending}
-            canSend={canSend}
-            disabled={!ready || connectionState !== "connected"}
-            inputId="chat-message-input"
-            composerId="chat-composer"
-            ariaLabel={t("chat.panel.messageInputAria")}
-            placeholder={
-              ready && connectionState === "connected"
-                ? t("chat.panel.placeholderConnected")
-                : t("chat.panel.placeholderDisconnected")
-            }
-            providerId={providerId}
-            providerOptions={providerOptions}
-            onProviderChange={onProviderChange}
-            modelId={modelId}
-            modelOptions={modelOptions}
-            onModelChange={onModelChange}
-            modelsLoading={modelsLoading}
-            modelSaving={modelSaving}
-            hint={modelHint}
-            modelLabel={
-              modelOptions.find((m) => m.value === modelId)?.label ?? modelId
-            }
-            contextUsage={contextUsage}
-            projectId={projectId}
-            sandboxActive={sandboxActive}
-            stagingMaxBytes={stagingMaxBytes}
-            invokableSkills={invokableSkills}
-            invokableSkillsLoading={invokableSkillsLoading}
-          />
-        }
-      >
-        {messages.map((message) => (
-          <ChatMessageBubble
-            key={message.id}
-            role={message.role}
-            text={message.text}
-          />
-        ))}
-
-        <ChatLiveThread
-          liveItems={liveItems}
-          showToolPreparing={showToolPreparing}
-        />
-
-        {streamText ? (
-          <ChatMessageBubble role="assistant" text={streamText} streaming />
-        ) : null}
+      <ContentArea scrollResetKey={sessionKey} emptyState={emptyState} footer={composer}>
+        {thread}
       </ContentArea>
-    </Box>
+    </section>
   );
 }

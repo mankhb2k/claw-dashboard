@@ -6,14 +6,39 @@ const GATEWAY_RUNTIME_GID = Number(process.env.OPENCLAW_RUNTIME_GID ?? 1000) || 
 
 const PROJECT_SUBDIRS = ['workspace', 'devices', 'agents', 'logs', 'chat-uploads'] as const;
 
+/** OSS single-project layout: all sync writes under `{dataRoot}/default/`. */
+export const OSS_FIXED_PROJECT_DISK_DIR = 'default';
+
+export type ProjectLayoutOptions = {
+  dataRoot?: string;
+  cwd?: string;
+  /** Override on-disk folder name (tests / explicit pin). */
+  diskDirName?: string;
+};
+
+export function resolveProjectsDataRoot(options?: ProjectLayoutOptions): string {
+  return (
+    options?.dataRoot?.trim() ||
+    path.join(options?.cwd ?? process.cwd(), 'data', 'projects')
+  );
+}
+
+export function resolveProjectDiskDirName(
+  projectId: string,
+  options?: ProjectLayoutOptions,
+): string {
+  const override = options?.diskDirName?.trim();
+  if (override) return override;
+  if (process.env.RUNTIME_MODE === 'oss') return OSS_FIXED_PROJECT_DISK_DIR;
+  return projectId;
+}
+
 export function resolveProjectDataDir(
   projectId: string,
-  options?: { dataRoot?: string; cwd?: string },
+  options?: ProjectLayoutOptions,
 ): string {
-  const root =
-    options?.dataRoot?.trim() ||
-    path.join(options?.cwd ?? process.cwd(), 'data', 'projects');
-  return path.resolve(root, projectId);
+  const root = resolveProjectsDataRoot(options);
+  return path.resolve(root, resolveProjectDiskDirName(projectId, options));
 }
 
 async function safeChown(targetPath: string, uid: number, gid: number): Promise<void> {
@@ -68,7 +93,7 @@ export async function ensureGatewayWritableProjectDir(dataDir: string): Promise<
 
 export async function ensureProjectLayout(
   projectId: string,
-  options?: { dataRoot?: string; cwd?: string },
+  options?: ProjectLayoutOptions,
 ): Promise<string> {
   const dataDir = resolveProjectDataDir(projectId, options);
   await mkdir(dataDir, { recursive: true });

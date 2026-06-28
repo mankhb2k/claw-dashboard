@@ -10,7 +10,7 @@ Mục tiêu: **một lệnh** dựng 5 service + volume dùng chung (Supabase-st
 | `mcp` | 8388 | Hub `aucobot/mcp` — **pull only**, không build |
 | `gateway` | 18789 | `alpine/openclaw:latest` |
 
-Volume **`openclaw_data`**: API ghi `/data/projects/{projectId}/…`, gateway đọc cùng dữ liệu.
+Volume **`openclaw_data`**: API ghi `/data/projects/default/…` (OSS), gateway đọc cùng dữ liệu.
 
 File compose duy nhất: [`docker-compose.yml`](./docker-compose.yml)
 
@@ -76,7 +76,7 @@ pnpm dev   # api + web trên host
 | ---- | ------- |
 | `OPENCLAW_GATEWAY_TOKEN` | Khớp giữa `api` và `gateway` |
 | `OPENCLAW_DATA_ROOT` | Trong compose: `/data/projects` (cả api + gateway) |
-| `OSS_PROJECT_ID` | Tuỳ chọn — pin một project; để trống = auto project đầu tiên |
+| `OSS_PROJECT_ID` | **Deprecated** — OSS dùng cố định `default/`. Chỉ dùng khi dev pin folder legacy. |
 | `MCP_SERVICE_SECRET` | Khớp giữa `api` và `mcp` |
 | `AUCOMCP_BASE_URL` | `http://mcp:8388` trong compose |
 | `AUCOBOT_IMAGE_TAG` | Tag Hub cho api/web/mcp (mặc định `latest`) |

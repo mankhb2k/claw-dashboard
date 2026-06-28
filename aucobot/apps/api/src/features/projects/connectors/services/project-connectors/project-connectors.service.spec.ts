@@ -38,6 +38,22 @@ jest.mock('../../lib/connector-registry', () => ({
   listActiveConnectors: jest.fn(() => [mockAdapter]),
 }));
 
+jest.mock('../../lib/oauth-mode', () => ({
+  getOAuthRelayPublicMode: jest.fn().mockReturnValue('local'),
+  isRelayOAuthEnabled: jest.fn().mockReturnValue(false),
+  connectorSlugToRelayProvider: jest.fn().mockReturnValue('google'),
+  getApiOAuthCallbackUrl: jest
+    .fn()
+    .mockReturnValue('http://localhost:8387/api/connectors/oauth/callback'),
+}));
+
+jest.mock('../../lib/oauth-relay-client', () => ({
+  buildRelayOAuthStartUrl: jest
+    .fn()
+    .mockReturnValue('http://localhost:3090/oauth/google/start'),
+  exchangeRelayCode: jest.fn(),
+}));
+
 import { BadRequestException, ConflictException } from '@nestjs/common';
 
 import { ProjectConnectorsService } from './project-connectors.service';
@@ -177,6 +193,27 @@ describe('ProjectConnectorsService', () => {
         state: 'signed-state',
         prompt: 'consent',
       });
+    });
+
+    it('returns relay url when relay mode enabled', async () => {
+      const oauthMode = jest.requireMock('../../lib/oauth-mode');
+      const relayClient = jest.requireMock('../../lib/oauth-relay-client');
+      oauthMode.isRelayOAuthEnabled.mockReturnValue(true);
+
+      const { service, prisma } = createService();
+      prisma.projectConnector.findUnique.mockResolvedValue({
+        id: CONNECTOR_ID,
+      });
+
+      const result = await service.startOAuth(
+        'user-1',
+        PROJECT_ID,
+        'google-drive',
+      );
+
+      expect(result.url).toBe('http://localhost:3090/oauth/google/start');
+      expect(relayClient.buildRelayOAuthStartUrl).toHaveBeenCalled();
+      expect(mockAdapter.buildOAuthUrl).not.toHaveBeenCalled();
     });
   });
 });

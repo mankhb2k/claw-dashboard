@@ -169,7 +169,6 @@ export function useClientChatPage() {
     useState<ConnectionState>("idle");
   const [messages, setMessages] = useState<ChatPanelMessage[]>([]);
   const [streamText, setStreamText] = useState("");
-  const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -932,70 +931,75 @@ export function useClientChatPage() {
     });
   }, [sessionKey, connectionState, loadHistory]);
 
-  const handleSend = async (payload: ComposerSendPayload) => {
-    const text = payload.text.trim();
-    const attachments = payload.attachments;
-    const attachmentIds = attachments
-      .map((item) => item.serverId)
-      .filter((id): id is string => Boolean(id));
-    const client = clientRef.current;
-    if (
-      (!text && attachmentIds.length === 0) ||
-      !client?.connected ||
-      sending
-    ) {
-      return;
-    }
+  const handleSend = useCallback(
+    async (payload: ComposerSendPayload) => {
+      const text = payload.text.trim();
+      const attachments = payload.attachments;
+      const attachmentIds = attachments
+        .map((item) => item.serverId)
+        .filter((id): id is string => Boolean(id));
+      const client = clientRef.current;
+      if (
+        (!text && attachmentIds.length === 0) ||
+        !client?.connected ||
+        sendingRef.current
+      ) {
+        return;
+      }
 
-    if (
-      sandboxActive &&
-      attachments.some((item) =>
-        isFileOverSandboxStagingLimit(item.file.size, true),
-      )
-    ) {
-      setError(
-        `File exceeds ${Math.round(SANDBOX_STAGING_MAX_BYTES / (1024 * 1024))} MB — sandbox is enabled.`,
-      );
-      return;
-    }
+      if (
+        sandboxActive &&
+        attachments.some((item) =>
+          isFileOverSandboxStagingLimit(item.file.size, true),
+        )
+      ) {
+        setError(
+          `File exceeds ${Math.round(SANDBOX_STAGING_MAX_BYTES / (1024 * 1024))} MB — sandbox is enabled.`,
+        );
+        return;
+      }
 
-    const messageText =
-      text ||
-      (attachmentIds.length > 0
-        ? attachments.map((item) => item.file.name).join(", ")
-        : "");
+      const messageText =
+        text ||
+        (attachmentIds.length > 0
+          ? attachments.map((item) => item.file.name).join(", ")
+          : "");
 
-    setInput("");
-    sendingRef.current = true;
-    setSending(true);
-    setError(null);
-    resetToolStream();
-    setMessages((prev) => [
-      ...prev,
-      { id: `u-${Date.now()}`, role: "user", text: messageText },
-    ]);
-    void maybeAutoTitleSession(messageText, sessionKey);
-    const runId = crypto.randomUUID();
-    try {
-      await client.request("chat.send", {
-        sessionKey,
-        message: messageText,
-        deliver: false,
-        idempotencyKey: runId,
-        attachmentIds,
-      });
-    } catch (err) {
-      sendingRef.current = false;
-      setSending(false);
-      setError(err instanceof Error ? err.message : translate("chat.errors.sendMessage"));
-    }
-  };
+      sendingRef.current = true;
+      setSending(true);
+      setError(null);
+      resetToolStream();
+      const activeSessionKey = sessionKeyRef.current;
+      setMessages((prev) => [
+        ...prev,
+        { id: `u-${Date.now()}`, role: "user", text: messageText },
+      ]);
+      void maybeAutoTitleSession(messageText, activeSessionKey);
+      const runId = crypto.randomUUID();
+      try {
+        await client.request("chat.send", {
+          sessionKey: activeSessionKey,
+          message: messageText,
+          deliver: false,
+          idempotencyKey: runId,
+          attachmentIds,
+        });
+      } catch (err) {
+        sendingRef.current = false;
+        setSending(false);
+        setError(
+          err instanceof Error ? err.message : translate("chat.errors.sendMessage"),
+        );
+      }
+    },
+    [maybeAutoTitleSession, resetToolStream, sandboxActive],
+  );
 
-  const handleAbort = async () => {
+  const handleAbort = useCallback(async () => {
     const client = clientRef.current;
     if (!client?.connected) return;
     try {
-      await client.request("chat.abort", { sessionKey });
+      await client.request("chat.abort", { sessionKey: sessionKeyRef.current });
     } catch {
       /* ignore */
     }
@@ -1003,7 +1007,7 @@ export function useClientChatPage() {
     setSending(false);
     setStreamText("");
     resetToolStream();
-  };
+  }, [resetToolStream]);
 
   const openSetup = useCallback(() => {
     router.replace(SETUP_PATH);
@@ -1054,8 +1058,6 @@ export function useClientChatPage() {
     messages,
     streamText,
     sending,
-    input,
-    setInput,
     handleSend,
     handleAbort,
     sandboxActive,

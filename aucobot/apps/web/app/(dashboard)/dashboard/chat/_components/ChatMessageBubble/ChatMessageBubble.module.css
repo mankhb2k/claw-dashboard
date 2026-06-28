@@ -1,7 +1,7 @@
 .row {
   display: flex;
   width: 100%;
-  animation: chatFadeIn 0.22s var(--ease-out) both;
+  animation: chatFadeIn 0.3s var(--ease-out) both;
 }
 
 .rowUser {
@@ -18,7 +18,11 @@
   max-width: min(85%, 520px);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--color-muted) 72%, var(--color-background));
+  background: color-mix(
+    in srgb,
+    var(--color-muted) 72%,
+    var(--color-background)
+  );
   border: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
 }
 

@@ -22,8 +22,9 @@ AucoBot là monorepo **pnpm** gồm:
 - **Spawn container per project = chỉ Cloud.** Code hiện tại (`DockerService.spawnWorker`, `hostPort` động) là mô hình Cloud.
 - **OSS = Supabase-style:** `docker compose` dựng **hết** service (`postgres`, `api`, `web`, `gateway`); backend **không** cần `docker.sock`, truy cập gateway qua `OPENCLAW_GATEWAY_URL` (ví dụ `http://gateway:18789`).
 - **Sync file DB → volume** giữ nguyên cho cả OSS và Cloud (Phase 1 — `workflow.md` §5.6).
+- **MCP connectors = stdio do gateway spawn** (`npx @aucobot/mcp-*`), Google pre-bake trong image gateway — **không** còn service HTTP `mcp` riêng trên OSS (xem [`mcp.md`](mcp.md)).
 
-> **OSS compose = 5 services:** `web` + `api` (build AucoBot) + `mcp` (pull Hub) + `gateway` + `postgres` (upstream pull). **+2 volume** (`postgres_data`, `openclaw_data`). Không Redis / BullMQ / fleet. LLM / OAuth / kênh chat = cấu hình + API bên ngoài. _(Chi tiết 5 service: xem `workflow.md` §2; bảng §2 dưới đây giữ mô tả 4 service AucoBot+gateway+postgres, `mcp` là service connectors bổ sung.)_
+> **OSS compose = 4 services:** `web` + `api` (build AucoBot) + `gateway` + `postgres` (upstream pull). **+2 volume** (`postgres_data`, `openclaw_data`). Không Redis / BullMQ / fleet / service `mcp`. MCP connectors chạy **stdio** trong gateway (Google pre-bake, connector khác `npx @aucobot/mcp-*`). LLM / OAuth / kênh chat = cấu hình + API bên ngoài. _(Chi tiết MCP: [`mcp.md`](mcp.md); service: `workflow.md` §2.)_
 
 ---
 
@@ -89,6 +90,7 @@ Compose / hạ tầng (bạn viết, không phải app logic)
 | Traefik / ingress fleet | Không bắt buộc (tuỳ chọn production) |
 | Docker socket trên `api` | Không |
 | Service `skill-hub` | Không |
+| **Service `mcp` HTTP** | **Không** — MCP chạy stdio trong `gateway` (Google pre-bake, khác `npx @aucobot/mcp-*`); xem [`mcp.md`](mcp.md) |
 | Mail server, MinIO, object storage riêng | Không (trừ khi tự thêm sau) |
 
 ### 2.5 Phụ thuộc bên ngoài stack (không container AucoBot)
@@ -899,7 +901,8 @@ Team Cloud thêm repo/package riêng, **import lõi AucoBot OSS**, không fork l
 | Billing Cloud | `billing-plan.md` |
 | DB OSS + Cloud extension (ER, luồng) | `monorepoplan.md` §10.1 |
 | Kế hoạch monorepo (file này) | `monorepoplan.md` §2 (4 service) |
+| MCP Hub & connectors (OSS stdio, pre-bake Google) | [`mcp.md`](mcp.md) |
 
 ---
 
-*AucoBot — OSS: 5 services (`web`, `api`, `mcp`, `gateway`, `postgres`) + 2 volume (`postgres_data`, `openclaw_data`); web/api build AucoBot, mcp pull Hub, gateway/postgres pull upstream. Cloud: spawn per project (repo private, FK → OSS). Monorepo pnpm tách package public; `packages/cloud` proprietary.*
+*AucoBot — OSS: 4 services (`web`, `api`, `gateway`, `postgres`) + 2 volume (`postgres_data`, `openclaw_data`); web/api build AucoBot, gateway/postgres pull upstream (gateway pre-bake `@aucobot/mcp-google-*`). MCP connectors = stdio do gateway spawn (`mcp.md`). Cloud: spawn per project (repo private, FK → OSS). Monorepo pnpm tách package public; `packages/cloud` proprietary.*

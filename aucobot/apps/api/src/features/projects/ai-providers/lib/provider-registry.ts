@@ -353,3 +353,45 @@ export function collectFoundationAllowlist(
   }
   return ids;
 }
+
+export function collectFoundationProviderModelsSync(
+  enabledProviderIds: Set<string>,
+  apiKeyByProviderId?: ReadonlyMap<string, string>,
+): Array<{
+  openclawProviderId: string;
+  models: Array<{ id: string; name: string }>;
+  openAiCompat?: { baseUrl: string; api?: string };
+  apiKey?: string;
+}> {
+  const entries: Array<{
+    openclawProviderId: string;
+    models: Array<{ id: string; name: string }>;
+    openAiCompat?: { baseUrl: string; api?: string };
+    apiKey?: string;
+  }> = [];
+
+  for (const def of PROVIDER_REGISTRY) {
+    if (def.uiGroup !== 'foundation' || !enabledProviderIds.has(def.id)) {
+      continue;
+    }
+    const models = (def.models ?? []).map((model) => ({
+      id: model.id,
+      name: model.name,
+    }));
+    if (models.length === 0) continue;
+
+    entries.push({
+      openclawProviderId: def.openclawProviderId ?? def.id,
+      models,
+      openAiCompat: def.openAiCompatTest
+        ? {
+            baseUrl: def.openAiCompatTest.baseUrl,
+            api: 'openai-completions',
+          }
+        : undefined,
+      apiKey: apiKeyByProviderId?.get(def.id),
+    });
+  }
+
+  return entries;
+}

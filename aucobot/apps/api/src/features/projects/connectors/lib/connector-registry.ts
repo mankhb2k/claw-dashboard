@@ -1,3 +1,4 @@
+import { GITHUB_CONNECTOR } from '../adapters/github/github.connector';
 import { GOOGLE_CALENDAR_CONNECTOR } from '../adapters/google/calendar/google-calendar.connector';
 import { GOOGLE_DRIVE_CONNECTOR } from '../adapters/google/drive/google-drive.connector';
 
@@ -6,6 +7,7 @@ import type { ConnectorAdapter } from './connector-adapter.types';
 export const CONNECTOR_REGISTRY: ConnectorAdapter[] = [
   GOOGLE_DRIVE_CONNECTOR,
   GOOGLE_CALENDAR_CONNECTOR,
+  GITHUB_CONNECTOR,
 ];
 
 export function resolveConnector(

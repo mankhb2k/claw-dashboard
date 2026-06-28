@@ -25,6 +25,22 @@ export type ProviderKeyRow = {
 export type MergeProviderKeysOptions = {
   foundationAllowlistOpenclawIds?: string[];
   proxyModelOpenclawIds?: string[];
+  /** Register enabled foundation models under `models.providers` (OpenClaw v2026+). */
+  providerModelsSync?: ProviderModelsSyncEntry[];
+};
+
+export type ProviderModelsSyncEntry = {
+  openclawProviderId: string;
+  models: Array<{ id: string; name: string }>;
+  openAiCompat?: { baseUrl: string; api?: string };
+  /**
+   * Literal API key written to `models.providers.<id>.apiKey`. The gateway
+   * resolves provider auth from this field (`resolveUsableCustomProviderApiKey`)
+   * regardless of whether a provider plugin is installed or an agent-scoped
+   * auth store exists — the only reliable path for OpenAI-compatible custom
+   * providers such as DeepSeek that ship no stock gateway plugin.
+   */
+  apiKey?: string;
 };
 
 export async function readOpenClawConfigJson(
@@ -52,6 +68,25 @@ const PLUGIN_ENTRY_BY_PROVIDER: Record<string, string> = {
   kilocode: 'kilocode',
 };
 
+/**
+ * Provider plugins bundled in the stock OpenClaw gateway image
+ * (`/app/dist/extensions`). Plugins NOT listed here are not installed, so we
+ * must never enable their `plugins.entries.*` flag — doing so makes the gateway
+ * fail to load the plugin and surface a misleading "No API key found" error.
+ * Such providers (e.g. DeepSeek, KiloCode) are OpenAI-compatible and resolve via
+ * `models.providers` (api: openai-completions + baseUrl) + auth-profiles instead.
+ */
+const STOCK_BUNDLED_PLUGIN_IDS = new Set<string>([
+  'openai',
+  'anthropic',
+  'google',
+  'xai',
+  'mistral',
+  'openrouter',
+  'together',
+  'vercel-ai-gateway',
+]);
+
 function mergePluginEntriesFromProviders(
   config: Record<string, unknown>,
   enabledProviderIds: Set<string>,
@@ -71,7 +106,12 @@ function mergePluginEntriesFromProviders(
   }
 
   for (const [pluginId, enabled] of pluginEnabled) {
-    entries[pluginId] = { enabled };
+    // Never enable a plugin the gateway image does not ship: it would fail to
+    // load and break provider resolution. These providers are served through
+    // `models.providers` (OpenAI-compatible) instead.
+    entries[pluginId] = {
+      enabled: enabled && STOCK_BUNDLED_PLUGIN_IDS.has(pluginId),
+    };
   }
 
   plugins.entries = entries;
@@ -106,6 +146,49 @@ export function migrateDeprecatedFoundationModelsInConfig(
       (entry as Record<string, unknown>).model as Record<string, unknown> | undefined,
     );
   }
+}
+
+/** Sync `models.providers` so allowlisted `provider/model` refs resolve on the gateway. */
+function mergeModelsProvidersIntoConfig(
+  config: Record<string, unknown>,
+  entries: ProviderModelsSyncEntry[],
+): void {
+  if (entries.length === 0) return;
+
+  const models = (config.models as Record<string, unknown> | undefined) ?? {};
+  models.mode = 'merge';
+
+  const existingProviders =
+    (models.providers as Record<string, Record<string, unknown>> | undefined) ?? {};
+  const managedIds = new Set(entries.map((entry) => entry.openclawProviderId));
+  const providers: Record<string, Record<string, unknown>> = {};
+
+  for (const [providerId, providerSlice] of Object.entries(existingProviders)) {
+    if (!managedIds.has(providerId)) {
+      providers[providerId] = providerSlice;
+    }
+  }
+
+  for (const entry of entries) {
+    const slice: Record<string, unknown> = {
+      models: entry.models.map((model) => ({
+        id: model.id,
+        name: model.name,
+      })),
+    };
+    if (entry.openAiCompat?.baseUrl?.trim()) {
+      slice.baseUrl = entry.openAiCompat.baseUrl.trim().replace(/\/$/, '');
+      slice.api = entry.openAiCompat.api?.trim() || 'openai-completions';
+    }
+    const apiKey = entry.apiKey?.replace(/\s/g, '');
+    if (apiKey) {
+      slice.apiKey = apiKey;
+    }
+    providers[entry.openclawProviderId] = slice;
+  }
+
+  models.providers = providers;
+  config.models = models;
 }
 
 /** Merge provider API keys + default model into openclaw.json (gateway watch → reload). */
@@ -176,6 +259,10 @@ export function mergeProviderKeysIntoConfig(
     config.agents = agents;
   }
 
+  if (options.providerModelsSync?.length) {
+    mergeModelsProvidersIntoConfig(config, options.providerModelsSync);
+  }
+
   migrateDeprecatedFoundationModelsInConfig(config);
 
   return config;
@@ -234,6 +321,64 @@ export type ProjectExecPolicy = {
   safeBins: string[];
   timeoutSec: number;
 };
+
+/** Bundled web-search provider that needs no third-party API key (OpenClaw `duckduckgo` plugin). */
+export const DEFAULT_WEB_SEARCH_PROVIDER = 'duckduckgo';
+
+/**
+ * Enable stock free web tools for OSS defaults:
+ * - `web_search` → DuckDuckGo (must be selected explicitly; keyless providers are not auto-detected)
+ * - `web_fetch` → built-in HTTP/readability path (no Firecrawl key required for basic fetch)
+ */
+export function mergeDefaultWebToolsIntoConfig(
+  config: Record<string, unknown>,
+): Record<string, unknown> {
+  const tools = (config.tools as Record<string, unknown> | undefined) ?? {};
+  const existingWeb = (tools.web as Record<string, unknown> | undefined) ?? {};
+  const existingSearch = (existingWeb.search as Record<string, unknown> | undefined) ?? {};
+  const existingFetch = (existingWeb.fetch as Record<string, unknown> | undefined) ?? {};
+
+  const searchEnabled = existingSearch.enabled !== false;
+  const existingProvider =
+    typeof existingSearch.provider === 'string' ? existingSearch.provider.trim() : '';
+
+  const search: Record<string, unknown> = { ...existingSearch };
+  if (searchEnabled && !existingProvider) {
+    search.provider = DEFAULT_WEB_SEARCH_PROVIDER;
+  }
+  if (search.enabled === undefined) {
+    search.enabled = true;
+  }
+
+  const fetch: Record<string, unknown> = { ...existingFetch };
+  if (fetch.enabled === undefined) {
+    fetch.enabled = true;
+  }
+  if (fetch.readability === undefined) {
+    fetch.readability = true;
+  }
+
+  tools.web = {
+    ...existingWeb,
+    search,
+    fetch,
+  };
+  config.tools = tools;
+
+  const providerToEnable = (existingProvider || DEFAULT_WEB_SEARCH_PROVIDER).toLowerCase();
+  if (searchEnabled && providerToEnable === DEFAULT_WEB_SEARCH_PROVIDER) {
+    const plugins = (config.plugins as Record<string, unknown> | undefined) ?? {};
+    const entries =
+      (plugins.entries as Record<string, { enabled?: boolean }> | undefined) ?? {};
+    plugins.entries = {
+      ...entries,
+      duckduckgo: { ...entries.duckduckgo, enabled: true },
+    };
+    config.plugins = plugins;
+  }
+
+  return config;
+}
 
 /** OpenClaw 2026.5+ — exec policy lives under `tools.exec`, not `agents.list[].exec`. */
 export function mergeExecToolsIntoConfig(
@@ -337,7 +482,7 @@ export function mergeAgentsIntoConfig(
     name: 'Main',
     workspace: CONTAINER_WORKSPACE_DIR,
     skills: [],
-    tools: { profile: 'messaging' },
+    tools: { profile: 'coding' },
   };
   applyProjectSandboxToEntry(mainEntry, 'main', policy, exemptSet, appliedSet);
 
@@ -377,6 +522,7 @@ export function mergeAgentsIntoConfig(
   );
 
   mergeExecToolsIntoConfig(config, projectExecPolicy);
+  mergeDefaultWebToolsIntoConfig(config);
 
   return config;
 }
