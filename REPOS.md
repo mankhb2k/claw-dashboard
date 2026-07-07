@@ -1,25 +1,35 @@
 # Claw Dashboard — repository layout
 
-The active OSS control plane lives in **`studio/`** (this meta-repo).
+Single-repo OSS control plane: **api**, **web**, **packages**, **deploy**.
 
-## Recommended workspace layout
+## Layout
 
 ```text
 claw-dashboard/
-└── studio/          # Claw Dashboard monorepo (api, web, packages, deploy)
+├── apps/api          @claw-dashboard/api
+├── apps/web          @claw-dashboard/web
+├── packages/*        @claw-dashboard/*
+├── deploy/           Docker Compose + Dockerfiles
+├── workflow.md       Control-plane workflow (SSOT)
+├── openclaw-architecture.md   OpenClaw gateway reference
+└── mcp.md            MCP connectors (stdio npx)
 ```
 
-## `studio/` monorepo
+Full stack:
 
-| Path | Role |
-| ---- | ---- |
-| `studio/apps/api` | NestJS API |
-| `studio/apps/web` | Next.js dashboard (Claw Dashboard) |
-| `studio/packages/*` | Shared libs (`@claw-dashboard/*`) |
-| `studio/deploy/` | Docker Compose + Dockerfiles |
+```bash
+docker compose -f deploy/docker-compose.yml up -d
+```
 
-Full stack: `docker compose -f studio/deploy/docker-compose.yml up`
+## OpenClaw gateway (upstream)
 
-## Legacy meta-repo
+Runtime gateway is **not** vendored in this repo. Deploy pulls the official image:
 
-This repo (`claw-dashboard`) also contains reference docs: `workflow.md`, `openclaw-architecture.md`, `mcp.md`.
+- **Repo:** https://github.com/openclaw/openclaw
+- **Image:** `alpine/openclaw` (see `deploy/docker-compose.yml`)
+
+Clone upstream locally when you need to read gateway source:
+
+```bash
+git clone https://github.com/openclaw/openclaw.git openclaw-upstream
+```

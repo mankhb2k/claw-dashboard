@@ -1,7 +1,7 @@
 # Claw Dashboard — Workflow (OSS)
 
-> **SSOT control plane:** this file + [`studio/README.md`](studio/README.md)  
-> **SSOT OpenClaw gateway:** [`openclaw-architecture.md`](openclaw-architecture.md)  
+> **SSOT control plane:** this file + [`README.md`](README.md)  
+> **SSOT OpenClaw gateway:** [`openclaw-architecture.md`](openclaw-architecture.md) (paths relative to [openclaw/openclaw](https://github.com/openclaw/openclaw))  
 > **MCP connectors:** [`mcp.md`](mcp.md)
 
 ## OSS stack (4 services)
@@ -9,7 +9,6 @@
 `web` (:8386) + `api` (:8387) + `gateway` (:18789) + `postgres` (:5432)
 
 ```powershell
-cd studio
 docker compose -f deploy/docker-compose.yml up -d
 ```
 
@@ -24,17 +23,15 @@ docker compose -f deploy/docker-compose.yml up -d
 ## Monorepo layout
 
 ```
-studio/
-├── apps/api          @claw-dashboard/api
-├── apps/web          @claw-dashboard/web
-├── packages/*        shared libs
-└── deploy/           Docker Compose
+apps/api          @claw-dashboard/api
+apps/web          @claw-dashboard/web
+packages/*        shared libs
+deploy/           Docker Compose
 ```
 
 ## Dev (host)
 
 ```powershell
-cd studio
 pnpm install
 pnpm dev:db
 pnpm dev

@@ -1,0 +1,22 @@
+---
+description: Claw Dashboard packages/* — no Nest, dependency rules
+globs: packages/**/*
+alwaysApply: false
+---
+
+# packages/* conventions
+
+## Allowed dependencies
+
+- `runtime-oss` → `@claw-dashboard/runtime-contracts` only
+- `database` → Prisma client only
+- `workspace-sync` → Node fs/path; **no** `@nestjs/*`
+
+## Forbidden in packages/*
+
+- `@nestjs/common`, `@nestjs/core`, Fastify, Express adapters
+- Import from `apps/api` or `apps/web`
+
+## Nest exceptions stay in apps/api
+
+- `BadRequestException`, guards, cookies → map errors at app boundary

@@ -19,10 +19,10 @@
 | Google Drive | `npx -y @modelcontextprotocol/server-gdrive` |
 | Google Calendar | `npx -y @franciscpd/calendar-mcp-server` |
 
-Implementation: `studio/packages/workspace-sync/src/connectors/connector-mcp.ts`
+Implementation: `packages/workspace-sync/src/connectors/connector-mcp.ts`
 
 ## Gateway image
 
 Use upstream `alpine/openclaw:latest` — MCP packages are fetched via `npx` at runtime (first spawn may need network).
 
-See also: [`workflow.md`](workflow.md), [`studio/deploy/README.md`](studio/deploy/README.md).
+See also: [`workflow.md`](workflow.md), [`deploy/README.md`](deploy/README.md).

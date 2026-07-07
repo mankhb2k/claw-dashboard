@@ -1,18 +1,32 @@
+# Dependencies & build
+node_modules/
 **/node_modules/
-**/.env
-**/.env.docker
-**/.env.local
-**/.env.*.local
-**/dist/
+dist/
 **/.next/
+.turbo/
+coverage/
 **/vendor/
 **/*.tsbuildinfo
+packages/database/src/generated/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.docker
+
+# Runtime data
+apps/api/data/
 *.log
-openclaw-fork/
+
+# OS
+**/.DS_Store
 .DS_Store
+
+# Sibling / legacy repos (not vendored)
 /cloud
 /mcp
 /node-device
 /scratch
 /logoship
-

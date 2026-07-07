@@ -1,0 +1,75 @@
+# Dev local: Postgres :5432 + OpenClaw gateway :18789 (API/web chạy trên host).
+#
+# From repo root:
+#   pnpm dev:runtime   # tắt dev:db postgres (nếu có) rồi start stack này
+#
+# Không chạy song song với pnpm dev:db — cùng cổng 5432.
+#
+# Khớp apps/.env:
+#   DATABASE_URL=postgresql://postgres:password@localhost:5432/openclaw
+#   OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
+#   OPENCLAW_GATEWAY_TOKEN=<same as deploy/.env.gateway và apps/.env>
+#
+# Image: official release mirror (Docker Hub) — ghcr.io/openclaw/openclaw
+#   docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway pull gateway
+#   pnpm dev:runtime:pull
+
+name: claw-dashboard-runtime
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: claw-dashboard-postgres-runtime
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-openclaw}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-openclaw}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  gateway:
+    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    pull_policy: always
+    container_name: claw-dashboard-gateway-runtime
+    entrypoint: ["sh", "/entrypoint/gateway-entrypoint.sh"]
+    environment:
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-dev-gateway-token-change-me}
+      OPENCLAW_DATA_ROOT: /data/projects
+    volumes:
+      # Bind mount
+      - ../apps/api/data/projects:/data/projects
+      - ./scripts/gateway-entrypoint.sh:/entrypoint/gateway-entrypoint.sh:ro
+    ports:
+      - "127.0.0.1:18789:18789"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 8
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: claw-dashboard-postgres-data-runtime
