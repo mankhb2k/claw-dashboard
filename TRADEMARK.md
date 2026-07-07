@@ -1,7 +1,7 @@
 # Claw Dashboard Trademark Policy
 
 This document explains how you may use Claw Dashboard names, logos, and other brand
-elements. It supplements the [Apache License 2.0](./LICENSE), which does **not**
+elements. It supplements the [MIT License](./LICENSE), which does **not**
 grant trademark rights.
 
 ---
@@ -23,9 +23,9 @@ of their respective owners.
 
 ---
 
-## 2. What the Apache 2.0 license allows
+## 2. What the MIT license allows
 
-Under the Apache License 2.0 you may:
+Under the MIT License you may:
 
 - Use, modify, and redistribute the **source code**
 - Self-host the software for yourself or your organization
@@ -149,4 +149,4 @@ action to protect users and the Claw Dashboard brand.
 We may update this policy from time to time. The version in the main branch of
 the repository applies to community use of the OSS project.
 
-**Last updated:** 2026-06-21
+**Last updated:** 2026-07-07

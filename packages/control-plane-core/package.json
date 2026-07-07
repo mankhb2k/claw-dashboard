@@ -6,6 +6,8 @@
 
   "private": true,
 
+  "license": "MIT",
+
   "description": "Pure control-plane helpers (no Nest) — projects, gateway tokens",
 
   "type": "module",

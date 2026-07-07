@@ -2,6 +2,7 @@
   "name": "@claw-dashboard/workspace-sync",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "description": "openclaw.json merge, agent compile, skills markdown, connector MCP files",
   "type": "module",
   "main": "./dist/index.js",

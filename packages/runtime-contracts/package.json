@@ -2,6 +2,7 @@
   "name": "@claw-dashboard/runtime-contracts",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "description": "RuntimeProvisioner, GatewayEndpoint, PlanGuard interfaces",
   "type": "module",
   "main": "./dist/index.js",

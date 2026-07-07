@@ -2,6 +2,7 @@
   "name": "claw-dashboard",
   "private": true,
   "description": "Claw Dashboard monorepo — OSS-first control plane + OpenClaw gateway",
+  "license": "MIT",
   "scripts": {
     "dev": "turbo run dev --parallel --filter=@claw-dashboard/api --filter=@claw-dashboard/web",
     "build": "turbo run build",

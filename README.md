@@ -249,6 +249,7 @@ Browser API calls use **same-origin** `/api` rewrite by default (recommended). S
 
 | Doc                                                      | Audience                                     |
 | -------------------------------------------------------- | -------------------------------------------- |
+| [`claw-dashboard-architecture.md`](./claw-dashboard-architecture.md) | OSS control plane — stack, flow, chat attachments |
 | [`deploy/README.md`](./deploy/README.md)                 | Docker compose & production-like deploy      |
 | [`docs/monorepoplan.md`](./docs/monorepoplan.md)         | Monorepo architecture & package map          |
 | [`docs/monorepo-diagram.md`](./docs/monorepo-diagram.md) | Flow diagrams                                |

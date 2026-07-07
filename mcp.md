@@ -25,4 +25,4 @@ Implementation: `packages/workspace-sync/src/connectors/connector-mcp.ts`
 
 Use upstream `alpine/openclaw:latest` — MCP packages are fetched via `npx` at runtime (first spawn may need network).
 
-See also: [`workflow.md`](workflow.md), [`deploy/README.md`](deploy/README.md).
+See also: [`claw-dashboard-architecture.md`](claw-dashboard-architecture.md), [`deploy/README.md`](deploy/README.md).

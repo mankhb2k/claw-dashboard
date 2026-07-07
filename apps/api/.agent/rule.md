@@ -1,7 +1,7 @@
 # Nguyên tắc Phát triển Backend — Claw Dashboard API
 
 > Áp dụng cho `apps/api/`. Mọi code do AI tạo phải tuân thủ.  
-> Monorepo: đọc thêm `repo rootAGENTS.md`, [`workflow.md`](../../../../workflow.md) (repo root; `repo rootdocs/workflow.md` chỉ redirect), `repo rootdocs/monorepoplan.md` khi task chạm runtime/sync/cloud.  
+> Monorepo: đọc thêm `repo rootAGENTS.md`, [`claw-dashboard-architecture.md`](../../../../claw-dashboard-architecture.md) (repo root; `repo rootdocs/claw-dashboard-architecture.md` chỉ redirect), `repo rootdocs/monorepoplan.md` khi task chạm runtime/sync/cloud.  
 > **Tiến độ / nợ kỹ thuật:** [`.agent/note.md`](./note.md)
 
 ---
@@ -66,7 +66,7 @@
 | **JWT dashboard** | REST API, WS proxy `/api/projects/:id/chat/ws` | Cookie / Bearer — **không** gửi thẳng gateway `:18789`                                |
 | **Gateway token** | OpenClaw `gateway.auth`                        | DB `project.gatewayToken` + env `OPENCLAW_GATEWAY_TOKEN` (OSS) + sync `openclaw.json` |
 
-- Chat flow: **web → api (JWT) → gateway (gateway token)** — xem [`workflow.md`](../../../../workflow.md) §5.7.
+- Chat flow: **web → api (JWT) → gateway (gateway token)** — xem [`claw-dashboard-architecture.md`](../../../../claw-dashboard-architecture.md) §5.7.
 - WS proxy: xác thực JWT trong `ChatWsRegistrar` trước khi `bridge()` — **cấm** gateway token trong query string từ client.
 
 ### 1.4 Secrets & mã hóa
@@ -511,7 +511,7 @@ features/internal/
 
 ## 4. Data & sync (DB ↔ volume)
 
-> SSOT vận hành: [`workflow.md`](../../../../workflow.md) §3, §5.6.
+> SSOT vận hành: [`claw-dashboard-architecture.md`](../../../../claw-dashboard-architecture.md) §3, §5.6.
 
 ### 4.1 Hai nguồn sự thật
 
@@ -807,7 +807,7 @@ packages/database/           # nếu chạm schema
 | ------------------------------------------------------- | ------------------------------------------- |
 | Sửa `apps/web/`, `cloud/*` (trừ contract chung)         | Ngoài backend scope                         |
 | Thêm npm dependency                                     | Review + bề mặt tấn công                    |
-| Docker spawn / `docker.sock` trong OSS                  | [`workflow.md`](../../../../workflow.md) §2 |
+| Docker spawn / `docker.sock` trong OSS                  | [`claw-dashboard-architecture.md`](../../../../claw-dashboard-architecture.md) §2 |
 | Cloud billing/fleet trong `runtime-oss`                 | Ranh OSS/Cloud                              |
 | Drive-by format, rename lan man                         | Khó review                                  |
 | Markdown/doc mới (ngoài `.agent/rule.md`, `.agent/note.md`) | Chỉ khi user yêu cầu                        |
@@ -838,14 +838,14 @@ Scope: apps/api/src/features/projects/<domain>/
 Out of scope: apps/web, cloud/, unrelated refactor, new deps
 Verify: pnpm --filter @claw-dashboard/api lint:ci && pnpm --filter @claw-dashboard/api build
 Rule: apps/api/.agent/rule.md §[liên quan]
-Diagram: workflow.md §[n] hoặc monorepo-diagram.md
+Diagram: claw-dashboard-architecture.md §[n] hoặc monorepo-diagram.md
 ```
 
 ### 6.6 Đọc trước khi code (onboarding)
 
 | Doc                                         | Khi                                      |
 | ------------------------------------------- | ---------------------------------------- |
-| [`workflow.md`](../../../../workflow.md)    | Sync, chat proxy, OSS vs Cloud, channels |
+| [`claw-dashboard-architecture.md`](../../../../claw-dashboard-architecture.md)    | Sync, chat proxy, OSS vs Cloud, channels |
 | `repo rootAGENTS.md`                         | Monorepo commands, package map           |
 | `repo rootdocs/monorepoplan.md`              | Folder roles, Phase extract              |
 | `packages/control-plane-core/README.md`     | JWT, crypto, gateway upstream            |

@@ -2,6 +2,7 @@
   "name": "@claw-dashboard/runtime-oss",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "description": "StaticGateway — OPENCLAW_GATEWAY_URL :18789",
   "type": "module",
   "main": "./dist/index.js",

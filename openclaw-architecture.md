@@ -1,6 +1,6 @@
 ﻿# OpenClaw — Kiến Trúc Tổng Quan Chi Tiết
 
-> **Phạm vi:** Runtime Gateway upstream — repo [openclaw/openclaw](https://github.com/openclaw/openclaw). **Không** mô tả control plane Claw Dashboard (API, DB, sync volume, chat proxy) — xem **`workflow.md`**.
+> **Phạm vi:** Runtime Gateway upstream — repo [openclaw/openclaw](https://github.com/openclaw/openclaw). **Không** mô tả control plane Claw Dashboard (API, DB, sync volume, chat proxy) — xem **`claw-dashboard-architecture.md`**.
 >
 > Tài liệu này mô tả kiến trúc, cách hoạt động, các kênh, gateway, model provider, tools, plugin và các tính năng của OpenClaw worker.
 
@@ -290,7 +290,7 @@ Gateway → Client: res(ok|error)
   - `update.run` / `update.status` — cập nhật bản thân gateway + restart sentinel
 - **Rate limit** (theo doc): các thao tác control-plane ghi (`config.apply`, `config.patch`, `update.run`) bị giới hạn tần suất theo `deviceId` + IP; restart được gom và có cooldown giữa các chu kỳ restart.
 
-Gọi RPC thường qua **`openclaw gateway call <method>`** hoặc client WebSocket; credential là **`gateway.auth`** (token/password/…) — không thay thế bằng JWT hay session của ứng dụng bên ngoài trừ khi control plane tự map (chi tiết tích hợp Claw Dashboard: `workflow.md`).
+Gọi RPC thường qua **`openclaw gateway call <method>`** hoặc client WebSocket; credential là **`gateway.auth`** (token/password/…) — không thay thế bằng JWT hay session của ứng dụng bên ngoài trừ khi control plane tự map (chi tiết tích hợp Claw Dashboard: `claw-dashboard-architecture.md`).
 
 ### 4.6 Multi-Gateway Setup
 
@@ -1255,7 +1255,7 @@ Khi agent đang chạy và nhận tin nhắn mới:
 
 ### 11.5 Skills — Skill tự tạo, import và cách agent dùng
 
-> Phần dưới đối chiếu `openclaw/docs/tools/skills.md`, `creating-skills.md`, `skills-config.md`, `docs/cli/skills.md` và mã `src/agents/skills/*`, `src/agents/skills-install*.ts`, `src/gateway/server-methods/skills*.ts` (pin `v2026.6.6` / `8c802aa683`). Cách Claw Dashboard sync skill từ DB → volume: `workflow.md`.
+> Phần dưới đối chiếu `openclaw/docs/tools/skills.md`, `creating-skills.md`, `skills-config.md`, `docs/cli/skills.md` và mã `src/agents/skills/*`, `src/agents/skills-install*.ts`, `src/gateway/server-methods/skills*.ts` (pin `v2026.6.6` / `8c802aa683`). Cách Claw Dashboard sync skill từ DB → volume: `claw-dashboard-architecture.md`.
 
 #### 11.5.1 Skill là gì
 
@@ -1579,7 +1579,7 @@ Khi user gửi file qua `chat.send` (`server-methods/chat.ts`):
 3. Nếu session **sandboxed** → `prestageMediaPathOffloads` copy vào `workspace/media/inbound/` trong sandbox workspace
 4. **Giới hạn staging sandbox: 5 MB** (`MEDIA_MAX_BYTES` / `STAGED_MEDIA_MAX_BYTES`) — file 5–20 MB có thể pass bước 1 nhưng **fail staging** → lỗi client
 
-Liên quan thiết kế Claw Dashboard chat attachments: xem `chat-attachments-backend-plan.md` mục 8.
+Liên quan thiết kế Claw Dashboard chat attachments: xem `claw-dashboard-architecture.md` §6.8.
 
 #### 13.3.7 Vận hành & kiểm tra
 
@@ -2642,7 +2642,7 @@ flowchart LR
 }
 ```
 
-**Claw Dashboard SaaS:** một project = một pool collaboration (`Project.collaborationEnabled` + `collaborationMemberSlugs` → merge `tools.agentToAgent.allow`). Đây là **mesh trong pool**, không phải quyền một chiều A→B; UI tại `/dashboard/agent/collaboration` (xem `workflow.md` §5.6).
+**Claw Dashboard SaaS:** một project = một pool collaboration (`Project.collaborationEnabled` + `collaborationMemberSlugs` → merge `tools.agentToAgent.allow`). Đây là **mesh trong pool**, không phải quyền một chiều A→B; UI tại `/dashboard/agent/collaboration` (xem `claw-dashboard-architecture.md` §5.6).
 
 **Tools giao tiếp agent:**
 
@@ -4434,4 +4434,4 @@ Biến môi trường thường gặp: `OPENCLAW_GATEWAY_TOKEN`, config `~/.open
 
 ---
 
-_Tài liệu được tổng hợp từ `openclaw/` (`README.md`, `VISION.md`, `docs/gateway/configuration.md`, `src/gateway/config-reload-plan.ts`, …). **SSOT worker:** `openclaw-architecture.md` (repo root). **SSOT tính năng Claw Dashboard:** `workflow.md`. Cập nhật: 2026-05-25._
+_Tài liệu được tổng hợp từ `openclaw/` (`README.md`, `VISION.md`, `docs/gateway/configuration.md`, `src/gateway/config-reload-plan.ts`, …). **SSOT worker:** `openclaw-architecture.md` (repo root). **SSOT tính năng Claw Dashboard:** `claw-dashboard-architecture.md`. Cập nhật: 2026-05-25._

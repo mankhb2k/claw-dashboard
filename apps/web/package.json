@@ -2,6 +2,7 @@
   "name": "@claw-dashboard/web",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev -p 8386",
     "build": "next build",

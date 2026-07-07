@@ -2,6 +2,7 @@
   "name": "@claw-dashboard/clawhub-client",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "description": "HTTP client for ClawHub skill catalog API",
   "type": "module",
   "main": "./dist/index.js",
