@@ -1,0 +1,6 @@
+# Gateway image: upstream OpenClaw (no custom MCP pre-bake)
+#
+# Build from repo root (claw-dashboard):
+#   docker build -f studio/deploy/Dockerfile.gateway -t claw-dashboard/gateway:latest .
+
+FROM alpine/openclaw:latest

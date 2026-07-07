@@ -24,7 +24,7 @@
 - Avatar OSS: lưu bytes trong Postgres (512KB) — **không áp dụng pattern này** cho file 20MB
 - Avatar Cloud: S3 + `avatarStorageKey` trong DB — **pattern tương tự** cho Cloud phase
 - OpenClaw gateway: `GET /api/chat/media/outgoing/…` cho **ảnh agent trả về** (outgoing) — không dùng cho upload user
-- OpenClaw inbound: `chat.send` → `parseMessageWithAttachments` → `media/inbound/` (`openclaw-worker/src/gateway/chat-attachments.ts`, `src/media/store.ts`)
+- OpenClaw inbound: `chat.send` → `parseMessageWithAttachments` → `media/inbound/` (`openclaw-fork/src/gateway/chat-attachments.ts`, `src/media/store.ts`)
 - Gateway state dir = `OPENCLAW_STATE_DIR` = `data/projects/{projectId}/` (entrypoint `deploy/scripts/gateway-entrypoint.sh`)
 
 ### Vì sao tách `images/` và `files/` trên disk?
@@ -136,7 +136,7 @@ model ChatAttachment {
 
 ## 5. Storage abstraction
 
-Pattern giống `AvatarStorage` (`@aucobot/runtime-contracts` + provider NestJS).
+Pattern giống `AvatarStorage` (`@claw-dashboard/runtime-contracts` + provider NestJS).
 
 ```typescript
 interface ChatAttachmentStorage {
@@ -231,7 +231,7 @@ sequenceDiagram
 
 ## 8. Tích hợp `chat.send` với Gateway
 
-> **Đã đối chiếu** `openclaw-worker` (2026-06-08). Schema RPC: `ChatSendParamsSchema` — `attachments?: Array<Unknown>`; mỗi item sau normalize phải có **`content` base64** + `mimeType` + `fileName` (`chat-attachments.ts`, `attachment-normalize.ts`). **Không hỗ trợ path-only.**
+> **Đã đối chiếu** `openclaw-fork` (2026-06-08). Schema RPC: `ChatSendParamsSchema` — `attachments?: Array<Unknown>`; mỗi item sau normalize phải có **`content` base64** + `mimeType` + `fileName` (`chat-attachments.ts`, `attachment-normalize.ts`). **Không hỗ trợ path-only.**
 
 ### Kết quả đối chiếu các hướng
 
@@ -240,7 +240,7 @@ sequenceDiagram
 | **A. Path trong container** | ❌ Không khả thi trực tiếp | `content` bắt buộc base64; cần fork gateway nếu muốn path ref |
 | **B. Copy vào `workspace/`** | ⚠️ Gateway đã làm (sandbox) | `prestageMediaPathOffloads` copy → `workspace/media/inbound/`; không thay API upload |
 | **C. Gateway media API** | ❌ Chỉ outgoing | `/api/chat/media/outgoing/…` = ảnh **agent tạo**, không phải upload user |
-| **D. API đọc disk → base64 → `chat.send`** | ✅ **Khuyến nghị Phase 3** | Không sửa `openclaw-worker`; proxy hiện tại forward transparent |
+| **D. API đọc disk → base64 → `chat.send`** | ✅ **Khuyến nghị Phase 3** | Không sửa `openclaw-fork`; proxy hiện tại forward transparent |
 
 ### Luồng gateway sau khi nhận base64
 
@@ -370,21 +370,21 @@ Chat attachment **không nên** đi theo pattern avatar OSS.
 
 | Path | Ghi chú |
 |------|---------|
-| `aucobot/apps/web/.../MessageBox/` | Composer UI, drag-drop, paste |
-| `aucobot/apps/web/.../MessageBox/composer-attachments.ts` | Validate client-side |
-| `aucobot/apps/web/lib/api/multipart-upload.ts` | Pattern upload HTTP |
-| `aucobot/apps/api/src/core/users/avatar/` | Pattern storage provider |
-| `aucobot/packages/workspace-sync/src/project-paths.ts` | Project dir layout |
-| `aucobot/packages/database/prisma/schema.prisma` | Migration target |
-| `aucobot/apps/api/src/features/projects/chat/` | Module mở rộng |
+| `studio/apps/web/.../MessageBox/` | Composer UI, drag-drop, paste |
+| `studio/apps/web/.../MessageBox/composer-attachments.ts` | Validate client-side |
+| `studio/apps/web/lib/api/multipart-upload.ts` | Pattern upload HTTP |
+| `studio/apps/api/src/core/users/avatar/` | Pattern storage provider |
+| `studio/packages/workspace-sync/src/project-paths.ts` | Project dir layout |
+| `studio/packages/database/prisma/schema.prisma` | Migration target |
+| `studio/apps/api/src/features/projects/chat/` | Module mở rộng |
 | `openclaw-architecture.md` §4.2 | Gateway media endpoint |
-| `openclaw-worker/src/gateway/chat-attachments.ts` | Parse inbound attachments, offload `media/inbound/` |
-| `openclaw-worker/src/gateway/server-methods/chat.ts` | `chat.send` handler, `prestageMediaPathOffloads` |
-| `openclaw-worker/src/gateway/managed-image-attachments.ts` | Outgoing images, `/api/chat/media/outgoing/…` |
-| `openclaw-worker/src/media/store.ts` | `saveMediaBuffer`, naming `{name}---{uuid}.ext` |
-| `openclaw-worker/src/gateway/protocol/schema/logs-chat.ts` | `ChatSendParamsSchema` |
-| `aucobot/deploy/scripts/gateway-entrypoint.sh` | `OPENCLAW_STATE_DIR` = project dir |
+| `openclaw-fork/src/gateway/chat-attachments.ts` | Parse inbound attachments, offload `media/inbound/` |
+| `openclaw-fork/src/gateway/server-methods/chat.ts` | `chat.send` handler, `prestageMediaPathOffloads` |
+| `openclaw-fork/src/gateway/managed-image-attachments.ts` | Outgoing images, `/api/chat/media/outgoing/…` |
+| `openclaw-fork/src/media/store.ts` | `saveMediaBuffer`, naming `{name}---{uuid}.ext` |
+| `openclaw-fork/src/gateway/protocol/schema/logs-chat.ts` | `ChatSendParamsSchema` |
+| `studio/deploy/scripts/gateway-entrypoint.sh` | `OPENCLAW_STATE_DIR` = project dir |
 
 ---
 
-*Tạo: 2026-06-05 — cập nhật: 2026-06-08 (đối chiếu openclaw-worker, hướng D, rủi ro sandbox).*
+*Tạo: 2026-06-05 — cập nhật: 2026-06-08 (đối chiếu openclaw-fork, hướng D, rủi ro sandbox).*

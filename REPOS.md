@@ -1,28 +1,25 @@
-# AucoBot — repository split
+# Claw Dashboard — repository layout
 
-The active codebases live in separate GitHub repositories under the **aucobot** organization:
-
-| Repo | SSH | Description |
-| ---- | --- | ----------- |
-| **aucobot** | `git@github.com:aucobot/aucobot.git` | Control plane — API, web, workspace sync, deploy (OSS) |
-| **cloud** | `git@github.com:aucobot/cloud.git` | Hosted Cloud — fleet, billing, S3 storage (`@aucobot-cloud/*`) |
-| **mcp** | `git@github.com:aucobot/mcp.git` | Hosted MCP connectors (Google Drive, Calendar) |
-| **node-device** | `git@github.com:aucobot/node-device.git` | Electron companion node desktop app |
+The active OSS control plane lives in **`studio/`** (this meta-repo).
 
 ## Recommended workspace layout
 
 ```text
-workspace/
-├── aucobot/       git clone git@github.com:aucobot/aucobot.git
-├── cloud/         git clone git@github.com:aucobot/cloud.git
-├── mcp/           git clone git@github.com:aucobot/mcp.git
-└── node-device/   git clone git@github.com:aucobot/node-device.git   # optional
+claw-dashboard/
+└── studio/          # Claw Dashboard monorepo (api, web, packages, deploy)
 ```
 
-Full Docker stack (`aucobot/deploy/docker-compose.yml`) expects **`mcp`** as a sibling directory: `../mcp` relative to the `aucobot` repo root.
+## `studio/` monorepo
 
-Cloud development expects **`cloud`** as a sibling: `../cloud` relative to `aucobot` (pnpm workspace link).
+| Path | Role |
+| ---- | ---- |
+| `studio/apps/api` | NestJS API |
+| `studio/apps/web` | Next.js dashboard (Claw Dashboard) |
+| `studio/packages/*` | Shared libs (`@claw-dashboard/*`) |
+| `studio/deploy/` | Docker Compose + Dockerfiles |
 
-## This repo (`openclaw-saas`)
+Full stack: `docker compose -f studio/deploy/docker-compose.yml up`
 
-Legacy meta-monorepo. New development should use the repos above. Remaining folders here (`openclaw-worker/`, `workflow.md`, `openclaw-architecture.md`, …) may still be useful as reference until fully migrated.
+## Legacy meta-repo
+
+This repo (`claw-dashboard`) also contains reference docs: `workflow.md`, `openclaw-architecture.md`, `mcp.md`.

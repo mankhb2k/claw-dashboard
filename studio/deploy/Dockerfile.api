@@ -1,0 +1,46 @@
+# Build context: studio/ (monorepo root)
+# docker compose -f deploy/docker-compose.yml build api
+
+FROM node:24-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+WORKDIR /repo
+
+FROM base AS build
+ENV DATABASE_URL=postgresql://postgres:password@localhost:5432/openclaw
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/api/package.json apps/api/
+COPY packages/database/package.json packages/database/
+COPY packages/runtime-contracts/package.json packages/runtime-contracts/
+COPY packages/runtime-oss/package.json packages/runtime-oss/
+COPY packages/workspace-sync/package.json packages/workspace-sync/
+COPY packages/shared/package.json packages/shared/
+COPY packages/control-plane-core/package.json packages/control-plane-core/
+COPY packages/clawhub-client/package.json packages/clawhub-client/
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @claw-dashboard/api...
+
+COPY packages/database packages/database
+COPY packages/runtime-contracts packages/runtime-contracts
+COPY packages/runtime-oss packages/runtime-oss
+COPY packages/workspace-sync packages/workspace-sync
+COPY packages/shared packages/shared
+COPY packages/control-plane-core packages/control-plane-core
+COPY packages/clawhub-client packages/clawhub-client
+COPY scripts/load-monorepo-env.mjs scripts/load-monorepo-env.mjs
+RUN pnpm --filter @claw-dashboard/database build && pnpm --filter @claw-dashboard/runtime-contracts build && pnpm --filter @claw-dashboard/shared build && pnpm --filter @claw-dashboard/control-plane-core build && pnpm --filter @claw-dashboard/runtime-oss build && pnpm --filter @claw-dashboard/workspace-sync build && pnpm --filter @claw-dashboard/clawhub-client build
+
+COPY apps/api apps/api
+WORKDIR /repo/apps/api
+RUN pnpm run build
+
+FROM node:24-alpine AS runner
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+WORKDIR /repo/apps/api
+ENV NODE_ENV=production
+ENV PORT=8387
+
+# pnpm hoists deps to /repo/node_modules — copy monorepo layout so symlinks resolve
+COPY --from=build /repo /repo
+
+EXPOSE 8387
+
+CMD ["sh", "-c", "pnpm --filter @claw-dashboard/database exec prisma migrate deploy && node dist/main.js"]

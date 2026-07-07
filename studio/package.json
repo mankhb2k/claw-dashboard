@@ -1,0 +1,30 @@
+{
+  "name": "claw-dashboard",
+  "private": true,
+  "description": "Claw Dashboard monorepo — OSS-first control plane + OpenClaw gateway",
+  "scripts": {
+    "dev": "turbo run dev --parallel --filter=@claw-dashboard/api --filter=@claw-dashboard/web",
+    "build": "turbo run build",
+    "build:packages": "pnpm db:generate && pnpm --filter @claw-dashboard/shared --filter @claw-dashboard/database --filter @claw-dashboard/runtime-contracts --filter @claw-dashboard/workspace-sync --filter @claw-dashboard/runtime-oss --filter @claw-dashboard/control-plane-core --filter @claw-dashboard/clawhub-client run build",
+    "lint": "turbo run lint",
+    "dev:db": "docker compose -f deploy/docker-compose.postgres.dev.yml up -d --remove-orphans",
+    "dev:db:down": "docker compose -f deploy/docker-compose.postgres.dev.yml down --remove-orphans",
+    "dev:runtime": "docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway up -d --remove-orphans",
+    "dev:runtime:pull": "docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway pull gateway",
+    "dev:runtime:down": "docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway down --remove-orphans",
+    "dev:runtime:logs": "docker compose -f deploy/docker-compose.runtime.yml --env-file deploy/.env.gateway logs -f postgres gateway",
+    "dev:stack": "docker compose -f deploy/docker-compose.yml up",
+    "db:generate": "pnpm --filter @claw-dashboard/database db:generate",
+    "db:migrate": "pnpm --filter @claw-dashboard/database db:migrate",
+    "db:seed": "pnpm --filter @claw-dashboard/database db:seed",
+    "postinstall": "pnpm build:packages"
+  },
+  "devDependencies": {
+    "dotenv": "^16.6.1",
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  }
+}

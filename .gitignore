@@ -8,7 +8,7 @@
 **/vendor/
 **/*.tsbuildinfo
 *.log
-openclaw-worker/
+openclaw-fork/
 .DS_Store
 /cloud
 /mcp

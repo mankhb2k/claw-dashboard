@@ -1,0 +1,42 @@
+---
+description: Claw Dashboard monorepo — scope, forbidden changes, verify commands
+globs: studio/**/*
+alwaysApply: false
+---
+
+# Claw Dashboard monorepo
+
+## Folder roles
+
+| Path | Role |
+|------|------|
+| `studio/apps/api` | Nest wiring, controllers, DTOs, guards — **thin** |
+| `studio/apps/web` | Next.js UI (Claw Dashboard) |
+| `studio/packages/*` | Shared libs (`@claw-dashboard/*`) |
+| `studio/deploy/` | OSS compose + Dockerfiles (api/web) |
+| Gateway/postgres | **Pull images** — not vendored in repo |
+
+## Forbidden without explicit user ask
+
+- New top-level folder, rename `apps/` / `packages/`
+- New npm dependency (root or package) without reason
+- Abstractions used once (base class, factory, “future” config)
+- Cloud/billing logic in OSS packages or `apps/api`
+- Drive-by refactors outside task scope
+- New markdown docs unless user requested
+
+## Verify (from `studio/`)
+
+```bash
+pnpm --filter @claw-dashboard/runtime-contracts build
+pnpm --filter @claw-dashboard/runtime-oss build
+pnpm --filter @claw-dashboard/api build
+pnpm --filter @claw-dashboard/web build
+```
+
+Compose E2E: `docker compose -f deploy/docker-compose.yml up -d --build`
+
+## Runtime placement
+
+- Interfaces → `packages/runtime-contracts`
+- OSS gateway URL/health → `packages/runtime-oss`

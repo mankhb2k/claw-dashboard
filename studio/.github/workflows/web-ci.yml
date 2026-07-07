@@ -1,0 +1,60 @@
+# CI cho apps/web — chạy tự động trên mỗi Pull Request và push vào nhánh chính.
+# Mục tiêu: chặn merge nếu lint có error hoặc typecheck/build thất bại.
+# Tài liệu chuẩn: apps/web/.agent/rule.md §8.
+name: Web CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/web-ci.yml"
+
+# Hủy lần chạy cũ khi có commit mới trên cùng nhánh/PR (tiết kiệm thời gian)
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-quality:
+    name: Lint + Typecheck + Build (apps/web)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # Tự nhận pnpm 9.15.9 từ field "packageManager" trong package.json
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Hard rules (error) block merge — rule.md §9
+      - name: Lint (eslint)
+        run: pnpm --filter @claw-dashboard/web lint
+
+      - name: Typecheck (tsc --noEmit)
+        run: pnpm --filter @claw-dashboard/web typecheck
+
+      # Build web (postinstall already builds workspace deps used by web)
+      - name: Build (next build)
+        run: pnpm --filter @claw-dashboard/web build

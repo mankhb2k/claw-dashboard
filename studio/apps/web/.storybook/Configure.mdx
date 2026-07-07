@@ -1,0 +1,136 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Welcome/Introduction" />
+
+<div className="sb-container">
+  <div className='sb-section-title'>
+    # 🚀 Claw Dashboard Design System
+
+    Welcome to the **Claw Dashboard** design system. This is the home for storing, testing, and documenting every UI component in the project.
+  </div>
+
+  <div className="sb-section">
+    <div className="sb-section-item">
+      ### 🛠 Technology Stack
+      Built on a modern stack that prioritizes flexibility and performance:
+      - **Framework**: Next.js 16 (App Router)
+      - **Styling**: Vanilla CSS Modules (no utility framework)
+      - **Icons**: Lucide React / React Icons
+      - **State**: Zustand
+      - **Validation**: Zod
+    </div>
+
+    <div className="sb-section-item">
+      ### 📜 Core Principles (Rule.md)
+      Every UI component in the project must follow these rules:
+      - **No Tailwind/Bootstrap**: Write custom CSS to maintain full control over the interface.
+      - **CSS Variables**: Always use system variables for colors and spacing.
+      - **Atomic Design**: Prefer using and extending components in `components/ui/`.
+      - **Consistency**: Hover and focus effects must be consistent across the entire system.
+    </div>
+  </div>
+</div>
+
+---
+
+## 🎨 Color System
+
+The project uses orange `#ff5f00` as the primary accent, paired with subtle overlay layers.
+
+<div className="color-grid">
+  <div className="color-item" style={{ background: '#ff5f00', color: 'white' }}>
+    <strong>Primary</strong>
+    <code>--color-primary</code>
+    <span>#ff5f00</span>
+  </div>
+  <div className="color-item" style={{ background: '#17181c', color: 'white' }}>
+    <strong>Text</strong>
+    <code>--color-text</code>
+    <span>#17181c</span>
+  </div>
+  <div className="color-item" style={{ background: '#e4e6ec', color: '#17181c' }}>
+    <strong>Border</strong>
+    <code>--color-border</code>
+    <span>#e4e6ec</span>
+  </div>
+  <div className="color-item" style={{ background: '#f4f5f8', color: '#17181c' }}>
+    <strong>Background</strong>
+    <code>--color-bg</code>
+    <span>#f4f5f8</span>
+  </div>
+</div>
+
+---
+
+## 📐 Spacing & Shapes
+
+| Variable | Value | Description |
+|---|---|---|
+| `--radius-md` | 10px | Medium corner radius |
+| `--radius-lg` | 12px | Standard card corner radius |
+| `--space-4` | 1rem (16px) | Default padding/margin spacing |
+| `--transition-base` | 180ms | Default animation duration |
+
+---
+
+## 🤖 AI-Assisted Workflow
+
+If you are working with **Antigravity (AI Agent)**, use these prompts:
+- *"Create a [Name] component and write a story for it."*
+- *"Check rule.md and update the CSS for this component."*
+- *"Create a new variant of [Component] in Storybook."*
+
+---
+
+<style>
+  {`
+  .sb-container {
+    margin-bottom: 48px;
+  }
+  .sb-section-title {
+    margin-bottom: 32px;
+  }
+  .sb-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+  .sb-section-item h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+  }
+  
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .color-item {
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .color-item strong {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .color-item code {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    width: fit-content;
+  }
+
+  @media screen and (max-width: 600px) {
+    .sb-section {
+      grid-template-columns: 1fr;
+    }
+  }
+  `}
+</style>
